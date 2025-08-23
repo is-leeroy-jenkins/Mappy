@@ -134,7 +134,7 @@ By catching these explicitly, you can gracefully handle errors in bulk geocoding
 
 ## 📜 License
 
-Mappy is available via the MIT License [here]().  
+Mappy is available via the MIT License [here](https://github.com/is-leeroy-jenkins/mappy/blob/master/LICENSE.txt).  
 
 ---
 
