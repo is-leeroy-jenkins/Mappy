@@ -120,31 +120,29 @@ By catching these explicitly, you can gracefully handle errors in bulk geocoding
 - **Rate-aware**: Built-in `RateLimiter` keeps calls under quota.  
 - **Spreadsheet-ready**: The `Excel` service directly reads/writes `.csv` or `.xlsx`.  
 
----
+
 
 ## 🧪 Example Use Cases
 
 - Enriching a customer database with GPS coordinates.  
-- Calculating commute distances for HR relocation analysis.  
+- Calculating commute distances for IMT relocation analysis.  
 - Creating static map thumbnails for property listings.  
 - Validating and normalizing international addresses.  
 - Auditing time zone coverage for scheduling software.  
 
----
+## 🔮 Roadmap
+
+- ✅ Current: Geocoding, Distance Matrix, Static Maps, Time Zones, Excel integration.
+- 🔜 Planned:
+  - Support for **Places API** (landmarks, restaurants, POIs).
+  - **Directions API** with polyline decoding.
 
 ## 📜 License
 
 Mappy is available via the MIT License [here](https://github.com/is-leeroy-jenkins/mappy/blob/master/LICENSE.txt).  
 
----
 
-## 🔮 Roadmap
 
-- ✅ Current: Geocoding, Distance Matrix, Static Maps, Time Zones, Excel integration.  
-- 🔜 Planned:  
-  - Support for **Places API** (landmarks, restaurants, POIs).  
-  - **Directions API** with polyline decoding.  
-  - **Batch async mode** for high-volume jobs.  
-  - Optional CLI (`mappy enrich locations.xlsx`).  
 
----
+
+
