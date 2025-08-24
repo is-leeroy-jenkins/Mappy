@@ -40,7 +40,7 @@
     distance.py
   </summary>
   ******************************************************************************************
-  '''
+'''
 from typing import Dict, Tuple, Union
 from .maps import Maps
 
@@ -51,6 +51,7 @@ def throw_if( name: str, value: object ):
 
 Coord = Tuple[ float, float ]
 AddressOrCoord = Union[ str, Coord ]
+
 
 def _fmt( o: AddressOrCoord ) -> str:
 	"""
@@ -69,6 +70,7 @@ def _fmt( o: AddressOrCoord ) -> str:
 	if isinstance( o, tuple ) and len( o ) == 2:
 		return f"{o[ 0 ]},{o[ 1 ]}"
 	return str( o )
+
 
 class DistanceMatrix:
 	"""
