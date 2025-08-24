@@ -41,62 +41,60 @@
   </summary>
   ******************************************************************************************
   '''
-"""
-Purpose:
-    Static Maps URL builder for thumbnails that pin a coordinate on a map.
-
-Parameters:
-    api_key (str):
-        Google Maps Platform API key.
-
-Returns:
-    StaticMapURL with .pin(lat, lng, zoom=12, size="400x300").
-"""
-
 from urllib.parse import urlencode
+
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
 
 class StaticMapURL( ):
 	"""
-	Purpose:
-		Generate Google Static Maps URLs for quick preview images.
-
-	Parameters:
-		api_key (str):
-			Google Maps Platform API key.
-
-	Returns:
-		Instance with simple URL-building helpers.
+		
+		Purpose:
+			Generate Google Static Maps URLs for quick preview images.
+	
+		Parameters:
+			api_key (str):
+				Google Maps Platform API key.
+	
+		Returns:
+			Instance with simple URL-building helpers.
+		
 	"""
 
-	BASE = "https://maps.googleapis.com/maps/api/staticmap"
+	BASE = 'https://maps.googleapis.com/maps/api/staticmap'
 
 	def __init__( self, api_key: str ) -> None:
 		self._key = api_key
 
-	def pin( self, lat: float, lng: float, zoom: int = 12, size: str = "400x300" ) -> str:
+	def pin( self, lat: float, lng: float, zoom: int = 12, size: str = '400x300' ) -> str:
 		"""
-		Purpose:
-			Build a GET URL for a static map centered on a coordinate with a
-			single marker.
 
-		Parameters:
-			lat (float):
-				Latitude for the pin.
-			lng (float):
-				Longitude for the pin.
-			zoom (int):
-				Zoom level, 1..20 (higher is closer).
-			size (str):
-				Image dimensions "WxH" in pixels.
+			Purpose:
+				Build a GET URL for a static map centered on a coordinate with a
+				single marker.
 
-		Returns:
-			Fully-qualified URL string suitable for embedding.
+			Parameters:
+				lat (float):
+					Latitude for the pin.
+				lng (float):
+					Longitude for the pin.
+				zoom (int):
+					Zoom level, 1..20 (higher is closer).
+				size (str):
+					Image dimensions 'WxH' in pixels.
+
+			Returns:
+				Fully-qualified URL string suitable for embedding.
+
 		"""
 		params = {
-				"center": f"{lat},{lng}",
-				"zoom": str( zoom ),
-				"size": size,
-				"markers": f"{lat},{lng}",
-				"key": self._key,
+				'center': f'{lat},{lng}',
+				'zoom': str( zoom ),
+				'size': size,
+				'markers': f'{lat},{lng}',
+				'key': self._key,
 		}
-		return f"{self.BASE}?{urlencode( params )}"
+		return f'{self.BASE}?{urlencode( params )}'

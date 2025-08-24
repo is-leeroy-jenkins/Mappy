@@ -8,10 +8,15 @@
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="geocode.py" company="Terry D. Eppler">
+  <copyright file='geocode.py' company='Terry D. Eppler'>
 
 	     Mappy is a python framework encapsulating the Google Maps functionality.
 	     Copyright ©  2022  Terry Eppler
+
+	     Purpose:
+		    High-level Geocoding service that resolves addresses or city/state/country
+		    triples into canonical address data and coordinates.
+
 
      Permission is hereby granted, free of charge, to any person obtaining a copy
      of this software and associated documentation files (the “Software”),
@@ -40,77 +45,72 @@
     geocode.py
   </summary>
   ******************************************************************************************
-  '''
-"""
-Purpose:
-    High-level Geocoding service that resolves addresses or city/state/country
-    triples into canonical address data and coordinates.
-
-Parameters:
-    maps (Maps):
-        Shared Maps gateway instance.
-    cache (Optional[BaseCache]):
-        Optional cache to memoize queries and cut cost.
-
-Returns:
-    Geocoder with .freeform(...) and .city_state_country(...) helpers.
-"""
-
+'''
 from typing import Any, Dict, Optional
-
 from .caching import BaseCache
 from .exceptions import NotFound
 from .maps import Maps
 
+
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
+
 def _flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 	"""
-	Purpose:
-		Reduce a geocode result into a compact, row-friendly dict.
 
-	Parameters:
-		result (Dict[str, Any]):
-			One element from "results" in Geocoding API response.
+		Purpose:
+			Reduce a geocode result into a compact, row-friendly dict.
 
-	Returns:
-		Dict with formatted_address, lat, lng, place_id, types, and components.
+		Parameters:
+			result (Dict[str, Any]):
+				One element from 'results' in Geocoding API response.
+
+		Returns:
+			Dict with formatted_address, lat, lng, place_id, types, and components.
+
 	"""
-	geometry = result.get( "geometry", { } ) or { }
-	loc = geometry.get( "location", { } ) or { }
-	comps = result.get( "address_components", [ ] ) or [ ]
+	geometry = result.get( 'geometry', { } ) or { }
+	loc = geometry.get( 'location', { } ) or { }
+	comps = result.get( 'address_components', [ ] ) or [ ]
 
 	def comp( kind: str, want_long: bool = False ) -> Optional[ str ]:
 		for c in comps:
-			if kind in (c.get( "types" ) or [ ]):
-				return (c.get( "long_name" ) if want_long else c.get( "short_name" )) or None
+			if kind in (c.get( 'types' ) or [ ]):
+				return (c.get( 'long_name' ) if want_long else c.get( 'short_name' )) or None
 		return None
 
 	return {
-			"formatted_address": result.get( "formatted_address" ),
-			"lat": loc.get( "lat" ),
-			"lng": loc.get( "lng" ),
-			"place_id": result.get( "place_id" ),
-			"types": ",".join( result.get( "types", [ ] ) ) if result.get( "types" ) else None,
-			"country_code": comp( "country" ),
-			"country_name": comp( "country", want_long = True ),
-			"admin_level_1": comp( "administrative_area_level_1" ),
-			"admin_level_2": comp( "administrative_area_level_2" ),
-			"locality": comp( "locality" ) or comp( "postal_town" ),
-			"postal_code": comp( "postal_code" ),
+			'formatted_address': result.get( 'formatted_address' ),
+			'lat': loc.get( 'lat' ),
+			'lng': loc.get( 'lng' ),
+			'place_id': result.get( 'place_id' ),
+			'types': ','.join( result.get( 'types', [ ] ) ) if result.get( 'types' ) else None,
+			'country_code': comp( 'country' ),
+			'country_name': comp( 'country', want_long = True ),
+			'admin_level_1': comp( 'administrative_area_level_1' ),
+			'admin_level_2': comp( 'administrative_area_level_2' ),
+			'locality': comp( 'locality' ) or comp( 'postal_town' ),
+			'postal_code': comp( 'postal_code' ),
 	}
 
 class Geocoder:
 	"""
-	Purpose:
-		Provide address and city/state/country geocoding with optional caching.
 
-	Parameters:
-		maps (Maps):
-			Maps gateway instance.
-		cache (Optional[BaseCache]):
-			Pluggable cache for memoization.
+		Purpose:
+			Provide address and city/state/country geocoding with optional caching.
 
-	Returns:
-		Geocoder instance with clear methods and consistent output shape.
+		Parameters:
+			maps (Maps):
+				Maps gateway instance.
+			cache (Optional[BaseCache]):
+				Pluggable cache for memoization.
+
+		Returns:
+			Geocoder instance with clear methods and consistent output shape.
+
 	"""
 
 	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
@@ -119,68 +119,67 @@ class Geocoder:
 
 	@staticmethod
 	def _key_for( prefix: str, *parts: str ) -> str:
-		joined = " ".join( p.strip( ) for p in parts if p and str( p ).strip( ) )
-		return f"{prefix}::{joined}"
+		joined = ' '.join( p.strip( ) for p in parts if p and str( p ).strip( ) )
+		return f'{prefix}::{joined}'
 
-	def freeform( self, address: str, country_hint: Optional[ str ] = None ) -> Dict[ str, Any ]:
+	def freeform( self, address: str, country_hint: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
 		"""
-		Purpose:
-			Geocode a free-form address string. Optionally bias by country code.
 
-		Parameters:
-			address (str):
-				Any human-entered address string.
-			country_hint (Optional[str]):
-				ISO-3166 alpha-2 country code to bias results (e.g., "US", "FR").
+			Purpose:
+				Geocode a free-form address string. Optionally bias by country code.
 
-		Returns:
-			Flattened dict as from _flatten_geocode(...).
+			Parameters:
+				address (str):
+					Any human-entered address string.
+				country_hint (Optional[str]):
+					ISO-3166 alpha-2 country code to bias results (e.g., 'US', 'FR').
 
-		Raises:
-			NotFound when no results are returned.
+			Returns:
+				Flattened dict as from _flatten_geocode(...).
+
+			Raises:
+				NotFound when no results are returned.
+
 		"""
-		key = self._key_for( "geocode", address, country_hint or "" )
+		key = self._key_for( 'geocode', address, country_hint or "" )
 		if self._cache:
 			hit = self._cache.get( key )
 			if hit:
 				return hit
 
-		comps = { "country": country_hint.upper( ) } if country_hint else None
-		data = self._maps.request( "geocode/json", { "address": address, **(comps or { }) } )
+		comps = { 'country': country_hint.upper( ) } if country_hint else None
+		data = self._maps.request( 'geocode/json', { 'address': address, **(comps or { }) } )
 
-		if data.get( "status" ) != "OK" or not data.get( "results" ):
-			raise NotFound( f"No geocode for '{address}'" )
+		if data.get( 'status' ) != 'OK' or not data.get( 'results' ):
+			raise NotFound( f'No geocode for "{address}" ' )
 
-		out = _flatten_geocode( data[ "results" ][ 0 ] )
+		out = _flatten_geocode( data[ 'results' ][ 0 ] )
 		if self._cache:
 			self._cache.set( key, out )
 		return out
 
-	def city_state_country(
-			self,
-			city: str,
-			state: Optional[ str ],
-			country: str,
-	) -> Dict[ str, Any ]:
+	def city_state_country( self, city: str, state: Optional[ str ], country: str ) -> Dict[ str, Any ]:
 		"""
-		Purpose:
-			Geocode a structured triple: (city, optional state/region, country).
 
-		Parameters:
-			city (str):
-				City or locality.
-			state (Optional[str]):
-				State or region (may be None or empty).
-			country (str):
-				Country name or ISO-2 code.
+			Purpose:
+				Geocode a structured triple: (city, optional state/region, country).
 
-		Returns:
-			Flattened dict like freeform().
+			Parameters:
+				city (str):
+					City or locality.
+				state (Optional[str]):
+					State or region (may be None or empty).
+				country (str):
+					Country name or ISO-2 code.
 
-		Raises:
-			NotFound when no result is available.
+			Returns:
+				Flattened dict like freeform().
+
+			Raises:
+				NotFound when no result is available.
+
 		"""
 		parts = [ p for p in [ city, state, country ] if p ]
-		query = ", ".join( parts )
+		query = ', '.join( parts )
 		hint = country.strip( ).upper( ) if country and len( country.strip( ) ) <= 3 else None
 		return self.freeform( query, country_hint = hint )

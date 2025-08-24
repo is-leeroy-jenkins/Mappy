@@ -55,27 +55,33 @@ Parameters:
 Returns:
     Places with .text_to_location(query, country_hint=None).
 """
-
 from typing import Any, Dict, Optional
-
 from .caching import BaseCache
 from .exceptions import NotFound
 from .maps import Maps
 
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
+
 class Places:
 	"""
-	Purpose:
-		Use Places Text Search to recover locations that Geocoding may miss.
-		Top result is promoted via Place Details to a geocode-like dict.
 
-	Parameters:
-		maps (Maps):
-			Maps gateway instance.
-		cache (Optional[BaseCache]):
-			Optional cache for query results.
+		Purpose:
+			Use Places Text Search to recover locations that Geocoding may miss.
+			Top result is promoted via Place Details to a geocode-like dict.
 
-	Returns:
-		Places instance with .text_to_location(...).
+		Parameters:
+			maps (Maps):
+				Maps gateway instance.
+			cache (Optional[BaseCache]):
+				Optional cache for query results.
+
+		Returns:
+			Places instance with .text_to_location(...).
+
 	"""
 
 	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
@@ -106,34 +112,34 @@ class Places:
 			if hit:
 				return hit
 
-		params: Dict[ str, str ] = { "query": query }
+		params: Dict[ str, str ] = { 'query': query }
 		if country_hint:
-			params[ "region" ] = country_hint.upper( )
+			params[ 'region' ] = country_hint.upper( )
 
-		search = self._maps.request( "place/textsearch/json", params )
-		results = search.get( "results" ) or [ ]
+		search = self._maps.request( 'place/textsearch/json', params )
+		results = search.get( 'results' ) or [ ]
 		if not results:
-			raise NotFound( f"No places match for '{query}'" )
+			raise NotFound( f'No places match for "{query}" ' )
 
 		top = results[ 0 ]
-		pid = top.get( "place_id" )
+		pid = top.get( 'place_id' )
 		if not pid:
-			raise NotFound( "Top place had no place_id" )
+			raise NotFound( 'Top place had no place_id' )
 
 		detail = self._maps.request(
-			"place/details/json",
-			{ "place_id": pid,
-			  "fields": "formatted_address,geometry,address_component,place_id,type" },
-		).get( "result", { } )
+			'place/details/json',
+			{ 'place_id': pid,
+			  'fields': 'formatted_address,geometry,address_component,place_id,type' },
+		).get( 'result', { } )
 
-		geom = (detail.get( "geometry" ) or { }).get( "location" ) or { }
+		geom = (detail.get( 'geometry' ) or { }).get( 'location' ) or { }
 		out = {
-				"formatted_address": detail.get( "formatted_address" ),
-				"lat": geom.get( "lat" ),
-				"lng": geom.get( "lng" ),
-				"place_id": detail.get( "place_id" ),
-				"types": ",".join( detail.get( "types", [ ] ) ) if detail.get( "types" ) else None,
-				"address_components": detail.get( "address_components", [ ] ),
+				'formatted_address': detail.get( 'formatted_address' ),
+				'lat': geom.get( 'lat' ),
+				'lng': geom.get( 'lng' ),
+				'place_id': detail.get( 'place_id' ),
+				'types': ','.join( detail.get( 'types', [ ] ) ) if detail.get( 'types' ) else None,
+				'address_components': detail.get( 'address_components', [ ] ),
 		}
 		if self._cache:
 			self._cache.set( key, out )

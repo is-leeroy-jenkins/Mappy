@@ -40,21 +40,20 @@
     timezone.py
   </summary>
   ******************************************************************************************
-  '''
-"""
-
-	Purpose:
-	    Time Zone service to map a coordinate to an IANA time zone id.
-
-"""
-
+'''
 import time
 from typing import Optional
-
 from .maps import Maps
+
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
 
 class Timezone:
 	"""
+	
 		Purpose:
 			Wrap Google Time Zone API for simple coordinate lookups.
 
@@ -64,6 +63,7 @@ class Timezone:
 
 		Returns:
 			Timezone with .get_id(...).
+			
 	"""
 
 	def __init__( self, maps: Maps ) -> None:
@@ -71,6 +71,7 @@ class Timezone:
 
 	def get_id( self, lat: float, lng: float ) -> Optional[ str ]:
 		"""
+		
 			Purpose:
 				Fetch the IANA time zone id (e.g., "Europe/Paris") for a coordinate.
 
@@ -82,8 +83,9 @@ class Timezone:
 
 			Returns:
 				Time zone id string or None if unavailable.
+				
 		"""
 		ts = int( time.time( ) )
-		data = self._maps.request( "timezone/json",
-			{ "location": f"{lat},{lng}", "timestamp": str( ts ) } )
-		return data.get( "timeZoneId" )
+		data = self._maps.request( 'timezone/json',
+			{ 'location': f'{lat},{lng}', 'timestamp': str( ts ) } )
+		return data.get( 'timeZoneId' )

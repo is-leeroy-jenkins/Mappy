@@ -41,36 +41,30 @@
   </summary>
   ******************************************************************************************
   '''
-"""
-Purpose:
-    Distance Matrix service for point-to-point travel distance and duration.
-
-Parameters:
-    maps (Maps):
-        Maps gateway instance.
-
-Returns:
-    DistanceMatrix with .summary(origin, destination, mode="driving").
-"""
-
 from typing import Dict, Tuple, Union
-
 from .maps import Maps
+
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
 Coord = Tuple[ float, float ]
 AddressOrCoord = Union[ str, Coord ]
 
 def _fmt( o: AddressOrCoord ) -> str:
 	"""
-	Purpose:
-		Normalize an origin/destination input to the API's expected string.
-
-	Parameters:
-		o (AddressOrCoord):
-			Either "lat,lng" as tuple or a free-form string address.
-
-	Returns:
-		String representation for the API, "lat,lng" or the original string.
+	
+		Purpose:
+			Normalize an origin/destination input to the API's expected string.
+	
+		Parameters:
+			o (AddressOrCoord):
+				Either "lat,lng" as tuple or a free-form string address.
+	
+		Returns:
+			String representation for the API, "lat,lng" or the original string.
+			
 	"""
 	if isinstance( o, tuple ) and len( o ) == 2:
 		return f"{o[ 0 ]},{o[ 1 ]}"
@@ -78,47 +72,51 @@ def _fmt( o: AddressOrCoord ) -> str:
 
 class DistanceMatrix:
 	"""
-	Purpose:
-		Provide a thin wrapper for Google Distance Matrix API.
-
-	Parameters:
-		maps (Maps):
-			Maps gateway instance.
-
-	Returns:
-		DistanceMatrix with .summary(...).
+	
+		Purpose:
+			Provide a thin wrapper for Google Distance Matrix API.
+	
+		Parameters:
+			maps (Maps):
+				Maps gateway instance.
+	
+		Returns:
+			DistanceMatrix with .summary(...).
+			
 	"""
 
 	def __init__( self, maps: Maps ) -> None:
 		self._maps = maps
 
 	def summary( self, origin: AddressOrCoord, destination: AddressOrCoord,
-	             mode: str = "driving" ) -> Dict:
+	             mode: str = 'driving' ) -> Dict:
 		"""
-		Purpose:
-			Return a compact dict with meters/seconds and human text fields.
-
-		Parameters:
-			origin (AddressOrCoord):
-				Origin address string or (lat, lng) tuple.
-			destination (AddressOrCoord):
-				Destination address string or (lat, lng) tuple.
-			mode (str):
-				Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
-
-		Returns:
-			Dict with distance_text, distance_meters, duration_text, duration_seconds.
+		
+			Purpose:
+				Return a compact dict with meters/seconds and human text fields.
+	
+			Parameters:
+				origin (AddressOrCoord):
+					Origin address string or (lat, lng) tuple.
+				destination (AddressOrCoord):
+					Destination address string or (lat, lng) tuple.
+				mode (str):
+					Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
+	
+			Returns:
+				Dict with distance_text, distance_meters, duration_text, duration_seconds.
+				
 		"""
 		data = self._maps.request(
-			"distancematrix/json",
-			{ "origins": _fmt( origin ), "destinations": _fmt( destination ), "mode": mode },
+			'distancematrix/json',
+			{ 'origins': _fmt( origin ), 'destinations': _fmt( destination ), 'mode': mode },
 		)
-		row = ((data.get( "rows" ) or [ { } ])[ 0 ].get( "elements" ) or [ { } ])[ 0 ]
-		dist = row.get( "distance" ) or { }
-		dur = row.get( "duration" ) or { }
+		row = ((data.get( 'rows' ) or [ { } ])[ 0 ].get( 'elements' ) or [ { } ])[ 0 ]
+		dist = row.get( 'distance' ) or { }
+		dur = row.get( 'duration' ) or { }
 		return {
-				"distance_text": dist.get( "text" ),
-				"distance_meters": dist.get( "value" ),
-				"duration_text": dur.get( "text" ),
-				"duration_seconds": dur.get( "value" ),
+				'distance_text': dist.get( 'text' ),
+				'distance_meters': dist.get( 'value' ),
+				'duration_text': dur.get( 'text' ),
+				'duration_seconds': dur.get( 'value' ),
 		}

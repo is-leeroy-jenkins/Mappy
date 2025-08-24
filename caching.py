@@ -57,6 +57,12 @@ import os
 import sqlite3
 from typing import Any, Dict, Optional
 
+
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
 class BaseCache:
 	"""
 	Purpose:
@@ -78,14 +84,16 @@ class BaseCache:
 
 class InMemoryCache( BaseCache ):
 	"""
-	Purpose:
-		Provide a fast, process-local dictionary cache.
 
-	Parameters:
-		None.
+		Purpose:
+			Provide a fast, process-local dictionary cache.
 
-	Returns:
-		O(1) get/set operations for this process lifetime.
+		Parameters:
+			None.
+
+		Returns:
+			O(1) get/set operations for this process lifetime.
+
 	"""
 
 	def __init__( self ) -> None:
@@ -97,40 +105,43 @@ class InMemoryCache( BaseCache ):
 	def set( self, key: str, value: Dict[ str, Any ] ) -> None:
 		self._store[ key ] = value
 
+
 class SQLiteCache( BaseCache ):
 	"""
-	Purpose:
-		Persist a small cache on disk via sqlite3. Keys are text; values are
-		stored as JSON strings.
 
-	Parameters:
-		path (str):
-			File path for the SQLite database. Directory is created if needed.
+		Purpose:
+			Persist a small cache on disk via sqlite3. Keys are text; values are
+			stored as JSON strings.
 
-	Returns:
-		Durable cache across runs with simple upsert semantics.
+		Parameters:
+			path (str):
+				File path for the SQLite database. Directory is created if needed.
+
+		Returns:
+			Durable cache across runs with simple upsert semantics.
+
 	"""
 
-	def __init__( self, path: str = "mappy_cache.sqlite" ) -> None:
+	def __init__( self, path: str='mappy_cache.sqlite' ) -> None:
 		d = os.path.dirname( path )
 		if d:
 			os.makedirs( d, exist_ok = True )
 		self._conn = sqlite3.connect( path )
 		self._conn.execute(
-			"CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)"
+			'CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)'
 		)
 		self._conn.commit( )
 
 	def get( self, key: str ) -> Optional[ Dict[ str, Any ] ]:
-		cur = self._conn.execute( "SELECT v FROM kv WHERE k = ?", (key,) )
+		cur = self._conn.execute( 'SELECT v FROM kv WHERE k = ?', (key,) )
 		row = cur.fetchone( )
 		if not row:
 			return None
 		return json.loads( row[ 0 ] )
 
 	def set( self, key: str, value: Dict[ str, Any ] ) -> None:
-		payload = json.dumps( value, ensure_ascii = False )
+		payload = json.dumps( value, ensure_ascii=False )
 		self._conn.execute(
-			"INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)", (key, payload)
+			'INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)', (key, payload)
 		)
 		self._conn.commit( )

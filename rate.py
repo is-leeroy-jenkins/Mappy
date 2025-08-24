@@ -51,22 +51,29 @@ Parameters:
 Returns:
     RateLimiter class that sleeps between calls to maintain an average rate.
 """
-
 import time
 from typing import Optional
 
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
+
 class RateLimiter:
 	"""
-	Purpose:
-		Enforce a rough max-queries-per-second ceiling by sleeping between
-		calls. This is lightweight and process-local.
 
-	Parameters:
-		qps (Optional[float]):
-			Max queries per second. If None or <= 0, no throttling occurs.
+		Purpose:
+			Enforce a rough max-queries-per-second ceiling by sleeping between
+			calls. This is lightweight and process-local.
 
-	Returns:
-		Instance exposing .wait() to call right before an outbound request.
+		Parameters:
+			qps (Optional[float]):
+				Max queries per second. If None or <= 0, no throttling occurs.
+
+		Returns:
+			Instance exposing .wait() to call right before an outbound request.
+
 	"""
 
 	def __init__( self, qps: Optional[ float ] ) -> None:
@@ -76,14 +83,16 @@ class RateLimiter:
 
 	def wait( self ) -> None:
 		"""
-		Purpose:
-			Sleep just enough so successive calls keep under the configured QPS.
 
-		Parameters:
-			None.
+			Purpose:
+				Sleep just enough so successive calls keep under the configured QPS.
 
-		Returns:
-			None.
+			Parameters:
+				None.
+
+			Returns:
+				None.
+
 		"""
 		if self._interval <= 0:
 			return
