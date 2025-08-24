@@ -93,10 +93,10 @@ class RateLimiter:
 		try:
 			if self.interval <= 0:
 				return
-			now = time.time( )
-			delta = now - self.last
-			if delta < self.interval:
-				time.sleep( self.interval - delta )
+			self.now = time.time( )
+			self.delta = self.now - self.last
+			if self.delta < self.interval:
+				time.sleep( self.interval - self.delta )
 			self.last = time.time( )
 		except Exception as e:
 			exception = Error( e )
