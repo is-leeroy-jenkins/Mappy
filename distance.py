@@ -95,18 +95,18 @@ class DistanceMatrix:
 		"""
 		
 			Purpose:
-				Return a compact dict with meters/seconds and human text fields.
+			Return a compact dict with meters/seconds and human text fields.
 	
 			Parameters:
-				origin (AddressOrCoord):
-					Origin address string or (lat, lng) tuple.
-				destination (AddressOrCoord):
-					Destination address string or (lat, lng) tuple.
-				mode (str):
-					Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
+			origin (AddressOrCoord):
+				Origin address string or (lat, lng) tuple.
+			destination (AddressOrCoord):
+				Destination address string or (lat, lng) tuple.
+			mode (str):
+				Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
 	
 			Returns:
-				Dict with distance_text, distance_meters, duration_text, duration_seconds.
+			Dict with distance_text, distance_meters, duration_text, duration_seconds.
 				
 		"""
 		data = self._maps.request(
