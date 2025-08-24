@@ -40,119 +40,117 @@
     maps.py
   </summary>
   ******************************************************************************************
-  '''
-"""
-Purpose:
-    Provide the low-level HTTP gateway for Google Maps Web Service calls with
-    optional rate limiting and exponential backoff.
-
-Parameters:
-    api_key (str):
-        Google Maps Platform API key with necessary APIs enabled.
-    qps (Optional[float]):
-        Queries-per-second cap. None or <=0 disables throttling.
-    max_retries (int):
-        Number of retry attempts on transient errors (HTTP 429/5xx, timeouts).
-    backoff_min (float):
-        Initial backoff in seconds for retries (exponential).
-    backoff_max (float):
-        Maximum backoff in seconds for retries.
-
-Returns:
-    Maps instance exposing .request(endpoint, params) for JSON APIs.
-"""
-
+'''
 import time
 from typing import Dict, Optional
-
 import requests
-
 from .exceptions import GatewayError
-from .rate import RateLimiter
+from .rates import RateLimiter
+from boogr import Error, ErrorDialog
+
+def throw_if( name: str, value: object ):
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
 class Maps:
 	"""
-    Purpose:
-        Centralized HTTP gateway for Google Maps Web Services. Handles rate
-        limiting, retry-with-backoff, and error normalization.
 
-    Parameters:
-        api_key (str):
-            Google Maps Platform API key.
-        qps (Optional[float]):
-            Max queries per second (None disables).
-        max_retries (int):
-            Maximum number of retries for transient failures.
-        backoff_min (float):
-            Initial backoff seconds.
-        backoff_max (float):
-            Maximum backoff seconds.
+	    Purpose:
+	        Centralized HTTP gateway for Google Maps Web Services. Handles rate
+	        limiting, retry-with-backoff, and error normalization.
 
-    Returns:
-        Ready-to-use gateway. Use .request("geocode/json", {...}) etc.
+	    Parameters:
+	        api_key (str):
+	            Google Maps Platform API key.
+	        qps (Optional[float]):
+	            Max queries per second (None disables).
+	        max_retries (int):
+	            Maximum number of retries for transient failures.
+	        backoff_min (float):
+	            Initial backoff seconds.
+	        backoff_max (float):
+	            Maximum backoff seconds.
+
+	    Returns:
+	        Ready-to-use gateway. Use .request("geocode/json", {...}) etc.
+
     """
+	base_url: Optional[ str ]
+	endpoint: Optional[ str ]
+	params: Optional[ Dict[ str, str ] ]
+	api_key: str
+	query_per_second: Optional[ float ]
+	retries: Optional[ int ]
+	min: Optional[ float ]
+	max: Optional[ float ]
+	timeout: Optional[ float ]
+	url: Optional[ str ]
+	session: Optional[ requests.Session ]
+	limiter: Optional[ RateLimiter ]
+	query: Optional[ Dict[ str, str ] ]
 
-	BASE = "https://maps.googleapis.com/maps/api"
+	BASE = 'https://maps.googleapis.com/maps/api'
 
-	def __init__(
-			self,
-			api_key: str,
-			qps: Optional[ float ] = 5.0,
-			max_retries: int = 5,
-			backoff_min: float = 1.0,
-			backoff_max: float = 30.0,
-			timeout_sec: float = 15.0,
-	) -> None:
-		self._key = api_key
-		self._limiter = RateLimiter( qps )
-		self._max_retries = max_retries
-		self._backoff_min = backoff_min
-		self._backoff_max = backoff_max
-		self._timeout = timeout_sec
-		self._session = requests.Session( )
+	def __init__( self, api_key: str, qps: Optional[ float ]=5.0, retries: int=5,
+			min: float=1.0, max: float=30.0, timeout: float=15.0 ) -> None:
+		self.api_key = api_key
+		self.limiter = RateLimiter( qps )
+		self.retries = retries
+		self.min = min
+		self.max = max
+		self.timeout = timeout
+		self.session = requests.Session( )
+		self.base_url = 'https://maps.googleapis.com/maps/api'
 
-	def request( self, endpoint: str, params: Dict[ str, str ] ) -> Dict:
+
+	def request( self, endpoint: str, params: Dict[ str, str ] ) -> Dict | None:
 		"""
-        Purpose:
-            Execute a GET request to the given Google Maps endpoint with query
-            params and robust retry/backoff for transient errors.
 
-        Parameters:
-            endpoint (str):
-                Endpoint path, e.g., "geocode/json", "distancematrix/json".
-            params (Dict[str, str]):
-                Query parameters for the request. "key" is injected.
+	        Purpose:
+	            Execute a GET request to the given Google Maps endpoint with query
+	            params and robust retry/backoff for transient errors.
 
-        Returns:
-            Parsed JSON (dict) on success.
+	        Parameters:
+	            endpoint (str):
+	                Endpoint path, e.g., "geocode/json", "distancematrix/json".
+	            params (Dict[str, str]):
+	                Query parameters for the request. "key" is injected.
 
-        Raises:
-            GatewayError for non-recoverable HTTP issues or malformed responses.
+	        Returns:
+	            Parsed JSON (dict) on success.
+
         """
-		url = f"{self.BASE}/{endpoint}"
-		attempt = 0
-		backoff = self._backoff_min
+		try:
+			throw_if( 'endpoint', endpoint )
+			throw_if( 'params', params )
+			self.endpoint = endpoint
+			self.params = params
+			self.url = f'{self.base_url}/{self.endpoint}'
+			attempt = 0
+			backoff = self.min
+			while True:
+				self.limiter.wait( )
+				try:
+					self.query = dict( self.params or { } )
+					self.query[ 'api_key' ] = self.api_key
+					resp = self.session.get( self.url, params=self.query, timeout=self.timeout )
+					status = resp.status_code
+					if status == 200:
+						return resp.json( )
 
-		while True:
-			self._limiter.wait( )
-			try:
-				q = dict( params or { } )
-				q[ "key" ] = self._key
-				resp = self._session.get( url, params = q, timeout = self._timeout )
-				status = resp.status_code
-
-				if status == 200:
-					return resp.json( )
-
-				if status in (408, 429, 500, 502, 503, 504):
-					# Transient; fall through to retry path below.
-					raise GatewayError( f"Transient HTTP {status}: {resp.text[ :200 ]}" )
-
-				# Non-retryable HTTP errors.
-				raise GatewayError( f"HTTP {status}: {resp.text[ :200 ]}" )
-			except (requests.Timeout, requests.ConnectionError, GatewayError) as ex:
-				attempt += 1
-				if attempt > self._max_retries:
-					raise GatewayError( f"Exceeded retries: {ex}" ) from ex
-				time.sleep( backoff )
-				backoff = min( backoff * 2, self._backoff_max )
+					if status in (408, 429, 500, 502, 503, 504):
+						raise GatewayError( f'Transient HTTP {status}: {resp.text[ :200 ]}' )
+					raise GatewayError( f'HTTP {status}: {resp.text[ :200 ]}' )
+				except (requests.Timeout, requests.ConnectionError, GatewayError) as ex:
+					attempt += 1
+					if attempt > self.retries:
+						raise GatewayError( f'Exceeded retries: {ex}' ) from ex
+					time.sleep( backoff )
+					backoff = min( backoff * 2, self.max )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'mappy'
+			exception.cause = 'Maps'
+			exception.method = 'request( self, endpoint: str, params: Dict[ str, str ] ) -> Dict'
+			error = ErrorDialog( exception )
+			error.show( )

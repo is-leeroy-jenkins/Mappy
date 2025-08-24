@@ -46,17 +46,15 @@
   </summary>
   ******************************************************************************************
 '''
-from typing import Any, Dict, Optional
-from .caching import BaseCache
+from typing import Any, Dict, Optional, List, Tuple
+from .caches import BaseCache
 from .exceptions import NotFound
 from .maps import Maps
-
-
+from boogr import Error, ErrorDialog
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
-
 
 def _flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 	"""
@@ -100,29 +98,50 @@ class Geocoder:
 	"""
 
 		Purpose:
-			Provide address and city/state/country geocoding with optional caching.
+		Provide address and city/state/country geocoding with optional caching.
 
 		Parameters:
-			maps (Maps):
-				Maps gateway instance.
-			cache (Optional[BaseCache]):
-				Pluggable cache for memoization.
+		maps (Maps): Maps gateway instance.
+		cache (Optional[BaseCache]): Pluggable cache for memoization.
 
 		Returns:
-			Geocoder instance with clear methods and consistent output shape.
+		Geocoder instance with clear methods and consistent output shape.
 
 	"""
+	maps: Optional[ Maps ]
+	cache: Optional[ BaseCache ]
+	prefix: Optional[ str ]
+	data: Optional[ Dict ]
+	output: Optional[ Dict ]
+	parts: Optional[ Tuple ]
+	city: Optional[ str ]
+	address: Optional[ str ]
+	state: Optional[ str ]
+	country: Optional[ str ]
+	comps: Optional[ Dict[ str, str ] ]
+	key: Optional[ str ]
+	query: Optional[ str ]
 
 	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
 		self._maps = maps
 		self._cache = cache
 
-	@staticmethod
-	def _key_for( prefix: str, *parts: str ) -> str:
-		joined = ' '.join( p.strip( ) for p in parts if p and str( p ).strip( ) )
-		return f'{prefix}::{joined}'
+	def key_for( self, prefix: str, *parts: str ) -> str | None:
+		try:
+			self.prefix = prefix
+			self.parts = parts
+			joined = ' '.join( p.strip( ) for p in parts if p and str( p ).strip( ) )
+			return f'{prefix}::{joined}'
+		except Exception as e:
+			exception = Error( e )
+			exception.module = ''
+			exception.cause = ''
+			exception.method = ''
+			error = ErrorDialog( exception )
+			error.show( )
 
-	def freeform( self, address: str, country_hint: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
+
+	def freeform( self, address: str, country: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
@@ -131,7 +150,7 @@ class Geocoder:
 			Parameters:
 				address (str):
 					Any human-entered address string.
-				country_hint (Optional[str]):
+				country (Optional[str]):
 					ISO-3166 alpha-2 country code to bias results (e.g., 'US', 'FR').
 
 			Returns:
@@ -141,45 +160,70 @@ class Geocoder:
 				NotFound when no results are returned.
 
 		"""
-		key = self._key_for( 'geocode', address, country_hint or "" )
-		if self._cache:
-			hit = self._cache.get( key )
-			if hit:
-				return hit
+		try:
+			self.address = address
+			self.country = country
+			self.key = self.key_for( 'geocode', address, country or "" )
+			if self._cache:
+				_hit = self._cache.get( self.key )
+				if _hit:
+					return _hit
 
-		comps = { 'country': country_hint.upper( ) } if country_hint else None
-		data = self._maps.request( 'geocode/json', { 'address': address, **(comps or { }) } )
+			self.comps = { 'country': self.country.upper( ) } if self.country else None
+			self.data = self._maps.request( 'geocode/json',
+				{ 'address': self.address, **(self.comps or { }) } )
+			if self.data.get( 'status' ) != 'OK' or not self.data.get( 'results' ):
+				raise NotFound( f'No geocode for "{self.address}" ' )
 
-		if data.get( 'status' ) != 'OK' or not data.get( 'results' ):
-			raise NotFound( f'No geocode for "{address}" ' )
+			self.output = _flatten_geocode( self.data[ 'results' ][ 0 ] )
+			if self.cache:
+				self.cache.set( self.key, self.output )
+			return self.output
+		except Exception as e:
+			exception = Error( e )
+			exception.module = ''
+			exception.cause = ''
+			exception.method = ''
+			error = ErrorDialog( exception )
+			error.show( )
 
-		out = _flatten_geocode( data[ 'results' ][ 0 ] )
-		if self._cache:
-			self._cache.set( key, out )
-		return out
 
-	def city_state_country( self, city: str, state: Optional[ str ], country: str ) -> Dict[ str, Any ]:
+	def city_state_country( self, city: str, state: Optional[ str ], ctry: str ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
-				Geocode a structured triple: (city, optional state/region, country).
+			Geocode a structured triple: (city, optional state/region, country).
 
 			Parameters:
-				city (str):
-					City or locality.
-				state (Optional[str]):
-					State or region (may be None or empty).
-				country (str):
-					Country name or ISO-2 code.
+			city (str):
+			City or locality.
+
+			state (Optional[str]):
+			State or region (may be None or empty).
+
+			ctry (str):
+			Country name or ISO-2 code.
 
 			Returns:
-				Flattened dict like freeform().
+			Flattened dict like freeform().
 
 			Raises:
-				NotFound when no result is available.
+			NotFound when no result is available.
 
 		"""
-		parts = [ p for p in [ city, state, country ] if p ]
-		query = ', '.join( parts )
-		hint = country.strip( ).upper( ) if country and len( country.strip( ) ) <= 3 else None
-		return self.freeform( query, country_hint = hint )
+		try:
+			self.city = city
+			self.state = state
+			self.country = ctry
+			self.parts = tuple( [ p for p in [ self.city, self.state, self.country ] if p ] )
+			self.query = ', '.join( self.parts )
+			_hint = self.country.strip( ).upper( ) if self.country and len(
+				self.country.strip( ) ) <= 3 else None
+			return self.freeform( self.query, _hint, )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = ''
+			exception.cause = ''
+			exception.method = ''
+			error = ErrorDialog( exception )
+			error.show( )

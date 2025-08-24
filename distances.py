@@ -1,14 +1,14 @@
 '''
   ******************************************************************************************
       Assembly:                Mappy
-      Filename:                staticmaps.py
+      Filename:                distances.py
       Author:                  Terry D. Eppler
       Created:                 05-31-2022
 
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="staticmaps.py" company="Terry D. Eppler">
+  <copyright file="distances.py" company="Terry D. Eppler">
 
 	     Mappy is a python framework encapsulating the Google Maps functionality.
 	     Copyright ©  2022  Terry Eppler
@@ -37,87 +37,88 @@
 
   </copyright>
   <summary>
-    staticmaps.py
+    distances.py
   </summary>
   ******************************************************************************************
-  '''
-from typing import Optional, Dict
-from urllib.parse import urlencode
-from boogr import Error, ErrorDialog
+'''
+from typing import Dict, Tuple, Union
+from .maps import Maps
 
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
+Coord = Tuple[ float, float ]
+AddressOrCoord = Union[ str, Coord ]
 
-class StaticMapURL( ):
+
+def _fmt( o: AddressOrCoord ) -> str:
 	"""
-		
+	
 		Purpose:
-			Generate Google Static Maps URLs for quick preview images.
+			Normalize an origin/destination input to the API's expected string.
 	
 		Parameters:
-			api_key (str):
-				Google Maps Platform API key.
+			o (AddressOrCoord):
+				Either "lat,lng" as tuple or a free-form string address.
 	
 		Returns:
-			Instance with simple URL-building helpers.
-		
+			String representation for the API, "lat,lng" or the original string.
+			
 	"""
-	api_key: Optional[ str ]
-	zoom: Optional[ int ]
-	size: Optional[ str ]
-	latitude: Optional[ float ]
-	longitude: Optional[ float ]
-	params: Optional[ Dict ]
-	markers: Optional[ str ]
-	base_url: Optional[ str ]
+	if isinstance( o, tuple ) and len( o ) == 2:
+		return f"{o[ 0 ]},{o[ 1 ]}"
+	return str( o )
 
-	def __init__( self, api_key: str ) -> None:
-		self.api_key = api_key
-		self.base_url = 'https://maps.googleapis.com/maps/api/staticmap'
 
-	def pin( self, lat: float, lng: float, zoom: int=12, size: str='400x300' ) -> str | None:
+class DistanceMatrix:
+	"""
+	
+		Purpose:
+			Provide a thin wrapper for Google Distance Matrix API.
+	
+		Parameters:
+			maps (Maps):
+				Maps gateway instance.
+	
+		Returns:
+			DistanceMatrix with .summary(...).
+			
+	"""
+
+	def __init__( self, maps: Maps ) -> None:
+		self._maps = maps
+
+	def summary( self, origin: AddressOrCoord, destination: AddressOrCoord,
+	             mode: str = 'driving' ) -> Dict:
 		"""
-
+		
 			Purpose:
-				Build a GET URL for a static map centered on a coordinate with a
-				single marker.
-
+			Return a compact dict with meters/seconds and human text fields.
+	
 			Parameters:
-				lat (float):
-					Latitude for the pin.
-				lng (float):
-					Longitude for the pin.
-				zoom (int):
-					Zoom level, 1..20 (higher is closer).
-				size (str):
-					Image dimensions 'WxH' in pixels.
-
+			origin (AddressOrCoord):
+				Origin address string or (lat, lng) tuple.
+			destination (AddressOrCoord):
+				Destination address string or (lat, lng) tuple.
+			mode (str):
+				Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
+	
 			Returns:
-				Fully-qualified URL string suitable for embedding.
-
+			Dict with distance_text, distance_meters, duration_text, duration_seconds.
+				
 		"""
-		try:
-			throw_if( 'lat', lat )
-			throw_if( 'lng', lng )
-			self.latitude = lat
-			self.longitude = lng
-			self.zoom = zoom
-			self.size = size
-			self.params = {
-					'center': f'{self.latitude},{self.longitude}',
-					'zoom': str( self.zoom ),
-					'size': self.size,
-					'markers': f'{self.latitude},{self.longitude}',
-					'key': self.api_key,
-			}
-			return f'{self.base_url}?{urlencode( self.params )}'
-		except Exception as e:
-			exception = Error( e )
-			exception.module = 'mappy'
-			exception.cause = 'StaticMapUrl'
-			exception.method = 'pin( self, lat: float, lng: foat ) -> str'
-			error = ErrorDialog( exception )
-			error.show( )
+		data = self._maps.request(
+			'distancematrix/json',
+			{ 'origins': _fmt( origin ), 'destinations': _fmt( destination ), 'mode': mode },
+		)
+		row = ((data.get( 'rows' ) or [ { } ])[ 0 ].get( 'elements' ) or [ { } ])[ 0 ]
+		dist = row.get( 'distance' ) or { }
+		dur = row.get( 'duration' ) or { }
+		return {
+				'distance_text': dist.get( 'text' ),
+				'distance_meters': dist.get( 'value' ),
+				'duration_text': dur.get( 'text' ),
+				'duration_seconds': dur.get( 'value' ),
+		}

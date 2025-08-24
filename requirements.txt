@@ -1,5 +1,6 @@
 # 📋 requirements.txt for mappy
-
 requests>=2.25.0
 pandas>=1.2.0
 openpyxl>=3.0.0
+typing~=3.7.4.3
+FreeSimpleGUI~=5.2.0.post1

@@ -15,13 +15,13 @@
 
 	 mappy/__init__.py
 	 mappy/exceptions.py
-	 mappy/rate.py
-	 mappy/caching.py
+	 mappy/rates.py
+	 mappy/caches.py
 	 mappy/maps.py
 	 mappy/geocode.py
 	 mappy/places.py
-	 mappy/distance.py
-	 mappy/timezone.py
+	 mappy/distances.py
+	 mappy/timezones.py
 	 mappy/staticmaps.py
 	 mappy/excel.py
 
@@ -66,13 +66,13 @@ Returns:
 """
 
 from .exceptions import MappyError, GatewayError, NotFound  # noqa: F401
-from .rate import RateLimiter  # noqa: F401
-from .caching import BaseCache, InMemoryCache, SQLiteCache  # noqa: F401
+from .rates import RateLimiter  # noqa: F401
+from .caches import BaseCache, InMemoryCache, SQLiteCache  # noqa: F401
 from .maps import Maps  # noqa: F401
 from .geocode import Geocoder  # noqa: F401
 from .places import Places  # noqa: F401
-from .distance import DistanceMatrix  # noqa: F401
-from .timezone import Timezone  # noqa: F401
+from .distances import DistanceMatrix  # noqa: F401
+from .timezones import Timezone  # noqa: F401
 from .staticmaps import StaticMapURL  # noqa: F401
 from .excel import Excel  # noqa: F401
 

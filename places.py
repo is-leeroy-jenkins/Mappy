@@ -53,12 +53,13 @@ Parameters:
         Pluggable cache to memoize the text queries.
 
 Returns:
-    Places with .text_to_location(query, country_hint=None).
+    Places with .text_to_location(query, country=None).
 """
-from typing import Any, Dict, Optional
-from .caching import BaseCache
+from typing import Any, Dict, Optional, List
+from .caches import BaseCache
 from .exceptions import NotFound
 from .maps import Maps
+from boogr import Error, ErrorDialog
 
 
 def throw_if( name: str, value: object ):
@@ -70,26 +71,39 @@ class Places:
 	"""
 
 		Purpose:
-			Use Places Text Search to recover locations that Geocoding may miss.
-			Top result is promoted via Place Details to a geocode-like dict.
+		Use Places Text Search to recover locations that Geocoding may miss.
+		Top result is promoted via Place Details to a geocode-like dict.
 
 		Parameters:
-			maps (Maps):
-				Maps gateway instance.
-			cache (Optional[BaseCache]):
-				Optional cache for query results.
+		maps (Maps):
+			Maps gateway instance.
+		cache (Optional[BaseCache]):
+			Optional cache for query results.
 
 		Returns:
-			Places instance with .text_to_location(...).
+		Places instance with .text_to_location(...).
 
 	"""
+	map: Optional[ Maps ]
+	cache: Optional[ BaseCache ]
+	country: Optional[ str ]
+	query: Optional[ str ]
+	hit: Optional[ Dict[ str, Any ] ]
+	params: Optional[ Dict[ str, str ] ]
+	request: Optional[ Dict[ str, str ] ]
+	search: Optional[ Dict ]
+	results: Optional[ List ]
+	details: Optional[ Dict ]
+	geometry: Optional[ Dict ]
+	key: Optional[ str ]
+	output: Optional[ Dict ]
+
 
 	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
-		self._maps = maps
-		self._cache = cache
+		self.maps = maps
+		self.cache = cache
 
-	def text_to_location( self, query: str, country_hint: Optional[ str ] = None ) -> Dict[
-		str, Any ]:
+	def text_to_location( self, query: str, country: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
 		"""
 			Purpose:
 				Resolve a free-text query into address and coordinates via Places.
@@ -97,7 +111,7 @@ class Places:
 			Parameters:
 				query (str):
 					Arbitrary human-entered text (e.g., "Newcastle, NSW, AU").
-				country_hint (Optional[str]):
+				country (Optional[str]):
 					ISO-2 region bias (e.g., "AU", "US").
 
 			Returns:
@@ -106,41 +120,48 @@ class Places:
 			Raises:
 				NotFound if no candidate is returned.
 		"""
-		key = f"places::{query}::{(country_hint or '').upper( )}"
-		if self._cache:
-			hit = self._cache.get( key )
-			if hit:
-				return hit
-
-		params: Dict[ str, str ] = { 'query': query }
-		if country_hint:
-			params[ 'region' ] = country_hint.upper( )
-
-		search = self._maps.request( 'place/textsearch/json', params )
-		results = search.get( 'results' ) or [ ]
-		if not results:
-			raise NotFound( f'No places match for "{query}" ' )
-
-		top = results[ 0 ]
-		pid = top.get( 'place_id' )
-		if not pid:
-			raise NotFound( 'Top place had no place_id' )
-
-		detail = self._maps.request(
-			'place/details/json',
-			{ 'place_id': pid,
-			  'fields': 'formatted_address,geometry,address_component,place_id,type' },
-		).get( 'result', { } )
-
-		geom = (detail.get( 'geometry' ) or { }).get( 'location' ) or { }
-		out = {
-				'formatted_address': detail.get( 'formatted_address' ),
-				'lat': geom.get( 'lat' ),
-				'lng': geom.get( 'lng' ),
-				'place_id': detail.get( 'place_id' ),
-				'types': ','.join( detail.get( 'types', [ ] ) ) if detail.get( 'types' ) else None,
-				'address_components': detail.get( 'address_components', [ ] ),
-		}
-		if self._cache:
-			self._cache.set( key, out )
-		return out
+		try:
+			throw_if( 'query', query )
+			throw_if( 'country', country )
+			self.query = query
+			self.country = country
+			self.key = f"places::{self.query}::{(self.country or '').upper( )}"
+			if self.cache:
+				self.hit = self.cache.get( self.key )
+				if self.hit:
+					return self.hit
+			self.params: Dict[ str, str ] = { 'query': self.query }
+			if self.country:
+				self.params[ 'region' ] = self.country.upper( )
+			self.search = self.maps.request( 'place/textsearch/json', self.params )
+			self.results = self.search.get( 'results' )
+			if not self.results:
+				raise NotFound( f'No places match for "{self.query}" ' )
+			_top = self.results[ 0 ]
+			_pid = _top.get( 'place_id' )
+			if not _pid:
+				raise NotFound( 'Top place had no place_id' )
+			self.details = self.maps.request( 'place/details/json',
+				{ 'place_id': _pid,
+				  'fields': 'formatted_address,geometry,address_component,place_id,type' },
+			).get( 'result', { } )
+			self.geometry = (self.details.get( 'geometry' ) or { }).get( 'location' ) or { }
+			self.output = \
+			{
+				'formatted_address': self.details.get( 'formatted_address' ),
+				'lat': self.geometry.get( 'lat' ),
+				'lng': self.geometry.get( 'lng' ),
+				'place_id': self.details.get( 'place_id' ),
+				'types': ','.join( self.details.get( 'types', [ ] ) ),
+				'address_components': self.details.get( 'address_components', [ ] ),
+			}
+			if self.cache:
+				self.cache.set( self.key, self.output )
+			return self.output
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'mappy'
+			exception.cause = 'Places'
+			exception.method = 'text_to_location( self, query: str, country: Optional[ str ]=None ) -> Dict'
+			error = ErrorDialog( exception )
+			error.show( )

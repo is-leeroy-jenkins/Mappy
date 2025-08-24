@@ -1,14 +1,14 @@
 '''
   ******************************************************************************************
       Assembly:                Mappy
-      Filename:                distance.py
+      Filename:                caches.py
       Author:                  Terry D. Eppler
       Created:                 05-31-2022
 
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="distance.py" company="Terry D. Eppler">
+  <copyright file="caches.py" company="Terry D. Eppler">
 
 	     Mappy is a python framework encapsulating the Google Maps functionality.
 	     Copyright ©  2022  Terry Eppler
@@ -37,88 +37,102 @@
 
   </copyright>
   <summary>
-    distance.py
+    caches.py
   </summary>
   ******************************************************************************************
-'''
-from typing import Dict, Tuple, Union
-from .maps import Maps
+  '''
+import json
+import os
+import sqlite3
+from typing import Any, Dict, Optional
+
 
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
-Coord = Tuple[ float, float ]
-AddressOrCoord = Union[ str, Coord ]
 
-
-def _fmt( o: AddressOrCoord ) -> str:
+class BaseCache:
 	"""
-	
+	Purpose:
+		Minimal cache interface for mapping string keys to JSON-serializable
+		dict values.
+
+	Parameters:
+		None.
+
+	Returns:
+		Subclasses implement get/set.
+	"""
+
+	def get( self, key: str ) -> Optional[ Dict[ str, Any ] ]:
+		raise NotImplementedError
+
+	def set( self, key: str, value: Dict[ str, Any ] ) -> None:
+		raise NotImplementedError
+
+
+class InMemoryCache( BaseCache ):
+	"""
+
 		Purpose:
-			Normalize an origin/destination input to the API's expected string.
-	
+			Provide a fast, process-local dictionary cache.
+
 		Parameters:
-			o (AddressOrCoord):
-				Either "lat,lng" as tuple or a free-form string address.
-	
+			None.
+
 		Returns:
-			String representation for the API, "lat,lng" or the original string.
-			
+			O(1) get/set operations for this process lifetime.
+
 	"""
-	if isinstance( o, tuple ) and len( o ) == 2:
-		return f"{o[ 0 ]},{o[ 1 ]}"
-	return str( o )
+
+	def __init__( self ) -> None:
+		self._store: Dict[ str, Dict[ str, Any ] ] = { }
+
+	def get( self, key: str ) -> Optional[ Dict[ str, Any ] ]:
+		return self._store.get( key )
+
+	def set( self, key: str, value: Dict[ str, Any ] ) -> None:
+		self._store[ key ] = value
 
 
-class DistanceMatrix:
+class SQLiteCache( BaseCache ):
 	"""
-	
+
 		Purpose:
-			Provide a thin wrapper for Google Distance Matrix API.
-	
+			Persist a small cache on disk via sqlite3. Keys are text; values are
+			stored as JSON strings.
+
 		Parameters:
-			maps (Maps):
-				Maps gateway instance.
-	
+			path (str):
+				File path for the SQLite database. Directory is created if needed.
+
 		Returns:
-			DistanceMatrix with .summary(...).
-			
+			Durable cache across runs with simple upsert semantics.
+
 	"""
 
-	def __init__( self, maps: Maps ) -> None:
-		self._maps = maps
-
-	def summary( self, origin: AddressOrCoord, destination: AddressOrCoord,
-	             mode: str = 'driving' ) -> Dict:
-		"""
-		
-			Purpose:
-			Return a compact dict with meters/seconds and human text fields.
-	
-			Parameters:
-			origin (AddressOrCoord):
-				Origin address string or (lat, lng) tuple.
-			destination (AddressOrCoord):
-				Destination address string or (lat, lng) tuple.
-			mode (str):
-				Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
-	
-			Returns:
-			Dict with distance_text, distance_meters, duration_text, duration_seconds.
-				
-		"""
-		data = self._maps.request(
-			'distancematrix/json',
-			{ 'origins': _fmt( origin ), 'destinations': _fmt( destination ), 'mode': mode },
+	def __init__( self, path: str='mappy_cache.sqlite' ) -> None:
+		d = os.path.dirname( path )
+		if d:
+			os.makedirs( d, exist_ok = True )
+		self._conn = sqlite3.connect( path )
+		self._conn.execute(
+			'CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)'
 		)
-		row = ((data.get( 'rows' ) or [ { } ])[ 0 ].get( 'elements' ) or [ { } ])[ 0 ]
-		dist = row.get( 'distance' ) or { }
-		dur = row.get( 'duration' ) or { }
-		return {
-				'distance_text': dist.get( 'text' ),
-				'distance_meters': dist.get( 'value' ),
-				'duration_text': dur.get( 'text' ),
-				'duration_seconds': dur.get( 'value' ),
-		}
+		self._conn.commit( )
+
+	def get( self, key: str ) -> Optional[ Dict[ str, Any ] ]:
+		cur = self._conn.execute( 'SELECT v FROM kv WHERE k = ?', (key,) )
+		row = cur.fetchone( )
+		if not row:
+			return None
+		return json.loads( row[ 0 ] )
+
+	def set( self, key: str, value: Dict[ str, Any ] ) -> None:
+		payload = json.dumps( value, ensure_ascii=False )
+		self._conn.execute(
+			'INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)', (key, payload)
+		)
+		self._conn.commit( )

@@ -1,14 +1,14 @@
 '''
   ******************************************************************************************
       Assembly:                Mappy
-      Filename:                rate.py
+      Filename:                rates.py
       Author:                  Terry D. Eppler
       Created:                 05-31-2022
 
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="rate.py" company="Terry D. Eppler">
+  <copyright file="rates.py" company="Terry D. Eppler">
 
 	     Mappy is a python framework encapsulating the Google Maps functionality.
 	     Copyright ©  2022  Terry Eppler
@@ -37,22 +37,13 @@
 
   </copyright>
   <summary>
-    rate.py
+    rates.py
   </summary>
   ******************************************************************************************
   '''
-"""
-Purpose:
-    Provide a minimal, dependency-free rate limiter to constrain outbound QPS.
-
-Parameters:
-    None.
-
-Returns:
-    RateLimiter class that sleeps between calls to maintain an average rate.
-"""
 import time
 from typing import Optional
+from boogr import Error, ErrorDialog
 
 
 def throw_if( name: str, value: object ):
@@ -64,22 +55,27 @@ class RateLimiter:
 	"""
 
 		Purpose:
-			Enforce a rough max-queries-per-second ceiling by sleeping between
-			calls. This is lightweight and process-local.
+		Enforce a rough max-queries-per-second ceiling by sleeping between
+		calls. This is lightweight and process-local.
 
 		Parameters:
-			qps (Optional[float]):
-				Max queries per second. If None or <= 0, no throttling occurs.
+		query_per_second (Optional[float]):
+		Max queries per second. If None or <= 0, no throttling occurs.
 
 		Returns:
-			Instance exposing .wait() to call right before an outbound request.
+		Instance exposing .wait() to call right before an outbound request.
 
 	"""
+	query_per_second: Optional[ float ]
+	interval: Optional[ float ]
+	last: Optional[ float ]
+	now: Optional[ time ]
+	delta: Optional[ float ]
 
-	def __init__( self, qps: Optional[ float ] ) -> None:
-		self._qps = qps
-		self._interval = 1.0 / qps if qps and qps > 0 else 0.0
-		self._last = 0.0
+	def __init__( self, max: Optional[ float ] ) -> None:
+		self.query_per_second = max
+		self.interval = 1.0 / max if max and max > 0 else 0.0
+		self.last = 0.0
 
 	def wait( self ) -> None:
 		"""
@@ -94,10 +90,18 @@ class RateLimiter:
 				None.
 
 		"""
-		if self._interval <= 0:
-			return
-		now = time.time( )
-		delta = now - self._last
-		if delta < self._interval:
-			time.sleep( self._interval - delta )
-		self._last = time.time( )
+		try:
+			if self.interval <= 0:
+				return
+			now = time.time( )
+			delta = now - self.last
+			if delta < self.interval:
+				time.sleep( self.interval - delta )
+			self.last = time.time( )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'mappy'
+			exception.cause = 'RateLimiter'
+			exception.method = 'wait( self ) -> None'
+			error = ErrorDialog( exception )
+			error.show( )

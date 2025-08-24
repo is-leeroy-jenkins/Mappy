@@ -75,7 +75,7 @@ Clone the repository and install dependencies:
     from mappy import Excel
 
     excel = Excel(api_key="YOUR_API_KEY")
-    excel.enrich_from_city_state_country(
+    excel.enrich(
         input_path="locations.xlsx",
         output_path="locations_with_coords.xlsx",
         city_col="City",

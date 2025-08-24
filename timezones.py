@@ -1,14 +1,14 @@
 '''
   ******************************************************************************************
       Assembly:                Mappy
-      Filename:                timezone.py
+      Filename:                timezones.py
       Author:                  Terry D. Eppler
       Created:                 05-31-2022
 
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="timezone.py" company="Terry D. Eppler">
+  <copyright file="timezones.py" company="Terry D. Eppler">
 
 	     Mappy is a python framework encapsulating the Google Maps functionality.
 	     Copyright ©  2022  Terry Eppler
@@ -37,13 +37,14 @@
 
   </copyright>
   <summary>
-    timezone.py
+    timezones.py
   </summary>
   ******************************************************************************************
 '''
 import time
-from typing import Optional
+from typing import Optional, Dict
 from .maps import Maps
+from boogr import Error, ErrorDialog
 
 
 def throw_if( name: str, value: object ):
@@ -65,9 +66,15 @@ class Timezone:
 			Timezone with .get_id(...).
 			
 	"""
+	timestamp: Optional[ int ]
+	maps: Optional[ Maps ]
+	latitude: Optional[ float ]
+	longitude: Optional[ float ]
+	data: Optional[ Dict ]
+
 
 	def __init__( self, maps: Maps ) -> None:
-		self._maps = maps
+		self.maps = maps
 
 	def get_id( self, lat: float, lng: float ) -> Optional[ str ]:
 		"""
@@ -85,7 +92,19 @@ class Timezone:
 				Time zone id string or None if unavailable.
 				
 		"""
-		ts = int( time.time( ) )
-		data = self._maps.request( 'timezone/json',
-			{ 'location': f'{lat},{lng}', 'timestamp': str( ts ) } )
-		return data.get( 'timeZoneId' )
+		try:
+			throw_if( 'lat', lat )
+			throw_if( 'lng', lng )
+			self.timestamp = int( time.time( ) )
+			self.latitude = lat
+			self.longitude = lng
+			self.data = self.maps.request( 'timezone/json',
+				{ 'location': f'{self.latitude},{self.longitude}', 'timestamp': str( self.timestamp ) } )
+			return self.data.get( 'timeZoneId' )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'mappy'
+			exception.cause = 'Timezone'
+			exception.method = 'get_id( self, lat: float, lng: float ) -> Optional[ str ]'
+			error = ErrorDialog( exception )
+			error.show( )

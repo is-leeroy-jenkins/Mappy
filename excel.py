@@ -55,12 +55,13 @@ Parameters:
 Returns:
     Excel with enrichment methods for either full-address or city/state/country.
 """
-from typing import Optional
+from typing import Optional, Dict, List
 import pandas as pd
-from .caching import BaseCache
+from .caches import BaseCache
 from .geocode import Geocoder
 from .maps import Maps
 from .places import Places
+from boogr import Error, ErrorDialog
 
 
 def throw_if( name: str, value: object ):
@@ -68,56 +69,69 @@ def throw_if( name: str, value: object ):
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
 
-# noinspection PyBroadException
+
 class Excel:
 	"""
+	
         Purpose:
-            Read and write spreadsheets while enriching location rows using Google
-            Maps APIs. Keeps original columns; appends geocode outputs.
+        Read and write spreadsheets while enriching location rows using Google
+        Maps APIs. Keeps original columns; appends geocode outputs.
 
         Parameters:
-            api_key (str):
-                Google Maps Platform API key.
-            cache (Optional[BaseCache]):
-                Optional cache for memoization.
+        api_key (str): Google Maps Platform API key.
+        cache (Optional[BaseCache]): Optional cache for memoization.
 
-        Returns:
-            Excel helper with two enrichment entry points.
+        Returns: Excel helper with two enrichment entry points.
+        
     """
+	api_key: str
+	maps: Optional[ Maps ]
+	geocoder: Optional[ Geocoder ]
+	places: Optional[ Places ]
+	input_path: Optional[ str ]
+	output_path: Optional[ str ]
+	dataframe: Optional[ pd.DataFrame ]
+	worksheet: Optional[ str ]
+	output: Optional[ Dict[ str, List ] ]
+	address: Optional[ str ]
+	cache: Optional[ BaseCache ]
+	file_path: Optional[ str ]
+	
 
-	def __init__( self, api_key: str, cache: Optional[ BaseCache ] = None ) -> None:
-		maps = Maps( api_key = api_key )
-		self._geocoder = Geocoder( maps, cache = cache )
-		self._places = Places( maps, cache = cache )
+	def __init__( self, api: str, cache: Optional[ BaseCache ] = None ) -> None:
+		self.api_key = api
+		self.cache = cache
+		self.maps = Maps( api_key=self.api_key )
+		self.geocoder = Geocoder( self.maps, cache=self.cache )
+		self.places = Places( self.maps, cache=self.cache )
 
-	@staticmethod
-	def _read( path: str, sheet: Optional[ str ] ) -> pd.DataFrame:
+
+	def read( self, path: str, sheet: Optional[ str ] ) -> pd.DataFrame:
 		"""
+
             Purpose:
-                Robustly read CSV/XLSX and preserve strings (e.g., leading zeros).
+            Robustly read CSV/XLSX and preserve strings (e.g., leading zeros).
 
             Parameters:
-                path (str):
-                    Input file path (.csv or .xlsx).
-                sheet (Optional[str]):
-                    Optional sheet name for Excel.
+            path (str): Input file path (.csv or .xlsx).
+            sheet (Optional[str]): Optional sheet name for Excel.
 
-            Returns:
-                DataFrame with dtype=str for string-like columns.
+            Returns: DataFrame with dtype=str for string-like columns.
+
         """
 		if path.lower( ).endswith( '.csv' ):
-			df = pd.read_csv( path, dtype = str )
+			self.dataframe = pd.read_csv( path, dtype = str )
 		else:
-			df = pd.read_excel( path, sheet_name = sheet or 0, dtype = str )
-		# Normalize whitespace
-		for c in df.columns:
-			if df[ c ].dtype == object:
-				df[ c ] = df[ c ].fillna( "" ).astype( str ).str.strip( )
-		return df
+			self.dataframe = pd.read_excel( path, sheet_name=sheet, dtype=str )
+
+		for c in self.dataframe.columns:
+			if self.dataframe[ c ].dtype == object:
+				self.dataframe[ c ] = self.dataframe[ c ].fillna( "" ).astype( str ).str.strip( )
+
+		return self.dataframe
 
 
-	@staticmethod
-	def _write( df: pd.DataFrame, path: str, sheet: Optional[ str ] ) -> None:
+	def write( self, df: pd.DataFrame, path: str, sheet: Optional[ str ] ) -> None:
 		"""
 
 	        Purpose:
@@ -135,60 +149,58 @@ class Excel:
 	            None.
 
         """
-		if path.lower( ).endswith( '.csv' ):
-			df.to_csv( path, index = False )
+		self.file_path = path
+		self.dataframe = df.copy( )
+		if self.file_path.lower( ).endswith( '.csv' ):
+			self.dataframe.to_csv( self.file_path, index=False )
 		else:
-			df.to_excel( path, index = False, sheet_name = sheet or 'Sheet1' )
+			self.dataframe.to_excel( self.file_path, index=False, sheet_name=sheet )
 
-	def enrich_from_address(
-			self,
-			input_path: str,
-			output_path: str,
-			address_col: str = 'Address',
-			sheet: Optional[ str ] = None,
-			country_hint_col: Optional[ str ] = None,
-	) -> None:
+
+	def enrich_from_address( self, inpath: str, outpath: str, address: str, sheet: Optional[ str ],
+	                         cntry: Optional[ str ] ) -> None:
 		"""
             Purpose:
                 Enrich a file containing a single free-form address column, adding
                 lat/lng, place_id, and canonical components.
 
             Parameters:
-                input_path (str):
+                inpath (str):
                     Path to input CSV/XLSX with an address column.
-                output_path (str):
+                outpath (str):
                     Output path to write enriched file.
-                address_col (str):
+                address (str):
                     Column name containing free-form addresses.
                 sheet (Optional[str]):
                     Excel sheet name (if .xlsx).
-                country_hint_col (Optional[str]):
+                cntry (Optional[str]):
                     Optional column containing ISO-2 country bias codes.
 
             Returns:
                 None. Writes the enriched file.
         """
-		df = self._read( input_path, sheet )
-		outputs = {
-				"formatted_address": [ ],
-				"lat": [ ],
-				"lng": [ ],
-				"place_id": [ ],
-				"types": [ ],
-				"country_code": [ ],
-				"country_name": [ ],
-				"admin_level_1": [ ],
-				"admin_level_2": [ ],
-				"locality": [ ],
-				"postal_code": [ ],
-				"geocode_status": [ ],
+		df = self.read( inpath, sheet )
+		outputs = \
+		{
+			'formatted_address': [ ],
+			'lat': [ ],
+			'lng': [ ],
+			'place_id': [ ],
+			'types': [ ],
+			'country_code': [ ],
+			'country_name': [ ],
+			'admin_level_1': [ ],
+			'admin_level_2': [ ],
+			'locality': [ ],
+			'postal_code': [ ],
+			'geocode_status': [ ],
 		}
 
 		for _, row in df.iterrows( ):
-			addr = (row.get( address_col ) or "").strip( )
+			addr = (row.get( address ) or "").strip( )
 			hint = (
-					((row.get( country_hint_col ) or "").strip( ).upper( ))
-					if (country_hint_col and country_hint_col in df.columns)
+					((row.get( cntry ) or "").strip( ).upper( ))
+					if (cntry and cntry in df.columns)
 					else None
 			)
 			if not addr:
@@ -197,12 +209,12 @@ class Excel:
 				continue
 
 			try:
-				g = self._geocoder.freeform( addr, country_hint = hint )
+				g = self.geocoder.freeform( addr, country = hint )
 				status = 'ok'
 			except Exception:
 				# Fallback via Places for stubborn inputs
 				try:
-					g = self._places.text_to_location( addr, country_hint = hint )
+					g = self.places.text_to_location( addr, country = hint )
 					status = "ok_places"
 				except Exception:
 					g = { }
@@ -224,95 +236,91 @@ class Excel:
 		for k, v in outputs.items( ):
 			df[ k ] = v
 
-		self._write( df, output_path, sheet )
+		self.write( df, outpath, sheet )
 
-	def enrich_from_city_state_country(
-			self,
-			input_path: str,
-			output_path: str,
-			city_col: str = 'City',
-			state_col: Optional[ str ] = 'State',
-			country_col: str = 'Country',
-			sheet: Optional[ str ] = None,
-	) -> None:
+	def enrich( self, inpath: str, outpath: str, city: str, state: Optional[ str ], cntry: str,
+	            sheet: Optional[ str ]=None, ) -> None:
 		"""
 
 	            Purpose:
-	                Enrich a file with (City, State/Region, Country) columns by appending
-	                lat/lng, place_id, and standardized components.
+                Enrich a file with (City, State/Region, Country) columns by appending
+                lat/lng, place_id, and standardized components.
 
 	            Parameters:
-	                input_path (str):
-	                    Input CSV/XLSX path containing location columns.
-	                output_path (str):
-	                    Output CSV/XLSX path to write enriched results.
-	                city_col (str):
-	                    Column for city/locality.
-	                state_col (Optional[str]):
-	                    Column for state/region (optional/not required).
-	                country_col (str):
-	                    Column for country (name or ISO-2 code).
-	                sheet (Optional[str]):
-	                    Excel sheet name (if .xlsx).
+                inpath (str): Input CSV/XLSX path containing location columns.
+                outpath (str): Output CSV/XLSX path to write enriched results.
+                city (str): Column for city/locality.
+                state (Optional[str]): Column for state/region (optional/not required).
+                cntry (str): Column for country (name or ISO-2 code).
+                sheet (Optional[str]): Excel sheet name (if .xlsx).
 
 	            Returns:
-	                None. Writes the enriched file.
+                None. Writes the enriched file.
 
             """
-		df = self._read( input_path, sheet )
-		outputs = {
-				"formatted_address": [ ],
-				"lat": [ ],
-				"lng": [ ],
-				"place_id": [ ],
-				"types": [ ],
-				"country_code": [ ],
-				"country_name": [ ],
-				"admin_level_1": [ ],
-				"admin_level_2": [ ],
-				"locality": [ ],
-				"postal_code": [ ],
-				"geocode_status": [ ],
-		}
+		try:
+			throw_if( 'inpath', inpath )
+			df = self.read( inpath, sheet )
+			outputs = \
+			{
+					'formatted_address': [ ],
+					'lat': [ ],
+					'lng': [ ],
+					'place_id': [ ],
+					'types': [ ],
+					'country_code': [ ],
+					'country_name': [ ],
+					'admin_level_1': [ ],
+					'admin_level_2': [ ],
+					'locality': [ ],
+					'postal_code': [ ],
+					'geocode_status': [ ],
+			}
 
-		for _, row in df.iterrows( ):
-			city = (row.get( city_col ) or "").strip( )
-			state = (row.get( state_col ) or "").strip( ) if (
-						state_col and state_col in df.columns) else ""
-			country = (row.get( country_col ) or "").strip( )
+			for _, row in df.iterrows( ):
+				city = (row.get( city ) ).strip( )
+				state = (row.get( state ) ).strip( ) if (
+						state and state in df.columns) else ""
+				country = (row.get( cntry ) ).strip( )
 
-			if not any( [ city, state, country ] ):
-				for k in outputs:
-					outputs[ k ].append( None if k != 'geocode_status' else 'skipped_empty' )
-				continue
+				if not any( [ city, state, country ] ):
+					for k in outputs:
+						outputs[ k ].append( None if k != 'geocode_status' else 'skipped_empty' )
+					continue
 
-			try:
-				g = self._geocoder.city_state_country( city, state, country )
-				status = 'ok'
-			except Exception:
-				# Text-search fallback with a combined freeform query.
-				query = ', '.join( [ p for p in [ city, state, country ] if p ] )
 				try:
-					g = self._places.text_to_location( query, country_hint = country )
-					status = 'ok_places'
+					g = self._geocoder.city_state_country( city, state, country )
+					status = 'ok'
 				except Exception:
-					g = { }
-					status = 'not_found'
+					query = ', '.join( [ p for p in [ city, state, country ] if p ] )
+					try:
+						g = self._places.text_to_location( query, country = country )
+						status = 'ok_places'
+					except Exception:
+						g = { }
+						status = 'not_found'
 
-			outputs[ 'formatted_address' ].append( g.get( 'formatted_address' ) )
-			outputs[ 'lat' ].append( g.get( 'lat' ) )
-			outputs[ 'lng' ].append( g.get( 'lng' ) )
-			outputs[ 'place_id' ].append( g.get( 'place_id' ) )
-			outputs[ 'types' ].append( g.get( 'types' ) )
-			outputs[ 'country_code' ].append( g.get( 'country_code' ) )
-			outputs[ 'country_name' ].append( g.get( 'country_name' ) )
-			outputs[ 'admin_level_1' ].append( g.get( 'admin_level_1' ) )
-			outputs[ 'admin_level_2' ].append( g.get( 'admin_level_2' ) )
-			outputs[ 'locality' ].append( g.get( 'locality' ) )
-			outputs[ 'postal_code' ].append( g.get( 'postal_code' ) )
-			outputs[ 'geocode_status' ].append( status )
+				outputs[ 'formatted_address' ].append( g.get( 'formatted_address' ) )
+				outputs[ 'lat' ].append( g.get( 'lat' ) )
+				outputs[ 'lng' ].append( g.get( 'lng' ) )
+				outputs[ 'place_id' ].append( g.get( 'place_id' ) )
+				outputs[ 'types' ].append( g.get( 'types' ) )
+				outputs[ 'country_code' ].append( g.get( 'country_code' ) )
+				outputs[ 'country_name' ].append( g.get( 'country_name' ) )
+				outputs[ 'admin_level_1' ].append( g.get( 'admin_level_1' ) )
+				outputs[ 'admin_level_2' ].append( g.get( 'admin_level_2' ) )
+				outputs[ 'locality' ].append( g.get( 'locality' ) )
+				outputs[ 'postal_code' ].append( g.get( 'postal_code' ) )
+				outputs[ 'geocode_status' ].append( status )
 
-		for k, v in outputs.items( ):
-			df[ k ] = v
+			for k, v in outputs.items( ):
+				df[ k ] = v
 
-		self._write( df, output_path, sheet )
+			self._write( df, outpath, sheet )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = ''
+			exception.cause = ''
+			exception.method = ''
+			error = ErrorDialog( exception )
+			error.show( )
