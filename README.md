@@ -21,7 +21,7 @@ generate static map previews, and use caching/rate limiting to control API usage
 - 🛠 **Error Handling** – Explicit exceptions for not found, gateway failures, and more.  
 - 🧩 **Extensible** – Drop-in services for Places, Directions, or any other Maps endpoint.  
 
----
+
 
 ## 📦 Installation
 
@@ -36,7 +36,7 @@ Clone the repository and install dependencies:
 - `pandas` – spreadsheet data processing  
 - `openpyxl` – Excel I/O (.xlsx files)  
 
----
+
 
 ## 🚀 Quick Start
 
@@ -138,12 +138,7 @@ Clone the repository and install dependencies:
 - Validating and normalizing international addresses.  
 - Auditing time zone coverage for scheduling software.  
 
-## 🔮 Roadmap
 
-- ✅ Current: Geocoding, Distance Matricies, Static Maps, Time Zones, Excel integration.
-- 🔜 Planned:
-  - Support for **Places API** (landmarks, restaurants, POIs).
-  - **Directions API** with polyline decoding.
 
 ## 📜 License
 
