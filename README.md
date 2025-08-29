@@ -8,7 +8,7 @@ into ML/AI workflows and applications.
 - With `mappy`, you can enrich spreadsheets with latitude/longitude, calculate travel distances,  
 generate static map previews, and use caching/rate limiting to control API usage — all from Python.
 
-- `mappy' plays well with `cosmo`, mappy's galactic cousin.
+- `mappy` plays well with `cosmo`, mappy's galactic cousin.
 
 ## ✨ Features
 
@@ -116,7 +116,7 @@ Clone the repository and install dependencies:
 - **GatewayError** – Raised when HTTP/API communication fails.  
 - **MappyError** – Base class for all framework exceptions.  
 
-By catching these explicitly, you can gracefully handle errors in bulk geocoding or API calls.
+###### By catching these explicitly, you can gracefully handle errors in bulk geocoding or API calls.
 
 
 
@@ -140,7 +140,7 @@ By catching these explicitly, you can gracefully handle errors in bulk geocoding
 
 ## 🔮 Roadmap
 
-- ✅ Current: Geocoding, Distance Matrix, Static Maps, Time Zones, Excel integration.
+- ✅ Current: Geocoding, Distance Matricies, Static Maps, Time Zones, Excel integration.
 - 🔜 Planned:
   - Support for **Places API** (landmarks, restaurants, POIs).
   - **Directions API** with polyline decoding.
