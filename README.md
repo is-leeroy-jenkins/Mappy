@@ -41,37 +41,45 @@ Clone the repository and install dependencies:
 ## 🚀 Quick Start
 
 ### 1. Initialize Maps
-
+```
     from mappy import Maps
 
     maps = Maps(api_key="YOUR_API_KEY")
+```
 
 ### 2. Geocode an address
 
+```    
     from mappy import Geocoder
 
     geo = Geocoder(maps)
     result = geo.freeform("Paris, France")
     print(result["lat"], result["lng"], result["formatted_address"])
+   ```
 
 ### 3. Calculate distance
 
+```    
     from mappy import DistanceMatrix
 
     dist = DistanceMatrix(maps)
     d = dist.summary("New York, USA", "Los Angeles, USA", mode="driving")
     print(d["distance_text"], d["duration_text"])
+ ```
 
 ### 4. Get a static map URL
 
+```    
     from mappy import StaticMapURL
 
     sm = StaticMapURL(api_key="YOUR_API_KEY")
     url = sm.pin(lat=48.8584, lng=2.2945, zoom=14)
     print(url)
+```
 
 ### 5. Process Excel locations
 
+```    
     from mappy import Excel
 
     excel = Excel(api_key="YOUR_API_KEY")
@@ -82,8 +90,8 @@ Clone the repository and install dependencies:
         state_col="State",
         country_col="Country"
     )
+```
 
----
 
 ## 📂 Project Structure
 
@@ -100,7 +108,7 @@ Clone the repository and install dependencies:
      ├── rate.py            # Rate limiter
      └── exceptions.py      # Custom errors
 
----
+
 
 ## ⚠️ Error Handling
 
@@ -110,7 +118,7 @@ Clone the repository and install dependencies:
 
 By catching these explicitly, you can gracefully handle errors in bulk geocoding or API calls.
 
----
+
 
 ## 💡 Design Philosophy
 
