@@ -41,16 +41,6 @@
   </summary>
   ******************************************************************************************
   '''
-"""
-Purpose:
-    Define framework-specific exceptions for clear, explicit error handling.
-
-Parameters:
-    None.
-
-Returns:
-    Exception classes used across the framework.
-"""
 
 class MappyError( Exception ):
 	"""Base error for the mappy framework."""
