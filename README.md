@@ -1,5 +1,5 @@
 ###### mappy
-![](https://github.com/is-leeroy-jenkins/mappy/blob/master/resources/images/project_soupy.png)
+![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/project_mappy.png)
 
 - `mappy` is a lightweight Python framework that wraps the **Google Maps API** into a clean,  
 developer-friendly interface. It is designed to be simple, SOLID, and practical, making it easy to  
