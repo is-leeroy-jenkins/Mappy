@@ -1,14 +1,14 @@
 ###### mappy
 ![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/project_mappy.png)
 
-- `mappy` is a lightweight Python framework that wraps the **Google Maps API** into a clean,  
-developer-friendly interface. It is designed to be simple, SOLID, and practical, making it easy to  
-add geospatial capabilities to data workflows and applications.
+- `mappy` is a lightweight Python framework that wraps various mapping fucntion for use in GenAI
+agentic tooling. It is designed to be simplify the integration of geospatial capabilities 
+into ML/AI workflows and applications.
 
 - With `mappy`, you can enrich spreadsheets with latitude/longitude, calculate travel distances,  
 generate static map previews, and use caching/rate limiting to control API usage — all from Python.
 
-
+- `mappy' plays well with `cosmo`, mappy's galactic cousin.
 
 ## ✨ Features
 
@@ -55,7 +55,7 @@ Clone the repository and install dependencies:
     geo = Geocoder(maps)
     result = geo.freeform("Paris, France")
     print(result["lat"], result["lng"], result["formatted_address"])
-   ```
+```
 
 ### 3. Calculate distance
 
