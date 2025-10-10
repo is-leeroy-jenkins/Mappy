@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
-  </component>
   <component name="ChangeListManager">
-    <list default="true" id="6d4e51f9-0455-4222-ac84-e007ab06e251" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/icon.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jupyter-settings.xml" beforeDir="false" />
+    <list default="true" id="8fbea6f8-7c5d-4ae3-853f-11dcb3707a47" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/MypyPlugin.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/git_toolbox_prj.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/mappy.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/geocode.py" beforeDir="false" afterPath="$PROJECT_DIR$/geocode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/images/mappy.svg" beforeDir="false" afterPath="$PROJECT_DIR$/resources/images/mappy.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/images/soupy_sketchy.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,9 +37,9 @@
   }
 }]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
+  "customColor": "689fb1d0"
 }]]></component>
-  <component name="ProjectId" id="33VriGxr2bXtPGiTG1WPAM1CI6a" />
+  <component name="ProjectId" id="33sKCeqsu6BKVNas1wjcs7CWLhg" />
   <component name="ProjectViewState">
     <option name="foldersAlwaysOnTop" value="false" />
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -53,8 +53,6 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/terry/source/repos/Mappy",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -64,14 +62,6 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="PyConsoleOptionsProvider">
-    <option name="myPythonConsoleState">
-      <console-settings is-module-sdk="true" working-directory="$PROJECT_DIR$/../Boo">
-        <option name="myUseModuleSdk" value="true" />
-        <option name="myWorkingDirectory" value="$PROJECT_DIR$/../Boo" />
-      </console-settings>
-    </option>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -82,12 +72,12 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="6d4e51f9-0455-4222-ac84-e007ab06e251" name="Changes" comment="" />
-      <created>1759413205907</created>
+      <changelist id="8fbea6f8-7c5d-4ae3-853f-11dcb3707a47" name="Changes" comment="" />
+      <created>1760100214377</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1759413205907</updated>
-      <workItem from="1759413207523" duration="384000" />
+      <updated>1760100214377</updated>
+      <workItem from="1760100215483" duration="304000" />
     </task>
     <servers />
   </component>

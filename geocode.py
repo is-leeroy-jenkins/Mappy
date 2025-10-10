@@ -15,7 +15,7 @@
 
 	     Purpose:
 		    High-level Geocoding service that resolves addresses or city/state/country
-		    triples into canonical address data and coordinates.
+		    triples into canonical address stores and coordinates.
 
 
      Permission is hereby granted, free of charge, to any person obtaining a copy
