@@ -89,13 +89,13 @@ class Dark( ):
 		self.button_backcolor = sg.theme_button_color_background( )
 		self.button_forecolor = sg.theme_button_color_text( )
 		self.button_color = sg.theme_button_color( )
-		self.icon_path = r'/\resources\ico\ninja.ico'
+		self.icon_path = r'/resources/ico/ninja.ico'
 		self.theme_font = ('Roboto', 11)
 		self.scrollbar_color = '#755600'
 		self.form_size = (400, 200)
 		sg.set_global_icon( icon = self.icon_path )
 		sg.set_options( font = self.theme_font )
-		sg.user_settings_save( 'Boo', r'/\resources\theme' )
+		sg.user_settings_save( 'Boo', r'/resources/theme' )
 
 	def __dir__( self ) -> List[ str ] | None:
 		'''

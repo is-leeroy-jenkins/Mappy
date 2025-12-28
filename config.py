@@ -1,16 +1,16 @@
 '''
   ******************************************************************************************
-      Assembly:                Mappy
-      Filename:                rates.py
+      Assembly:                Name
+      Filename:                name.py
       Author:                  Terry D. Eppler
       Created:                 05-31-2022
 
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="rates.py" company="Terry D. Eppler">
+  <copyright file="guro.py" company="Terry D. Eppler">
 
-	     Mappy is a python framework encapsulating the Google Maps functionality.
+	     name.py
 	     Copyright ©  2022  Terry Eppler
 
      Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -37,66 +37,34 @@
 
   </copyright>
   <summary>
-    rates.py
+    name.py
   </summary>
   ******************************************************************************************
   '''
-import time
-from typing import Optional
-from boogr import Error, ErrorDialog
+import os
+from typing import Optional, List, Dict
+from pathlib import Path
 
 
-def throw_if( name: str, value: object ):
-	if not value:
-		raise ValueError( f'Argument "{name}" cannot be empty!' )
+GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
+GOOGLE_API_KEY = os.getenv( 'GOOGLE_API_KEY' )
+GOOGLE_CSE_ID = os.getenv( 'GOOGLE_CSE_ID' )
+GOOGLE_CLOUD_LOCATION = os.getenv( 'GOOGLE_CLOUD_LOCATION' )
+GOOGLE_CLOUD_PROJECT = os.getenv( 'GOOGLE_CLOUD_PROJECT' )
+GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLE_MAPS_API_KEY' )
+GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
 
-
-class RateLimiter:
+def set_environment( ):
 	"""
 
 		Purpose:
-		Enforce a rough max-queries-per-second ceiling by sleeping between
-		calls. This is lightweight and process-local.
+		--------
+		Gets availible environment vaariables for configuration
 
-		Parameters:
-		query_per_second (Optional[float]):
-		Max queries per second. If None or <= 0, no throttling occurs.
-
-		Returns:
-		Instance exposing .wait() to call right before an outbound request.
 
 	"""
-	query_per_second: Optional[ float ]
-	interval: Optional[ float ]
-	last: Optional[ float ]
-	now: Optional[ time ]
-	delta: Optional[ float ]
+	variable_dict = globals( ).items( )
+	for key, value in variable_dict:
+		if 'API' in key or 'ID' in key:
+			os.environ[ key ] = value
 
-	def __init__( self, max: Optional[ float ] ) -> None:
-		self.query_per_second = max
-		self.interval = 1.0 / max if max and max > 0 else 0.0
-		self.last = 0.0
-
-	def wait( self ) -> None:
-		"""
-
-			Purpose:
-				Sleep just enough so successive calls keep under the configured QPS.
-
-			Parameters:
-				None.
-
-			Returns:
-				None.
-
-		"""
-		try:
-			if self.interval <= 0:
-				return
-			self.now = time.time( )
-			self.delta = self.now - self.last
-			if self.delta < self.interval:
-				time.sleep( self.interval - self.delta )
-			self.last = time.time( )
-		except Exception as e:
-			raise

@@ -57,10 +57,10 @@ Returns:
 """
 from typing import Optional, Dict, List
 import pandas as pd
-from .caches import BaseCache
-from .geocode import Geocoder
-from .maps import Maps
-from .places import Places
+from caches import BaseCache
+from geocode import Geocoder
+from maps import Maps
+from places import Places
 from boogr import Error, ErrorDialog
 
 
@@ -318,9 +318,4 @@ class Excel:
 
 			self._write( df, outpath, sheet )
 		except Exception as e:
-			exception = Error( e )
-			exception.module = ''
-			exception.cause = ''
-			exception.method = ''
-			error = ErrorDialog( exception )
-			error.show( )
+			raise

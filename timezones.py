@@ -43,7 +43,7 @@
 '''
 import time
 from typing import Optional, Dict
-from .maps import Maps
+from maps import Maps
 from boogr import Error, ErrorDialog
 
 
@@ -102,9 +102,4 @@ class Timezone:
 				{ 'location': f'{self.latitude},{self.longitude}', 'timestamp': str( self.timestamp ) } )
 			return self.data.get( 'timeZoneId' )
 		except Exception as e:
-			exception = Error( e )
-			exception.module = 'mappy'
-			exception.cause = 'Timezone'
-			exception.method = 'get_id( self, lat: float, lng: float ) -> Optional[ str ]'
-			error = ErrorDialog( exception )
-			error.show( )
+			raise

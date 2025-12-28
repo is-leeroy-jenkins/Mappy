@@ -44,8 +44,8 @@
 import time
 from typing import Dict, Optional
 import requests
-from .exceptions import GatewayError
-from .rates import RateLimiter
+from exceptions import GatewayError
+from rates import RateLimiter
 from boogr import Error, ErrorDialog
 
 def throw_if( name: str, value: object ):
@@ -148,9 +148,4 @@ class Maps:
 					time.sleep( backoff )
 					backoff = min( backoff * 2, self.max )
 		except Exception as e:
-			exception = Error( e )
-			exception.module = 'mappy'
-			exception.cause = 'Maps'
-			exception.method = 'request( self, endpoint: str, params: Dict[ str, str ] ) -> Dict'
-			error = ErrorDialog( exception )
-			error.show( )
+			raise

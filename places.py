@@ -56,9 +56,9 @@ Returns:
     Places with .text_to_location(query, country=None).
 """
 from typing import Any, Dict, Optional, List
-from .caches import BaseCache
-from .exceptions import NotFound
-from .maps import Maps
+from caches import BaseCache
+from exceptions import NotFound
+from maps import Maps
 from boogr import Error, ErrorDialog
 
 
@@ -103,7 +103,7 @@ class Places:
 		self.maps = maps
 		self.cache = cache
 
-	def text_to_location( self, query: str, country: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
+	def text_to_location( self, query: str, country: str='US' ) -> Dict[ str, Any ] | None:
 		"""
 			Purpose:
 				Resolve a free-text query into address and coordinates via Places.
@@ -159,9 +159,4 @@ class Places:
 				self.cache.set( self.key, self.output )
 			return self.output
 		except Exception as e:
-			exception = Error( e )
-			exception.module = 'mappy'
-			exception.cause = 'Places'
-			exception.method = 'text_to_location( self, query: str, country: Optional[ str ]=None ) -> Dict'
-			error = ErrorDialog( exception )
-			error.show( )
+			raise

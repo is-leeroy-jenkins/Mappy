@@ -4,11 +4,33 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8fbea6f8-7c5d-4ae3-853f-11dcb3707a47" name="Changes" comment="update;" />
+    <list default="true" id="8fbea6f8-7c5d-4ae3-853f-11dcb3707a47" name="Changes" comment="update;">
+      <change afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/boogr.py" beforeDir="false" afterPath="$PROJECT_DIR$/boogr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/distances.py" beforeDir="false" afterPath="$PROJECT_DIR$/distances.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/excel.py" beforeDir="false" afterPath="$PROJECT_DIR$/excel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/geocode.py" beforeDir="false" afterPath="$PROJECT_DIR$/geocode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/maps.py" beforeDir="false" afterPath="$PROJECT_DIR$/maps.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/places.py" beforeDir="false" afterPath="$PROJECT_DIR$/places.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rates.py" beforeDir="false" afterPath="$PROJECT_DIR$/rates.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/timezones.py" beforeDir="false" afterPath="$PROJECT_DIR$/timezones.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -25,6 +47,9 @@
     &quot;accountId&quot;: &quot;78145f30-18cb-443d-a346-237522922b0e&quot;
   }
 }</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/app.py" root0="SKIP_INSPECTION" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;689fb1d0&quot;
 }</component>
@@ -68,6 +93,10 @@
       <updated>1760100214377</updated>
       <workItem from="1760100215483" duration="350000" />
       <workItem from="1765491486685" duration="41000" />
+      <workItem from="1766867261910" duration="2497000" />
+      <workItem from="1766869831114" duration="1038000" />
+      <workItem from="1766870893139" duration="1858000" />
+      <workItem from="1766879178022" duration="2728000" />
     </task>
     <task id="LOCAL-00001" summary="update;">
       <option name="closed" value="true" />

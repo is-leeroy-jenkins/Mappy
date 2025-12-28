@@ -47,9 +47,9 @@
   ******************************************************************************************
 '''
 from typing import Any, Dict, Optional, List, Tuple
-from .caches import BaseCache
-from .exceptions import NotFound
-from .maps import Maps
+from caches import BaseCache
+from exceptions import NotFound
+from maps import Maps
 from boogr import Error, ErrorDialog
 
 def throw_if( name: str, value: object ):
@@ -133,15 +133,10 @@ class Geocoder:
 			joined = ' '.join( p.strip( ) for p in parts if p and str( p ).strip( ) )
 			return f'{prefix}::{joined}'
 		except Exception as e:
-			exception = Error( e )
-			exception.module = ''
-			exception.cause = ''
-			exception.method = ''
-			error = ErrorDialog( exception )
-			error.show( )
+			raise
 
 
-	def freeform( self, address: str, country: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
+	def freeform( self, address: str, country: str='US' ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
@@ -180,15 +175,10 @@ class Geocoder:
 				self.cache.set( self.key, self.output )
 			return self.output
 		except Exception as e:
-			exception = Error( e )
-			exception.module = ''
-			exception.cause = ''
-			exception.method = ''
-			error = ErrorDialog( exception )
-			error.show( )
+			raise
 
 
-	def city_state_country( self, city: str, state: Optional[ str ], ctry: str ) -> Dict[ str, Any ] | None:
+	def city_state_country( self, city: str, state: str, country: str ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
@@ -214,16 +204,11 @@ class Geocoder:
 		try:
 			self.city = city
 			self.state = state
-			self.country = ctry
+			self.country = country
 			self.parts = tuple( [ p for p in [ self.city, self.state, self.country ] if p ] )
 			self.query = ', '.join( self.parts )
 			_hint = self.country.strip( ).upper( ) if self.country and len(
 				self.country.strip( ) ) <= 3 else None
 			return self.freeform( self.query, _hint, )
 		except Exception as e:
-			exception = Error( e )
-			exception.module = ''
-			exception.cause = ''
-			exception.method = ''
-			error = ErrorDialog( exception )
-			error.show( )
+			raise

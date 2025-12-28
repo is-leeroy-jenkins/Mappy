@@ -1,6 +1,27 @@
-# 📋 requirements.txt for mappy
-requests>=2.25.0
-pandas>=1.2.0
-openpyxl>=3.0.0
-typing~=3.7.4.3
-FreeSimpleGUI~=5.2.0.post1
+# ------------------------------------------------------------------------------
+# Core HTTP & Data Processing
+# ------------------------------------------------------------------------------
+
+requests
+pandas
+openpyxl
+
+# ------------------------------------------------------------------------------
+# Streamlit Application Framework
+# ------------------------------------------------------------------------------
+
+streamlit
+
+# ------------------------------------------------------------------------------
+# Optional / Infrastructure
+# ------------------------------------------------------------------------------
+
+# SQLite is part of the Python standard library and does not need a package entry.
+# typing is built-in for Python >=3.8 and should not be pinned separately.
+
+# ------------------------------------------------------------------------------
+# Notes
+# ------------------------------------------------------------------------------
+# - This requirements file assumes Python 3.9+
+# - All Mappy functionality (caching, rate limiting, Maps services)
+#   is implemented without third-party dependencies beyond

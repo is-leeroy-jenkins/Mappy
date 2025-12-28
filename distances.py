@@ -42,7 +42,7 @@
   ******************************************************************************************
 '''
 from typing import Dict, Tuple, Union
-from .maps import Maps
+from maps import Maps
 
 
 def throw_if( name: str, value: object ):
@@ -100,8 +100,10 @@ class DistanceMatrix:
 			Parameters:
 			origin (AddressOrCoord):
 				Origin address string or (lat, lng) tuple.
+				
 			destination (AddressOrCoord):
 				Destination address string or (lat, lng) tuple.
+				
 			mode (str):
 				Travel mode: 'driving', 'walking', 'bicycling', 'transit'.
 	
