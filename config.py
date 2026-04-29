@@ -54,17 +54,4 @@ GOOGLE_CLOUD_PROJECT = os.getenv( 'GOOGLE_CLOUD_PROJECT' )
 GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLE_MAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
 
-def set_environment( ):
-	"""
-
-		Purpose:
-		--------
-		Gets availible environment vaariables for configuration
-
-
-	"""
-	variable_dict = globals( ).items( )
-	for key, value in variable_dict:
-		if 'API' in key or 'ID' in key:
-			os.environ[ key ] = value
 
