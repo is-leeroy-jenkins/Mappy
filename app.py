@@ -59,27 +59,37 @@ st.set_page_config(  page_title='Mappy – Geospatial Toolkit', layout='wide',
 # Sidebar – Global Configuration
 # ---------------------------------------------------------------------
 
-st.sidebar.title( '🗺️ Mappy Configuration' )
+st.logo( '🗺️' )
 
-with st.sidebar.expander( 'API Keys', expanded=False ):
-	api_keys = { name: value for name, value in vars(config).items()
-	             if name.endswith('_API_KEY') and value }
-	if not api_keys:
-	    st.error( 'No API keys found in config.py' )
-	
-	selected_key = st.sidebar.selectbox(  'API Key',  options=list(api_keys.keys()), )
-	api_key = api_keys[selected_key]
-	qps = st.sidebar.slider( 'Queries Per Second', min_value=1,  max_value=50,  value=10, )
-	
-	st.sidebar.subheader('Caching')
-	cache_backend = st.sidebar.selectbox( 'Cache Backend', options=['none', 'memory', 'sqlite'], )
-	cache: Optional[ object ] = None
-	if cache_backend == 'memory':
-	    cache = InMemoryCache()
-	elif cache_backend == 'sqlite':
-	    cache_path = st.sidebar.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
-	    cache = SQLiteCache(cache_path)
+st.sidebar.divider( )
 
+with st.sidebar:
+	
+	with st.sidebar.expander( 'Configuration', expanded=False ):
+			api_keys = { name: value for name, value in vars( config ).items( )
+			             if name.endswith( '_API_KEY' ) and value }
+			if not api_keys:
+				st.error( 'No API keys found in config.py' )
+			
+			selected_key = st.selectbox( 'API Key', options=list( api_keys.keys( ) ), )
+			api_key = api_keys[ selected_key ]
+		
+	st.sidebar.divider( )
+	
+	with st.sidebar.expander( 'Query', expanded=False ):
+		qps = st.slider( 'Queries Per Second', min_value=1, max_value=50, value=10, )
+	
+	st.sidebar.divider( )
+	
+	with st.sidebar.expander( 'Cache', expanded=False ):
+		cache_backend = st.selectbox( 'Cache Backend', options=[ 'none', 'memory', 'sqlite' ], )
+		cache: Optional[ object ] = None
+		if cache_backend == 'memory':
+			cache = InMemoryCache( )
+		elif cache_backend == 'sqlite':
+			cache_path = st.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
+			cache = SQLiteCache( cache_path )
+	
 
 # ---------------------------------------------------------------------
 # Core Maps Gateway (NO cache argument — VERIFIED)
