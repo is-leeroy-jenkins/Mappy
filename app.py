@@ -111,11 +111,11 @@ static_maps = StaticMapURL( api_key=api_key )
 
 tab_geo, tab_dist, tab_map, tab_tz, tab_excel = st.tabs(
     [
-        '🔎 Geocoding & Places',
-        '📏 Distance Matrix',
+        '🔎 Geocoding',
+        '📏 Distances',
         '🗺 Static Maps',
         '⏱ Time Zones',
-        '📊 Excel Enrichment',
+        '📊 Data Enrichment',
     ]
 )
 
@@ -127,13 +127,8 @@ tab_geo, tab_dist, tab_map, tab_tz, tab_excel = st.tabs(
 with tab_geo:
     st.header('Geocoding & Places')
 
-    query = st.text_input('Address or Free-Form Location')
-
-    use_places = st.checkbox(
-        'Use Places fallback if geocoding fails',
-        value=True,
-    )
-
+    query = st.text_input('Address or Location')
+    use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
     if st.button('Resolve Location'):
         if not query:
             st.warning('Enter a location.')
@@ -154,33 +149,27 @@ with tab_geo:
 # ---------------------------------------------------------------------
 # Distance Matrix Tab
 # ---------------------------------------------------------------------
-
 with tab_dist:
-    st.header('Distance Matrix')
+    st.header( 'Distance Matrix' )
 
-    col1, col2 = st.columns(2)
-
+    col1, col2 = st.columns( 2 )
     with col1:
-        origin = st.text_input('Origin')
+        origin = st.text_input( 'Origin' )
 
     with col2:
-        destination = st.text_input('Destination')
-
-    mode = st.selectbox(
-        'Travel Mode',
-        ['driving', 'walking', 'bicycling', 'transit'],
-    )
-
-    if st.button('Calculate Distance'):
-        if not origin or not destination:
-            st.warning('Provide both origin and destination.')
-        else:
-            summary = distances.summary(
-                origin,
-                destination,
-                mode=mode,
-            )
-            st.table(pd.DataFrame([summary]))
+        destination = st.text_input( 'Destination' )
+    
+    mode = st.selectbox( 'Travel Mode', [ 'driving', 'walking', 'bicycling', 'transit' ], )
+    if st.button( 'Calculate Distance' ):
+	    if not origin or not destination:
+		    st.warning( 'Provide both origin and destination.' )
+	    else:
+		    summary = distances.summary(
+			    origin,
+			    destination,
+			    mode=mode,
+		    )
+		    st.table( pd.DataFrame( [ summary ] ) )
 
 
 # ---------------------------------------------------------------------
@@ -188,26 +177,18 @@ with tab_dist:
 # ---------------------------------------------------------------------
 
 with tab_map:
-    st.header('Static Map Preview')
-
-    lat = st.number_input('Latitude', value=0.0, format='%.6f')
-    lng = st.number_input('Longitude', value=0.0, format='%.6f')
-
-    zoom = st.slider('Zoom', 1, 20, 12)
-    size = st.selectbox(
-        'Image Size',
-        ['400x400', '600x400', '800x600'],
-    )
-
-    if st.button('Generate Map'):
-        url = static_maps.pin(
-            lat=lat,
-            lng=lng,
-            zoom=zoom,
-            size=size,
-        )
-        st.image(url)
-        st.code(url)
+	st.header( 'Static Map Preview' )
+	
+	lat = st.number_input( 'Latitude', value=0.0, format='%.6f' )
+	lng = st.number_input( 'Longitude', value=0.0, format='%.6f' )
+	
+	zoom = st.slider( 'Zoom', 1, 20, 12 )
+	size = st.selectbox( 'Image Size', [ '400x400', '600x400', '800x600' ], )
+	
+	if st.button( 'Generate Map' ):
+		url = static_maps.pin( lat=lat, lng=lng, zoom=zoom, size=size, )
+		st.image( url )
+		st.code( url )
 
 
 # ---------------------------------------------------------------------
@@ -215,24 +196,13 @@ with tab_map:
 # ---------------------------------------------------------------------
 
 with tab_tz:
-    st.header('Time Zone Lookup')
-
-    lat_tz = st.number_input(
-        'Latitude',
-        key='tz_lat',
-        value=0.0,
-        format='%.6f',
-    )
-    lng_tz = st.number_input(
-        'Longitude',
-        key='tz_lng',
-        value=0.0,
-        format='%.6f',
-    )
-
-    if st.button('Lookup Time Zone'):
-        result = timezone.lookup(lat_tz, lng_tz)
-        st.json(result)
+	st.header( 'Time Zone Lookup' )
+	lat_tz = st.number_input( 'Latitude', key='tz_lat', value=0.0, format='%.6f', )
+	lng_tz = st.number_input( 'Longitude', key='tz_lng', value=0.0, format='%.6f', )
+	
+	if st.button( 'Lookup Time Zone' ):
+		result = timezone.lookup( lat_tz, lng_tz )
+		st.json( result )
 
 
 # ---------------------------------------------------------------------
@@ -240,43 +210,30 @@ with tab_tz:
 # ---------------------------------------------------------------------
 
 with tab_excel:
-    st.header('Excel / CSV Enrichment')
-
-    uploaded = st.file_uploader(
-        'Upload CSV or XLSX',
-        type=['csv', 'xlsx'],
-    )
-
-    city_col = st.text_input('City Column', value='City')
-    state_col = st.text_input('State Column', value='State')
-    country_col = st.text_input('Country Column', value='Country')
-
-    if uploaded:
-        input_path = f'_input_{uploaded.name}'
-        output_path = f'_output_{uploaded.name}'
-
-        with open(input_path, 'wb') as f:
-            f.write(uploaded.read())
-
-        if st.button('Enrich File'):
-            excel = Excel(api_key=api_key)
-
-            excel.enrich(
-                input_path=input_path,
-                output_path=output_path,
-                city_col=city_col,
-                state_col=state_col,
-                country_col=country_col,
-            )
-
-            df = pd.read_excel(output_path)
-            st.dataframe(df)
-
-            st.download_button(
-                'Download Enriched File',
-                data=open(output_path, 'rb').read(),
-                file_name=output_path,
-            )
-
-            os.remove(input_path)
-            os.remove(output_path)
+	st.header( 'Excel / CSV' )
+	
+	uploaded = st.file_uploader( 'Upload CSV or XLSX', type=[ 'csv', 'xlsx' ], )
+	city_col = st.text_input( 'City Column', value='City' )
+	state_col = st.text_input( 'State Column', value='State' )
+	country_col = st.text_input( 'Country Column', value='Country' )
+	if uploaded:
+		input_path = f'_input_{uploaded.name}'
+		output_path = f'_output_{uploaded.name}'
+		
+		with open( input_path, 'wb' ) as f:
+			f.write( uploaded.read( ) )
+		
+		if st.button( 'Enrich File' ):
+			excel = Excel( api_key=api_key )
+	
+	excel.enrich( input_path=input_path, output_path=output_path, city_col=city_col,
+		state_col=state_col, country_col=country_col, )
+	
+	df = pd.read_excel( output_path )
+	st.data_editor( df )
+	
+	st.download_button( 'Download Enriched File', data=open( output_path, 'rb' ).read( ),
+		file_name=output_path, )
+	
+	os.remove( input_path )
+	os.remove( output_path )
