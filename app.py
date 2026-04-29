@@ -77,8 +77,7 @@ qps = st.sidebar.slider( 'Queries Per Second', min_value=1,  max_value=50,  valu
 
 st.sidebar.subheader('Caching')
 cache_backend = st.sidebar.selectbox( 'Cache Backend', options=['none', 'memory', 'sqlite'], )
-
-cache: Optional[object] = None
+cache: Optional[ object ] = None
 
 if cache_backend == 'memory':
     cache = InMemoryCache()
@@ -98,12 +97,12 @@ maps = Maps( api_key=api_key, qps=qps, )
 # Services (cache injected ONLY where supported)
 # ---------------------------------------------------------------------
 
-geocoder = Geocoder(maps, cache=cache)
-places = Places(maps, cache=cache)
+geocoder = Geocoder( maps, cache=cache )
+places = Places( maps, cache=cache )
 
-distances = DistanceMatrix(maps)
-timezone = Timezone(maps)
-static_maps = StaticMapURL(api_key=api_key)
+distances = DistanceMatrix( maps )
+timezone = Timezone( maps )
+static_maps = StaticMapURL( api_key=api_key )
 
 
 # ---------------------------------------------------------------------
