@@ -181,7 +181,6 @@ with tab_map:
 	
 	lat = st.number_input( 'Latitude', value=0.0, format='%.6f' )
 	lng = st.number_input( 'Longitude', value=0.0, format='%.6f' )
-	
 	zoom = st.slider( 'Zoom', 1, 20, 12 )
 	size = st.selectbox( 'Image Size', [ '400x400', '600x400', '800x600' ], )
 	
