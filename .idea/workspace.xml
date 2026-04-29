@@ -4,25 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6e8897af-3ee3-4d4e-83df-27a4ae217e01" name="Changes" comment="updates">
-      <change beforePath="$PROJECT_DIR$/.idea/mappy.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/mappy.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/boogr.py" beforeDir="false" afterPath="$PROJECT_DIR$/boogr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/caches.py" beforeDir="false" afterPath="$PROJECT_DIR$/caches.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distances.py" beforeDir="false" afterPath="$PROJECT_DIR$/distances.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/excel.py" beforeDir="false" afterPath="$PROJECT_DIR$/excel.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/geocode.py" beforeDir="false" afterPath="$PROJECT_DIR$/geocode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/maps.py" beforeDir="false" afterPath="$PROJECT_DIR$/maps.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/places.py" beforeDir="false" afterPath="$PROJECT_DIR$/places.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rates.py" beforeDir="false" afterPath="$PROJECT_DIR$/rates.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/staticmaps.py" beforeDir="false" afterPath="$PROJECT_DIR$/staticmaps.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/timezones.py" beforeDir="false" afterPath="$PROJECT_DIR$/timezones.py" afterDir="false" />
-    </list>
+    <list default="true" id="6e8897af-3ee3-4d4e-83df-27a4ae217e01" name="Changes" comment="updates" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -89,7 +71,7 @@
       <option name="presentableId" value="Default" />
       <updated>1777487626341</updated>
       <workItem from="1777487627910" duration="387000" />
-      <workItem from="1777488371637" duration="4985000" />
+      <workItem from="1777488371637" duration="5369000" />
     </task>
     <task id="LOCAL-00001" summary="updates">
       <option name="closed" value="true" />
@@ -99,7 +81,23 @@
       <option name="project" value="LOCAL" />
       <updated>1777487748149</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="updates">
+      <option name="closed" value="true" />
+      <created>1777499350447</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1777499350447</updated>
+    </task>
+    <task id="LOCAL-00003" summary="updates">
+      <option name="closed" value="true" />
+      <created>1777499627094</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1777499627094</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
