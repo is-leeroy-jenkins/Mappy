@@ -61,30 +61,24 @@ st.set_page_config(  page_title='Mappy – Geospatial Toolkit', layout='wide',
 
 st.sidebar.title( '🗺️ Mappy Configuration' )
 
-# Discover API keys from config.py
-api_keys = { name: value for name, value in vars(config).items()
-             if name.endswith('_API_KEY') and value }
-
-if not api_keys:
-    st.error( 'No API keys found in config.py' )
-    st.stop( )
-
-selected_key = st.sidebar.selectbox(  'API Key',  options=list(api_keys.keys()), )
-
-api_key = api_keys[selected_key]
-
-qps = st.sidebar.slider( 'Queries Per Second', min_value=1,  max_value=50,  value=10, )
-
-st.sidebar.subheader('Caching')
-cache_backend = st.sidebar.selectbox( 'Cache Backend', options=['none', 'memory', 'sqlite'], )
-cache: Optional[ object ] = None
-
-if cache_backend == 'memory':
-    cache = InMemoryCache()
-
-elif cache_backend == 'sqlite':
-    cache_path = st.sidebar.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
-    cache = SQLiteCache(cache_path)
+with st.sidebar.expander( 'API Keys', expanded=False ):
+	api_keys = { name: value for name, value in vars(config).items()
+	             if name.endswith('_API_KEY') and value }
+	if not api_keys:
+	    st.error( 'No API keys found in config.py' )
+	
+	selected_key = st.sidebar.selectbox(  'API Key',  options=list(api_keys.keys()), )
+	api_key = api_keys[selected_key]
+	qps = st.sidebar.slider( 'Queries Per Second', min_value=1,  max_value=50,  value=10, )
+	
+	st.sidebar.subheader('Caching')
+	cache_backend = st.sidebar.selectbox( 'Cache Backend', options=['none', 'memory', 'sqlite'], )
+	cache: Optional[ object ] = None
+	if cache_backend == 'memory':
+	    cache = InMemoryCache()
+	elif cache_backend == 'sqlite':
+	    cache_path = st.sidebar.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
+	    cache = SQLiteCache(cache_path)
 
 
 # ---------------------------------------------------------------------
@@ -108,7 +102,6 @@ static_maps = StaticMapURL( api_key=api_key )
 # ---------------------------------------------------------------------
 # Tabs
 # ---------------------------------------------------------------------
-
 tab_geo, tab_dist, tab_map, tab_tz, tab_excel = st.tabs(
     [
         '🔎 Geocoding',
@@ -123,7 +116,6 @@ tab_geo, tab_dist, tab_map, tab_tz, tab_excel = st.tabs(
 # ---------------------------------------------------------------------
 # Geocoding & Places Tab
 # ---------------------------------------------------------------------
-
 with tab_geo:
     st.header('Geocoding & Places')
 
@@ -175,7 +167,6 @@ with tab_dist:
 # ---------------------------------------------------------------------
 # Static Maps Tab
 # ---------------------------------------------------------------------
-
 with tab_map:
 	st.header( 'Static Map Preview' )
 	
@@ -193,7 +184,6 @@ with tab_map:
 # ---------------------------------------------------------------------
 # Time Zone Tab
 # ---------------------------------------------------------------------
-
 with tab_tz:
 	st.header( 'Time Zone Lookup' )
 	lat_tz = st.number_input( 'Latitude', key='tz_lat', value=0.0, format='%.6f', )
@@ -207,7 +197,6 @@ with tab_tz:
 # ---------------------------------------------------------------------
 # Excel Enrichment Tab
 # ---------------------------------------------------------------------
-
 with tab_excel:
 	st.header( 'Excel / CSV' )
 	
@@ -225,14 +214,14 @@ with tab_excel:
 		if st.button( 'Enrich File' ):
 			excel = Excel( api_key=api_key )
 	
-	excel.enrich( input_path=input_path, output_path=output_path, city_col=city_col,
-		state_col=state_col, country_col=country_col, )
-	
-	df = pd.read_excel( output_path )
-	st.data_editor( df )
-	
-	st.download_button( 'Download Enriched File', data=open( output_path, 'rb' ).read( ),
-		file_name=output_path, )
-	
-	os.remove( input_path )
-	os.remove( output_path )
+		excel.enrich( input_path=input_path, output_path=output_path, city_col=city_col,
+			state_col=state_col, country_col=country_col, )
+		
+		df = pd.read_excel( output_path )
+		st.data_editor( df )
+		
+		st.download_button( 'Download Enriched File', data=open( output_path, 'rb' ).read( ),
+			file_name=output_path, )
+		
+		os.remove( input_path )
+		os.remove( output_path )
