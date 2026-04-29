@@ -74,12 +74,8 @@ with st.sidebar:
 			selected_key = st.selectbox( 'API Key', options=list( api_keys.keys( ) ), )
 			api_key = api_keys[ selected_key ]
 		
-	st.sidebar.divider( )
-	
 	with st.sidebar.expander( 'Query', expanded=False ):
 		qps = st.slider( 'Queries Per Second', min_value=1, max_value=50, value=10, )
-	
-	st.sidebar.divider( )
 	
 	with st.sidebar.expander( 'Cache', expanded=False ):
 		cache_backend = st.selectbox( 'Cache Backend', options=[ 'none', 'memory', 'sqlite' ], )
