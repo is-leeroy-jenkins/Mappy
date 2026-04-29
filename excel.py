@@ -41,27 +41,15 @@
   </summary>
   ******************************************************************************************
   '''
-"""
-Purpose:
-    Spreadsheet helper that enriches a sheet of locations with coordinates and
-    canonical addresses using the Geocoding API.
 
-Parameters:
-    api_key (str):
-        Google Maps Platform API key for constructing services internally.
-    cache (Optional[BaseCache]):
-        Optional cache to cut repeat lookups across runs.
-
-Returns:
-    Excel with enrichment methods for either full-address or city/state/country.
-"""
 from typing import Optional, Dict, List
 import pandas as pd
 from caches import BaseCache
 from geocode import Geocoder
 from maps import Maps
 from places import Places
-from boogr import Error, ErrorDialog
+from boogr import Error
+
 
 
 def throw_if( name: str, value: object ):
@@ -98,7 +86,7 @@ class Excel:
 	file_path: Optional[ str ]
 	
 
-	def __init__( self, api: str, cache: Optional[ BaseCache ] = None ) -> None:
+	def __init__( self, api: str, cache: Optional[ BaseCache ]=None ) -> None:
 		self.api_key = api
 		self.cache = cache
 		self.maps = Maps( api_key=self.api_key )
@@ -119,16 +107,27 @@ class Excel:
             Returns: DataFrame with dtype=str for string-like columns.
 
         """
-		if path.lower( ).endswith( '.csv' ):
-			self.dataframe = pd.read_csv( path, dtype = str )
-		else:
-			self.dataframe = pd.read_excel( path, sheet_name=sheet, dtype=str )
-
-		for c in self.dataframe.columns:
-			if self.dataframe[ c ].dtype == object:
-				self.dataframe[ c ] = self.dataframe[ c ].fillna( "" ).astype( str ).str.strip( )
-
-		return self.dataframe
+		try:
+			throw_if( 'path', path )
+			throw_if( 'sheet', sheet )
+			self.file_path = path
+			self.worksheet = sheet
+			if self.file_path.lower( ).endswith( '.csv' ):
+				self.dataframe = pd.read_csv( self.file_path, dtype = str )
+			else:
+				self.dataframe = pd.read_excel( self.file_path, sheet_name=self.worksheet, dtype=str )
+	
+			for c in self.dataframe.columns:
+				if self.dataframe[ c ].dtype == object:
+					self.dataframe[ c ] = self.dataframe[ c ].fillna( "" ).astype( str ).str.strip( )
+	
+			return self.dataframe
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Excel'
+			exception.method = 'read( self, **kwargs )'
+			raise exception
 
 
 	def write( self, df: pd.DataFrame, path: str, sheet: Optional[ str ] ) -> None:
@@ -149,12 +148,22 @@ class Excel:
 	            None.
 
         """
-		self.file_path = path
-		self.dataframe = df.copy( )
-		if self.file_path.lower( ).endswith( '.csv' ):
-			self.dataframe.to_csv( self.file_path, index=False )
-		else:
-			self.dataframe.to_excel( self.file_path, index=False, sheet_name=sheet )
+		try:
+			throw_if( 'path', path )
+			throw_if( 'df', df )
+			self.file_path = path
+			self.dataframe = df.copy( )
+			self.worksheet = sheet
+			if self.file_path.lower( ).endswith( '.csv' ):
+				self.dataframe.to_csv( self.file_path, index=False )
+			else:
+				self.dataframe.to_excel( self.file_path, index=False, sheet_name=self.worksheet )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Excel'
+			exception.method = 'write( self, **kwargs )'
+			raise exception
 
 
 	def enrich_from_address( self, inpath: str, outpath: str, address: str, sheet: Optional[ str ],
@@ -179,64 +188,69 @@ class Excel:
             Returns:
                 None. Writes the enriched file.
         """
-		df = self.read( inpath, sheet )
-		outputs = \
-		{
-			'formatted_address': [ ],
-			'lat': [ ],
-			'lng': [ ],
-			'place_id': [ ],
-			'types': [ ],
-			'country_code': [ ],
-			'country_name': [ ],
-			'admin_level_1': [ ],
-			'admin_level_2': [ ],
-			'locality': [ ],
-			'postal_code': [ ],
-			'geocode_status': [ ],
-		}
-
-		for _, row in df.iterrows( ):
-			addr = (row.get( address ) or "").strip( )
-			hint = (
-					((row.get( cntry ) or "").strip( ).upper( ))
-					if (cntry and cntry in df.columns)
-					else None
-			)
-			if not addr:
-				for k in outputs:
-					outputs[ k ].append( None if k != 'geocode_status' else 'skipped_empty' )
-				continue
-
-			try:
-				g = self.geocoder.freeform( addr, country = hint )
-				status = 'ok'
-			except Exception:
-				# Fallback via Places for stubborn inputs
+		try:
+			df = self.read( inpath, sheet )
+			outputs = \
+			{
+				'formatted_address': [ ],
+				'lat': [ ],
+				'lng': [ ],
+				'place_id': [ ],
+				'types': [ ],
+				'country_code': [ ],
+				'country_name': [ ],
+				'admin_level_1': [ ],
+				'admin_level_2': [ ],
+				'locality': [ ],
+				'postal_code': [ ],
+				'geocode_status': [ ],
+			}
+	
+			for _, row in df.iterrows( ):
+				addr = (row.get( address ) or "").strip( )
+				hint = (
+						((row.get( cntry ) or "").strip( ).upper( ))
+						if (cntry and cntry in df.columns)
+						else None )
+				if not addr:
+					for k in outputs:
+						outputs[ k ].append( None if k != 'geocode_status' else 'skipped_empty' )
+					continue
+	
 				try:
-					g = self.places.text_to_location( addr, country = hint )
-					status = "ok_places"
+					g = self.geocoder.freeform( addr, country = hint )
+					status = 'ok'
 				except Exception:
-					g = { }
-					status = "not_found"
-
-			outputs[ 'formatted_address' ].append( g.get( 'formatted_address' ) )
-			outputs[ 'lat' ].append( g.get( 'lat' ) )
-			outputs[ 'lng' ].append( g.get( 'lng' ) )
-			outputs[ 'place_id' ].append( g.get( 'place_id' ) )
-			outputs[ 'types' ].append( g.get( 'types' ) )
-			outputs[ 'country_code' ].append( g.get( 'country_code' ) )
-			outputs[ 'country_name' ].append( g.get( 'country_name' ) )
-			outputs[ 'admin_level_1' ].append( g.get( 'admin_level_1' ) )
-			outputs[ 'admin_level_2' ].append( g.get( 'admin_level_2' ) )
-			outputs[ 'locality' ].append( g.get( 'locality' ) )
-			outputs[ 'postal_code' ].append( g.get( 'postal_code' ) )
-			outputs[ 'geocode_status' ].append( status )
-
-		for k, v in outputs.items( ):
-			df[ k ] = v
-
-		self.write( df, outpath, sheet )
+					try:
+						g = self.places.text_to_location( addr, country = hint )
+						status = "ok_places"
+					except Exception:
+						g = { }
+						status = "not_found"
+	
+				outputs[ 'formatted_address' ].append( g.get( 'formatted_address' ) )
+				outputs[ 'lat' ].append( g.get( 'lat' ) )
+				outputs[ 'lng' ].append( g.get( 'lng' ) )
+				outputs[ 'place_id' ].append( g.get( 'place_id' ) )
+				outputs[ 'types' ].append( g.get( 'types' ) )
+				outputs[ 'country_code' ].append( g.get( 'country_code' ) )
+				outputs[ 'country_name' ].append( g.get( 'country_name' ) )
+				outputs[ 'admin_level_1' ].append( g.get( 'admin_level_1' ) )
+				outputs[ 'admin_level_2' ].append( g.get( 'admin_level_2' ) )
+				outputs[ 'locality' ].append( g.get( 'locality' ) )
+				outputs[ 'postal_code' ].append( g.get( 'postal_code' ) )
+				outputs[ 'geocode_status' ].append( status )
+	
+			for k, v in outputs.items( ):
+				df[ k ] = v
+	
+			self.write( df, outpath, sheet )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Excel'
+			exception.method = 'enrich_from_address( self, **kwargs )'
+			raise exception
 
 	def enrich( self, inpath: str, outpath: str, city: str, state: Optional[ str ], cntry: str,
 	            sheet: Optional[ str ]=None, ) -> None:
@@ -263,18 +277,18 @@ class Excel:
 			df = self.read( inpath, sheet )
 			outputs = \
 			{
-					'formatted_address': [ ],
-					'lat': [ ],
-					'lng': [ ],
-					'place_id': [ ],
-					'types': [ ],
-					'country_code': [ ],
-					'country_name': [ ],
-					'admin_level_1': [ ],
-					'admin_level_2': [ ],
-					'locality': [ ],
-					'postal_code': [ ],
-					'geocode_status': [ ],
+				'formatted_address': [ ],
+				'lat': [ ],
+				'lng': [ ],
+				'place_id': [ ],
+				'types': [ ],
+				'country_code': [ ],
+				'country_name': [ ],
+				'admin_level_1': [ ],
+				'admin_level_2': [ ],
+				'locality': [ ],
+				'postal_code': [ ],
+				'geocode_status': [ ],
 			}
 
 			for _, row in df.iterrows( ):
@@ -318,4 +332,8 @@ class Excel:
 
 			self._write( df, outpath, sheet )
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Excel'
+			exception.method = 'enrich( self, **kwargs)'
+			raise exception

@@ -50,13 +50,13 @@ from typing import Any, Dict, Optional, List, Tuple
 from caches import BaseCache
 from exceptions import NotFound
 from maps import Maps
-from boogr import Error, ErrorDialog
+from boogr import Error 
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
-def _flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
+def flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 	"""
 
 		Purpose:
@@ -94,7 +94,7 @@ def _flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 			'postal_code': comp( 'postal_code' ),
 	}
 
-class Geocoder:
+class Geocoder( ):
 	"""
 
 		Purpose:
@@ -122,7 +122,7 @@ class Geocoder:
 	key: Optional[ str ]
 	query: Optional[ str ]
 
-	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
+	def __init__( self, maps: Maps, cache: Optional[ BaseCache ]=None ) -> None:
 		self._maps = maps
 		self._cache = cache
 
@@ -133,8 +133,11 @@ class Geocoder:
 			joined = ' '.join( p.strip( ) for p in parts if p and str( p ).strip( ) )
 			return f'{prefix}::{joined}'
 		except Exception as e:
-			raise
-
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Geocoder'
+			exception.method = 'key_for( self, **kwargs )'
+			raise exception
 
 	def freeform( self, address: str, country: str='US' ) -> Dict[ str, Any ] | None:
 		"""
@@ -149,7 +152,7 @@ class Geocoder:
 					ISO-3166 alpha-2 country code to bias results (e.g., 'US', 'FR').
 
 			Returns:
-				Flattened dict as from _flatten_geocode(...).
+				Flattened dict as from flatten_geocode(...).
 
 			Raises:
 				NotFound when no results are returned.
@@ -170,12 +173,16 @@ class Geocoder:
 			if self.data.get( 'status' ) != 'OK' or not self.data.get( 'results' ):
 				raise NotFound( f'No geocode for "{self.address}" ' )
 
-			self.output = _flatten_geocode( self.data[ 'results' ][ 0 ] )
+			self.output = flatten_geocode( self.data[ 'results' ][ 0 ] )
 			if self.cache:
 				self.cache.set( self.key, self.output )
 			return self.output
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Geocoder'
+			exception.method = 'freeform( self, **kwargs )'
+			raise exception
 
 
 	def city_state_country( self, city: str, state: str, country: str ) -> Dict[ str, Any ] | None:
@@ -211,4 +218,8 @@ class Geocoder:
 				self.country.strip( ) ) <= 3 else None
 			return self.freeform( self.query, _hint, )
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Geocoder'
+			exception.method = 'city_state_country( self, **kwargs )'
+			raise exception

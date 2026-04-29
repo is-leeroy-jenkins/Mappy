@@ -43,7 +43,7 @@
   '''
 import time
 from typing import Optional
-from boogr import Error, ErrorDialog
+from boogr import Error
 
 
 def throw_if( name: str, value: object ):
@@ -91,6 +91,7 @@ class RateLimiter:
 
 		"""
 		try:
+			throw_if( 'max', max )
 			if self.interval <= 0:
 				return
 			self.now = time.time( )
@@ -99,4 +100,8 @@ class RateLimiter:
 				time.sleep( self.interval - self.delta )
 			self.last = time.time( )
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'rates'
+			exception.method = 'wait( self, **kwargs)'
+			raise exception

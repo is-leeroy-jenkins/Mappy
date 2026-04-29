@@ -46,13 +46,13 @@ from typing import Dict, Optional
 import requests
 from exceptions import GatewayError
 from rates import RateLimiter
-from boogr import Error, ErrorDialog
+from boogr import Error
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
-class Maps:
+class Maps( ):
 	"""
 
 	    Purpose:
@@ -138,7 +138,7 @@ class Maps:
 					if status == 200:
 						return resp.json( )
 
-					if status in (408, 429, 500, 502, 503, 504):
+					if status in ( 408, 429, 500, 502, 503, 504 ):
 						raise GatewayError( f'Transient HTTP {status}: {resp.text[ :200 ]}' )
 					raise GatewayError( f'HTTP {status}: {resp.text[ :200 ]}' )
 				except (requests.Timeout, requests.ConnectionError, GatewayError) as ex:
@@ -148,4 +148,8 @@ class Maps:
 					time.sleep( backoff )
 					backoff = min( backoff * 2, self.max )
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Maps'
+			exception.method = 'request( sefl, **kwargs)'
+			raise exception

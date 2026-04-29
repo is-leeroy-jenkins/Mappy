@@ -43,6 +43,7 @@
 '''
 from typing import Dict, Tuple, Union
 from maps import Maps
+from boogr import Error
 
 
 def throw_if( name: str, value: object ):
@@ -53,7 +54,7 @@ Coord = Tuple[ float, float ]
 AddressOrCoord = Union[ str, Coord ]
 
 
-def _fmt( o: AddressOrCoord ) -> str:
+def fmt( o: AddressOrCoord ) -> str:
 	"""
 	
 		Purpose:
@@ -72,7 +73,7 @@ def _fmt( o: AddressOrCoord ) -> str:
 	return str( o )
 
 
-class DistanceMatrix:
+class DistanceMatrix():
 	"""
 	
 		Purpose:
@@ -91,7 +92,7 @@ class DistanceMatrix:
 		self._maps = maps
 
 	def summary( self, origin: AddressOrCoord, destination: AddressOrCoord,
-	             mode: str = 'driving' ) -> Dict:
+	             mode: str='driving' ) -> Dict:
 		"""
 		
 			Purpose:
@@ -111,16 +112,21 @@ class DistanceMatrix:
 			Dict with distance_text, distance_meters, duration_text, duration_seconds.
 				
 		"""
-		data = self._maps.request(
-			'distancematrix/json',
-			{ 'origins': _fmt( origin ), 'destinations': _fmt( destination ), 'mode': mode },
-		)
-		row = ((data.get( 'rows' ) or [ { } ])[ 0 ].get( 'elements' ) or [ { } ])[ 0 ]
-		dist = row.get( 'distance' ) or { }
-		dur = row.get( 'duration' ) or { }
-		return {
-				'distance_text': dist.get( 'text' ),
-				'distance_meters': dist.get( 'value' ),
-				'duration_text': dur.get( 'text' ),
-				'duration_seconds': dur.get( 'value' ),
-		}
+		try:
+			data = self._maps.request( 'distancematrix/json',
+				{ 'origins': fmt( origin ), 'destinations': fmt( destination ), 'mode': mode }, )
+			row = ((data.get( 'rows' ) or [ { } ])[ 0 ].get( 'elements' ) or [ { } ])[ 0 ]
+			dist = row.get( 'distance' ) or { }
+			dur = row.get( 'duration' ) or { }
+			return {
+					'distance_text': dist.get( 'text' ),
+					'distance_meters': dist.get( 'value' ),
+					'duration_text': dur.get( 'text' ),
+					'duration_seconds': dur.get( 'value' ),
+			}
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'DistanceMatrix'
+			exception.method = 'summary( self, **kwargs )'
+			raise exception

@@ -1,0 +1,11 @@
+[theme]
+base = 'dark'
+backgroundColor = '#141414'
+secondaryBackgroundColor = '#414141'
+textColor = '#FFFFFF'
+dataframeBorderColor = '#00254C'
+primaryColor = '#0078FC'
+borderColor = '#565557'
+dataframeHeaderBackgroundColor = '#023770'
+font = 'Roboto Regular'
+baseFontSize = 14

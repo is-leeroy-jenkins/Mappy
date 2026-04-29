@@ -43,13 +43,11 @@
   '''
 from typing import Optional, Dict
 from urllib.parse import urlencode
-from boogr import Error, ErrorDialog
-
+from boogr import Error
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
-
 
 class StaticMapURL( ):
 	"""
@@ -119,5 +117,4 @@ class StaticMapURL( ):
 			exception.module = 'mappy'
 			exception.cause = 'StaticMapUrl'
 			exception.method = 'pin( self, lat: float, lng: foat ) -> str'
-			error = ErrorDialog( exception )
-			error.show( )
+			raise exception

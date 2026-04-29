@@ -1,4 +1,4 @@
-"""
+'''
 ******************************************************************************************
  Assembly:                Mappy
  Filename:                app.py
@@ -21,14 +21,13 @@ CRITICAL ASSUMPTIONS (VERIFIED):
     - Places.text_to_location(...) is the ONLY Places lookup method
     - Cache is injected ONLY into services that support it
 ******************************************************************************************
-"""
+'''
 
 from __future__ import annotations
 
 from exceptions import NotFound
 import os
 from typing import Optional
-
 import pandas as pd
 import streamlit as st
 
@@ -52,61 +51,40 @@ import config
 # Streamlit Configuration
 # ---------------------------------------------------------------------
 
-st.set_page_config(
-    page_title="Mappy – Geospatial Toolkit",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+st.set_page_config(  page_title='Mappy – Geospatial Toolkit', layout='wide',
+    initial_sidebar_state='expanded', )
 
 
 # ---------------------------------------------------------------------
 # Sidebar – Global Configuration
 # ---------------------------------------------------------------------
 
-st.sidebar.title("🗺️ Mappy Configuration")
+st.sidebar.title( '🗺️ Mappy Configuration' )
 
 # Discover API keys from config.py
-api_keys = {
-    name: value
-    for name, value in vars(config).items()
-    if name.endswith("_API_KEY") and value
-}
+api_keys = { name: value for name, value in vars(config).items()
+             if name.endswith('_API_KEY') and value }
 
 if not api_keys:
-    st.error("No API keys found in config.py")
-    st.stop()
+    st.error( 'No API keys found in config.py' )
+    st.stop( )
 
-selected_key = st.sidebar.selectbox(
-    "API Key",
-    options=list(api_keys.keys()),
-)
+selected_key = st.sidebar.selectbox(  'API Key',  options=list(api_keys.keys()), )
 
 api_key = api_keys[selected_key]
 
-qps = st.sidebar.slider(
-    "Queries Per Second",
-    min_value=1,
-    max_value=50,
-    value=10,
-)
+qps = st.sidebar.slider( 'Queries Per Second', min_value=1,  max_value=50,  value=10, )
 
-st.sidebar.subheader("Caching")
-
-cache_backend = st.sidebar.selectbox(
-    "Cache Backend",
-    options=["none", "memory", "sqlite"],
-)
+st.sidebar.subheader('Caching')
+cache_backend = st.sidebar.selectbox( 'Cache Backend', options=['none', 'memory', 'sqlite'], )
 
 cache: Optional[object] = None
 
-if cache_backend == "memory":
+if cache_backend == 'memory':
     cache = InMemoryCache()
 
-elif cache_backend == "sqlite":
-    cache_path = st.sidebar.text_input(
-        "SQLite Cache Path",
-        value="mappy_cache.db",
-    )
+elif cache_backend == 'sqlite':
+    cache_path = st.sidebar.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
     cache = SQLiteCache(cache_path)
 
 
@@ -114,10 +92,7 @@ elif cache_backend == "sqlite":
 # Core Maps Gateway (NO cache argument — VERIFIED)
 # ---------------------------------------------------------------------
 
-maps = Maps(
-    api_key=api_key,
-    qps=qps,
-)
+maps = Maps( api_key=api_key, qps=qps, )
 
 # ---------------------------------------------------------------------
 # Services (cache injected ONLY where supported)
@@ -137,11 +112,11 @@ static_maps = StaticMapURL(api_key=api_key)
 
 tab_geo, tab_dist, tab_map, tab_tz, tab_excel = st.tabs(
     [
-        "🔎 Geocoding & Places",
-        "📏 Distance Matrix",
-        "🗺 Static Maps",
-        "⏱ Time Zones",
-        "📊 Excel Enrichment",
+        '🔎 Geocoding & Places',
+        '📏 Distance Matrix',
+        '🗺 Static Maps',
+        '⏱ Time Zones',
+        '📊 Excel Enrichment',
     ]
 )
 
@@ -151,25 +126,25 @@ tab_geo, tab_dist, tab_map, tab_tz, tab_excel = st.tabs(
 # ---------------------------------------------------------------------
 
 with tab_geo:
-    st.header("Geocoding & Places")
+    st.header('Geocoding & Places')
 
-    query = st.text_input("Address or Free-Form Location")
+    query = st.text_input('Address or Free-Form Location')
 
     use_places = st.checkbox(
-        "Use Places fallback if geocoding fails",
+        'Use Places fallback if geocoding fails',
         value=True,
     )
 
-    if st.button("Resolve Location"):
+    if st.button('Resolve Location'):
         if not query:
-            st.warning("Enter a location.")
+            st.warning('Enter a location.')
         else:
 	        try:
 		        result = geocoder.freeform( query )
 		        st.json( result )
 	        
 	        except NotFound:
-		        st.warning( "Geocoding failed. Trying Places search." )
+		        st.warning( 'Geocoding failed. Trying Places search.' )
 		        result = places.text_to_location( query )
 		        st.json( result )
 	        
@@ -182,24 +157,24 @@ with tab_geo:
 # ---------------------------------------------------------------------
 
 with tab_dist:
-    st.header("Distance Matrix")
+    st.header('Distance Matrix')
 
     col1, col2 = st.columns(2)
 
     with col1:
-        origin = st.text_input("Origin")
+        origin = st.text_input('Origin')
 
     with col2:
-        destination = st.text_input("Destination")
+        destination = st.text_input('Destination')
 
     mode = st.selectbox(
-        "Travel Mode",
-        ["driving", "walking", "bicycling", "transit"],
+        'Travel Mode',
+        ['driving', 'walking', 'bicycling', 'transit'],
     )
 
-    if st.button("Calculate Distance"):
+    if st.button('Calculate Distance'):
         if not origin or not destination:
-            st.warning("Provide both origin and destination.")
+            st.warning('Provide both origin and destination.')
         else:
             summary = distances.summary(
                 origin,
@@ -214,18 +189,18 @@ with tab_dist:
 # ---------------------------------------------------------------------
 
 with tab_map:
-    st.header("Static Map Preview")
+    st.header('Static Map Preview')
 
-    lat = st.number_input("Latitude", value=0.0, format="%.6f")
-    lng = st.number_input("Longitude", value=0.0, format="%.6f")
+    lat = st.number_input('Latitude', value=0.0, format='%.6f')
+    lng = st.number_input('Longitude', value=0.0, format='%.6f')
 
-    zoom = st.slider("Zoom", 1, 20, 12)
+    zoom = st.slider('Zoom', 1, 20, 12)
     size = st.selectbox(
-        "Image Size",
-        ["400x400", "600x400", "800x600"],
+        'Image Size',
+        ['400x400', '600x400', '800x600'],
     )
 
-    if st.button("Generate Map"):
+    if st.button('Generate Map'):
         url = static_maps.pin(
             lat=lat,
             lng=lng,
@@ -241,22 +216,22 @@ with tab_map:
 # ---------------------------------------------------------------------
 
 with tab_tz:
-    st.header("Time Zone Lookup")
+    st.header('Time Zone Lookup')
 
     lat_tz = st.number_input(
-        "Latitude",
-        key="tz_lat",
+        'Latitude',
+        key='tz_lat',
         value=0.0,
-        format="%.6f",
+        format='%.6f',
     )
     lng_tz = st.number_input(
-        "Longitude",
-        key="tz_lng",
+        'Longitude',
+        key='tz_lng',
         value=0.0,
-        format="%.6f",
+        format='%.6f',
     )
 
-    if st.button("Lookup Time Zone"):
+    if st.button('Lookup Time Zone'):
         result = timezone.lookup(lat_tz, lng_tz)
         st.json(result)
 
@@ -266,25 +241,25 @@ with tab_tz:
 # ---------------------------------------------------------------------
 
 with tab_excel:
-    st.header("Excel / CSV Enrichment")
+    st.header('Excel / CSV Enrichment')
 
     uploaded = st.file_uploader(
-        "Upload CSV or XLSX",
-        type=["csv", "xlsx"],
+        'Upload CSV or XLSX',
+        type=['csv', 'xlsx'],
     )
 
-    city_col = st.text_input("City Column", value="City")
-    state_col = st.text_input("State Column", value="State")
-    country_col = st.text_input("Country Column", value="Country")
+    city_col = st.text_input('City Column', value='City')
+    state_col = st.text_input('State Column', value='State')
+    country_col = st.text_input('Country Column', value='Country')
 
     if uploaded:
-        input_path = f"_input_{uploaded.name}"
-        output_path = f"_output_{uploaded.name}"
+        input_path = f'_input_{uploaded.name}'
+        output_path = f'_output_{uploaded.name}'
 
-        with open(input_path, "wb") as f:
+        with open(input_path, 'wb') as f:
             f.write(uploaded.read())
 
-        if st.button("Enrich File"):
+        if st.button('Enrich File'):
             excel = Excel(api_key=api_key)
 
             excel.enrich(
@@ -299,8 +274,8 @@ with tab_excel:
             st.dataframe(df)
 
             st.download_button(
-                "Download Enriched File",
-                data=open(output_path, "rb").read(),
+                'Download Enriched File',
+                data=open(output_path, 'rb').read(),
                 file_name=output_path,
             )
 

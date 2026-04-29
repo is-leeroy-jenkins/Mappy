@@ -8,10 +8,12 @@
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="places.py" company="Terry D. Eppler">
+  <copyright file='places.py' company='Terry D. Eppler'>
 
 	     Mappy is a python framework encapsulating the Google Maps functionality.
 	     Copyright ©  2022  Terry Eppler
+
+	 
 
      Permission is hereby granted, free of charge, to any person obtaining a copy
      of this software and associated documentation files (the “Software”),
@@ -40,26 +42,12 @@
     places.py
   </summary>
   ******************************************************************************************
-  '''
-"""
-Purpose:
-    Provide a Places Text Search fallback and detail fetch that can be promoted
-    into a geocode-like shape (address, lat/lng, components).
-
-Parameters:
-    maps (Maps):
-        Maps gateway instance.
-    cache (Optional[BaseCache]):
-        Pluggable cache to memoize the text queries.
-
-Returns:
-    Places with .text_to_location(query, country=None).
-"""
+'''
 from typing import Any, Dict, Optional, List
 from caches import BaseCache
 from exceptions import NotFound
 from maps import Maps
-from boogr import Error, ErrorDialog
+from boogr import Error
 
 
 def throw_if( name: str, value: object ):
@@ -67,7 +55,7 @@ def throw_if( name: str, value: object ):
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
 
-class Places:
+class Places( ):
 	"""
 
 		Purpose:
@@ -99,7 +87,7 @@ class Places:
 	output: Optional[ Dict ]
 
 
-	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
+	def __init__( self, maps: Maps, cache: Optional[ BaseCache ]=None ) -> None:
 		self.maps = maps
 		self.cache = cache
 
@@ -130,9 +118,9 @@ class Places:
 				self.hit = self.cache.get( self.key )
 				if self.hit:
 					return self.hit
-			self.params: Dict[ str, str ] = { 'query': self.query }
+			self.params: Dict[ str, str ]={ 'query': self.query }
 			if self.country:
-				self.params[ 'region' ] = self.country.upper( )
+				self.params[ 'region' ]=self.country.upper( )
 			self.search = self.maps.request( 'place/textsearch/json', self.params )
 			self.results = self.search.get( 'results' )
 			if not self.results:
@@ -141,10 +129,8 @@ class Places:
 			_pid = _top.get( 'place_id' )
 			if not _pid:
 				raise NotFound( 'Top place had no place_id' )
-			self.details = self.maps.request( 'place/details/json',
-				{ 'place_id': _pid,
-				  'fields': 'formatted_address,geometry,address_component,place_id,type' },
-			).get( 'result', { } )
+			self.details = self.maps.request( 'place/details/json', { 'place_id': _pid,
+				  'fields': 'formatted_address,geometry,address_component,place_id,type' }, ).get( 'result', { } )
 			self.geometry = (self.details.get( 'geometry' ) or { }).get( 'location' ) or { }
 			self.output = \
 			{
@@ -159,4 +145,8 @@ class Places:
 				self.cache.set( self.key, self.output )
 			return self.output
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Places'
+			exception.method = 'text_to_location( self, **kwargs)'
+			raise exception

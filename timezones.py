@@ -44,13 +44,11 @@
 import time
 from typing import Optional, Dict
 from maps import Maps
-from boogr import Error, ErrorDialog
-
+from boogr import Error
 
 def throw_if( name: str, value: object ):
 	if not value:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
-
 
 class Timezone:
 	"""
@@ -102,4 +100,8 @@ class Timezone:
 				{ 'location': f'{self.latitude},{self.longitude}', 'timestamp': str( self.timestamp ) } )
 			return self.data.get( 'timeZoneId' )
 		except Exception as e:
-			raise
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Timezone'
+			exception.method = 'get_id( self, **kwargs)'
+			raise exception

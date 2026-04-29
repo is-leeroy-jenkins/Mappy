@@ -45,6 +45,7 @@ import json
 import os
 import sqlite3
 from typing import Any, Dict, Optional
+from boogr import Error
 
 
 
@@ -124,15 +125,27 @@ class SQLiteCache( BaseCache ):
 		self._conn.commit( )
 
 	def get( self, key: str ) -> Optional[ Dict[ str, Any ] ]:
-		cur = self._conn.execute( 'SELECT v FROM kv WHERE k = ?', (key,) )
-		row = cur.fetchone( )
-		if not row:
-			return None
-		return json.loads( row[ 0 ] )
+		try:
+			cur = self._conn.execute( 'SELECT v FROM kv WHERE k = ?', (key,) )
+			row = cur.fetchone( )
+			if not row:
+				return None
+			return json.loads( row[ 0 ] )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'SQLiteCache'
+			exception.method = 'get( self, **kwargs )'
+			raise exception
 
 	def set( self, key: str, value: Dict[ str, Any ] ) -> None:
-		payload = json.dumps( value, ensure_ascii=False )
-		self._conn.execute(
-			'INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)', (key, payload)
-		)
-		self._conn.commit( )
+		try:
+			payload = json.dumps( value, ensure_ascii=False )
+			self._conn.execute( 'INSERT OR REPLACE INTO kv (k, v) VALUES (?, ?)', (key, payload) )
+			self._conn.commit( )
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'SQLiteCache'
+			exception.method = 'set( self, **kwargs )'
+			raise exception
