@@ -45,7 +45,15 @@ import os
 from typing import Optional, List, Dict
 from pathlib import Path
 
+# ------------ CONSTANT
+BLUE_DIVIDER = "<div style='height:2px;align:left;background:#0078FC;margin:20px 0 30px 0;'></div>"
+APP_TITLE = 'Mappy'
+DB_PATH = 'stores/sqlite/data.db'
+BASE_DIR = Path( __file__ ).resolve( ).parent
+FAVICON = r'resources/images/favicon.ico'
+LOGO = r'resources/images/gpt.png'
 
+# ----------- API KEYS
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
 GOOGLE_API_KEY = os.getenv( 'GOOGLE_API_KEY' )
 GOOGLE_CSE_ID = os.getenv( 'GOOGLE_CSE_ID' )
@@ -54,4 +62,6 @@ GOOGLE_CLOUD_PROJECT = os.getenv( 'GOOGLE_CLOUD_PROJECT_ID' )
 GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLEMAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
 
+# -------------- SETTINGS
 
+MODES = [ 'Geocoding', 'Distances', 'Maps', 'Time Zones', 'Data Upload', 'Data Management' ]
