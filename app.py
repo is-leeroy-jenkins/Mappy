@@ -1472,33 +1472,31 @@ static_maps = StaticMapURL( api_key=api_key )
 # Geocoding & Places Tab
 # ==============================================================================
 if mode == 'Geocoding':
-    st.markdown( '#### Geocoding & Places' )
-    set_blue_divider( )
+    st.subheader( 'Geocoding & Places' )
+    st.divider( )
     
-    geo_c1, geo_c2, geo_c3 = st.columns( [ 0.5, 0.25, 0.25 ], border=True, width='stretch' )
-    
+    geo_c1, geo_c2= st.columns( [ 0.75, 0.25 ], border=True )
     with geo_c1:
 	    query = st.text_input( 'Address or Location' )
     
     with geo_c2:
 	    use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
     
-    with geo_c3:
-	    if st.button( 'Resolve Location' ):
-		    if not query:
-			    st.warning( 'Enter a location.' )
-		    else:
-			    try:
-				    result = geocoder.freeform( query )
-				    st.json( result )
-			    
-			    except NotFound:
-				    st.warning( 'Geocoding failed. Trying Places search.' )
-				    result = places.text_to_location( query )
-				    st.json( result )
-			    
-			    except Exception as e:
-				    st.error( str( e ) )
+    if st.button( 'Resolve Location' ):
+	    if not query:
+		    st.warning( 'Enter a location.' )
+	    else:
+		    try:
+			    result = geocoder.freeform( query )
+			    st.json( result )
+		    
+		    except NotFound:
+			    st.warning( 'Geocoding failed. Trying Places search.' )
+			    result = places.text_to_location( query )
+			    st.json( result )
+		    
+		    except Exception as e:
+			    st.error( str( e ) )
 
 # ==============================================================================
 # Distance Matrix Tab
