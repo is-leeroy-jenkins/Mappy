@@ -1342,18 +1342,17 @@ def store_loaded_dataset( df_dataset: pd.DataFrame, df_original: pd.DataFrame | 
 	st.session_state[ 'df_dataset' ] = df_source.copy( )
 	
 # ---------------------------------------------------------------------
-# Streamlit Configuration
+# PAGE CONFIGURATION
 # ---------------------------------------------------------------------
 style_subheaders( )
 st.set_page_config(  page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
     initial_sidebar_state='expanded', )
 
-
-# ---------------------------------------------------------------------
+# ==============================================================================
 # SIDEBAR
-# ---------------------------------------------------------------------
+# ==============================================================================
 
-st.logo( cfg.LOGO )
+st.logo( cfg.LOGO, size='large' )
 
 with st.sidebar:
 	# ------- Mode Selection
@@ -1459,19 +1458,11 @@ with st.sidebar:
 			cache_path = st.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
 			cache = SQLiteCache( cache_path )
 
-# ---------------------------------------------------------------------
-# Core Maps Gateway (NO cache argument — VERIFIED)
-# ---------------------------------------------------------------------
+# -----------  Core Maps Gateway (NO cache argument — VERIFIED)
 
 maps = Maps( api_key=api_key, qps=qps, )
-
-# ---------------------------------------------------------------------
-# Services (cache injected ONLY where supported)
-# ---------------------------------------------------------------------
-
 geocoder = Geocoder( maps, cache=cache )
 places = Places( maps, cache=cache )
-
 distances = DistanceMatrix( maps )
 timezone = Timezone( maps )
 static_maps = StaticMapURL( api_key=api_key )
@@ -1483,24 +1474,29 @@ static_maps = StaticMapURL( api_key=api_key )
 if mode == 'Geocoding':
     st.subheader('Geocoding & Places')
     st.divider( )
-    query = st.text_input('Address or Location')
-    use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
-    if st.button('Resolve Location'):
-        if not query:
-            st.warning('Enter a location.')
-        else:
-	        try:
-		        result = geocoder.freeform( query )
-		        st.json( result )
-	        
-	        except NotFound:
-		        st.warning( 'Geocoding failed. Trying Places search.' )
-		        result = places.text_to_location( query )
-		        st.json( result )
-	        
-	        except Exception as e:
-		        st.error( str( e ) )
-
+    geo_c1, geo_c2, geo_c3 = st.columns( [ 0.5, 0.25, 0.25 ], border=True )
+    with geo_c1:
+	    query = st.text_input( 'Address or Location' )
+    
+    with geo_c2:
+	    use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
+    
+    with geo_c3:
+	    if st.button( 'Resolve Location' ):
+		    if not query:
+			    st.warning( 'Enter a location.' )
+		    else:
+			    try:
+				    result = geocoder.freeform( query )
+				    st.json( result )
+			    
+			    except NotFound:
+				    st.warning( 'Geocoding failed. Trying Places search.' )
+				    result = places.text_to_location( query )
+				    st.json( result )
+			    
+			    except Exception as e:
+				    st.error( str( e ) )
 
 # ==============================================================================
 # Distance Matrix Tab
@@ -1529,7 +1525,6 @@ elif mode == 'Distances':
 		    )
 		    st.table( pd.DataFrame( [ summary ] ) )
 
-
 # ==============================================================================
 # Static Maps Tab
 # ==============================================================================
@@ -1547,7 +1542,6 @@ elif mode == 'Maps':
 		st.image( url )
 		st.code( url )
 
-
 # ==============================================================================
 # Time Zone Tab
 # ==============================================================================
@@ -1560,7 +1554,6 @@ elif mode == 'Time Zones':
 	if st.button( 'Lookup Time Zone' ):
 		result = timezone.lookup( lat_tz, lng_tz )
 		st.json( result )
-
 
 # ==============================================================================
 # Excel Enrichment Tab
