@@ -46,7 +46,7 @@ from typing import Optional, List, Dict
 from pathlib import Path
 
 # ------------ CONSTANT
-BLUE_DIVIDER = "<div style='height:1.5px;align:left;background:#0078FC;margin:20px 0px 20px 0px;'></div>"
+BLUE_DIVIDER = "<div style='height:1.5px;align:left;background:#0078FC;margin:20px 0px 30px 0px;'></div>"
 APP_TITLE = 'Mappy'
 APP_SUBTITLE = 'Geospatial Toolkit'
 DB_PATH = 'stores/sqlite/data.db'

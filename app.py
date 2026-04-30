@@ -1472,9 +1472,11 @@ static_maps = StaticMapURL( api_key=api_key )
 # Geocoding & Places Tab
 # ==============================================================================
 if mode == 'Geocoding':
-    st.subheader('Geocoding & Places')
-    st.divider( )
-    geo_c1, geo_c2, geo_c3 = st.columns( [ 0.5, 0.25, 0.25 ], border=True )
+    st.markdown( '#### Geocoding & Places' )
+    set_blue_divider( )
+    
+    geo_c1, geo_c2, geo_c3 = st.columns( [ 0.5, 0.25, 0.25 ], border=True, width='stretch' )
+    
     with geo_c1:
 	    query = st.text_input( 'Address or Location' )
     
@@ -1518,11 +1520,7 @@ elif mode == 'Distances':
 	    if not origin or not destination:
 		    st.warning( 'Provide both origin and destination.' )
 	    else:
-		    summary = distances.summary(
-			    origin,
-			    destination,
-			    mode=mode,
-		    )
+		    summary = distances.summary( origin, destination,  mode=mode, )
 		    st.table( pd.DataFrame( [ summary ] ) )
 
 # ==============================================================================
