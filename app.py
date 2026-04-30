@@ -28,11 +28,14 @@ from __future__ import annotations
 from exceptions import NotFound
 import os
 from typing import Optional
+import matplotlib
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 import sqlite3
 import re
+import datetime as dt
+from typing import Optional
 import time
 from pathlib import Path
 import config as cfg
@@ -45,7 +48,31 @@ from timezones import Timezone
 from staticmaps import StaticMapURL
 from excel import Excel
 from caches import InMemoryCache, SQLiteCache
-
+from fetchers import (
+	GoogleWeather,
+	OpenWeather,
+	HistoricalWeather,
+	ClimateData,
+	TidesAndCurrents,
+	AirNow,
+	UvIndex,
+	OpenAQ,
+	PurpleAir,
+	EnviroFacts,
+	Firms,
+	EoNet,
+	USGSEarthquakes,
+	USGSWaterData,
+	USGSTheNationalMap,
+	GlobalImagery,
+	NavalObservatory,
+	SatelliteCenter,
+	SpaceWeather,
+	AstroCatalog,
+	AstroQuery,
+	StarMap,
+	StarChart
+)
 
 # ---------------------------------------------------------------------
 # SESSION STATE INITIALIZATION
@@ -1508,7 +1535,8 @@ if mode == 'Geocoding':
 					
 		with geo_c2:
 			use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
-			
+
+
 # ==============================================================================
 # WEATHER MODE
 # ==============================================================================
@@ -1519,27 +1547,747 @@ elif mode == 'Weather':
 		st.divider( )
 		
 		met_c1, met_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		
 		with met_c1:
-			#----Expanders for Fetchers
-			pass
+			# ------------------------------------------------------------------
+			# GOOGLE WEATHER
+			# ------------------------------------------------------------------
+			with st.expander( '🌦️ Google Weather', expanded=True ):
+				google_address = st.text_input(
+					'Address or Location',
+					value='Washington, DC',
+					key='weather_google_address' )
+				
+				google_product = st.selectbox(
+					'Product',
+					options=[ 'Current Conditions', 'Hourly Forecast', 'Daily Forecast', 'Alerts' ],
+					key='weather_google_product' )
+				
+				google_units = st.selectbox(
+					'Units System',
+					options=[ 'METRIC', 'IMPERIAL' ],
+					key='weather_google_units' )
+				
+				google_language = st.text_input(
+					'Language Code',
+					value='en',
+					key='weather_google_language' )
+				
+				google_hours = st.number_input(
+					'Hours',
+					min_value=1,
+					max_value=240,
+					value=24,
+					step=1,
+					key='weather_google_hours',
+					disabled=(google_product != 'Hourly Forecast') )
+				
+				google_days = st.number_input(
+					'Days',
+					min_value=1,
+					max_value=10,
+					value=5,
+					step=1,
+					key='weather_google_days',
+					disabled=(google_product != 'Daily Forecast') )
+				
+				google_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=10,
+					step=1,
+					key='weather_google_timeout' )
+				
+				google_btn_c1, google_btn_c2 = st.columns( 2 )
+				with google_btn_c1:
+					if st.button( 'Run Google Weather', key='weather_google_run',
+							use_container_width=True ):
+						if not google_address:
+							st.warning( 'Enter an address or location.' )
+						else:
+							try:
+								weather = GoogleWeather( )
+								
+								if google_product == 'Current Conditions':
+									result = weather.fetch_current(
+										address=google_address,
+										units_system=google_units,
+										language_code=google_language,
+										time=int( google_timeout ) )
+								
+								elif google_product == 'Hourly Forecast':
+									result = weather.fetch_hourly_forecast(
+										address=google_address,
+										hours=int( google_hours ),
+										units_system=google_units,
+										language_code=google_language,
+										time=int( google_timeout ) )
+								
+								elif google_product == 'Daily Forecast':
+									result = weather.fetch_daily_forecast(
+										address=google_address,
+										days=int( google_days ),
+										units_system=google_units,
+										language_code=google_language,
+										time=int( google_timeout ) )
+								
+								else:
+									result = weather.fetch_alerts(
+										address=google_address,
+										language_code=google_language,
+										time=int( google_timeout ) )
+								
+								st.session_state[ 'weather_last_source' ] = 'Google Weather'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = weather.latitude
+								st.session_state[ 'weather_last_longitude' ] = weather.longitude
+								st.success( 'Google Weather request completed.' )
+							
+							except Exception as ex:
+								st.error( f'Google Weather request failed: {ex}' )
+				
+				with google_btn_c2:
+					if st.button( 'Clear Google Result', key='weather_google_clear',
+							use_container_width=True ):
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# OPENWEATHER / OPEN-METEO
+			# ------------------------------------------------------------------
+			with st.expander( '🌤️ OpenWeather / Open-Meteo', expanded=False ):
+				open_location = st.text_input(
+					'Location',
+					value='Washington, DC',
+					key='weather_open_location' )
+				
+				open_mode = st.selectbox(
+					'Mode',
+					options=[ 'current', 'hourly', 'daily' ],
+					key='weather_open_mode' )
+				
+				open_zone = st.text_input(
+					'Timezone',
+					value='auto',
+					key='weather_open_zone' )
+				
+				open_forecast_days = st.number_input(
+					'Forecast Days',
+					min_value=1,
+					max_value=16,
+					value=7,
+					step=1,
+					key='weather_open_forecast_days' )
+				
+				open_past_days = st.number_input(
+					'Past Days',
+					min_value=0,
+					max_value=92,
+					value=0,
+					step=1,
+					key='weather_open_past_days' )
+				
+				open_count = st.number_input(
+					'Geocoding Result Count',
+					min_value=1,
+					max_value=100,
+					value=10,
+					step=1,
+					key='weather_open_count' )
+				
+				open_btn_c1, open_btn_c2 = st.columns( 2 )
+				
+				with open_btn_c1:
+					if st.button( 'Run OpenWeather', key='weather_open_run',
+							use_container_width=True ):
+						if not open_location:
+							st.warning( 'Enter a location.' )
+						else:
+							try:
+								weather = OpenWeather( )
+								result = weather.fetch(
+									location=open_location,
+									mode=open_mode,
+									zone=open_zone,
+									forecast_days=int( open_forecast_days ),
+									past_days=int( open_past_days ),
+									count=int( open_count ) )
+								
+								st.session_state[
+									'weather_last_source' ] = 'OpenWeather / Open-Meteo'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = getattr(
+									weather, 'latitude', None )
+								st.session_state[ 'weather_last_longitude' ] = getattr(
+									weather, 'longitude', None )
+								st.success( 'OpenWeather request completed.' )
+							
+							except Exception as ex:
+								st.error( f'OpenWeather request failed: {ex}' )
+				
+				with open_btn_c2:
+					if st.button( 'Clear OpenWeather Result', key='weather_open_clear',
+							use_container_width=True ):
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# HISTORICAL WEATHER
+			# ------------------------------------------------------------------
+			with st.expander( '🕰️ Historical Weather', expanded=False ):
+				historical_location = st.text_input(
+					'Location',
+					value='Washington, DC',
+					key='weather_historical_location' )
+				
+				historical_date = st.date_input(
+					'Historical Date',
+					value=dt.date.today( ) - dt.timedelta( days=7 ),
+					key='weather_historical_date' )
+				
+				historical_zone = st.text_input(
+					'Timezone',
+					value='auto',
+					key='weather_historical_zone' )
+				
+				historical_count = st.number_input(
+					'Geocoding Result Count',
+					min_value=1,
+					max_value=100,
+					value=10,
+					step=1,
+					key='weather_historical_count' )
+				
+				historical_btn_c1, historical_btn_c2 = st.columns( 2 )
+				
+				with historical_btn_c1:
+					if st.button( 'Run Historical Weather', key='weather_historical_run',
+							use_container_width=True ):
+						if not historical_location:
+							st.warning( 'Enter a location.' )
+						else:
+							try:
+								weather = HistoricalWeather( )
+								result = weather.fetch(
+									location=historical_location,
+									date=historical_date,
+									zone=historical_zone,
+									count=int( historical_count ) )
+								
+								st.session_state[ 'weather_last_source' ] = 'Historical Weather'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = getattr(
+									weather, 'latitude', None )
+								st.session_state[ 'weather_last_longitude' ] = getattr(
+									weather, 'longitude', None )
+								st.success( 'Historical Weather request completed.' )
+							
+							except Exception as ex:
+								st.error( f'Historical Weather request failed: {ex}' )
+				
+				with historical_btn_c2:
+					if st.button( 'Clear Historical Result', key='weather_historical_clear',
+							use_container_width=True ):
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
+		
 		with met_c2:
-			#----Static Map & Langchain Document Data
-			pass
+			# ------------------------------------------------------------------
+			# WEATHER RESULTS
+			# ------------------------------------------------------------------
+			st.markdown( '##### Weather Results' )
+			
+			weather_source = st.session_state.get( 'weather_last_source', '' )
+			weather_result = st.session_state.get( 'weather_last_result', { } )
+			weather_latitude = st.session_state.get( 'weather_last_latitude', None )
+			weather_longitude = st.session_state.get( 'weather_last_longitude', None )
+			
+			if not weather_result:
+				st.info( 'No weather results available. Run one of the Weather expanders.' )
+			
+			else:
+				if weather_source:
+					st.caption( f'Source: {weather_source}' )
+				
+				if weather_latitude is not None and weather_longitude is not None:
+					try:
+						lat_value = float( weather_latitude )
+						lng_value = float( weather_longitude )
+						
+						lat_c, lng_c = st.columns( 2 )
+						with lat_c:
+							st.metric( 'Latitude', f'{lat_value:.6f}' )
+						with lng_c:
+							st.metric( 'Longitude', f'{lng_value:.6f}' )
+						
+						preview_url = static_maps.pin(
+							lat=lat_value,
+							lng=lng_value,
+							zoom=8,
+							size='600x400' )
+						
+						st.image( preview_url )
+					
+					except Exception as ex:
+						st.warning( f'Static map preview failed: {ex}' )
+				
+				st.json( weather_result )
 
 # ==============================================================================
 # ENVIRONMENTAL MODE
 # ==============================================================================
 elif mode == 'Environmental':
-	st.subheader( 'Environmental Data' )
-	st.divider( )
-	
-	enviro_c1, enviro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
-	with enviro_c1:
-		# ----Expanders for Fetchers
-		pass
-	with enviro_c2:
-		# ----Static Map and/or Langchain Document Data
-		pass
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Environmental Data' )
+		st.divider( )
+		
+		enviro_c1, enviro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		
+		with enviro_c1:
+			# ------------------------------------------------------------------
+			# AIRNOW AIR QUALITY
+			# ------------------------------------------------------------------
+			with st.expander( '🌫️ AirNow Air Quality', expanded=True ):
+				airnow_mode = st.selectbox(
+					'Mode',
+					options=[
+							'Current by ZIP',
+							'Current by Coordinates',
+							'Forecast by ZIP',
+							'Forecast by Coordinates'
+					],
+					key='env_airnow_mode' )
+				
+				airnow_distance = st.number_input(
+					'Distance',
+					min_value=0,
+					max_value=250,
+					value=25,
+					step=1,
+					key='env_airnow_distance' )
+				
+				airnow_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_airnow_timeout' )
+				
+				if 'ZIP' in airnow_mode:
+					airnow_zip = st.text_input(
+						'ZIP Code',
+						value='20001',
+						key='env_airnow_zip' )
+					
+					airnow_latitude = None
+					airnow_longitude = None
+				
+				else:
+					airnow_zip = ''
+					airnow_latitude = st.number_input(
+						'Latitude',
+						value=38.907200,
+						format='%.6f',
+						key='env_airnow_latitude' )
+					
+					airnow_longitude = st.number_input(
+						'Longitude',
+						value=-77.036900,
+						format='%.6f',
+						key='env_airnow_longitude' )
+				
+				if 'Forecast' in airnow_mode:
+					airnow_date = st.date_input(
+						'Forecast Date',
+						value=dt.date.today( ),
+						key='env_airnow_date' )
+				else:
+					airnow_date = None
+				
+				airnow_btn_c1, airnow_btn_c2 = st.columns( 2 )
+				
+				with airnow_btn_c1:
+					if st.button( 'Run AirNow', key='env_airnow_run',
+							use_container_width=True ):
+						try:
+							service = AirNow( )
+							
+							if airnow_mode == 'Current by ZIP':
+								if not airnow_zip:
+									st.warning( 'Enter a ZIP code.' )
+									result = None
+								else:
+									result = service.fetch_current_zip(
+										zip_code=airnow_zip,
+										distance=int( airnow_distance ),
+										time=int( airnow_timeout ) )
+							
+							elif airnow_mode == 'Current by Coordinates':
+								result = service.fetch_current_latlon(
+									latitude=float( airnow_latitude ),
+									longitude=float( airnow_longitude ),
+									distance=int( airnow_distance ),
+									time=int( airnow_timeout ) )
+							
+							elif airnow_mode == 'Forecast by ZIP':
+								if not airnow_zip:
+									st.warning( 'Enter a ZIP code.' )
+									result = None
+								else:
+									result = service.fetch_forecast_zip(
+										zip_code=airnow_zip,
+										date=airnow_date.isoformat( ),
+										distance=int( airnow_distance ),
+										time=int( airnow_timeout ) )
+							
+							else:
+								result = service.fetch_forecast_latlon(
+									latitude=float( airnow_latitude ),
+									longitude=float( airnow_longitude ),
+									date=airnow_date.isoformat( ),
+									distance=int( airnow_distance ),
+									time=int( airnow_timeout ) )
+							
+							if result is not None:
+								st.session_state[ 'env_last_source' ] = 'AirNow'
+								st.session_state[ 'env_last_result' ] = result or { }
+								st.session_state[ 'env_last_latitude' ] = airnow_latitude
+								st.session_state[ 'env_last_longitude' ] = airnow_longitude
+								st.success( 'AirNow request completed.' )
+						
+						except Exception as ex:
+							st.error( f'AirNow request failed: {ex}' )
+				
+				with airnow_btn_c2:
+					if st.button( 'Clear AirNow Result', key='env_airnow_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# UV INDEX
+			# ------------------------------------------------------------------
+			with st.expander( '☀️ UV Index', expanded=False ):
+				uv_mode = st.selectbox(
+					'Mode',
+					options=[
+							'Daily by ZIP',
+							'Daily by City / State',
+							'Hourly by ZIP',
+							'Hourly by City / State'
+					],
+					key='env_uv_mode' )
+				
+				uv_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_uv_timeout' )
+				
+				if 'ZIP' in uv_mode:
+					uv_zip = st.text_input(
+						'ZIP Code',
+						value='20001',
+						key='env_uv_zip' )
+					
+					uv_city = ''
+					uv_state = ''
+				
+				else:
+					uv_zip = ''
+					uv_city = st.text_input(
+						'City',
+						value='Washington',
+						key='env_uv_city' )
+					
+					uv_state = st.text_input(
+						'State',
+						value='DC',
+						key='env_uv_state' )
+				
+				uv_btn_c1, uv_btn_c2 = st.columns( 2 )
+				
+				with uv_btn_c1:
+					if st.button( 'Run UV Index', key='env_uv_run',
+							use_container_width=True ):
+						try:
+							service = UvIndex( )
+							
+							if uv_mode == 'Daily by ZIP':
+								if not uv_zip:
+									st.warning( 'Enter a ZIP code.' )
+									result = None
+								else:
+									result = service.fetch_daily_zip(
+										zip_code=uv_zip,
+										time=int( uv_timeout ) )
+							
+							elif uv_mode == 'Daily by City / State':
+								if not uv_city or not uv_state:
+									st.warning( 'Enter both city and state.' )
+									result = None
+								else:
+									result = service.fetch_daily_city_state(
+										city=uv_city,
+										state=uv_state,
+										time=int( uv_timeout ) )
+							
+							elif uv_mode == 'Hourly by ZIP':
+								if not uv_zip:
+									st.warning( 'Enter a ZIP code.' )
+									result = None
+								else:
+									result = service.fetch_hourly_zip(
+										zip_code=uv_zip,
+										time=int( uv_timeout ) )
+							
+							else:
+								if not uv_city or not uv_state:
+									st.warning( 'Enter both city and state.' )
+									result = None
+								else:
+									result = service.fetch_hourly_city_state(
+										city=uv_city,
+										state=uv_state,
+										time=int( uv_timeout ) )
+							
+							if result is not None:
+								st.session_state[ 'env_last_source' ] = 'UV Index'
+								st.session_state[ 'env_last_result' ] = result or { }
+								st.session_state[ 'env_last_latitude' ] = None
+								st.session_state[ 'env_last_longitude' ] = None
+								st.success( 'UV Index request completed.' )
+						
+						except Exception as ex:
+							st.error( f'UV Index request failed: {ex}' )
+				
+				with uv_btn_c2:
+					if st.button( 'Clear UV Result', key='env_uv_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# OPENAQ
+			# ------------------------------------------------------------------
+			with st.expander( '🧪 OpenAQ', expanded=False ):
+				openaq_mode = st.selectbox(
+					'Mode',
+					options=[ 'Locations', 'Latest Measurements' ],
+					key='env_openaq_mode' )
+				
+				openaq_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_openaq_timeout' )
+				
+				if openaq_mode == 'Locations':
+					openaq_country_id = st.number_input(
+						'Country ID',
+						min_value=0,
+						value=0,
+						step=1,
+						key='env_openaq_country_id' )
+					
+					openaq_coordinates = st.text_input(
+						'Coordinates',
+						value='38.9072,-77.0369',
+						help='OpenAQ expects a latitude,longitude string.',
+						key='env_openaq_coordinates' )
+					
+					openaq_radius = st.number_input(
+						'Radius',
+						min_value=1,
+						max_value=100000,
+						value=25000,
+						step=1000,
+						key='env_openaq_radius' )
+					
+					openaq_providers_id = st.text_input(
+						'Providers ID',
+						value='',
+						key='env_openaq_providers_id' )
+					
+					openaq_parameters_id = st.text_input(
+						'Parameters ID',
+						value='',
+						key='env_openaq_parameters_id' )
+					
+					openaq_limit = st.number_input(
+						'Limit',
+						min_value=1,
+						max_value=1000,
+						value=25,
+						step=1,
+						key='env_openaq_limit' )
+					
+					openaq_page = st.number_input(
+						'Page',
+						min_value=1,
+						max_value=10000,
+						value=1,
+						step=1,
+						key='env_openaq_page' )
+					
+					openaq_location_id = None
+				
+				else:
+					openaq_country_id = 0
+					openaq_coordinates = ''
+					openaq_radius = 25000
+					openaq_providers_id = ''
+					openaq_parameters_id = ''
+					openaq_limit = 25
+					openaq_page = 1
+					
+					openaq_location_id = st.number_input(
+						'Location ID',
+						min_value=1,
+						value=1,
+						step=1,
+						key='env_openaq_location_id' )
+				
+				openaq_btn_c1, openaq_btn_c2 = st.columns( 2 )
+				
+				with openaq_btn_c1:
+					if st.button( 'Run OpenAQ', key='env_openaq_run',
+							use_container_width=True ):
+						try:
+							service = OpenAQ( )
+							
+							if openaq_mode == 'Locations':
+								country_id_value = None
+								if int( openaq_country_id ) > 0:
+									country_id_value = int( openaq_country_id )
+								
+								result = service.fetch_locations(
+									country_id=country_id_value,
+									coordinates=openaq_coordinates,
+									radius=int( openaq_radius ),
+									providers_id=openaq_providers_id,
+									parameters_id=openaq_parameters_id,
+									limit=int( openaq_limit ),
+									page=int( openaq_page ),
+									time=int( openaq_timeout ) )
+								
+								lat_value = None
+								lng_value = None
+								try:
+									parts = [ p.strip( ) for p in openaq_coordinates.split( ',' ) ]
+									if len( parts ) == 2:
+										lat_value = float( parts[ 0 ] )
+										lng_value = float( parts[ 1 ] )
+								except Exception:
+									lat_value = None
+									lng_value = None
+							
+							else:
+								result = service.fetch_latest(
+									location_id=int( openaq_location_id ),
+									time=int( openaq_timeout ) )
+								
+								lat_value = None
+								lng_value = None
+							
+							st.session_state[ 'env_last_source' ] = 'OpenAQ'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = lat_value
+							st.session_state[ 'env_last_longitude' ] = lng_value
+							st.success( 'OpenAQ request completed.' )
+						
+						except Exception as ex:
+							st.error( f'OpenAQ request failed: {ex}' )
+				
+				with openaq_btn_c2:
+					if st.button( 'Clear OpenAQ Result', key='env_openaq_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+		
+		with enviro_c2:
+			# ------------------------------------------------------------------
+			# ENVIRONMENTAL RESULTS
+			# ------------------------------------------------------------------
+			st.markdown( '##### Environmental Results' )
+			
+			env_source = st.session_state.get( 'env_last_source', '' )
+			env_result = st.session_state.get( 'env_last_result', { } )
+			env_latitude = st.session_state.get( 'env_last_latitude', None )
+			env_longitude = st.session_state.get( 'env_last_longitude', None )
+			
+			if not env_result:
+				st.info(
+					'No environmental results available. Run one of the Environmental expanders.' )
+			
+			else:
+				if env_source:
+					st.caption( f'Source: {env_source}' )
+				
+				summary = env_result.get( 'summary', None ) if isinstance( env_result,
+					dict ) else None
+				rows = env_result.get( 'rows', None ) if isinstance( env_result, dict ) else None
+				
+				if isinstance( summary, dict ) and summary:
+					st.markdown( '##### Summary' )
+					st.data_editor(
+						pd.DataFrame( [ summary ] ),
+						key='env_summary_table',
+						use_container_width=True,
+						disabled=True )
+				
+				if env_latitude is not None and env_longitude is not None:
+					try:
+						lat_value = float( env_latitude )
+						lng_value = float( env_longitude )
+						
+						lat_c, lng_c = st.columns( 2 )
+						with lat_c:
+							st.metric( 'Latitude', f'{lat_value:.6f}' )
+						with lng_c:
+							st.metric( 'Longitude', f'{lng_value:.6f}' )
+						
+						preview_url = static_maps.pin(
+							lat=lat_value,
+							lng=lng_value,
+							zoom=8,
+							size='600x400' )
+						
+						st.image( preview_url )
+					
+					except Exception as ex:
+						st.warning( f'Static map preview failed: {ex}' )
+				
+				if isinstance( rows, list ) and rows:
+					st.markdown( '##### Rows' )
+					st.data_editor(
+						pd.DataFrame( rows ),
+						key='env_rows_table',
+						use_container_width=True,
+						disabled=True )
+				
+				st.markdown( '##### Raw Result' )
+				st.json( env_result )
+
 
 # ==============================================================================
 # ASTRONOMICAL MODE
@@ -1551,15 +2299,503 @@ elif mode == 'Astronomical':
 		st.divider( )
 		
 		astro_c1, astro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		
 		with astro_c1:
-			# ----Expanders for Fetchers
-			pass
+			# ------------------------------------------------------------------
+			# NAVAL OBSERVATORY
+			# ------------------------------------------------------------------
+			with st.expander( '🧭 Naval Observatory', expanded=True ):
+				naval_date = st.date_input(
+					'Date',
+					value=dt.date.today( ),
+					key='astro_naval_date' )
+				
+				naval_time_value = st.text_input(
+					'Time',
+					value='12:00:00',
+					help='Use HH:MM, HH:MM:SS, or HH:MM:SS.S format.',
+					key='astro_naval_time_value' )
+				
+				naval_c1, naval_c2 = st.columns( 2 )
+				with naval_c1:
+					naval_latitude = st.number_input(
+						'Latitude',
+						value=38.907200,
+						format='%.6f',
+						key='astro_naval_latitude' )
+				
+				with naval_c2:
+					naval_longitude = st.number_input(
+						'Longitude',
+						value=-77.036900,
+						format='%.6f',
+						key='astro_naval_longitude' )
+				
+				naval_location_label = st.text_input(
+					'Location Label',
+					value='Washington, DC',
+					key='astro_naval_location_label' )
+				
+				naval_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_naval_timeout' )
+				
+				naval_btn_c1, naval_btn_c2 = st.columns( 2 )
+				
+				with naval_btn_c1:
+					if st.button( 'Run Naval Observatory', key='astro_naval_run',
+							use_container_width=True ):
+						try:
+							service = NavalObservatory( )
+							result = service.fetch(
+								mode='celnav',
+								date_value=naval_date.isoformat( ),
+								time_value=naval_time_value,
+								latitude=float( naval_latitude ),
+								longitude=float( naval_longitude ),
+								location_label=naval_location_label,
+								time=int( naval_timeout ) )
+							
+							st.session_state[ 'astro_last_source' ] = 'Naval Observatory'
+							st.session_state[ 'astro_last_result' ] = result or { }
+							st.session_state[ 'astro_last_latitude' ] = naval_latitude
+							st.session_state[ 'astro_last_longitude' ] = naval_longitude
+							st.session_state[ 'astro_last_url' ] = ''
+							st.success( 'Naval Observatory request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Naval Observatory request failed: {ex}' )
+				
+				with naval_btn_c2:
+					if st.button( 'Clear Naval Result', key='astro_naval_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+			
+			# ------------------------------------------------------------------
+			# SPACE WEATHER
+			# ------------------------------------------------------------------
+			with st.expander( '☀️ Space Weather', expanded=False ):
+				space_mode = st.selectbox(
+					'Mode',
+					options=[
+							'cme',
+							'cme_analysis',
+							'gst',
+							'ips',
+							'flr',
+							'sep',
+							'mpc',
+							'rbe',
+							'hss',
+							'wsa_enlil',
+							'notifications'
+					],
+					key='astro_space_mode' )
+				
+				space_date_c1, space_date_c2 = st.columns( 2 )
+				with space_date_c1:
+					space_start = st.date_input(
+						'Start Date',
+						value=dt.date.today( ) - dt.timedelta( days=7 ),
+						key='astro_space_start_date' )
+				
+				with space_date_c2:
+					space_end = st.date_input(
+						'End Date',
+						value=dt.date.today( ),
+						key='astro_space_end_date' )
+				
+				space_location = st.text_input(
+					'Location',
+					value='ALL',
+					key='astro_space_location' )
+				
+				space_catalog = st.text_input(
+					'Catalog',
+					value='ALL',
+					key='astro_space_catalog' )
+				
+				space_notification_type = st.text_input(
+					'Notification Type',
+					value='all',
+					key='astro_space_notification_type' )
+				
+				space_c1, space_c2 = st.columns( 2 )
+				with space_c1:
+					space_most_accurate_only = st.checkbox(
+						'Most Accurate Only',
+						value=True,
+						key='astro_space_most_accurate_only' )
+					
+					space_complete_entry_only = st.checkbox(
+						'Complete Entry Only',
+						value=True,
+						key='astro_space_complete_entry_only' )
+				
+				with space_c2:
+					space_speed = st.number_input(
+						'Speed',
+						min_value=0,
+						max_value=5000,
+						value=0,
+						step=10,
+						key='astro_space_speed' )
+					
+					space_half_angle = st.number_input(
+						'Half Angle',
+						min_value=0,
+						max_value=360,
+						value=0,
+						step=1,
+						key='astro_space_half_angle' )
+				
+				space_keyword = st.text_input(
+					'Keyword',
+					value='',
+					key='astro_space_keyword' )
+				
+				space_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_space_timeout' )
+				
+				space_btn_c1, space_btn_c2 = st.columns( 2 )
+				
+				with space_btn_c1:
+					if st.button( 'Run Space Weather', key='astro_space_run',
+							use_container_width=True ):
+						try:
+							service = SpaceWeather( )
+							result = service.fetch(
+								mode=space_mode,
+								start_date=space_start.isoformat( ),
+								end_date=space_end.isoformat( ),
+								time=int( space_timeout ),
+								location=space_location,
+								catalog=space_catalog,
+								notification_type=space_notification_type,
+								most_accurate_only=bool( space_most_accurate_only ),
+								complete_entry_only=bool( space_complete_entry_only ),
+								speed=int( space_speed ),
+								half_angle=int( space_half_angle ),
+								keyword=space_keyword,
+								api_key=getattr( cfg, 'NASA_API_KEY', None ) )
+							
+							st.session_state[ 'astro_last_source' ] = 'Space Weather'
+							st.session_state[ 'astro_last_result' ] = result or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
+							st.success( 'Space Weather request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Space Weather request failed: {ex}' )
+				
+				with space_btn_c2:
+					if st.button( 'Clear Space Weather Result', key='astro_space_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+			
+			# ------------------------------------------------------------------
+			# STAR CHART
+			# ------------------------------------------------------------------
+			with st.expander( '✨ Star Chart', expanded=False ):
+				chart_mode = st.selectbox(
+					'Mode',
+					options=[
+							'Object Chart',
+							'Coordinate Chart',
+							'Static Chart'
+					],
+					key='astro_chart_mode' )
+				
+				chart_zoom = st.number_input(
+					'Zoom',
+					min_value=1,
+					max_value=20,
+					value=5,
+					step=1,
+					key='astro_chart_zoom' )
+				
+				chart_image_source = st.text_input(
+					'Image Source',
+					value='DSS2',
+					key='astro_chart_image_source' )
+				
+				if chart_mode == 'Object Chart':
+					chart_object_name = st.text_input(
+						'Object Name',
+						value='M31',
+						key='astro_chart_object_name' )
+					
+					chart_ra = 0.0
+					chart_dec = 0.0
+				
+				else:
+					chart_object_name = ''
+					coord_c1, coord_c2 = st.columns( 2 )
+					with coord_c1:
+						chart_ra = st.number_input(
+							'Right Ascension',
+							value=10.6847083,
+							format='%.7f',
+							key='astro_chart_ra' )
+					
+					with coord_c2:
+						chart_dec = st.number_input(
+							'Declination',
+							value=41.2687500,
+							format='%.7f',
+							key='astro_chart_dec' )
+				
+				chart_box_color = st.selectbox(
+					'Box Color',
+					options=[ 'yellow', 'red', 'green', 'blue', 'white' ],
+					key='astro_chart_box_color' )
+				
+				chart_options_c1, chart_options_c2 = st.columns( 2 )
+				with chart_options_c1:
+					chart_show_box = st.checkbox(
+						'Show Box',
+						value=True,
+						key='astro_chart_show_box' )
+					
+					chart_show_grid = st.checkbox(
+						'Show Grid',
+						value=True,
+						key='astro_chart_show_grid' )
+				
+				with chart_options_c2:
+					chart_show_lines = st.checkbox(
+						'Show Lines',
+						value=True,
+						key='astro_chart_show_lines' )
+					
+					chart_show_boundaries = st.checkbox(
+						'Show Boundaries',
+						value=True,
+						key='astro_chart_show_boundaries' )
+				
+				if chart_mode == 'Static Chart':
+					static_c1, static_c2 = st.columns( 2 )
+					with static_c1:
+						chart_width = st.number_input(
+							'Width',
+							min_value=250,
+							max_value=2500,
+							value=900,
+							step=50,
+							key='astro_chart_width' )
+						
+						chart_magnitude = st.number_input(
+							'Magnitude',
+							min_value=0.0,
+							max_value=20.0,
+							value=7.5,
+							step=0.1,
+							format='%.1f',
+							key='astro_chart_magnitude' )
+					
+					with static_c2:
+						chart_height = st.number_input(
+							'Height',
+							min_value=250,
+							max_value=2500,
+							value=450,
+							step=50,
+							key='astro_chart_height' )
+						
+						chart_show_const_names = st.checkbox(
+							'Show Constellation Names',
+							value=False,
+							key='astro_chart_show_const_names' )
+				
+				else:
+					chart_width = 900
+					chart_height = 450
+					chart_magnitude = 7.5
+					chart_show_const_names = False
+				
+				chart_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_chart_timeout' )
+				
+				chart_btn_c1, chart_btn_c2 = st.columns( 2 )
+				
+				with chart_btn_c1:
+					if st.button( 'Run Star Chart', key='astro_chart_run',
+							use_container_width=True ):
+						try:
+							service = StarChart( )
+							
+							if chart_mode == 'Object Chart':
+								if not chart_object_name:
+									st.warning( 'Enter an object name.' )
+									result = None
+								else:
+									result = service.fetch_object_chart(
+										name=chart_object_name,
+										zoom=int( chart_zoom ),
+										box_color=chart_box_color,
+										show_box=bool( chart_show_box ),
+										image_source=chart_image_source,
+										time=int( chart_timeout ) )
+							
+							elif chart_mode == 'Coordinate Chart':
+								result = service.fetch_coordinate_chart(
+									ra=float( chart_ra ),
+									dec=float( chart_dec ),
+									zoom=int( chart_zoom ),
+									box_color=chart_box_color,
+									show_box=bool( chart_show_box ),
+									show_grid=bool( chart_show_grid ),
+									show_lines=bool( chart_show_lines ),
+									show_boundaries=bool( chart_show_boundaries ),
+									image_source=chart_image_source )
+							
+							else:
+								result = service.fetch_static_chart(
+									ra=float( chart_ra ),
+									dec=float( chart_dec ),
+									zoom=int( chart_zoom ),
+									image_source=chart_image_source,
+									show_grid=bool( chart_show_grid ),
+									show_lines=bool( chart_show_lines ),
+									show_boundaries=bool( chart_show_boundaries ),
+									show_const_names=bool( chart_show_const_names ),
+									width=int( chart_width ),
+									height=int( chart_height ),
+									magnitude=float( chart_magnitude ) )
+							
+							if result is not None:
+								result_url = ''
+								if isinstance( result, dict ):
+									result_url = (
+											result.get( 'chart_url', '' )
+											or result.get( 'image_url', '' )
+											or result.get( 'static_chart_url', '' )
+											or result.get( 'preferred_image_url', '' )
+											or result.get( 'snapshot_page_url', '' )
+									)
+								
+								st.session_state[ 'astro_last_source' ] = 'Star Chart'
+								st.session_state[ 'astro_last_result' ] = result or { }
+								st.session_state[ 'astro_last_latitude' ] = None
+								st.session_state[ 'astro_last_longitude' ] = None
+								st.session_state[ 'astro_last_url' ] = result_url
+								st.success( 'Star Chart request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Star Chart request failed: {ex}' )
+				
+				with chart_btn_c2:
+					if st.button( 'Clear Star Chart Result', key='astro_chart_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+		
 		with astro_c2:
-			# ----Static Map and/or Langchain Document Data
-			pass
+			# ------------------------------------------------------------------
+			# ASTRONOMICAL RESULTS
+			# ------------------------------------------------------------------
+			st.markdown( '##### Astronomical Results' )
+			
+			astro_source = st.session_state.get( 'astro_last_source', '' )
+			astro_result = st.session_state.get( 'astro_last_result', { } )
+			astro_latitude = st.session_state.get( 'astro_last_latitude', None )
+			astro_longitude = st.session_state.get( 'astro_last_longitude', None )
+			astro_url = st.session_state.get( 'astro_last_url', '' )
+			
+			if not astro_result:
+				st.info(
+					'No astronomical results available. Run one of the Astronomical expanders.' )
+			
+			else:
+				if astro_source:
+					st.caption( f'Source: {astro_source}' )
+				
+				if astro_latitude is not None and astro_longitude is not None:
+					try:
+						lat_value = float( astro_latitude )
+						lng_value = float( astro_longitude )
+						
+						lat_c, lng_c = st.columns( 2 )
+						with lat_c:
+							st.metric( 'Latitude', f'{lat_value:.6f}' )
+						with lng_c:
+							st.metric( 'Longitude', f'{lng_value:.6f}' )
+						
+						preview_url = static_maps.pin(
+							lat=lat_value,
+							lng=lng_value,
+							zoom=6,
+							size='600x400' )
+						
+						st.image( preview_url )
+					
+					except Exception as ex:
+						st.warning( f'Static map preview failed: {ex}' )
+				
+				if astro_url:
+					st.markdown( '##### Generated Link' )
+					st.markdown( f'[Open Generated Astronomical Resource]({astro_url})' )
+					
+					try:
+						if any( astro_url.lower( ).endswith( ext ) for ext in
+						        [ '.png', '.jpg', '.jpeg' ] ):
+							st.image( astro_url )
+					except Exception:
+						pass
+				
+				summary = astro_result.get( 'summary', None ) if isinstance( astro_result,
+					dict ) else None
+				rows = astro_result.get( 'rows', None ) if isinstance( astro_result,
+					dict ) else None
+				
+				if isinstance( summary, dict ) and summary:
+					st.markdown( '##### Summary' )
+					st.data_editor(
+						pd.DataFrame( [ summary ] ),
+						key='astro_summary_table',
+						use_container_width=True,
+						disabled=True )
+				
+				if isinstance( rows, list ) and rows:
+					st.markdown( '##### Rows' )
+					df_astro_rows = pd.DataFrame( rows )
+					st.data_editor(
+						df_astro_rows,
+						key='astro_rows_table',
+						use_container_width=True,
+						disabled=True )
+				
+				st.markdown( '##### Raw Result' )
+				st.json( astro_result )
 
 # ==============================================================================
-# GEOLOGIAL MODE
+# GEOLOGICAL MODE
 # ==============================================================================
 elif mode == 'Geological':
 	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
@@ -1568,38 +2804,346 @@ elif mode == 'Geological':
 		st.divider( )
 		
 		geo_c1, geo_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		
 		with geo_c1:
-			# ----Expanders for Fetchers
-			pass
+			# ------------------------------------------------------------------
+			# USGS EARTHQUAKES
+			# ------------------------------------------------------------------
+			with st.expander( '🌎 USGS Earthquakes', expanded=True ):
+				quake_mode = st.selectbox(
+					'Mode',
+					options=[ 'feed', 'search' ],
+					key='geo_quake_mode' )
+				
+				quake_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='geo_quake_timeout' )
+				
+				if quake_mode == 'feed':
+					quake_feed = st.selectbox(
+						'Feed',
+						options=[
+								'all_hour.geojson',
+								'all_day.geojson',
+								'all_week.geojson',
+								'all_month.geojson',
+								'1.0_hour.geojson',
+								'1.0_day.geojson',
+								'1.0_week.geojson',
+								'1.0_month.geojson',
+								'2.5_hour.geojson',
+								'2.5_day.geojson',
+								'2.5_week.geojson',
+								'2.5_month.geojson',
+								'4.5_hour.geojson',
+								'4.5_day.geojson',
+								'4.5_week.geojson',
+								'4.5_month.geojson',
+								'significant_hour.geojson',
+								'significant_day.geojson',
+								'significant_week.geojson',
+								'significant_month.geojson'
+						],
+						key='geo_quake_feed' )
+					
+					quake_start_date = ''
+					quake_end_date = ''
+					quake_min_magnitude = 1.0
+					quake_max_magnitude = 10.0
+					quake_limit = 25
+					quake_order_by = 'time'
+					quake_event_type = 'earthquake'
+					quake_use_location = False
+					quake_latitude = None
+					quake_longitude = None
+					quake_radius = None
+				
+				else:
+					quake_feed = 'all_day.geojson'
+					
+					search_c1, search_c2 = st.columns( 2 )
+					with search_c1:
+						quake_start = st.date_input(
+							'Start Date',
+							value=dt.date.today( ) - dt.timedelta( days=7 ),
+							key='geo_quake_start_date' )
+					with search_c2:
+						quake_end = st.date_input(
+							'End Date',
+							value=dt.date.today( ),
+							key='geo_quake_end_date' )
+					
+					quake_start_date = quake_start.isoformat( )
+					quake_end_date = quake_end.isoformat( )
+					
+					mag_c1, mag_c2 = st.columns( 2 )
+					with mag_c1:
+						quake_min_magnitude = st.number_input(
+							'Minimum Magnitude',
+							min_value=0.0,
+							max_value=10.0,
+							value=1.0,
+							step=0.1,
+							format='%.1f',
+							key='geo_quake_min_magnitude' )
+					with mag_c2:
+						quake_max_magnitude = st.number_input(
+							'Maximum Magnitude',
+							min_value=0.0,
+							max_value=10.0,
+							value=10.0,
+							step=0.1,
+							format='%.1f',
+							key='geo_quake_max_magnitude' )
+					
+					quake_limit = st.number_input(
+						'Limit',
+						min_value=1,
+						max_value=20000,
+						value=25,
+						step=1,
+						key='geo_quake_limit' )
+					
+					quake_order_by = st.selectbox(
+						'Order By',
+						options=[ 'time', 'time-asc', 'magnitude', 'magnitude-asc' ],
+						key='geo_quake_order_by' )
+					
+					quake_event_type = st.text_input(
+						'Event Type',
+						value='earthquake',
+						key='geo_quake_event_type' )
+					
+					quake_use_location = st.checkbox(
+						'Use Location Radius Filter',
+						value=False,
+						key='geo_quake_use_location' )
+					
+					if quake_use_location:
+						loc_c1, loc_c2 = st.columns( 2 )
+						with loc_c1:
+							quake_latitude = st.number_input(
+								'Latitude',
+								value=38.907200,
+								format='%.6f',
+								key='geo_quake_latitude' )
+						with loc_c2:
+							quake_longitude = st.number_input(
+								'Longitude',
+								value=-77.036900,
+								format='%.6f',
+								key='geo_quake_longitude' )
+						
+						quake_radius = st.number_input(
+							'Maximum Radius KM',
+							min_value=1.0,
+							max_value=20000.0,
+							value=500.0,
+							step=10.0,
+							format='%.1f',
+							key='geo_quake_radius' )
+					
+					else:
+						quake_latitude = None
+						quake_longitude = None
+						quake_radius = None
+				
+				quake_btn_c1, quake_btn_c2 = st.columns( 2 )
+				
+				with quake_btn_c1:
+					if st.button( 'Run USGS Earthquakes', key='geo_quake_run',
+							use_container_width=True ):
+						try:
+							service = USGSEarthquakes( )
+							
+							result = service.fetch(
+								mode=quake_mode,
+								feed=quake_feed,
+								start_date=quake_start_date,
+								end_date=quake_end_date,
+								min_magnitude=float( quake_min_magnitude ),
+								max_magnitude=float( quake_max_magnitude ),
+								limit=int( quake_limit ),
+								order_by=quake_order_by,
+								event_type=quake_event_type,
+								latitude=quake_latitude,
+								longitude=quake_longitude,
+								max_radius_km=quake_radius,
+								time=int( quake_timeout ) )
+							
+							st.session_state[ 'geo_last_source' ] = 'USGS Earthquakes'
+							st.session_state[ 'geo_last_result' ] = result or { }
+							st.session_state[ 'geo_last_latitude' ] = quake_latitude
+							st.session_state[ 'geo_last_longitude' ] = quake_longitude
+							st.success( 'USGS Earthquake request completed.' )
+						
+						except Exception as ex:
+							st.error( f'USGS Earthquake request failed: {ex}' )
+				
+				with quake_btn_c2:
+					if st.button( 'Clear Earthquake Result', key='geo_quake_clear',
+							use_container_width=True ):
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
+			
+			# ------------------------------------------------------------------
+			# GLOBAL IMAGERY
+			# ------------------------------------------------------------------
+			with st.expander( '🛰️ Global Imagery', expanded=False ):
+				st.caption(
+					'Uses the original GlobalImagery fetcher. The current fetch_map_services() '
+					'writes the default NASA GIBS image to python-examples.'
+				)
+				
+				imagery_product = st.selectbox(
+					'Product',
+					options=[ 'NASA GIBS EPSG:4326 Default Map Service' ],
+					key='geo_imagery_product' )
+				
+				imagery_btn_c1, imagery_btn_c2 = st.columns( 2 )
+				
+				with imagery_btn_c1:
+					if st.button( 'Run Global Imagery', key='geo_imagery_run',
+							use_container_width=True ):
+						try:
+							Path( 'python-examples' ).mkdir( parents=True, exist_ok=True )
+							
+							service = GlobalImagery( )
+							result = service.fetch_map_services( )
+							
+							image_path = (
+									'python-examples/'
+									'MODIS_Terra_CorrectedReflectance_TrueColor.png'
+							)
+							
+							st.session_state[ 'geo_last_source' ] = 'Global Imagery'
+							st.session_state[ 'geo_last_result' ] = {
+									'mode': 'fetch_map_services',
+									'product': imagery_product,
+									'image_path': image_path,
+									'result': str( result )
+							}
+							st.session_state[ 'geo_last_latitude' ] = None
+							st.session_state[ 'geo_last_longitude' ] = None
+							st.session_state[ 'geo_last_image_path' ] = image_path
+							st.success( 'Global Imagery request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Global Imagery request failed: {ex}' )
+				
+				with imagery_btn_c2:
+					if st.button( 'Clear Imagery Result', key='geo_imagery_clear',
+							use_container_width=True ):
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
+		
 		with geo_c2:
-			# ----Static Map and/or Langchain Document Data
-			pass
-
+			# ------------------------------------------------------------------
+			# GEOLOGICAL RESULTS
+			# ------------------------------------------------------------------
+			st.markdown( '##### Geological Results' )
+			
+			geo_source = st.session_state.get( 'geo_last_source', '' )
+			geo_result = st.session_state.get( 'geo_last_result', { } )
+			geo_latitude = st.session_state.get( 'geo_last_latitude', None )
+			geo_longitude = st.session_state.get( 'geo_last_longitude', None )
+			geo_image_path = st.session_state.get( 'geo_last_image_path', '' )
+			
+			if not geo_result:
+				st.info( 'No geological results available. Run one of the Geological expanders.' )
+			
+			else:
+				if geo_source:
+					st.caption( f'Source: {geo_source}' )
+				
+				if geo_image_path and os.path.exists( geo_image_path ):
+					st.markdown( '##### Image Output' )
+					st.image( geo_image_path )
+				
+				summary = geo_result.get( 'summary', None ) if isinstance( geo_result,
+					dict ) else None
+				rows = geo_result.get( 'rows', None ) if isinstance( geo_result, dict ) else None
+				
+				if isinstance( summary, dict ) and summary:
+					st.markdown( '##### Summary' )
+					st.data_editor(
+						pd.DataFrame( [ summary ] ),
+						key='geo_summary_table',
+						use_container_width=True,
+						disabled=True )
+				
+				if geo_latitude is not None and geo_longitude is not None:
+					try:
+						lat_value = float( geo_latitude )
+						lng_value = float( geo_longitude )
+						
+						lat_c, lng_c = st.columns( 2 )
+						with lat_c:
+							st.metric( 'Latitude', f'{lat_value:.6f}' )
+						with lng_c:
+							st.metric( 'Longitude', f'{lng_value:.6f}' )
+						
+						preview_url = static_maps.pin(
+							lat=lat_value,
+							lng=lng_value,
+							zoom=5,
+							size='600x400' )
+						
+						st.image( preview_url )
+					
+					except Exception as ex:
+						st.warning( f'Static map preview failed: {ex}' )
+				
+				if isinstance( rows, list ) and rows:
+					st.markdown( '##### Rows' )
+					df_geo_rows = pd.DataFrame( rows )
+					st.data_editor(
+						df_geo_rows,
+						key='geo_rows_table',
+						use_container_width=True,
+						disabled=True )
+				
+				st.markdown( '##### Raw Result' )
+				st.json( geo_result )
+		
 # ==============================================================================
 # Distance Matrix Tab
 # ==============================================================================
 elif mode == 'Distances':
-    st.subheader( 'Distance Matrix' )
-    st.divider( )
-
-    col1, col2 = st.columns( 2 )
-    with col1:
-        origin = st.text_input( 'Origin' )
-
-    with col2:
-        destination = st.text_input( 'Destination' )
-    
-    mode = st.selectbox( 'Travel Mode', [ 'driving', 'walking', 'bicycling', 'transit' ],
-	    key='travel_key' )
-    if st.button( 'Calculate Distance' ):
-	    if not origin or not destination:
-		    st.warning( 'Provide both origin and destination.' )
-	    else:
-		    summary = distances.summary( origin, destination,  mode=mode, )
-		    st.table( pd.DataFrame( [ summary ] ) )
+	st.subheader( 'Distance Matrix' )
+	st.divider( )
+	
+	col1, col2 = st.columns( 2 )
+	with col1:
+		origin = st.text_input( 'Origin', key='distance_origin' )
+	
+	with col2:
+		destination = st.text_input( 'Destination', key='distance_destination' )
+	
+	travel_mode = st.selectbox(
+		'Travel Mode',
+		[ 'driving', 'walking', 'bicycling', 'transit' ],
+		key='travel_key' )
+	
+	if st.button( 'Calculate Distance', key='distance_calculate' ):
+		if not origin or not destination:
+			st.warning( 'Provide both origin and destination.' )
+		else:
+			summary = distances.summary( origin, destination, mode=travel_mode )
+			st.table( pd.DataFrame( [ summary ] ) )
 
 # ==============================================================================
-# Static Maps Tab
+# STATIC MAPS
 # ==============================================================================
 elif mode == 'Maps':
 	st.header( 'Static Map Preview' )
@@ -1616,7 +3160,7 @@ elif mode == 'Maps':
 		st.code( url )
 
 # ==============================================================================
-# Time Zone Tab
+# TIME ZONE MODE
 # ==============================================================================
 elif mode == 'Time Zones':
 	st.subheader( 'Time Zone Lookup' )
@@ -1629,16 +3173,46 @@ elif mode == 'Time Zones':
 		st.json( result )
 
 # ==============================================================================
-# Excel Enrichment Tab
+# DATA UPLOAD MODE
 # ==============================================================================
 elif mode == 'Data Upload':
 	st.subheader( 'Excel / CSV' )
 	st.divider( )
 	
-	uploaded = st.file_uploader( 'Upload CSV or XLSX', type=[ 'csv', 'xlsx' ], )
-	city_col = st.text_input( 'City Column', value='City' )
-	state_col = st.text_input( 'State Column', value='State' )
-	country_col = st.text_input( 'Country Column', value='Country' )
+	uploaded = st.file_uploader(
+		'Upload CSV or XLSX',
+		type=[ 'csv', 'xlsx' ],
+		key='data_upload_file' )
+	
+	enrichment_mode = st.selectbox(
+		'Enrichment Mode',
+		options=[ 'City / State / Country', 'Address Column' ],
+		key='data_upload_enrichment_mode' )
+	
+	if enrichment_mode == 'City / State / Country':
+		city_col = st.text_input( 'City Column', value='City', key='data_upload_city_col' )
+		state_col = st.text_input( 'State Column', value='State', key='data_upload_state_col' )
+		country_col = st.text_input( 'Country Column', value='Country',
+			key='data_upload_country_col' )
+		address_col = ''
+	
+	else:
+		address_col = st.text_input( 'Address Column', value='Address',
+			key='data_upload_address_col' )
+		country_col = st.text_input(
+			'Country Bias Column',
+			value='Country',
+			help='Optional. Leave as-is if the uploaded file has no country-bias column.',
+			key='data_upload_address_country_col' )
+		city_col = ''
+		state_col = ''
+	
+	sheet_name = st.text_input(
+		'Worksheet',
+		value='Sheet1',
+		help='Used for Excel files. For CSV files this value is ignored.',
+		key='data_upload_sheet_name' )
+	
 	if uploaded:
 		input_path = f'_input_{uploaded.name}'
 		output_path = f'_output_{uploaded.name}'
@@ -1646,30 +3220,69 @@ elif mode == 'Data Upload':
 		with open( input_path, 'wb' ) as f:
 			f.write( uploaded.read( ) )
 		
-		if st.button( 'Enrich File' ):
-			excel = Excel( api_key=api_key )
-	
-		excel.enrich( input_path=input_path, output_path=output_path, city_col=city_col,
-			state_col=state_col, country_col=country_col, )
-		
-		df = pd.read_excel( output_path )
-		st.data_editor( df )
-		
-		st.download_button( 'Download Enriched File', data=open( output_path, 'rb' ).read( ),
-			file_name=output_path, )
-		
-		os.remove( input_path )
-		os.remove( output_path )
+		if st.button( 'Enrich File', key='data_upload_enrich' ):
+			try:
+				excel = Excel( api=api_key, cache=cache )
+				sheet_value = sheet_name if input_path.lower( ).endswith( '.xlsx' ) else None
+				
+				if enrichment_mode == 'City / State / Country':
+					excel.enrich(
+						inpath=input_path,
+						outpath=output_path,
+						city=city_col,
+						state=state_col,
+						cntry=country_col,
+						sheet=sheet_value )
+				
+				else:
+					excel.enrich_from_address(
+						inpath=input_path,
+						outpath=output_path,
+						address=address_col,
+						sheet=sheet_value,
+						cntry=country_col )
+				
+				if output_path.lower( ).endswith( '.csv' ):
+					df_output = pd.read_csv( output_path )
+				else:
+					df_output = pd.read_excel( output_path )
+				
+				st.data_editor(
+					df_output,
+					key='data_upload_enriched_preview',
+					use_container_width=True,
+					disabled=True )
+				
+				with open( output_path, 'rb' ) as f:
+					output_bytes = f.read( )
+				
+				st.download_button(
+					'Download Enriched File',
+					data=output_bytes,
+					file_name=Path( output_path ).name,
+					key='data_upload_download' )
+			
+			except Exception as e:
+				st.error( f'Enrichment failed: {e}' )
+			
+			finally:
+				try:
+					if os.path.exists( input_path ):
+						os.remove( input_path )
+					if os.path.exists( output_path ):
+						os.remove( output_path )
+				except Exception:
+					pass
 		
 # ==============================================================================
 # DATA MANAGEMENT MODE
 # ==============================================================================
 elif mode == 'Data Management':
-	st.subheader( 'Database' )
+	st.subheader( 'Data Management' )
 	st.divider( )
 	left, center, right = st.columns( [ 0.05, 0.90, 0.05 ] )
 	with center:
-		st.subheader( '🏛️ Data Management'  )
+		st.markdown( '##### 🏛️ Database'  )
 		tabs = st.tabs( [ 'Import', 'Browse', 'CRUD', 'Explore', 'Filter',
 		                  'Aggregate', 'Visualize', 'Admin', 'SQL' ] )
 		 
@@ -1774,7 +3387,7 @@ elif mode == 'Data Management':
 				# INSERT
 				# ------------------------------------------------------------------
 				with insert_col:
-					st.markdown( '#### Insert Row' )
+					st.markdown( '##### Insert Row' )
 					insert_data = { }
 					
 					for column, col_type in type_map.items( ):
@@ -1820,7 +3433,7 @@ elif mode == 'Data Management':
 				# UPDATE
 				# ------------------------------------------------------------------
 				with update_col:
-					st.markdown( '#### Update Row' )
+					st.markdown( '##### Update Row' )
 					rowid = st.number_input(
 						'Row ID',
 						min_value=1,
@@ -1876,7 +3489,7 @@ elif mode == 'Data Management':
 				# DELETE
 				# ------------------------------------------------------------------
 				with delete_col:
-					st.markdown( '#### Delete Row' )
+					st.markdown( '##### Delete Row' )
 					delete_id = st.number_input(
 						'Row ID to Delete',
 						min_value=1,
@@ -1896,7 +3509,7 @@ elif mode == 'Data Management':
 				# PREVIEW
 				# ------------------------------------------------------------------
 				with preview_col:
-					st.markdown( '#### Current Data Preview' )
+					st.markdown( '##### Current Data Preview' )
 					st.data_editor(
 						df.head( 25 ),
 						key=f'dm_crud_preview_{table}',
@@ -1919,7 +3532,7 @@ elif mode == 'Data Management':
 					offset = (page - 1) * page_size
 					df_page = read_table( table, page_size, offset )
 				
-				st.data_editor( df_page )
+				st.data_editor( data=df_page, num_rows='dynamic', hide_index=False )
 		
 		# ------------------------------------------------------------------------------
 		# FILTER

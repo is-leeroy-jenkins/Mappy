@@ -124,3 +124,39 @@ class Timezone:
 			exception.cause = 'Timezone'
 			exception.method = 'get_id( self, **kwargs)'
 			raise exception
+	
+	def lookup( self, lat: float, lng: float ) -> Dict | None:
+		"""
+
+			Purpose:
+				Fetch the full Google Time Zone API response for a coordinate.
+
+			Parameters:
+				lat (float):
+					Latitude.
+
+				lng (float):
+					Longitude.
+
+			Returns:
+				Dict | None:
+					Full time zone response payload, including timeZoneId, timeZoneName,
+					rawOffset, dstOffset, and status when available.
+
+		"""
+		try:
+			throw_if( 'lat', lat )
+			throw_if( 'lng', lng )
+			self.timestamp = int( time.time( ) )
+			self.latitude = lat
+			self.longitude = lng
+			self.data = self.maps.request( 'timezone/json',
+				{ 'location': f'{self.latitude},{self.longitude}',
+				  'timestamp': str( self.timestamp ) } )
+			return self.data
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Timezone'
+			exception.method = 'lookup( self, **kwargs)'
+			raise exception

@@ -69,7 +69,16 @@ GOOGLE_CLOUD_LOCATION = os.getenv( 'GOOGLE_CLOUD_LOCATION' )
 GOOGLE_CLOUD_PROJECT = os.getenv( 'GOOGLE_CLOUD_PROJECT_ID' )
 GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLEMAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
+NASA_API_KEY = os.getenv( 'NASA_API_KEY' )
+AIRNOW_API_KEY = os.getenv( 'AIRNOW_API_KEY' )
+OPENAQ_API_KEY = os.getenv( 'OPENAQ_API_KEY' )
 
 # -------------- SETTINGS
 MODES = [ 'Geocoding', 'Weather', 'Environmental', 'Geological', 'Astronomical',
           'Distances', 'Maps', 'Time Zones', 'Data Upload', 'Data Management' ]
+
+AGENTS = (
+		'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+		'AppleWebKit/537.36 (KHTML, like Gecko) '
+		'Chrome/147.0.0.0 Safari/537.36'
+)

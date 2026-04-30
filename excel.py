@@ -124,13 +124,12 @@ class Excel:
         """
 		try:
 			throw_if( 'path', path )
-			throw_if( 'sheet', sheet )
 			self.file_path = path
 			self.worksheet = sheet
 			if self.file_path.lower( ).endswith( '.csv' ):
-				self.dataframe = pd.read_csv( self.file_path, dtype = str )
+				self.dataframe = pd.read_csv( self.file_path, dtype=str )
 			else:
-				self.dataframe = pd.read_excel( self.file_path, sheet_name=self.worksheet, dtype=str )
+				self.dataframe = pd.read_excel( self.file_path, sheet_name=self.worksheet or 0, dtype=str )
 	
 			for c in self.dataframe.columns:
 				if self.dataframe[ c ].dtype == object:
@@ -271,64 +270,70 @@ class Excel:
 	            sheet: Optional[ str ]=None, ) -> None:
 		"""
 
-	            Purpose:
-                Enrich a file with (City, State/Region, Country) columns by appending
-                lat/lng, place_id, and standardized components.
+			Purpose:
+			Enrich a file with (City, State/Region, Country) columns by appending
+			lat/lng, place_id, and standardized components.
+	
+			Parameters:
+			inpath (str): Input CSV/XLSX path containing location columns.
+			outpath (str): Output CSV/XLSX path to write enriched results.
+			city (str): Column for city/locality.
+			state (Optional[str]): Column for state/region (optional/not required).
+			cntry (str): Column for country (name or ISO-2 code).
+			sheet (Optional[str]): Excel sheet name (if .xlsx).
+	
+			Returns:
+			None. Writes the enriched file.
 
-	            Parameters:
-                inpath (str): Input CSV/XLSX path containing location columns.
-                outpath (str): Output CSV/XLSX path to write enriched results.
-                city (str): Column for city/locality.
-                state (Optional[str]): Column for state/region (optional/not required).
-                cntry (str): Column for country (name or ISO-2 code).
-                sheet (Optional[str]): Excel sheet name (if .xlsx).
-
-	            Returns:
-                None. Writes the enriched file.
-
-            """
+		"""
+		
 		try:
 			throw_if( 'inpath', inpath )
+			throw_if( 'outpath', outpath )
+			throw_if( 'city', city )
+			throw_if( 'cntry', cntry )
+			
 			df = self.read( inpath, sheet )
 			outputs = \
-			{
-				'formatted_address': [ ],
-				'lat': [ ],
-				'lng': [ ],
-				'place_id': [ ],
-				'types': [ ],
-				'country_code': [ ],
-				'country_name': [ ],
-				'admin_level_1': [ ],
-				'admin_level_2': [ ],
-				'locality': [ ],
-				'postal_code': [ ],
-				'geocode_status': [ ],
-			}
-
+				{
+						'formatted_address': [ ],
+						'lat': [ ],
+						'lng': [ ],
+						'place_id': [ ],
+						'types': [ ],
+						'country_code': [ ],
+						'country_name': [ ],
+						'admin_level_1': [ ],
+						'admin_level_2': [ ],
+						'locality': [ ],
+						'postal_code': [ ],
+						'geocode_status': [ ],
+				}
+			
 			for _, row in df.iterrows( ):
-				city = (row.get( city ) ).strip( )
-				state = (row.get( state ) ).strip( ) if (
-						state and state in df.columns) else ""
-				country = (row.get( cntry ) ).strip( )
-
-				if not any( [ city, state, country ] ):
+				city_value = (row.get( city ) or '').strip( ) if city in df.columns else ''
+				state_value = (row.get( state ) or '').strip( ) if (
+						state and state in df.columns) else ''
+				country_value = (row.get( cntry ) or '').strip( ) if cntry in df.columns else ''
+				
+				if not any( [ city_value, state_value, country_value ] ):
 					for k in outputs:
 						outputs[ k ].append( None if k != 'geocode_status' else 'skipped_empty' )
 					continue
-
+				
 				try:
-					g = self._geocoder.city_state_country( city, state, country )
+					g = self.geocoder.city_state_country( city_value, state_value, country_value )
 					status = 'ok'
+				
 				except Exception:
-					query = ', '.join( [ p for p in [ city, state, country ] if p ] )
+					query = ', '.join( [ p for p in [ city_value, state_value, country_value ] if p ] )
 					try:
-						g = self._places.text_to_location( query, country = country )
+						g = self.places.text_to_location( query, country=country_value )
 						status = 'ok_places'
 					except Exception:
 						g = { }
 						status = 'not_found'
-
+				
 				outputs[ 'formatted_address' ].append( g.get( 'formatted_address' ) )
 				outputs[ 'lat' ].append( g.get( 'lat' ) )
 				outputs[ 'lng' ].append( g.get( 'lng' ) )
@@ -341,11 +346,12 @@ class Excel:
 				outputs[ 'locality' ].append( g.get( 'locality' ) )
 				outputs[ 'postal_code' ].append( g.get( 'postal_code' ) )
 				outputs[ 'geocode_status' ].append( status )
-
+			
 			for k, v in outputs.items( ):
 				df[ k ] = v
-
-			self._write( df, outpath, sheet )
+			
+			self.write( df, outpath, sheet )
+		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
