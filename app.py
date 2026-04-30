@@ -1345,7 +1345,7 @@ def store_loaded_dataset( df_dataset: pd.DataFrame, df_original: pd.DataFrame | 
 # Streamlit Configuration
 # ---------------------------------------------------------------------
 style_subheaders( )
-st.set_page_config(  page_title='Mappy', layout='wide',
+st.set_page_config(  page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
     initial_sidebar_state='expanded', )
 
 
@@ -1353,7 +1353,7 @@ st.set_page_config(  page_title='Mappy', layout='wide',
 # SIDEBAR
 # ---------------------------------------------------------------------
 
-st.logo( '🗺️' )
+st.logo( cfg.LOGO )
 
 with st.sidebar:
 	# ------- Mode Selection

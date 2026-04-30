@@ -54,6 +54,8 @@ DEFAULT_DATA = r'stores/excel/Reports.xlsx'
 BASE_DIR = Path( __file__ ).resolve( ).parent
 FAVICON = r'resources/images/favicon.ico'
 LOGO = r'resources/images/mappy_logo.png'
+MAP_ID = r'16b56ad08af295ded24d8eb2'
+
 
 # ----------- API KEYS
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
@@ -63,7 +65,6 @@ GOOGLE_CLOUD_LOCATION = os.getenv( 'GOOGLE_CLOUD_LOCATION' )
 GOOGLE_CLOUD_PROJECT = os.getenv( 'GOOGLE_CLOUD_PROJECT_ID' )
 GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLEMAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
-
 # -------------- SETTINGS
 
 MODES = [ 'Geocoding', 'Distances', 'Maps', 'Time Zones', 'Data Upload', 'Data Management' ]
