@@ -57,28 +57,28 @@ if 'mode' not in st.session_state:
 if 'previous_mode' not in st.session_state:
 	st.session_state[ 'previous_mode' ] = ''
 	
-if 'source' not in st.session.state:
+if 'source' not in st.session_state:
 	st.session_state[ 'source' ] = ''
 
-if 'df_source' not in st.session.state:
+if 'df_source' not in st.session_state:
 	st.session_state[ 'df_source' ] = pd.DataFrame( )
 
-if 'df_frame' not in st.session.state:
+if 'df_frame' not in st.session_state:
 	st.session_state[ 'df_frame' ] = pd.DataFrame( )
 
-if 'df_original' not in st.session.state:
+if 'df_original' not in st.session_state:
 	st.session_state[ 'df_original' ] = pd.DataFrame( )
 	
-if 'df_raw' not in st.session.state:
+if 'df_raw' not in st.session_state:
 	st.session_state[ 'df_raw' ] = pd.DataFrame( )
 	
-if 'df_dataset' not in st.session.state:
+if 'df_dataset' not in st.session_state:
 	st.session_state[ 'df_dataset' ] = pd.DataFrame( )
 
 if 'pipeline_log' not in st.session_state:
 	st.session_state[ 'pipeline_log' ] = [ ]
 
-if 'coordinates' not in st.session.state:
+if 'coordinates' not in st.session_state:
 	st.session_state[ 'coordinates' ] = None
 
 if 'location' not in st.session_state:
@@ -1373,7 +1373,6 @@ with st.sidebar:
 	if source == 'Default Data':
 		loaded_df = pd.read_excel( cfg.DEFAULT_DATA )
 		loaded_original = loaded_df.copy( )
-	
 	elif source == 'Database Data':
 		try:
 			with sqlite3.connect( cfg.DB_PATH ) as connection:
@@ -1390,15 +1389,13 @@ with st.sidebar:
 				table_options = df_tables[ 'name' ].tolist( )[ :3 ]
 				
 				if table_options:
-					selected_table = st.selectbox(
-						label='Select Database Table',
-						options=table_options,
-						key='database_table_selectbox'
-					)
+					selected_table = st.selectbox( label='Select Database Table',
+						options=table_options, key='database_table_selectbox' )
 					
 					if selected_table:
 						loaded_df = pd.read_sql_query( f'SELECT * FROM "{selected_table}"',
 							connection )
+						
 						loaded_original = loaded_df.copy( )
 						log_step( f'Loaded Database Table: {selected_table}' )
 				else:
@@ -1425,21 +1422,14 @@ with st.sidebar:
 	st.sidebar.divider( )
 	st.subheader( 'Data Mode' )
 	
-	mode = st.sidebar.radio( 'Select', cfg.MODE.keys( ), index=0 )
+	mode = st.sidebar.radio( 'Select', cfg.MODES, index=0 )
 	previous_mode = st.session_state.get( 'previous_mode', None )
 	
 	if previous_mode != mode:
-		if mode == 'Classification Models':
-			reset_classification_mode_state( )
-		elif mode == 'Regression Models':
-			reset_regression_mode_state( )
-		
 		st.session_state[ 'previous_mode' ] = mode
 		st.rerun( )
 	
 	st.session_state[ 'previous_mode' ] = mode
-	
-	mode = st.radio( label='Select Mode', options=cfg.MODES, index=0, key='mode' )
 	
 	st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
 
