@@ -1371,9 +1371,10 @@ def store_loaded_dataset( df_dataset: pd.DataFrame, df_original: pd.DataFrame | 
 # ---------------------------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------------------------
-style_subheaders( )
 st.set_page_config(  page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
     initial_sidebar_state='expanded', )
+
+style_subheaders( )
 
 # ==============================================================================
 # SIDEBAR
@@ -3973,8 +3974,6 @@ elif mode == 'Astronomical':
 				
 				summary = astro_result.get( 'summary', None ) if isinstance( astro_result,
 					dict ) else None
-				rows = astro_result.get( 'rows', None ) if isinstance( astro_result,
-					dict ) else None
 				
 				if isinstance( summary, dict ) and summary:
 					st.markdown( '##### Summary' )
@@ -3984,14 +3983,6 @@ elif mode == 'Astronomical':
 						use_container_width=True,
 						disabled=True )
 				
-				if isinstance( rows, list ) and rows:
-					st.markdown( '##### Rows' )
-					df_astro_rows = pd.DataFrame( rows )
-					st.data_editor(
-						df_astro_rows,
-						key='astro_rows_table',
-						use_container_width=True,
-						disabled=True )
 					
 				columns = astro_result.get( 'columns', None ) if isinstance( astro_result,
 					dict ) else None
