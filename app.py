@@ -1356,11 +1356,26 @@ st.set_page_config(  page_title='Mappy', layout='wide',
 st.logo( '🗺️' )
 
 with st.sidebar:
+	# ------- Mode Selection
+	set_blue_divider( )
 	
-	st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
+	st.subheader( 'Mappy Mode' )
+	
+	mode = st.sidebar.radio( 'Select', cfg.MODES, index=0 )
+	previous_mode = st.session_state.get( 'previous_mode', None )
+	
+	if previous_mode != mode:
+		st.session_state[ 'previous_mode' ] = mode
+		st.rerun( )
+	
+	st.session_state[ 'previous_mode' ] = mode
+	
+	# ------- Data Selection
+	set_blue_divider( )
+	
 	st.subheader( 'Data Source' )
 	
-	with st.expander( 'Source', expanded=False ):
+	with st.expander( 'Database', expanded=False ):
 		source = st.selectbox( label='Select',
 			options=[ 'Default Data', 'Database Data', 'Custom Data' ], key='source_selectbox' )
 	
@@ -1373,6 +1388,7 @@ with st.sidebar:
 	if source == 'Default Data':
 		loaded_df = pd.read_excel( cfg.DEFAULT_DATA )
 		loaded_original = loaded_df.copy( )
+	
 	elif source == 'Database Data':
 		try:
 			with sqlite3.connect( cfg.DB_PATH ) as connection:
@@ -1418,20 +1434,8 @@ with st.sidebar:
 	if has_loaded_dataset( loaded_df ):
 		store_loaded_dataset( loaded_df, loaded_original )
 	
-	# ------- Mode Selection
-	st.sidebar.divider( )
-	st.subheader( 'Data Mode' )
-	
-	mode = st.sidebar.radio( 'Select', cfg.MODES, index=0 )
-	previous_mode = st.session_state.get( 'previous_mode', None )
-	
-	if previous_mode != mode:
-		st.session_state[ 'previous_mode' ] = mode
-		st.rerun( )
-	
-	st.session_state[ 'previous_mode' ] = mode
-	
-	st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
+	# ------- Mappy Configuration
+	set_blue_divider( )
 
 	with st.sidebar.expander( 'Configuration', expanded=False ):
 			api_keys = { name: value for name, value in vars( cfg ).items( )

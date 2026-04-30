@@ -53,7 +53,7 @@ DB_PATH = 'stores/sqlite/data.db'
 DEFAULT_DATA = r'stores/excel/Reports.xlsx'
 BASE_DIR = Path( __file__ ).resolve( ).parent
 FAVICON = r'resources/images/favicon.ico'
-LOGO = r'resources/images/Mappy.png'
+LOGO = r'resources/images/mappy_logo.png'
 
 # ----------- API KEYS
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
