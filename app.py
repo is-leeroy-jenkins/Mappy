@@ -48,12 +48,57 @@ from caches import InMemoryCache, SQLiteCache
 
 
 # ---------------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE INITIALIZATION
 # ---------------------------------------------------------------------
 
 if 'mode' not in st.session_state:
 	st.session_state[ 'mode' ] = 'Geocoding'
+
+if 'previous_mode' not in st.session_state:
+	st.session_state[ 'previous_mode' ] = ''
 	
+if 'source' not in st.session.state:
+	st.session_state[ 'source' ] = ''
+
+if 'df_source' not in st.session.state:
+	st.session_state[ 'df_source' ] = pd.DataFrame( )
+
+if 'df_frame' not in st.session.state:
+	st.session_state[ 'df_frame' ] = pd.DataFrame( )
+
+if 'df_original' not in st.session.state:
+	st.session_state[ 'df_original' ] = pd.DataFrame( )
+	
+if 'df_raw' not in st.session.state:
+	st.session_state[ 'df_raw' ] = pd.DataFrame( )
+	
+if 'df_dataset' not in st.session.state:
+	st.session_state[ 'df_dataset' ] = pd.DataFrame( )
+
+if 'pipeline_log' not in st.session_state:
+	st.session_state[ 'pipeline_log' ] = [ ]
+
+if 'coordinates' not in st.session.state:
+	st.session_state[ 'coordinates' ] = None
+
+if 'location' not in st.session_state:
+	st.session_state[ 'location' ] = ''
+
+if 'courty' not in st.session_state:
+	st.session_state[ 'country' ] = ''
+
+if 'state' not in st.session_state:
+	st.session_state[ 'state' ] = ''
+
+if 'city' not in st.session_state:
+	st.session_state[ 'city' ] = ''
+
+if 'description' not in st.session_state:
+	st.session_state[ 'description' ] = ''
+
+if 'date' not in st.session_state:
+	st.session_state[ 'date' ] = ''
+
 # ---------------------------------------------------------------------
 # UTILITIES
 # ---------------------------------------------------------------------
@@ -163,6 +208,12 @@ def normalize( obj ):
 		except Exception:
 			return str( obj )
 	return str( obj )
+
+def set_blue_divider( ) -> None:
+	st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
+
+def log_step( msg: str ) -> None:
+	st.session_state.pipeline_log.append( msg )
 
 # ------------ DATABASE UTILITIES
 
@@ -1220,17 +1271,86 @@ def rename_table( old_name: str, new_name: str ) -> None:
 				conn.execute( idx_sql )
 		
 		conn.commit( )
-		
+
+# ------------- DATASET UTILITIES
+
+def has_loaded_dataset( df_frame: object ) -> bool:
+	"""
+		Purpose:
+		--------
+		Determine whether an object is a valid loaded dataframe.
+
+		Parameters:
+		-----------
+		df_frame ( object ): Candidate dataframe object.
+
+		Returns:
+		--------
+		bool:
+			True when the object is a non-empty dataframe with at least one column.
+	"""
+	return (
+			isinstance( df_frame, pd.DataFrame )
+			and not df_frame.empty
+			and len( df_frame.columns ) > 0
+	)
+
+def get_loaded_dataset( ) -> pd.DataFrame | None:
+	"""
+		Purpose:
+		--------
+		Return the currently loaded dataset from session state when valid.
+
+		Parameters:
+		-----------
+		None
+
+		Returns:
+		--------
+		pd.DataFrame | None:
+			Copy of the loaded dataset, or None when no valid dataset exists.
+	"""
+	df_frame = st.session_state.get( 'df_dataset', None )
+	if not has_loaded_dataset( df_frame ):
+		return None
+	
+	return df_frame.copy( )
+
+def store_loaded_dataset( df_dataset: pd.DataFrame, df_original: pd.DataFrame | None = None ) -> None:
+	"""
+		Purpose:
+		--------
+		Persist a successfully loaded dataset to session state.
+
+		Parameters:
+		-----------
+		df_dataset ( pd.DataFrame ): Loaded dataset.
+		df_original ( pd.DataFrame | None ): Optional original copy.
+
+		Returns:
+		--------
+		None
+	"""
+	if not has_loaded_dataset( df_dataset ):
+		return
+	
+	df_source = df_dataset.copy( )
+	df_base = df_original.copy( ) if isinstance( df_original, pd.DataFrame ) else df_source.copy( )
+	
+	st.session_state[ 'df_raw' ] = df_source.copy( )
+	st.session_state[ 'df_original' ] = df_base.copy( )
+	st.session_state[ 'df_dataset' ] = df_source.copy( )
+	
 # ---------------------------------------------------------------------
 # Streamlit Configuration
 # ---------------------------------------------------------------------
 style_subheaders( )
-st.set_page_config(  page_title='Mappy – Geospatial Toolkit', layout='wide',
+st.set_page_config(  page_title='Mappy', layout='wide',
     initial_sidebar_state='expanded', )
 
 
 # ---------------------------------------------------------------------
-# Sidebar – Global Configuration
+# SIDEBAR
 # ---------------------------------------------------------------------
 
 st.logo( '🗺️' )
@@ -1238,6 +1358,86 @@ st.logo( '🗺️' )
 with st.sidebar:
 	
 	st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
+	st.subheader( 'Data Source' )
+	
+	with st.expander( 'Source', expanded=False ):
+		source = st.selectbox( label='Select',
+			options=[ 'Default Data', 'Database Data', 'Custom Data' ], key='source_selectbox' )
+	
+	uploaded = st.file_uploader( label='Upload Spreadsheet', type=[ 'xlsx', 'xls', 'csv' ],
+		key='source_uploader' )
+	
+	loaded_df: pd.DataFrame | None = None
+	loaded_original: pd.DataFrame | None = None
+	
+	if source == 'Default Data':
+		loaded_df = pd.read_excel( cfg.DEFAULT_DATA )
+		loaded_original = loaded_df.copy( )
+	
+	elif source == 'Database Data':
+		try:
+			with sqlite3.connect( cfg.DB_PATH ) as connection:
+				df_tables = pd.read_sql_query(
+					"""
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type = 'table'
+                      AND name NOT LIKE 'sqlite_%'
+                    ORDER BY name;
+					""",
+					connection )
+				
+				table_options = df_tables[ 'name' ].tolist( )[ :3 ]
+				
+				if table_options:
+					selected_table = st.selectbox(
+						label='Select Database Table',
+						options=table_options,
+						key='database_table_selectbox'
+					)
+					
+					if selected_table:
+						loaded_df = pd.read_sql_query( f'SELECT * FROM "{selected_table}"',
+							connection )
+						loaded_original = loaded_df.copy( )
+						log_step( f'Loaded Database Table: {selected_table}' )
+				else:
+					st.warning( 'No tables were found in the database.' )
+		except Exception as ex:
+			st.error( f'Error loading database data: {ex}' )
+	
+	elif source == 'Custom Data':
+		if uploaded is not None:
+			if uploaded.name.lower( ).endswith( ('.xlsx', '.xls') ):
+				loaded_df = pd.read_excel( uploaded )
+			else:
+				loaded_df = pd.read_csv( uploaded )
+			
+			loaded_original = loaded_df.copy( )
+			log_step( f'Loaded uploaded file: {uploaded.name}' )
+		else:
+			st.info( 'Upload a spreadsheet to load data.' )
+	
+	if has_loaded_dataset( loaded_df ):
+		store_loaded_dataset( loaded_df, loaded_original )
+	
+	# ------- Mode Selection
+	st.sidebar.divider( )
+	st.subheader( 'Data Mode' )
+	
+	mode = st.sidebar.radio( 'Select', cfg.MODE.keys( ), index=0 )
+	previous_mode = st.session_state.get( 'previous_mode', None )
+	
+	if previous_mode != mode:
+		if mode == 'Classification Models':
+			reset_classification_mode_state( )
+		elif mode == 'Regression Models':
+			reset_regression_mode_state( )
+		
+		st.session_state[ 'previous_mode' ] = mode
+		st.rerun( )
+	
+	st.session_state[ 'previous_mode' ] = mode
 	
 	mode = st.radio( label='Select Mode', options=cfg.MODES, index=0, key='mode' )
 	

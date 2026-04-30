@@ -46,12 +46,14 @@ from typing import Optional, List, Dict
 from pathlib import Path
 
 # ------------ CONSTANT
-BLUE_DIVIDER = "<div style='height:2px;align:left;background:#0078FC;margin:20px 0 30px 0;'></div>"
+BLUE_DIVIDER = "<div style='height:1.5px;align:left;background:#0078FC;margin:20px 0px 20px 0px;'></div>"
 APP_TITLE = 'Mappy'
+APP_SUBTITLE = 'Geospatial Toolkit'
 DB_PATH = 'stores/sqlite/data.db'
+DEFAULT_DATA = r'stores/excel/Reports.xlsx'
 BASE_DIR = Path( __file__ ).resolve( ).parent
 FAVICON = r'resources/images/favicon.ico'
-LOGO = r'resources/images/gpt.png'
+LOGO = r'resources/images/Mappy.png'
 
 # ----------- API KEYS
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
