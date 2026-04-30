@@ -55,7 +55,7 @@ BASE_DIR = Path( __file__ ).resolve( ).parent
 FAVICON = r'resources/images/favicon.ico'
 LOGO = r'resources/images/mappy_logo.png'
 MAP_ID = r'16b56ad08af295ded24d8eb2'
-
+MAP_NAME = r'uap - static'
 
 # ----------- API KEYS
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )

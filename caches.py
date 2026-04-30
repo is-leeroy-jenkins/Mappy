@@ -47,12 +47,28 @@ import sqlite3
 from typing import Any, Dict, Optional
 from boogr import Error
 
-
-
-def throw_if( name: str, value: object ):
-	if not value:
-		raise ValueError( f'Argument "{name}" cannot be empty!' )
-
+def throw_if( name: str, value: object ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Validate that a required value is not empty.
+		
+		Parameters:
+		-----------
+		name (str): Name of the argument being validated.
+		value (object): Value to validate.
+		
+		Returns:
+		--------
+		None
+		
+	"""
+	if value is None:
+		raise ValueError( f'Argument "{name}" cannot be None.' )
+	
+	if isinstance( value, str ) and not value.strip( ):
+		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class BaseCache:
 	"""
