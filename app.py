@@ -1469,7 +1469,7 @@ static_maps = StaticMapURL( api_key=api_key )
 
 
 # ==============================================================================
-# Geocoding & Places Tab
+# GEOCODING MODE
 # ==============================================================================
 if mode == 'Geocoding':
 	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
@@ -1512,27 +1512,68 @@ if mode == 'Geocoding':
 # ==============================================================================
 # METEOROLOGICAL MODE
 # ==============================================================================
-if mode == 'Meteorological':
-	pass
+if mode == 'Weather':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Weather & Meteorological Data' )
+		st.divider( )
+		
+		met_c1, met_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		with met_c1:
+			#----Expanders for Fetchers
+			pass
+		with met_c2:
+			#----Static Map & Langchain Document Data
+			pass
 
 # ==============================================================================
 # ENVIRONMENTAL MODE
 # ==============================================================================
-if mode == 'Enviornmental':
-	pass
+if mode == 'Environnmental':
+	st.subheader( 'Environmental Data' )
+	st.divider( )
+	
+	enviro_c1, enviro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+	with enviro_c1:
+		# ----Expanders for Fetchers
+		pass
+	with enviro_c2:
+		# ----Static Map & Langchain Document Data
+		pass
 
 # ==============================================================================
 # ASTRONOMICAL MODE
 # ==============================================================================
 if mode == 'Astronomical':
-	pass
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Astronomical Data' )
+		st.divider( )
+		
+		astro_c1, astro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		with asto_c1:
+			# ----Expanders for Fetchers
+			pass
+		with astro_c2:
+			# ----Static Map & Langchain Document Data
+			pass
 
 # ==============================================================================
 # GEOPHYSICAL MODE
 # ==============================================================================
-if mode == 'Geophysical':
-	pass
-
+if mode == 'Geological':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Geological Data' )
+		st.divider( )
+		
+		geo_c1, geo_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		with geo_c1:
+			# ----Expanders for Fetchers
+			pass
+		with geo_c2:
+			# ----Static Map & Langchain Document Data
+			pass
 
 
 # ==============================================================================

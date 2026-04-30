@@ -71,5 +71,5 @@ GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLEMAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
 
 # -------------- SETTINGS
-MODES = [ 'Geocoding', 'Meteorological', 'Environmental', 'Geophysical', 'Astronomical',
+MODES = [ 'Geocoding', 'Weather', 'Environmental', 'Geological', 'Astronomical',
           'Distances', 'Maps', 'Time Zones', 'Data Upload', 'Data Management' ]
