@@ -84,7 +84,7 @@ if 'coordinates' not in st.session_state:
 if 'location' not in st.session_state:
 	st.session_state[ 'location' ] = ''
 
-if 'courty' not in st.session_state:
+if 'country' not in st.session_state:
 	st.session_state[ 'country' ] = ''
 
 if 'state' not in st.session_state:
@@ -1472,31 +1472,68 @@ static_maps = StaticMapURL( api_key=api_key )
 # Geocoding & Places Tab
 # ==============================================================================
 if mode == 'Geocoding':
-    st.subheader( 'Geocoding & Places' )
-    st.divider( )
-    
-    geo_c1, geo_c2= st.columns( [ 0.75, 0.25 ], border=True )
-    with geo_c1:
-	    query = st.text_input( 'Address or Location' )
-    
-    with geo_c2:
-	    use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
-    
-    if st.button( 'Resolve Location' ):
-	    if not query:
-		    st.warning( 'Enter a location.' )
-	    else:
-		    try:
-			    result = geocoder.freeform( query )
-			    st.json( result )
-		    
-		    except NotFound:
-			    st.warning( 'Geocoding failed. Trying Places search.' )
-			    result = places.text_to_location( query )
-			    st.json( result )
-		    
-		    except Exception as e:
-			    st.error( str( e ) )
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Geocoding & Places' )
+		st.divider( )
+		
+		geo_c1, geo_c2 = st.columns( [ 0.60, 0.40  ], border=True, gap='xsmall' )
+		with geo_c1:
+			query = st.text_input( 'Enter Address or Location', key='location' )
+			
+			btn_c1, btn_c2 = st.columns( 2 )
+			with btn_c1:
+				if st.button( 'Resolve Location' ):
+					if not query:
+						st.warning( 'Enter a location.' )
+					else:
+						try:
+							result = geocoder.freeform( query )
+							st.json( result )
+						
+						except NotFound:
+							st.warning( 'Geocoding failed. Trying Places search.' )
+							result = places.text_to_location( query )
+							st.json( result )
+							
+						except Exception as e:
+							st.error( str( e ) )
+			with btn_c2:
+				if st.button( 'Clear Location' ):
+					if not query:
+						st.warning( 'Nothing to clear' )
+					else:
+						query = None
+						st.json( query )
+					
+		with geo_c2:
+			use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
+			
+# ==============================================================================
+# METEOROLOGICAL MODE
+# ==============================================================================
+if mode == 'Meteorological':
+	pass
+
+# ==============================================================================
+# ENVIRONMENTAL MODE
+# ==============================================================================
+if mode == 'Enviornmental':
+	pass
+
+# ==============================================================================
+# ASTRONOMICAL MODE
+# ==============================================================================
+if mode == 'Astronomical':
+	pass
+
+# ==============================================================================
+# GEOPHYSICAL MODE
+# ==============================================================================
+if mode == 'Geophysical':
+	pass
+
+
 
 # ==============================================================================
 # Distance Matrix Tab
