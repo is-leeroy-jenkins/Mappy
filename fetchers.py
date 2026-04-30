@@ -3411,6 +3411,7 @@ class GlobalImagery( Fetcher ):
 		self.local_time = None
 		self.utc_time = None
 		self.agents = cfg.AGENTS
+		self.headers = { }
 		self.headers[ 'User-Agent' ] = self.agents
 		self.era = None
 	

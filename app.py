@@ -1543,7 +1543,7 @@ if mode == 'Geocoding':
 elif mode == 'Weather':
 	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
 	with center:
-		st.subheader( 'Weather & Meteorological Data' )
+		st.subheader( 'Weather & Climate Data' )
 		st.divider( )
 		
 		met_c1, met_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
@@ -1792,6 +1792,258 @@ elif mode == 'Weather':
 				
 				with historical_btn_c2:
 					if st.button( 'Clear Historical Result', key='weather_historical_clear',
+							use_container_width=True ):
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# CLIMATE DATA
+			# ------------------------------------------------------------------
+			with st.expander( '🌡️ Climate Data', expanded=False ):
+				climate_mode = st.selectbox(
+					'Mode',
+					options=[ 'datasets', 'data' ],
+					key='weather_climate_mode' )
+				
+				climate_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='weather_climate_timeout' )
+				
+				if climate_mode == 'datasets':
+					climate_keyword = st.text_input(
+						'Keyword',
+						value='daily',
+						key='weather_climate_keyword' )
+					
+					climate_start_date_value = st.date_input(
+						'Start Date',
+						value=dt.date.today( ) - dt.timedelta( days=365 ),
+						key='weather_climate_dataset_start_date' )
+					
+					climate_end_date_value = st.date_input(
+						'End Date',
+						value=dt.date.today( ),
+						key='weather_climate_dataset_end_date' )
+					
+					climate_limit = st.number_input(
+						'Limit',
+						min_value=1,
+						max_value=1000,
+						value=25,
+						step=1,
+						key='weather_climate_dataset_limit' )
+					
+					climate_offset = st.number_input(
+						'Offset',
+						min_value=0,
+						max_value=100000,
+						value=0,
+						step=1,
+						key='weather_climate_dataset_offset' )
+					
+					climate_dataset = ''
+					climate_stations = ''
+					climate_data_types = ''
+				
+				else:
+					climate_dataset = st.text_input(
+						'Dataset',
+						value='daily-summaries',
+						help='Example: daily-summaries',
+						key='weather_climate_dataset' )
+					
+					climate_data_c1, climate_data_c2 = st.columns( 2 )
+					with climate_data_c1:
+						climate_start_date_value = st.date_input(
+							'Start Date',
+							value=dt.date.today( ) - dt.timedelta( days=30 ),
+							key='weather_climate_data_start_date' )
+					
+					with climate_data_c2:
+						climate_end_date_value = st.date_input(
+							'End Date',
+							value=dt.date.today( ),
+							key='weather_climate_data_end_date' )
+					
+					climate_stations = st.text_input(
+						'Stations',
+						value='',
+						help='Optional comma-separated station identifiers.',
+						key='weather_climate_stations' )
+					
+					climate_data_types = st.text_input(
+						'Data Types',
+						value='',
+						help='Optional comma-separated data type identifiers.',
+						key='weather_climate_data_types' )
+					
+					climate_limit = st.number_input(
+						'Limit',
+						min_value=1,
+						max_value=1000,
+						value=25,
+						step=1,
+						key='weather_climate_data_limit' )
+					
+					climate_offset = 0
+					climate_keyword = ''
+				
+				climate_btn_c1, climate_btn_c2 = st.columns( 2 )
+				
+				with climate_btn_c1:
+					if st.button( 'Run Climate Data', key='weather_climate_run',
+							use_container_width=True ):
+						try:
+							service = ClimateData( )
+							
+							if climate_mode == 'datasets':
+								result = service.fetch_datasets(
+									keyword=climate_keyword,
+									start_date=climate_start_date_value.isoformat( ),
+									end_date=climate_end_date_value.isoformat( ),
+									limit=int( climate_limit ),
+									offset=int( climate_offset ),
+									time=int( climate_timeout ) )
+							
+							else:
+								if not climate_dataset:
+									st.warning( 'Enter a dataset identifier.' )
+									result = None
+								else:
+									result = service.fetch_data(
+										dataset=climate_dataset,
+										start_date=climate_start_date_value.isoformat( ),
+										end_date=climate_end_date_value.isoformat( ),
+										stations=climate_stations,
+										data_types=climate_data_types,
+										limit=int( climate_limit ),
+										time=int( climate_timeout ) )
+							
+							if result is not None:
+								st.session_state[ 'weather_last_source' ] = 'Climate Data'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = None
+								st.session_state[ 'weather_last_longitude' ] = None
+								st.success( 'Climate Data request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Climate Data request failed: {ex}' )
+				
+				with climate_btn_c2:
+					if st.button( 'Clear Climate Result', key='weather_climate_clear',
+							use_container_width=True ):
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# TIDES AND CURRENTS
+			# ------------------------------------------------------------------
+			with st.expander( '🌊 Tides & Currents', expanded=False ):
+				tides_mode = st.selectbox(
+					'Mode',
+					options=[ 'station', 'water-level', 'tide-predictions' ],
+					key='weather_tides_mode' )
+				
+				tides_station_id = st.text_input(
+					'Station ID',
+					value='8594900',
+					help='Example NOAA station: 8594900',
+					key='weather_tides_station_id' )
+				
+				tides_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='weather_tides_timeout' )
+				
+				if tides_mode == 'station':
+					tides_begin_date = ''
+					tides_end_date = ''
+					tides_datum = 'MLLW'
+					tides_units = 'metric'
+					tides_time_zone = 'gmt'
+					tides_interval = 'hilo'
+				
+				else:
+					tides_date_c1, tides_date_c2 = st.columns( 2 )
+					with tides_date_c1:
+						tides_begin = st.date_input(
+							'Begin Date',
+							value=dt.date.today( ) - dt.timedelta( days=1 ),
+							key='weather_tides_begin_date' )
+					
+					with tides_date_c2:
+						tides_end = st.date_input(
+							'End Date',
+							value=dt.date.today( ),
+							key='weather_tides_end_date' )
+					
+					tides_begin_date = tides_begin.strftime( '%Y%m%d' )
+					tides_end_date = tides_end.strftime( '%Y%m%d' )
+					
+					tides_datum = st.selectbox(
+						'Datum',
+						options=[ 'MLLW', 'MLW', 'MSL', 'MHW', 'MHHW', 'NAVD' ],
+						key='weather_tides_datum' )
+					
+					tides_units = st.selectbox(
+						'Units',
+						options=[ 'metric', 'english' ],
+						key='weather_tides_units' )
+					
+					tides_time_zone = st.selectbox(
+						'Time Zone',
+						options=[ 'gmt', 'lst', 'lst_ldt' ],
+						key='weather_tides_time_zone' )
+					
+					if tides_mode == 'tide-predictions':
+						tides_interval = st.selectbox(
+							'Interval',
+							options=[ 'hilo', 'h' ],
+							key='weather_tides_interval' )
+					else:
+						tides_interval = 'hilo'
+				
+				tides_btn_c1, tides_btn_c2 = st.columns( 2 )
+				
+				with tides_btn_c1:
+					if st.button( 'Run Tides & Currents', key='weather_tides_run',
+							use_container_width=True ):
+						try:
+							service = TidesAndCurrents( )
+							
+							result = service.fetch(
+								mode=tides_mode,
+								station_id=tides_station_id,
+								begin_date=tides_begin_date,
+								end_date=tides_end_date,
+								datum=tides_datum,
+								units=tides_units,
+								time_zone=tides_time_zone,
+								interval=tides_interval,
+								time=int( tides_timeout ) )
+							
+							st.session_state[ 'weather_last_source' ] = 'Tides & Currents'
+							st.session_state[ 'weather_last_result' ] = result or { }
+							st.session_state[ 'weather_last_latitude' ] = None
+							st.session_state[ 'weather_last_longitude' ] = None
+							st.success( 'Tides & Currents request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Tides & Currents request failed: {ex}' )
+				
+				with tides_btn_c2:
+					if st.button( 'Clear Tides Result', key='weather_tides_clear',
 							use_container_width=True ):
 						st.session_state[ 'weather_last_source' ] = ''
 						st.session_state[ 'weather_last_result' ] = { }
@@ -2223,7 +2475,509 @@ elif mode == 'Environmental':
 						st.session_state[ 'env_last_result' ] = { }
 						st.session_state[ 'env_last_latitude' ] = None
 						st.session_state[ 'env_last_longitude' ] = None
-		
+			
+			# ------------------------------------------------------------------
+			# PURPLEAIR SENSORS
+			# ------------------------------------------------------------------
+			with st.expander( '🟣 PurpleAir Sensors', expanded=False ):
+				purple_mode = st.selectbox(
+					'Mode',
+					options=[ 'Sensors by Bounding Box', 'Single Sensor' ],
+					key='env_purple_mode' )
+				
+				purple_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_purple_timeout' )
+				
+				if purple_mode == 'Sensors by Bounding Box':
+					st.caption(
+						'Bounding box uses northwest longitude/latitude and southeast longitude/latitude.' )
+					
+					purple_box_c1, purple_box_c2 = st.columns( 2 )
+					with purple_box_c1:
+						purple_nwlng = st.number_input(
+							'NW Longitude',
+							value=-77.150000,
+							format='%.6f',
+							key='env_purple_nwlng' )
+						
+						purple_nwlat = st.number_input(
+							'NW Latitude',
+							value=39.000000,
+							format='%.6f',
+							key='env_purple_nwlat' )
+					
+					with purple_box_c2:
+						purple_selng = st.number_input(
+							'SE Longitude',
+							value=-76.900000,
+							format='%.6f',
+							key='env_purple_selng' )
+						
+						purple_selat = st.number_input(
+							'SE Latitude',
+							value=38.800000,
+							format='%.6f',
+							key='env_purple_selat' )
+					
+					purple_location_type = st.number_input(
+						'Location Type',
+						min_value=0,
+						max_value=1,
+						value=0,
+						step=1,
+						help='Public outdoor sensors are commonly 0.',
+						key='env_purple_location_type' )
+					
+					purple_max_age = st.number_input(
+						'Max Age',
+						min_value=0,
+						max_value=10080,
+						value=0,
+						step=10,
+						help='Maximum sensor age in minutes. 0 keeps the broad/default behavior.',
+						key='env_purple_max_age' )
+					
+					purple_modified_since = st.number_input(
+						'Modified Since',
+						min_value=0,
+						max_value=4102444800,
+						value=0,
+						step=1,
+						help='UNIX timestamp filter. 0 disables the filter.',
+						key='env_purple_modified_since' )
+					
+					purple_sensor_index = 0
+				
+				else:
+					purple_nwlng = 0.0
+					purple_nwlat = 0.0
+					purple_selng = 0.0
+					purple_selat = 0.0
+					purple_location_type = 0
+					purple_max_age = 0
+					purple_modified_since = 0
+					
+					purple_sensor_index = st.number_input(
+						'Sensor Index',
+						min_value=1,
+						value=1,
+						step=1,
+						key='env_purple_sensor_index' )
+				
+				purple_btn_c1, purple_btn_c2 = st.columns( 2 )
+				
+				with purple_btn_c1:
+					if st.button( 'Run PurpleAir', key='env_purple_run',
+							use_container_width=True ):
+						try:
+							service = PurpleAir( )
+							
+							if purple_mode == 'Sensors by Bounding Box':
+								result = service.fetch_sensors(
+									nwlng=float( purple_nwlng ),
+									nwlat=float( purple_nwlat ),
+									selng=float( purple_selng ),
+									selat=float( purple_selat ),
+									location_type=int( purple_location_type ),
+									max_age=int( purple_max_age ),
+									modified_since=int( purple_modified_since ),
+									time=int( purple_timeout ) )
+								
+								map_lat = (float( purple_nwlat ) + float( purple_selat )) / 2.0
+								map_lng = (float( purple_nwlng ) + float( purple_selng )) / 2.0
+							
+							else:
+								result = service.fetch_sensor(
+									sensor_index=int( purple_sensor_index ),
+									time=int( purple_timeout ) )
+								
+								map_lat = None
+								map_lng = None
+							
+							st.session_state[ 'env_last_source' ] = 'PurpleAir'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = map_lat
+							st.session_state[ 'env_last_longitude' ] = map_lng
+							st.success( 'PurpleAir request completed.' )
+						
+						except Exception as ex:
+							st.error( f'PurpleAir request failed: {ex}' )
+				
+				with purple_btn_c2:
+					if st.button( 'Clear PurpleAir Result', key='env_purple_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# ENVIROFACTS
+			# ------------------------------------------------------------------
+			with st.expander( '🏭 EnviroFacts Facilities', expanded=False ):
+				envirofacts_table = st.selectbox(
+					'Table',
+					options=[ 'TRI_FACILITY', 'TRI_RELEASE', 'EF_W_EMISSIONS_SOURCE_GHG' ],
+					key='env_envirofacts_table' )
+				
+				envirofacts_state = st.text_input(
+					'State Code',
+					value='DC',
+					help='Optional two-letter state filter.',
+					key='env_envirofacts_state' )
+				
+				envirofacts_facility = st.text_input(
+					'Facility Name',
+					value='',
+					help='Optional facility-name prefix filter.',
+					key='env_envirofacts_facility' )
+				
+				envirofacts_limit = st.number_input(
+					'Limit',
+					min_value=1,
+					max_value=500,
+					value=25,
+					step=1,
+					key='env_envirofacts_limit' )
+				
+				envirofacts_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_envirofacts_timeout' )
+				
+				envirofacts_btn_c1, envirofacts_btn_c2 = st.columns( 2 )
+				
+				with envirofacts_btn_c1:
+					if st.button( 'Run EnviroFacts', key='env_envirofacts_run',
+							use_container_width=True ):
+						try:
+							service = EnviroFacts( )
+							result = service.fetch(
+								table_name=envirofacts_table,
+								state_code=envirofacts_state,
+								facility_name=envirofacts_facility,
+								limit=int( envirofacts_limit ),
+								time=int( envirofacts_timeout ) )
+							
+							st.session_state[ 'env_last_source' ] = 'EnviroFacts'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = None
+							st.session_state[ 'env_last_longitude' ] = None
+							st.success( 'EnviroFacts request completed.' )
+						
+						except Exception as ex:
+							st.error( f'EnviroFacts request failed: {ex}' )
+				
+				with envirofacts_btn_c2:
+					if st.button( 'Clear EnviroFacts Result', key='env_envirofacts_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# FIRMS FIRE / THERMAL ANOMALIES
+			# ------------------------------------------------------------------
+			with st.expander( '🔥 FIRMS Fire / Thermal Anomalies', expanded=False ):
+				firms_source = st.selectbox(
+					'Source',
+					options=[
+							'MODIS_NRT',
+							'MODIS_SP',
+							'VIIRS_SNPP_NRT',
+							'VIIRS_SNPP_SP',
+							'VIIRS_NOAA20_NRT',
+							'VIIRS_NOAA20_SP',
+							'VIIRS_NOAA21_NRT',
+							'LANDSAT_NRT'
+					],
+					key='env_firms_source' )
+				
+				firms_area_mode = st.selectbox(
+					'Area Mode',
+					options=[ 'World', 'Bounding Box' ],
+					key='env_firms_area_mode' )
+				
+				if firms_area_mode == 'World':
+					firms_area_coordinates = 'world'
+					firms_center_lat = None
+					firms_center_lng = None
+				
+				else:
+					firms_box_c1, firms_box_c2 = st.columns( 2 )
+					with firms_box_c1:
+						firms_west = st.number_input(
+							'West',
+							value=-77.150000,
+							format='%.6f',
+							key='env_firms_west' )
+						
+						firms_south = st.number_input(
+							'South',
+							value=38.800000,
+							format='%.6f',
+							key='env_firms_south' )
+					
+					with firms_box_c2:
+						firms_east = st.number_input(
+							'East',
+							value=-76.900000,
+							format='%.6f',
+							key='env_firms_east' )
+						
+						firms_north = st.number_input(
+							'North',
+							value=39.000000,
+							format='%.6f',
+							key='env_firms_north' )
+					
+					firms_area_coordinates = (
+							f'{float( firms_west )},{float( firms_south )},'
+							f'{float( firms_east )},{float( firms_north )}'
+					)
+					firms_center_lat = (float( firms_south ) + float( firms_north )) / 2.0
+					firms_center_lng = (float( firms_west ) + float( firms_east )) / 2.0
+				
+				firms_day_range = st.number_input(
+					'Day Range',
+					min_value=1,
+					max_value=5,
+					value=1,
+					step=1,
+					key='env_firms_day_range' )
+				
+				firms_use_date = st.checkbox(
+					'Use Start Date',
+					value=False,
+					key='env_firms_use_date' )
+				
+				if firms_use_date:
+					firms_date_value = st.date_input(
+						'Date',
+						value=dt.date.today( ),
+						key='env_firms_date' )
+					firms_date = firms_date_value.isoformat( )
+				else:
+					firms_date = ''
+				
+				firms_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_firms_timeout' )
+				
+				firms_btn_c1, firms_btn_c2 = st.columns( 2 )
+				
+				with firms_btn_c1:
+					if st.button( 'Run FIRMS', key='env_firms_run',
+							use_container_width=True ):
+						try:
+							service = Firms( )
+							result = service.fetch_area(
+								source=firms_source,
+								area_coordinates=firms_area_coordinates,
+								day_range=int( firms_day_range ),
+								date=firms_date,
+								time=int( firms_timeout ) )
+							
+							st.session_state[ 'env_last_source' ] = 'FIRMS'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = firms_center_lat
+							st.session_state[ 'env_last_longitude' ] = firms_center_lng
+							st.success( 'FIRMS request completed.' )
+						
+						except Exception as ex:
+							st.error( f'FIRMS request failed: {ex}' )
+				
+				with firms_btn_c2:
+					if st.button( 'Clear FIRMS Result', key='env_firms_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+			
+			# ------------------------------------------------------------------
+			# EONET NATURAL EVENTS
+			# ------------------------------------------------------------------
+			with st.expander( '🌎 EONET Natural Events', expanded=False ):
+				eonet_mode = st.selectbox(
+					'Mode',
+					options=[ 'events', 'categories' ],
+					key='env_eonet_mode' )
+				
+				eonet_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='env_eonet_timeout' )
+				
+				if eonet_mode == 'events':
+					eonet_source = st.text_input(
+						'Source',
+						value='',
+						help='Optional EONET source identifier or comma-separated identifiers.',
+						key='env_eonet_source' )
+					
+					eonet_category = st.text_input(
+						'Category',
+						value='',
+						help='Optional EONET category identifier or comma-separated identifiers.',
+						key='env_eonet_category' )
+					
+					eonet_status = st.selectbox(
+						'Status',
+						options=[ 'open', 'closed', 'all' ],
+						key='env_eonet_status' )
+					
+					eonet_limit = st.number_input(
+						'Limit',
+						min_value=1,
+						max_value=500,
+						value=25,
+						step=1,
+						key='env_eonet_limit' )
+					
+					eonet_days = st.number_input(
+						'Days',
+						min_value=1,
+						max_value=3650,
+						value=30,
+						step=1,
+						key='env_eonet_days' )
+					
+					eonet_use_dates = st.checkbox(
+						'Use Start / End Dates',
+						value=False,
+						key='env_eonet_use_dates' )
+					
+					if eonet_use_dates:
+						eonet_date_c1, eonet_date_c2 = st.columns( 2 )
+						with eonet_date_c1:
+							eonet_start_value = st.date_input(
+								'Start Date',
+								value=dt.date.today( ) - dt.timedelta( days=30 ),
+								key='env_eonet_start_date' )
+						
+						with eonet_date_c2:
+							eonet_end_value = st.date_input(
+								'End Date',
+								value=dt.date.today( ),
+								key='env_eonet_end_date' )
+						
+						eonet_start_date = eonet_start_value.isoformat( )
+						eonet_end_date = eonet_end_value.isoformat( )
+					
+					else:
+						eonet_start_date = ''
+						eonet_end_date = ''
+					
+					eonet_use_bbox = st.checkbox(
+						'Use Bounding Box',
+						value=False,
+						key='env_eonet_use_bbox' )
+					
+					if eonet_use_bbox:
+						eonet_box_c1, eonet_box_c2 = st.columns( 2 )
+						with eonet_box_c1:
+							eonet_min_lon = st.number_input(
+								'Min Longitude',
+								value=-77.150000,
+								format='%.6f',
+								key='env_eonet_min_lon' )
+							
+							eonet_max_lat = st.number_input(
+								'Max Latitude',
+								value=39.000000,
+								format='%.6f',
+								key='env_eonet_max_lat' )
+						
+						with eonet_box_c2:
+							eonet_max_lon = st.number_input(
+								'Max Longitude',
+								value=-76.900000,
+								format='%.6f',
+								key='env_eonet_max_lon' )
+							
+							eonet_min_lat = st.number_input(
+								'Min Latitude',
+								value=38.800000,
+								format='%.6f',
+								key='env_eonet_min_lat' )
+						
+						eonet_bbox = (
+								f'{float( eonet_min_lon )},{float( eonet_max_lat )},'
+								f'{float( eonet_max_lon )},{float( eonet_min_lat )}'
+						)
+						eonet_center_lat = (float( eonet_min_lat ) + float( eonet_max_lat )) / 2.0
+						eonet_center_lng = (float( eonet_min_lon ) + float( eonet_max_lon )) / 2.0
+					
+					else:
+						eonet_bbox = ''
+						eonet_center_lat = None
+						eonet_center_lng = None
+				
+				else:
+					eonet_source = ''
+					eonet_category = ''
+					eonet_status = 'open'
+					eonet_limit = 25
+					eonet_days = 30
+					eonet_start_date = ''
+					eonet_end_date = ''
+					eonet_bbox = ''
+					eonet_center_lat = None
+					eonet_center_lng = None
+				
+				eonet_btn_c1, eonet_btn_c2 = st.columns( 2 )
+				
+				with eonet_btn_c1:
+					if st.button( 'Run EONET', key='env_eonet_run',
+							use_container_width=True ):
+						try:
+							service = EoNet( )
+							result = service.fetch(
+								mode=eonet_mode,
+								source=eonet_source,
+								category=eonet_category,
+								status=eonet_status,
+								limit=int( eonet_limit ),
+								days=int( eonet_days ),
+								start_date=eonet_start_date,
+								end_date=eonet_end_date,
+								bbox=eonet_bbox,
+								time=int( eonet_timeout ) )
+							
+							st.session_state[ 'env_last_source' ] = 'EONET'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = eonet_center_lat
+							st.session_state[ 'env_last_longitude' ] = eonet_center_lng
+							st.success( 'EONET request completed.' )
+						
+						except Exception as ex:
+							st.error( f'EONET request failed: {ex}' )
+				
+				with eonet_btn_c2:
+					if st.button( 'Clear EONET Result', key='env_eonet_clear',
+							use_container_width=True ):
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+						
 		with enviro_c2:
 			# ------------------------------------------------------------------
 			# ENVIRONMENTAL RESULTS
@@ -2715,7 +3469,456 @@ elif mode == 'Astronomical':
 						st.session_state[ 'astro_last_latitude' ] = None
 						st.session_state[ 'astro_last_longitude' ] = None
 						st.session_state[ 'astro_last_url' ] = ''
-		
+			
+			# ------------------------------------------------------------------
+			# SATELLITE CENTER
+			# ------------------------------------------------------------------
+			with st.expander( '🛰️ Satellite Center', expanded=False ):
+				satellite_mode = st.selectbox(
+					'Mode',
+					options=[ 'observatories', 'ground_stations', 'locations' ],
+					key='astro_satellite_mode' )
+				
+				satellite_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_satellite_timeout' )
+				
+				if satellite_mode == 'locations':
+					satellite_query = st.text_input(
+						'Observatories',
+						value='iss',
+						help='Comma-separated observatory identifiers such as iss or mms1,mms2.',
+						key='astro_satellite_query' )
+					
+					satellite_start_date = st.date_input(
+						'Start Date',
+						value=dt.date.today( ) - dt.timedelta( days=1 ),
+						key='astro_satellite_start_date' )
+					
+					satellite_start_time = st.text_input(
+						'Start Time',
+						value='00:00:00Z',
+						help='Use UTC time ending in Z.',
+						key='astro_satellite_start_time' )
+					
+					satellite_end_date = st.date_input(
+						'End Date',
+						value=dt.date.today( ),
+						key='astro_satellite_end_date' )
+					
+					satellite_end_time = st.text_input(
+						'End Time',
+						value='00:00:00Z',
+						help='Use UTC time ending in Z.',
+						key='astro_satellite_end_time' )
+					
+					satellite_coordinate_systems = st.text_input(
+						'Coordinate Systems',
+						value='gse',
+						help='Comma-separated coordinate systems such as gse, geo, or gsm.',
+						key='astro_satellite_coordinate_systems' )
+					
+					satellite_resolution_factor = st.number_input(
+						'Resolution Factor',
+						min_value=1,
+						max_value=10000,
+						value=1,
+						step=1,
+						key='astro_satellite_resolution_factor' )
+				
+				else:
+					satellite_query = ''
+					satellite_start_date = dt.date.today( )
+					satellite_start_time = ''
+					satellite_end_date = dt.date.today( )
+					satellite_end_time = ''
+					satellite_coordinate_systems = 'gse'
+					satellite_resolution_factor = 1
+				
+				satellite_btn_c1, satellite_btn_c2 = st.columns( 2 )
+				
+				with satellite_btn_c1:
+					if st.button( 'Run Satellite Center', key='astro_satellite_run',
+							use_container_width=True ):
+						try:
+							service = SatelliteCenter( )
+							
+							if satellite_mode == 'locations':
+								start_value = f'{satellite_start_date.isoformat( )}T{satellite_start_time}'
+								end_value = f'{satellite_end_date.isoformat( )}T{satellite_end_time}'
+							else:
+								start_value = ''
+								end_value = ''
+							
+							result = service.fetch(
+								mode=satellite_mode,
+								query=satellite_query,
+								start_time=start_value,
+								end_time=end_value,
+								coordinate_systems=satellite_coordinate_systems,
+								resolution_factor=int( satellite_resolution_factor ),
+								time=int( satellite_timeout ) )
+							
+							st.session_state[ 'astro_last_source' ] = 'Satellite Center'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
+							st.success( 'Satellite Center request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Satellite Center request failed: {ex}' )
+				
+				with satellite_btn_c2:
+					if st.button( 'Clear Satellite Result', key='astro_satellite_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+			
+			# ------------------------------------------------------------------
+			# ASTRO CATALOG
+			# ------------------------------------------------------------------
+			with st.expander( '🔭 Astro Catalog', expanded=False ):
+				catalog_mode = st.selectbox(
+					'Mode',
+					options=[ 'object_query', 'cone_search' ],
+					key='astro_catalog_mode' )
+				
+				catalog_quantity = st.text_input(
+					'Quantity',
+					value='',
+					help='Optional Open Astronomy Catalog quantity path segment.',
+					key='astro_catalog_quantity' )
+				
+				catalog_attributes = st.text_input(
+					'Attributes',
+					value='',
+					help='Optional comma-separated attribute path segments.',
+					key='astro_catalog_attributes' )
+				
+				catalog_arguments = st.text_area(
+					'Arguments',
+					value='',
+					help='Optional comma-separated or newline-separated key=value arguments.',
+					key='astro_catalog_arguments' )
+				
+				catalog_data_format = st.selectbox(
+					'Data Format',
+					options=[ 'json', 'csv' ],
+					key='astro_catalog_data_format' )
+				
+				catalog_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_catalog_timeout' )
+				
+				if catalog_mode == 'object_query':
+					catalog_query = st.text_input(
+						'Object Name',
+						value='SN2011fe',
+						key='astro_catalog_query' )
+					
+					catalog_ra = ''
+					catalog_dec = ''
+					catalog_radius = 2
+				
+				else:
+					catalog_query = ''
+					catalog_ra = st.text_input(
+						'Right Ascension',
+						value='10:00:00',
+						key='astro_catalog_ra' )
+					
+					catalog_dec = st.text_input(
+						'Declination',
+						value='+10:00:00',
+						key='astro_catalog_dec' )
+					
+					catalog_radius = st.number_input(
+						'Radius',
+						min_value=1,
+						max_value=360,
+						value=2,
+						step=1,
+						key='astro_catalog_radius' )
+				
+				catalog_btn_c1, catalog_btn_c2 = st.columns( 2 )
+				
+				with catalog_btn_c1:
+					if st.button( 'Run Astro Catalog', key='astro_catalog_run',
+							use_container_width=True ):
+						try:
+							service = AstroCatalog( )
+							result = service.fetch(
+								mode=catalog_mode,
+								query=catalog_query,
+								quantity=catalog_quantity,
+								attributes=catalog_attributes,
+								arguments=catalog_arguments,
+								ra=catalog_ra,
+								dec=catalog_dec,
+								radius=int( catalog_radius ),
+								data_format=catalog_data_format,
+								time=int( catalog_timeout ) )
+							
+							st.session_state[ 'astro_last_source' ] = 'Astro Catalog'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
+							st.success( 'Astro Catalog request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Astro Catalog request failed: {ex}' )
+				
+				with catalog_btn_c2:
+					if st.button( 'Clear Astro Catalog Result', key='astro_catalog_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+			
+			# ------------------------------------------------------------------
+			# ASTROQUERY / SIMBAD
+			# ------------------------------------------------------------------
+			with st.expander( '🌌 AstroQuery / SIMBAD', expanded=False ):
+				astroquery_mode = st.selectbox(
+					'Mode',
+					options=[ 'object_search', 'object_ids', 'region_search' ],
+					key='astro_astroquery_mode' )
+				
+				astroquery_row_limit = st.number_input(
+					'Row Limit',
+					min_value=1,
+					max_value=10000,
+					value=100,
+					step=1,
+					key='astro_astroquery_row_limit' )
+				
+				if astroquery_mode in [ 'object_search', 'object_ids' ]:
+					astroquery_query = st.text_input(
+						'Object Name',
+						value='M31',
+						key='astro_astroquery_query' )
+					
+					astroquery_ra = ''
+					astroquery_dec = ''
+					astroquery_radius = 0.5
+					astroquery_radius_unit = 'deg'
+				
+				else:
+					astroquery_query = ''
+					astroquery_ra = st.text_input(
+						'Right Ascension',
+						value='10.6847083',
+						key='astro_astroquery_ra' )
+					
+					astroquery_dec = st.text_input(
+						'Declination',
+						value='41.2687500',
+						key='astro_astroquery_dec' )
+					
+					astroquery_radius = st.number_input(
+						'Radius',
+						min_value=0.001,
+						max_value=180.0,
+						value=0.5,
+						step=0.1,
+						format='%.3f',
+						key='astro_astroquery_radius' )
+					
+					astroquery_radius_unit = st.selectbox(
+						'Radius Unit',
+						options=[ 'deg', 'arcmin', 'arcsec' ],
+						key='astro_astroquery_radius_unit' )
+				
+				astroquery_btn_c1, astroquery_btn_c2 = st.columns( 2 )
+				
+				with astroquery_btn_c1:
+					if st.button( 'Run AstroQuery', key='astro_astroquery_run',
+							use_container_width=True ):
+						try:
+							service = AstroQuery( )
+							result = service.fetch(
+								mode=astroquery_mode,
+								query=astroquery_query,
+								ra=astroquery_ra,
+								dec=astroquery_dec,
+								radius=float( astroquery_radius ),
+								radius_unit=astroquery_radius_unit,
+								row_limit=int( astroquery_row_limit ) )
+							
+							st.session_state[ 'astro_last_source' ] = 'AstroQuery / SIMBAD'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
+							st.success( 'AstroQuery request completed.' )
+						
+						except Exception as ex:
+							st.error( f'AstroQuery request failed: {ex}' )
+				
+				with astroquery_btn_c2:
+					if st.button( 'Clear AstroQuery Result', key='astro_astroquery_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+			
+			# ------------------------------------------------------------------
+			# STAR MAP
+			# ------------------------------------------------------------------
+			with st.expander( '🗺️ Star Map', expanded=False ):
+				starmap_mode = st.selectbox(
+					'Mode',
+					options=[ 'object_link', 'coordinate_link', 'snapshot' ],
+					key='astro_starmap_mode' )
+				
+				starmap_zoom = st.number_input(
+					'Zoom',
+					min_value=1,
+					max_value=20,
+					value=5,
+					step=1,
+					key='astro_starmap_zoom' )
+				
+				starmap_image_source = st.text_input(
+					'Image Source',
+					value='DSS2',
+					key='astro_starmap_image_source' )
+				
+				starmap_box_color = st.selectbox(
+					'Box Color',
+					options=[ 'yellow', 'red', 'green', 'blue', 'white' ],
+					key='astro_starmap_box_color' )
+				
+				if starmap_mode == 'object_link':
+					starmap_query = st.text_input(
+						'Object Name',
+						value='M31',
+						key='astro_starmap_query' )
+					
+					starmap_ra = 0.0
+					starmap_dec = 0.0
+				
+				else:
+					starmap_query = ''
+					starmap_coord_c1, starmap_coord_c2 = st.columns( 2 )
+					with starmap_coord_c1:
+						starmap_ra = st.number_input(
+							'Right Ascension',
+							value=10.6847083,
+							format='%.7f',
+							key='astro_starmap_ra' )
+					
+					with starmap_coord_c2:
+						starmap_dec = st.number_input(
+							'Declination',
+							value=41.2687500,
+							format='%.7f',
+							key='astro_starmap_dec' )
+				
+				starmap_options_c1, starmap_options_c2 = st.columns( 2 )
+				with starmap_options_c1:
+					starmap_show_box = st.checkbox(
+						'Show Box',
+						value=True,
+						key='astro_starmap_show_box' )
+					
+					starmap_show_grid = st.checkbox(
+						'Show Grid',
+						value=True,
+						key='astro_starmap_show_grid' )
+				
+				with starmap_options_c2:
+					starmap_show_lines = st.checkbox(
+						'Show Lines',
+						value=True,
+						key='astro_starmap_show_lines' )
+					
+					starmap_show_boundaries = st.checkbox(
+						'Show Boundaries',
+						value=True,
+						key='astro_starmap_show_boundaries' )
+				
+				starmap_show_const_names = st.checkbox(
+					'Show Constellation Names',
+					value=False,
+					key='astro_starmap_show_const_names' )
+				
+				starmap_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_starmap_timeout' )
+				
+				starmap_btn_c1, starmap_btn_c2 = st.columns( 2 )
+				
+				with starmap_btn_c1:
+					if st.button( 'Run Star Map', key='astro_starmap_run',
+							use_container_width=True ):
+						try:
+							service = StarMap( )
+							result = service.fetch(
+								mode=starmap_mode,
+								query=starmap_query,
+								ra=float( starmap_ra ),
+								dec=float( starmap_dec ),
+								zoom=int( starmap_zoom ),
+								image_source=starmap_image_source,
+								box_color=starmap_box_color,
+								show_box=bool( starmap_show_box ),
+								show_grid=bool( starmap_show_grid ),
+								show_lines=bool( starmap_show_lines ),
+								show_boundaries=bool( starmap_show_boundaries ),
+								show_const_names=bool( starmap_show_const_names ),
+								time=int( starmap_timeout ) )
+							
+							result_url = ''
+							if isinstance( result, dict ):
+								result_url = (
+										result.get( 'preferred_image_url', '' )
+										or result.get( 'snapshot_page_url', '' )
+										or result.get( 'object_page_url', '' )
+										or result.get( 'coordinate_page_url', '' )
+										or result.get( 'url', '' )
+								)
+							
+							st.session_state[ 'astro_last_source' ] = 'Star Map'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = result_url
+							st.success( 'Star Map request completed.' )
+						
+						except Exception as ex:
+							st.error( f'Star Map request failed: {ex}' )
+				
+				with starmap_btn_c2:
+					if st.button( 'Clear Star Map Result', key='astro_starmap_clear',
+							use_container_width=True ):
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
+						
 		with astro_c2:
 			# ------------------------------------------------------------------
 			# ASTRONOMICAL RESULTS
@@ -2729,8 +3932,7 @@ elif mode == 'Astronomical':
 			astro_url = st.session_state.get( 'astro_last_url', '' )
 			
 			if not astro_result:
-				st.info(
-					'No astronomical results available. Run one of the Astronomical expanders.' )
+				st.info( 'No astronomical results available. Run one of the Astronomical expanders.' )
 			
 			else:
 				if astro_source:
@@ -2790,7 +3992,25 @@ elif mode == 'Astronomical':
 						key='astro_rows_table',
 						use_container_width=True,
 						disabled=True )
+					
+				columns = astro_result.get( 'columns', None ) if isinstance( astro_result,
+					dict ) else None
+				rows = astro_result.get( 'rows', None ) if isinstance( astro_result, dict ) else None
 				
+				if isinstance( rows, list ) and rows:
+					st.markdown( '##### Rows' )
+					
+					if isinstance( columns, list ) and columns:
+						df_astro_rows = pd.DataFrame( rows, columns=columns )
+					else:
+						df_astro_rows = pd.DataFrame( rows )
+					
+					st.data_editor(
+						df_astro_rows,
+						key='astro_rows_table',
+						use_container_width=True,
+						disabled=True )
+					
 				st.markdown( '##### Raw Result' )
 				st.json( astro_result )
 
@@ -3046,7 +4266,260 @@ elif mode == 'Geological':
 						st.session_state[ 'geo_last_latitude' ] = None
 						st.session_state[ 'geo_last_longitude' ] = None
 						st.session_state[ 'geo_last_image_path' ] = ''
-		
+			
+			# ------------------------------------------------------------------
+			# USGS WATER DATA
+			# ------------------------------------------------------------------
+			with st.expander( '💧 USGS Water Data', expanded=False ):
+				water_mode = st.selectbox(
+					'Mode',
+					options=[
+							'monitoring-locations',
+							'time-series-metadata',
+							'latest-continuous',
+							'latest-daily'
+					],
+					key='geo_water_mode' )
+				
+				water_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='geo_water_timeout' )
+				
+				water_limit = st.number_input(
+					'Limit',
+					min_value=1,
+					max_value=1000,
+					value=25,
+					step=1,
+					key='geo_water_limit' )
+				
+				if water_mode == 'monitoring-locations':
+					water_monitoring_location_id = st.text_input(
+						'Monitoring Location ID',
+						value='',
+						help='Optional. Example: USGS-01491000',
+						key='geo_water_monitoring_location_id' )
+					
+					water_state_code = st.text_input(
+						'State Code',
+						value='',
+						help='Optional state filter.',
+						key='geo_water_state_code' )
+					
+					water_county_code = st.text_input(
+						'County Code',
+						value='',
+						help='Optional county filter.',
+						key='geo_water_county_code' )
+					
+					water_site_type = st.text_input(
+						'Site Type',
+						value='',
+						help='Optional site type filter.',
+						key='geo_water_site_type' )
+					
+					water_parameter_code = ''
+				
+				else:
+					water_monitoring_location_id = st.text_input(
+						'Monitoring Location ID',
+						value='USGS-01491000',
+						help='Example: USGS-01491000',
+						key='geo_water_monitoring_location_id_value' )
+					
+					water_parameter_code = st.text_input(
+						'Parameter Code',
+						value='',
+						help='Optional USGS parameter code.',
+						key='geo_water_parameter_code' )
+					
+					water_state_code = ''
+					water_county_code = ''
+					water_site_type = ''
+				
+				water_btn_c1, water_btn_c2 = st.columns( 2 )
+				
+				with water_btn_c1:
+					if st.button( 'Run USGS Water Data', key='geo_water_run',
+							use_container_width=True ):
+						try:
+							service = USGSWaterData( )
+							result = service.fetch(
+								mode=water_mode,
+								monitoring_location_id=water_monitoring_location_id,
+								state_code=water_state_code,
+								county_code=water_county_code,
+								site_type=water_site_type,
+								parameter_code=water_parameter_code,
+								limit=int( water_limit ),
+								time=int( water_timeout ) )
+							
+							st.session_state[ 'geo_last_source' ] = 'USGS Water Data'
+							st.session_state[ 'geo_last_result' ] = result or { }
+							st.session_state[ 'geo_last_latitude' ] = None
+							st.session_state[ 'geo_last_longitude' ] = None
+							st.session_state[ 'geo_last_image_path' ] = ''
+							st.success( 'USGS Water Data request completed.' )
+						
+						except Exception as ex:
+							st.error( f'USGS Water Data request failed: {ex}' )
+				
+				with water_btn_c2:
+					if st.button( 'Clear Water Data Result', key='geo_water_clear',
+							use_container_width=True ):
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
+			
+			# ------------------------------------------------------------------
+			# USGS THE NATIONAL MAP
+			# ------------------------------------------------------------------
+			with st.expander( '🗺️ USGS The National Map', expanded=False ):
+				tnm_mode = st.selectbox(
+					'Mode',
+					options=[ 'datasets', 'products' ],
+					key='geo_tnm_mode' )
+				
+				tnm_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='geo_tnm_timeout' )
+				
+				if tnm_mode == 'datasets':
+					tnm_dataset = ''
+					tnm_query = ''
+					tnm_bbox = ''
+					tnm_prod_formats = ''
+					tnm_max_items = 25
+					tnm_offset = 0
+					tnm_center_lat = None
+					tnm_center_lng = None
+				
+				else:
+					tnm_dataset = st.text_input(
+						'Dataset',
+						value='',
+						help='Optional TNM dataset filter.',
+						key='geo_tnm_dataset' )
+					
+					tnm_query = st.text_input(
+						'Search Query',
+						value='',
+						help='Optional free-text product search.',
+						key='geo_tnm_query' )
+					
+					tnm_prod_formats = st.text_input(
+						'Product Formats',
+						value='',
+						help='Optional format filter such as GeoTIFF, IMG, LAS, or LAZ.',
+						key='geo_tnm_prod_formats' )
+					
+					tnm_use_bbox = st.checkbox(
+						'Use Bounding Box',
+						value=False,
+						key='geo_tnm_use_bbox' )
+					
+					if tnm_use_bbox:
+						tnm_box_c1, tnm_box_c2 = st.columns( 2 )
+						with tnm_box_c1:
+							tnm_min_x = st.number_input(
+								'Min X / West Longitude',
+								value=-77.150000,
+								format='%.6f',
+								key='geo_tnm_min_x' )
+							
+							tnm_min_y = st.number_input(
+								'Min Y / South Latitude',
+								value=38.800000,
+								format='%.6f',
+								key='geo_tnm_min_y' )
+						
+						with tnm_box_c2:
+							tnm_max_x = st.number_input(
+								'Max X / East Longitude',
+								value=-76.900000,
+								format='%.6f',
+								key='geo_tnm_max_x' )
+							
+							tnm_max_y = st.number_input(
+								'Max Y / North Latitude',
+								value=39.000000,
+								format='%.6f',
+								key='geo_tnm_max_y' )
+						
+						tnm_bbox = (
+								f'{float( tnm_min_x )},{float( tnm_min_y )},'
+								f'{float( tnm_max_x )},{float( tnm_max_y )}'
+						)
+						tnm_center_lat = (float( tnm_min_y ) + float( tnm_max_y )) / 2.0
+						tnm_center_lng = (float( tnm_min_x ) + float( tnm_max_x )) / 2.0
+					
+					else:
+						tnm_bbox = ''
+						tnm_center_lat = None
+						tnm_center_lng = None
+					
+					tnm_max_items = st.number_input(
+						'Max Items',
+						min_value=1,
+						max_value=1000,
+						value=25,
+						step=1,
+						key='geo_tnm_max_items' )
+					
+					tnm_offset = st.number_input(
+						'Offset',
+						min_value=0,
+						max_value=100000,
+						value=0,
+						step=1,
+						key='geo_tnm_offset' )
+				
+				tnm_btn_c1, tnm_btn_c2 = st.columns( 2 )
+				
+				with tnm_btn_c1:
+					if st.button( 'Run The National Map', key='geo_tnm_run',
+							use_container_width=True ):
+						try:
+							service = USGSTheNationalMap( )
+							result = service.fetch(
+								mode=tnm_mode,
+								dataset=tnm_dataset,
+								q=tnm_query,
+								bbox=tnm_bbox,
+								prod_formats=tnm_prod_formats,
+								max_items=int( tnm_max_items ),
+								offset=int( tnm_offset ),
+								time=int( tnm_timeout ) )
+							
+							st.session_state[ 'geo_last_source' ] = 'USGS The National Map'
+							st.session_state[ 'geo_last_result' ] = result or { }
+							st.session_state[ 'geo_last_latitude' ] = tnm_center_lat
+							st.session_state[ 'geo_last_longitude' ] = tnm_center_lng
+							st.session_state[ 'geo_last_image_path' ] = ''
+							st.success( 'USGS The National Map request completed.' )
+						
+						except Exception as ex:
+							st.error( f'USGS The National Map request failed: {ex}' )
+				
+				with tnm_btn_c2:
+					if st.button( 'Clear National Map Result', key='geo_tnm_clear',
+							use_container_width=True ):
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
+						
 		with geo_c2:
 			# ------------------------------------------------------------------
 			# GEOLOGICAL RESULTS
