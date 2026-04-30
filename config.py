@@ -69,6 +69,6 @@ GOOGLE_CLOUD_LOCATION = os.getenv( 'GOOGLE_CLOUD_LOCATION' )
 GOOGLE_CLOUD_PROJECT = os.getenv( 'GOOGLE_CLOUD_PROJECT_ID' )
 GOOGLE_MAPS_API_KEY = os.getenv( 'GOOGLEMAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
-# -------------- SETTINGS
 
+# -------------- SETTINGS
 MODES = [ 'Geocoding', 'Distances', 'Maps', 'Time Zones', 'Data Upload', 'Data Management' ]
