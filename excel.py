@@ -143,7 +143,6 @@ class Excel:
 			exception.method = 'read( self, **kwargs )'
 			raise exception
 
-
 	def write( self, df: pd.DataFrame, path: str, sheet: Optional[ str ] ) -> None:
 		"""
 
@@ -178,7 +177,6 @@ class Excel:
 			exception.cause = 'Excel'
 			exception.method = 'write( self, **kwargs )'
 			raise exception
-
 
 	def enrich_from_address( self, inpath: str, outpath: str, address: str, sheet: Optional[ str ],
 	                         cntry: Optional[ str ] ) -> None:

@@ -3043,7 +3043,6 @@ elif mode == 'Environmental':
 				st.markdown( '##### Raw Result' )
 				st.json( env_result )
 
-
 # ==============================================================================
 # ASTRONOMICAL MODE
 # ==============================================================================
@@ -3996,11 +3995,8 @@ elif mode == 'Astronomical':
 					else:
 						df_astro_rows = pd.DataFrame( rows )
 					
-					st.data_editor(
-						df_astro_rows,
-						key='astro_rows_table',
-						use_container_width=True,
-						disabled=True )
+					st.data_editor( df_astro_rows, key='astro_rows_table',
+						use_container_width=True, disabled=True )
 					
 				st.markdown( '##### Raw Result' )
 				st.json( astro_result )
@@ -4814,7 +4810,7 @@ elif mode == 'Data Management':
 			if tables:
 				table = st.selectbox( 'Table', tables, key='table_name' )
 				df = read_table( table )
-				render_table( df )
+				st.data_editor( df )
 			else:
 				st.info( 'No tables available.' )
 		
@@ -4856,25 +4852,19 @@ elif mode == 'Data Management':
 					
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
-							insert_data[ column ] = st.number_input(
-								column,
-								step=1,
+							insert_data[ column ] = st.number_input( column, step=1,
 								key=f'ins_{table}_{column}' )
 						
 						elif 'REAL' in col_type:
-							insert_data[ column ] = st.number_input(
-								column,
-								format='%.6f',
+							insert_data[ column ] = st.number_input( column, format='%.6f',
 								key=f'ins_{table}_{column}' )
 						
 						elif 'BOOL' in col_type:
-							insert_data[ column ] = 1 if st.checkbox(
-								column,
+							insert_data[ column ] = 1 if st.checkbox( column,
 								key=f'ins_{table}_{column}' ) else 0
 						
 						else:
-							insert_data[ column ] = st.text_input(
-								column,
+							insert_data[ column ] = st.text_input( column,
 								key=f'ins_{table}_{column}' )
 					
 					if st.button( 'Insert Row', key=f'insert_row_{table}',
@@ -4898,39 +4888,27 @@ elif mode == 'Data Management':
 				# ------------------------------------------------------------------
 				with update_col:
 					st.markdown( '##### Update Row' )
-					rowid = st.number_input(
-						'Row ID',
-						min_value=1,
-						step=1,
+					rowid = st.number_input( 'Row ID', min_value=1, step=1,
 						key=f'crud_update_rowid_{table}' )
 					
 					update_data = { }
 					
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
-							val = st.number_input(
-								column,
-								step=1,
-								key=f'upd_{table}_{column}' )
+							val = st.number_input( column, step=1, key=f'upd_{table}_{column}' )
 							update_data[ column ] = val
 						
 						elif 'REAL' in col_type:
-							val = st.number_input(
-								column,
-								format='%.6f',
-								key=f'upd_{table}_{column}' )
+							val = st.number_input( column, format='%.6f', key=f'upd_{table}_{column}' )
 							update_data[ column ] = val
 						
 						elif 'BOOL' in col_type:
-							val = 1 if st.checkbox(
-								column,
+							val = 1 if st.checkbox( column,
 								key=f'upd_{table}_{column}' ) else 0
 							update_data[ column ] = val
 						
 						else:
-							val = st.text_input(
-								column,
-								key=f'upd_{table}_{column}' )
+							val = st.text_input( column, key=f'upd_{table}_{column}' )
 							update_data[ column ] = val
 					
 					if st.button( 'Update Row', key=f'update_row_{table}',
@@ -4946,7 +4924,6 @@ elif mode == 'Data Management':
 						st.rerun( )
 				
 				st.divider( )
-				
 				delete_col, preview_col = st.columns( [ 0.35, 0.65 ], border=True )
 				
 				# ------------------------------------------------------------------
@@ -4954,14 +4931,10 @@ elif mode == 'Data Management':
 				# ------------------------------------------------------------------
 				with delete_col:
 					st.markdown( '##### Delete Row' )
-					delete_id = st.number_input(
-						'Row ID to Delete',
-						min_value=1,
-						step=1,
+					delete_id = st.number_input( 'Row ID to Delete', min_value=1, step=1,
 						key=f'crud_delete_rowid_{table}' )
 					
-					if st.button( 'Delete Row', key=f'delete_row_{table}',
-							use_container_width=True ):
+					if st.button( 'Delete Row', key=f'delete_row_{table}', use_container_width=True ):
 						with create_connection( ) as conn:
 							conn.execute( f'DELETE FROM "{table}" WHERE rowid=?;', (delete_id,) )
 							conn.commit( )
@@ -4974,11 +4947,8 @@ elif mode == 'Data Management':
 				# ------------------------------------------------------------------
 				with preview_col:
 					st.markdown( '##### Current Data Preview' )
-					st.data_editor(
-						df.head( 25 ),
-						key=f'dm_crud_preview_{table}',
-						use_container_width=True,
-						disabled=True )
+					st.data_editor( df.head( 25 ), key=f'dm_crud_preview_{table}',
+						use_container_width=True, disabled=True )
 		
 		# ------------------------------------------------------------------------------
 		# EXPLORE
