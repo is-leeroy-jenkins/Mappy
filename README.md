@@ -2,7 +2,7 @@
 ![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/project_mappy.png)
 
 - `mappy` is a lightweight Python framework that wraps various mapping fucntionality 
-for use in GenAI agentic tooling. It is designed to be simplify the integration of geospatial 
+for use in data pipelines and agentic tooling. It is designed to be simplify the integration of geospatial 
 capabilities into ML/AI workflows and applications.
 
 - With `mappy`, you can enrich spreadsheets with latitude/longitude, calculate travel distances,  

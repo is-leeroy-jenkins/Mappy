@@ -72,33 +72,44 @@ class RateLimiter:
 	"""
 
 		Purpose:
-		Enforce a rough max-queries-per-second ceiling by sleeping between
-		calls. This is lightweight and process-local.
+		Enforce a process-local maximum queries-per-second ceiling by sleeping
+		between outbound requests. The limiter is intentionally lightweight and
+		designed for single-process Streamlit/API usage.
 
 		Parameters:
-		query_per_second (Optional[float]):
-		Max queries per second. If None or <= 0, no throttling occurs.
+		max (Optional[float]):
+		Maximum queries per second. If None or <= 0, throttling is disabled.
 
 		Returns:
-		Instance exposing .wait() to call right before an outbound request.
+		Instance exposing wait() to call immediately before an outbound request.
 
 	"""
 	query_per_second: Optional[ float ]
 	interval: Optional[ float ]
 	last: Optional[ float ]
-	now: Optional[ time ]
+	now: Optional[ float ]
 	delta: Optional[ float ]
-
+	calls: Optional[ int ]
+	total_sleep: Optional[ float ]
+	last_sleep: Optional[ float ]
+	
 	def __init__( self, max: Optional[ float ] ) -> None:
-		self.query_per_second = max
-		self.interval = 1.0 / max if max and max > 0 else 0.0
+		self.query_per_second = float( max ) if max is not None else None
+		self.interval = ( 1.0 / self.query_per_second
+		                  if self.query_per_second and self.query_per_second > 0 else 0.0 )
 		self.last = 0.0
-
+		self.now = 0.0
+		self.delta = 0.0
+		self.calls = 0
+		self.total_sleep = 0.0
+		self.last_sleep = 0.0
+	
 	def wait( self ) -> None:
 		"""
 
 			Purpose:
-				Sleep just enough so successive calls keep under the configured QPS.
+				Sleep just enough so successive calls remain under the configured
+				query-per-second ceiling.
 
 			Parameters:
 				None.
@@ -108,17 +119,22 @@ class RateLimiter:
 
 		"""
 		try:
-			throw_if( 'max', max )
-			if self.interval <= 0:
+			self.calls += 1
+			self.last_sleep = 0.0
+			if self.interval is None or self.interval <= 0:
 				return
+			
 			self.now = time.time( )
 			self.delta = self.now - self.last
-			if self.delta < self.interval:
-				time.sleep( self.interval - self.delta )
+			if self.last > 0.0 and self.delta < self.interval:
+				self.last_sleep = self.interval - self.delta
+				time.sleep( self.last_sleep )
+				self.total_sleep += self.last_sleep
+			
 			self.last = time.time( )
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
-			exception.cause = 'rates'
-			exception.method = 'wait( self, **kwargs)'
+			exception.cause = 'RateLimiter'
+			exception.method = 'wait( self )'
 			raise exception

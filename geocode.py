@@ -117,14 +117,15 @@ class Geocoder( ):
 	"""
 
 		Purpose:
-		Provide address and city/state/country geocoding with optional caching.
+		Provide address, city/state/country, reverse, and batch geocoding with
+		optional caching and a consistent flattened output shape.
 
 		Parameters:
 		maps (Maps): Maps gateway instance.
 		cache (Optional[BaseCache]): Pluggable cache for memoization.
 
 		Returns:
-		Geocoder instance with clear methods and consistent output shape.
+		Geocoder instance with forward, reverse, and batch geocoding methods.
 
 	"""
 	maps: Optional[ Maps ]
@@ -140,25 +141,94 @@ class Geocoder( ):
 	comps: Optional[ Dict[ str, str ] ]
 	key: Optional[ str ]
 	query: Optional[ str ]
-
-	def __init__( self, maps: Maps, cache: Optional[ BaseCache ]=None ) -> None:
+	latitude: Optional[ float ]
+	longitude: Optional[ float ]
+	
+	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
 		self._maps = maps
 		self._cache = cache
-
+		self.maps = maps
+		self.cache = cache
+		self.prefix = None
+		self.data = None
+		self.output = None
+		self.parts = None
+		self.city = None
+		self.address = None
+		self.state = None
+		self.country = None
+		self.comps = None
+		self.key = None
+		self.query = None
+		self.latitude = None
+		self.longitude = None
+	
 	def key_for( self, prefix: str, *parts: str ) -> str | None:
+		"""
+
+			Purpose:
+				Create a stable cache key from a namespace prefix and one or more
+				string parts.
+
+			Parameters:
+				prefix (str):
+					Cache namespace or operation prefix.
+				*parts (str):
+					Values that uniquely identify the request.
+
+			Returns:
+				str | None:
+					Normalized cache key.
+
+		"""
 		try:
+			throw_if( 'prefix', prefix )
 			self.prefix = prefix
 			self.parts = parts
-			joined = ' '.join( p.strip( ) for p in parts if p and str( p ).strip( ) )
+			joined = ' '.join( str( p ).strip( ) for p in parts if p and str( p ).strip( ) )
 			return f'{prefix}::{joined}'
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'key_for( self, **kwargs )'
+			exception.method = 'key_for( self, prefix: str, *parts: str )'
 			raise exception
+	
+	def validate_coordinates( self, latitude: float, longitude: float ) -> Tuple[ float, float ]:
+		"""
 
-	def freeform( self, address: str, country: str='US' ) -> Dict[ str, Any ] | None:
+			Purpose:
+				Validate and normalize a latitude/longitude coordinate pair.
+
+			Parameters:
+				latitude (float):
+					Latitude in decimal degrees.
+				longitude (float):
+					Longitude in decimal degrees.
+
+			Returns:
+				Tuple[float, float]:
+					Validated latitude and longitude.
+
+		"""
+		try:
+			throw_if( 'latitude', latitude )
+			throw_if( 'longitude', longitude )
+			lat = float( latitude )
+			lng = float( longitude )
+			if lat < -90.0 or lat > 90.0:
+				raise ValueError( 'Latitude must be between -90 and 90.' )
+			if lng < -180.0 or lng > 180.0:
+				raise ValueError( 'Longitude must be between -180 and 180.' )
+			return lat, lng
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Geocoder'
+			exception.method = 'validate_coordinates( self, latitude: float, longitude: float )'
+			raise exception
+	
+	def freeform( self, address: str, country: str = 'US' ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
@@ -167,78 +237,213 @@ class Geocoder( ):
 			Parameters:
 				address (str):
 					Any human-entered address string.
-				country (Optional[str]):
-					ISO-3166 alpha-2 country code to bias results (e.g., 'US', 'FR').
+				country (str):
+					ISO-3166 alpha-2 country code to bias results, such as 'US'
+					or 'FR'. Pass an empty string to disable country bias.
 
 			Returns:
-				Flattened dict as from flatten_geocode(...).
+				Dict[str, Any] | None:
+					Flattened geocode result.
 
 			Raises:
-				NotFound when no results are returned.
+				NotFound:
+					Raised when no results are returned.
 
 		"""
 		try:
-			self.address = address
-			self.country = country
-			self.key = self.key_for( 'geocode', address, country or "" )
+			throw_if( 'address', address )
+			self.address = address.strip( )
+			self.country = str( country or '' ).strip( )
+			self.key = self.key_for( 'geocode', self.address, self.country )
 			if self._cache:
-				_hit = self._cache.get( self.key )
-				if _hit:
-					return _hit
-
+				hit = self._cache.get( self.key )
+				if hit:
+					return hit
+			
 			self.comps = { 'country': self.country.upper( ) } if self.country else None
-			self.data = self._maps.request( 'geocode/json',
+			self.data = self._maps.request(
+				'geocode/json',
 				{ 'address': self.address, **(self.comps or { }) } )
+			
 			if self.data.get( 'status' ) != 'OK' or not self.data.get( 'results' ):
 				raise NotFound( f'No geocode for "{self.address}" ' )
-
+			
 			self.output = flatten_geocode( self.data[ 'results' ][ 0 ] )
-			if self.cache:
-				self.cache.set( self.key, self.output )
+			self.output[ 'source' ] = 'geocode'
+			self.output[ 'query' ] = self.address
+			if self._cache:
+				self._cache.set( self.key, self.output )
+			
+			return self.output
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Geocoder'
+			exception.method = 'freeform( self, address: str, country: str=US )'
+			raise exception
+	
+	def reverse( self, latitude: float, longitude: float ) -> Dict[ str, Any ] | None:
+		"""
+
+			Purpose:
+				Reverse geocode a latitude/longitude pair into a canonical address.
+
+			Parameters:
+				latitude (float):
+					Latitude in decimal degrees.
+				longitude (float):
+					Longitude in decimal degrees.
+
+			Returns:
+				Dict[str, Any] | None:
+					Flattened geocode result.
+
+			Raises:
+				NotFound:
+					Raised when no reverse-geocode result is returned.
+
+		"""
+		try:
+			self.latitude, self.longitude = self.validate_coordinates( latitude, longitude )
+			self.key = self.key_for( 'reverse_geocode', str( self.latitude ),
+				str( self.longitude ) )
+			if self._cache:
+				hit = self._cache.get( self.key )
+				if hit:
+					return hit
+			self.data = self._maps.request( 'geocode/json',
+				{ 'latlng': f'{self.latitude},{self.longitude}' } )
+			
+			if self.data.get( 'status' ) != 'OK' or not self.data.get( 'results' ):
+				raise NotFound( f'No reverse geocode for "{self.latitude},{self.longitude}" ' )
+			self.output = flatten_geocode( self.data[ 'results' ][ 0 ] )
+			self.output[ 'source' ] = 'reverse_geocode'
+			self.output[ 'query' ] = f'{self.latitude},{self.longitude}'
+			if self._cache:
+				self._cache.set( self.key, self.output )
 			return self.output
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'freeform( self, **kwargs )'
+			exception.method = 'reverse( self, latitude: float, longitude: float )'
 			raise exception
-
-
+	
 	def city_state_country( self, city: str, state: str, country: str ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
-			Geocode a structured triple: (city, optional state/region, country).
+				Geocode a structured city/state/country triple.
 
 			Parameters:
-			city (str):
-			City or locality.
-
-			state (Optional[str]):
-			State or region (may be None or empty).
-
-			ctry (str):
-			Country name or ISO-2 code.
+				city (str):
+					City or locality.
+				state (str):
+					State, province, territory, or region. May be empty.
+				country (str):
+					Country name or ISO-2 country code.
 
 			Returns:
-			Flattened dict like freeform().
+				Dict[str, Any] | None:
+					Flattened geocode result.
 
 			Raises:
-			NotFound when no result is available.
+				NotFound:
+					Raised when no result is available.
 
 		"""
 		try:
+			throw_if( 'city', city )
+			throw_if( 'country', country )
 			self.city = city
 			self.state = state
 			self.country = country
 			self.parts = tuple( [ p for p in [ self.city, self.state, self.country ] if p ] )
 			self.query = ', '.join( self.parts )
-			_hint = self.country.strip( ).upper( ) if self.country and len(
-				self.country.strip( ) ) <= 3 else None
-			return self.freeform( self.query, _hint, )
+			hint = ( self.country.strip( ).upper( )
+					if self.country and len( self.country.strip( ) ) <= 3
+					else '' )
+			return self.freeform( self.query, hint )
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'city_state_country( self, **kwargs )'
+			exception.method = 'city_state_country( self, city: str, state: str, country: str )'
+			raise exception
+	
+	def batch_freeform( self, addresses: List[ str ], country: str='US' ) -> List[ Dict[ str, Any ] ]:
+		"""
+
+			Purpose:
+				Geocode a list of free-form addresses while preserving row-level
+				success and failure status.
+
+			Parameters:
+				addresses (List[str]):
+					Address strings to geocode.
+				country (str):
+					ISO-3166 alpha-2 country code used as a default country bias.
+
+			Returns:
+				List[Dict[str, Any]]:
+					List of flattened geocode results. Failed rows include
+					geocode_status='error' and geocode_error.
+
+		"""
+		try:
+			throw_if( 'addresses', addresses )
+			if not isinstance( addresses, list ):
+				raise ValueError( 'addresses must be a list of strings.' )
+			results: List[ Dict[ str, Any ] ] = [ ]
+			for address in addresses:
+				value = str( address or '' ).strip( )
+				if not value:
+					results.append( {
+								'formatted_address': None,
+								'lat': None,
+								'lng': None,
+								'place_id': None,
+								'types': None,
+								'country_code': None,
+								'country_name': None,
+								'admin_level_1': None,
+								'admin_level_2': None,
+								'locality': None,
+								'postal_code': None,
+								'source': 'geocode',
+								'query': value,
+								'geocode_status': 'skipped_empty',
+								'geocode_error': None
+						} )
+					continue
+				try:
+					item = self.freeform( value, country=country ) or { }
+					item[ 'geocode_status' ] = 'ok'
+					item[ 'geocode_error' ] = None
+					results.append( item )
+				except Exception as row_error:
+					results.append( {
+								'formatted_address': None,
+								'lat': None,
+								'lng': None,
+								'place_id': None,
+								'types': None,
+								'country_code': None,
+								'country_name': None,
+								'admin_level_1': None,
+								'admin_level_2': None,
+								'locality': None,
+								'postal_code': None,
+								'source': 'geocode',
+								'query': value,
+								'geocode_status': 'error',
+								'geocode_error': str( row_error )
+						} )
+			return results
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'Geocoder'
+			exception.method = 'batch_freeform( self, addresses: List[ str ], country: str=US )'
 			raise exception
