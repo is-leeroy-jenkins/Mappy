@@ -136,12 +136,10 @@ class DistanceMatrix( ):
 		try:
 			throw_if( 'mode', mode )
 			value = str( mode ).strip( ).lower( )
-			
 			if value not in self.modes:
 				raise ValueError( f'Unsupported travel mode "{mode}". Use one of: {self.modes}.' )
 			
 			return value
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -169,15 +167,11 @@ class DistanceMatrix( ):
 			throw_if( 'values', values )
 			if isinstance( values, list ):
 				return values
-			
 			if isinstance( values, tuple ):
 				if len( values ) == 2 and all( isinstance( x, (int, float) ) for x in values ):
 					return [ values ]
-				
 				return list( values )
-			
 			return [ values ]
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -206,13 +200,11 @@ class DistanceMatrix( ):
 						'distance_km': None,
 						'distance_miles': None
 				}
-			
 			value = float( meters )
 			return {
 					'distance_km': round( value / 1000.0, 3 ),
 					'distance_miles': round( value / 1609.344, 3 )
 			}
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -241,13 +233,11 @@ class DistanceMatrix( ):
 						'duration_minutes': None,
 						'duration_hours': None
 				}
-			
 			value = float( seconds )
 			return {
 					'duration_minutes': round( value / 60.0, 2 ),
 					'duration_hours': round( value / 3600.0, 3 )
 			}
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -278,6 +268,9 @@ class DistanceMatrix( ):
 
 		"""
 		try:
+			throw_if( 'origin', origin )
+			throw_if( 'destination', destination )
+			throw_if( 'mode', mode )
 			element = element or { }
 			distance = element.get( 'distance' ) or { }
 			duration = element.get( 'duration' ) or { }
@@ -297,7 +290,6 @@ class DistanceMatrix( ):
 					'duration_in_traffic_text': duration_traffic.get( 'text' ),
 					'duration_in_traffic_seconds': traffic_seconds
 			}
-			
 			row.update( self.convert_distance( distance_meters ) )
 			row.update( self.convert_duration( duration_seconds ) )
 			
@@ -307,9 +299,7 @@ class DistanceMatrix( ):
 			else:
 				row[ 'duration_in_traffic_minutes' ] = round( float( traffic_seconds ) / 60.0, 2 )
 				row[ 'duration_in_traffic_hours' ] = round( float( traffic_seconds ) / 3600.0, 3 )
-			
 			return row
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -317,9 +307,10 @@ class DistanceMatrix( ):
 			exception.method = 'flatten_element( self, origin: str, destination: str, mode: str, element: Dict )'
 			raise exception
 	
-	def matrix( self, origins: List[ AddressOrCoord ] | Tuple[ AddressOrCoord, ... ] | AddressOrCoord,
+	def matrix( self,
+			origins: List[ AddressOrCoord ] | Tuple[ AddressOrCoord, ... ] | AddressOrCoord,
 			destinations: List[ AddressOrCoord ] | Tuple[ AddressOrCoord, ... ] | AddressOrCoord,
-			mode: str='driving', departure_time: str='' ) -> List[ Dict[ str, Any ] ]:
+			mode: str = 'driving', departure_time: str = '' ) -> List[ Dict[ str, Any ] ]:
 		"""
 
 			Purpose:
@@ -353,41 +344,30 @@ class DistanceMatrix( ):
 					'destinations': destination_query,
 					'mode': travel_mode
 			}
-			
 			if departure_time and str( departure_time ).strip( ):
 				params[ 'departure_time' ] = str( departure_time ).strip( )
-			
 			self.data = self._maps.request( 'distancematrix/json', params )
 			if not isinstance( self.data, dict ):
 				raise ValueError( 'Distance Matrix response was not a dictionary.' )
-			
-			origin_addresses = self.data.get( 'origin_addresses' ) or [ fmt( x ) for x in origin_values ]
+			origin_addresses = self.data.get( 'origin_addresses' ) or [ fmt( x ) for x in
+			                                                            origin_values ]
 			destination_addresses = self.data.get( 'destination_addresses' ) or [
-					fmt( x ) for x in destination_values]
+					fmt( x ) for x in destination_values ]
 			api_rows = self.data.get( 'rows' ) or [ ]
 			output_rows: List[ Dict[ str, Any ] ] = [ ]
 			for origin_index, row in enumerate( api_rows ):
 				origin_label = (
 						origin_addresses[ origin_index ]
 						if origin_index < len( origin_addresses )
-						else fmt( origin_values[ origin_index ] )
-				)
-				
+						else fmt( origin_values[ origin_index ] ))
 				elements = row.get( 'elements' ) or [ ]
-				
 				for destination_index, element in enumerate( elements ):
 					destination_label = (
 							destination_addresses[ destination_index ]
 							if destination_index < len( destination_addresses )
-							else fmt( destination_values[ destination_index ] )
-					)
-					output_rows.append(
-						self.flatten_element(
-							origin=origin_label,
-							destination=destination_label,
-							mode=travel_mode,
-							element=element ) )
-			
+							else fmt( destination_values[ destination_index ] ))
+					output_rows.append( self.flatten_element( origin=origin_label,
+						destination=destination_label, mode=travel_mode, element=element ) )
 			self.rows = output_rows
 			return output_rows
 		
@@ -399,7 +379,7 @@ class DistanceMatrix( ):
 			raise exception
 	
 	def summary( self, origin: AddressOrCoord, destination: AddressOrCoord,
-			mode: str='driving' ) -> Dict:
+			mode: str = 'driving' ) -> Dict:
 		"""
 		
 			Purpose:
@@ -431,7 +411,6 @@ class DistanceMatrix( ):
 				}
 			
 			row = rows[ 0 ]
-			
 			return {
 					'distance_text': row.get( 'distance_text' ),
 					'distance_meters': row.get( 'distance_meters' ),
@@ -449,16 +428,15 @@ class DistanceMatrix( ):
 					'mode': row.get( 'mode' ),
 					'status': row.get( 'status' )
 			}
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'summary( self, origin: AddressOrCoord, destination: AddressOrCoord, mode: str )'
+			exception.method = 'summary( self, **kwargs) -> Dict[ str, Any ]'
 			raise exception
 	
 	def compare_modes( self, origin: AddressOrCoord, destination: AddressOrCoord,
-			modes: List[ str ] | None=None, departure_time: str='' ) -> List[
+			modes: List[ str ] | None = None, departure_time: str = '' ) -> List[
 		Dict[ str, Any ] ]:
 		"""
 
@@ -492,19 +470,17 @@ class DistanceMatrix( ):
 					destinations=destination,
 					mode=active_mode,
 					departure_time=active_departure )
-				
 				if rows:
 					results.append( rows[ 0 ] )
-			
 			return results
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'compare_modes( self, origin: AddressOrCoord, destination: AddressOrCoord )'
+			exception.method = 'compare_modes( self, **kwargs)'
 			raise exception
 	
-	def to_dataframe( self, rows: List[ Dict[ str, Any ] ] | None=None ) -> pd.DataFrame:
+	def to_dataframe( self, rows: List[ Dict[ str, Any ] ] | None = None ) -> pd.DataFrame:
 		"""
 
 			Purpose:
@@ -522,15 +498,12 @@ class DistanceMatrix( ):
 		"""
 		try:
 			active_rows = rows if rows is not None else self.rows
-			
 			if not active_rows:
 				return pd.DataFrame( )
-			
 			return pd.DataFrame( active_rows )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'to_dataframe( self, rows: List[ Dict[ str, Any ] ] | None=None )'
+			exception.method = 'to_dataframe( self, **kwarg )'
 			raise exception

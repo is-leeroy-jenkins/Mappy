@@ -95,8 +95,8 @@ class RateLimiter:
 	
 	def __init__( self, max: Optional[ float ] ) -> None:
 		self.query_per_second = float( max ) if max is not None else None
-		self.interval = ( 1.0 / self.query_per_second
-		                  if self.query_per_second and self.query_per_second > 0 else 0.0 )
+		self.interval = (1.0 / self.query_per_second
+		                 if self.query_per_second and self.query_per_second > 0 else 0.0)
 		self.last = 0.0
 		self.now = 0.0
 		self.delta = 0.0
@@ -123,14 +123,12 @@ class RateLimiter:
 			self.last_sleep = 0.0
 			if self.interval is None or self.interval <= 0:
 				return
-			
 			self.now = time.time( )
 			self.delta = self.now - self.last
 			if self.last > 0.0 and self.delta < self.interval:
 				self.last_sleep = self.interval - self.delta
 				time.sleep( self.last_sleep )
 				self.total_sleep += self.last_sleep
-			
 			self.last = time.time( )
 		except Exception as e:
 			exception = Error( e )

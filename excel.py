@@ -41,13 +41,12 @@
   </summary>
   ******************************************************************************************
   '''
-
 from typing import Optional, Dict, List
 import pandas as pd
 from caches import BaseCache
 from geocode import Geocoder
 from maps import Maps
-from places import Places
+from places import Place
 from boogr import Error
 
 def throw_if( name: str, value: object ) -> None:
@@ -92,7 +91,7 @@ class Excel:
 	api_key: str
 	maps: Optional[ Maps ]
 	geocoder: Optional[ Geocoder ]
-	places: Optional[ Places ]
+	places: Optional[ Place ]
 	input_path: Optional[ str ]
 	output_path: Optional[ str ]
 	dataframe: Optional[ pd.DataFrame ]
@@ -112,7 +111,7 @@ class Excel:
 		self.cache = cache
 		self.maps = Maps( api_key=self.api_key )
 		self.geocoder = Geocoder( self.maps, cache=self.cache )
-		self.places = Places( self.maps, cache=self.cache )
+		self.places = Place( self.maps, cache=self.cache )
 		self.input_path = None
 		self.output_path = None
 		self.dataframe = None

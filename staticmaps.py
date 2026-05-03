@@ -44,6 +44,7 @@
 from typing import Optional, Dict
 from urllib.parse import urlencode
 from boogr import Error
+import config as cfg
 
 def throw_if( name: str, value: object ) -> None:
 	"""
@@ -68,7 +69,7 @@ def throw_if( name: str, value: object ) -> None:
 	if isinstance( value, str ) and not value.strip( ):
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
-class StaticMapURL( ):
+class StaticMap( ):
 	"""
 		
 		Purpose:
@@ -80,7 +81,7 @@ class StaticMapURL( ):
 				Google Maps Platform API key.
 	
 		Returns:
-			StaticMapURL instance with URL-building helpers.
+			StaticMap instance with URL-building helpers.
 		
 	"""
 	api_key: Optional[ str ]
@@ -100,8 +101,8 @@ class StaticMapURL( ):
 	east: Optional[ float ]
 	north: Optional[ float ]
 	
-	def __init__( self, api_key: str ) -> None:
-		self.api_key = api_key
+	def __init__( self ) -> None:
+		self.api_key = cfg.GOOGLEMAPS_API_KEY
 		self.zoom = None
 		self.size = None
 		self.latitude = None
@@ -134,31 +135,24 @@ class StaticMapURL( ):
 			Returns:
 				tuple:
 					Validated latitude and longitude.
-
 		"""
 		try:
 			throw_if( 'lat', lat )
 			throw_if( 'lng', lng )
-			
 			latitude = float( lat )
 			longitude = float( lng )
-			
 			if latitude < -90.0 or latitude > 90.0:
 				raise ValueError( 'Latitude must be between -90 and 90.' )
-			
 			if longitude < -180.0 or longitude > 180.0:
 				raise ValueError( 'Longitude must be between -180 and 180.' )
-			
 			self.latitude = latitude
 			self.longitude = longitude
-			
 			return self.latitude, self.longitude
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
-			exception.method = 'validate_coordinate( self, lat: float, lng: float )'
+			exception.cause = 'StaticMap'
+			exception.method = 'validate_coordinate( self, *args )'
 			raise exception
 	
 	def normalize_points( self, points: list ) -> list:
@@ -181,38 +175,28 @@ class StaticMapURL( ):
 		"""
 		try:
 			throw_if( 'points', points )
-			
 			if not isinstance( points, list ):
 				raise ValueError( 'points must be a list.' )
-			
 			output = [ ]
-			
 			for point in points:
 				if isinstance( point, dict ):
 					lat_value = point.get( 'lat', point.get( 'latitude' ) )
 					lng_value = point.get( 'lng', point.get( 'longitude' ) )
 					output.append( self.validate_coordinate( lat_value, lng_value ) )
-				
 				elif isinstance( point, tuple ) and len( point ) == 2:
 					output.append( self.validate_coordinate( point[ 0 ], point[ 1 ] ) )
-				
 				elif isinstance( point, list ) and len( point ) == 2:
 					output.append( self.validate_coordinate( point[ 0 ], point[ 1 ] ) )
-				
 				else:
 					raise ValueError( f'Unsupported point format: {point}' )
-			
 			if not output:
 				raise ValueError( 'At least one coordinate is required.' )
-			
 			self.points = output
-			
 			return self.points
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
+			exception.cause = 'StaticMap'
 			exception.method = 'normalize_points( self, points: list )'
 			raise exception
 	
@@ -233,21 +217,18 @@ class StaticMapURL( ):
 		"""
 		try:
 			throw_if( 'params', params )
-			
 			params_value = dict( params or { } )
 			params_value[ 'key' ] = self.api_key
 			self.params = params_value
-			
 			return f'{self.base_url}?{urlencode( self.params, doseq=True )}'
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
+			exception.cause = 'StaticMap'
 			exception.method = 'build_url( self, params: Dict )'
 			raise exception
 	
-	def pin( self, lat: float, lng: float, zoom: int = 12, size: str = '400x300' ) -> str | None:
+	def pin( self, lat: float, lng: float, zoom: int = 12, size: int = '400x300' ) -> str | None:
 		"""
 
 			Purpose:
@@ -276,31 +257,27 @@ class StaticMapURL( ):
 			zoom_value = max( 1, min( int( zoom or 12 ), 20 ) )
 			size_value = size or '400x300'
 			marker_value = f'{latitude},{longitude}'
-			
 			self.latitude = latitude
 			self.longitude = longitude
 			self.zoom = zoom_value
 			self.size = size_value
 			self.markers = marker_value
-			
 			self.params = {
 					'center': f'{self.latitude},{self.longitude}',
 					'zoom': str( self.zoom ),
 					'size': self.size,
 					'markers': self.markers
 			}
-			
 			return self.build_url( self.params )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
-			exception.method = 'pin( self, lat: float, lng: float, zoom: int=12, size: str=400x300 )'
+			exception.cause = 'StaticMap'
+			exception.method = 'pin( self, *args )'
 			raise exception
 	
-	def pins( self, points: list, zoom: int = 0, size: str = '600x400',
-			maptype: str = 'roadmap', color: str = 'red' ) -> str | None:
+	def pins( self, points: list, zoom: int = 0, size: int = '600x400',
+			maptype: int = 'roadmap', color: int = 'red' ) -> str | None:
 		"""
 
 			Purpose:
@@ -335,47 +312,38 @@ class StaticMapURL( ):
 			size_value = size or '600x400'
 			maptype_value = str( maptype or 'roadmap' ).strip( ).lower( )
 			color_value = color or 'red'
-			
 			if maptype_value not in [ 'roadmap', 'satellite', 'terrain', 'hybrid' ]:
 				raise ValueError( 'maptype must be roadmap, satellite, terrain, or hybrid.' )
-			
 			self.points = coordinates
 			self.zoom = zoom_value
 			self.size = size_value
 			self.maptype = maptype_value
 			self.color = color_value
-			
 			marker_values = [ ]
-			
 			for lat_value, lng_value in self.points:
 				marker_values.append( f'color:{self.color}|{lat_value},{lng_value}' )
-			
 			self.params = {
 					'size': self.size,
 					'maptype': self.maptype,
 					'markers': marker_values
 			}
-			
 			if self.zoom > 0:
 				center_lat = sum( p[ 0 ] for p in self.points ) / len( self.points )
 				center_lng = sum( p[ 1 ] for p in self.points ) / len( self.points )
 				self.params[ 'center' ] = f'{center_lat},{center_lng}'
 				self.params[ 'zoom' ] = str( max( 1, min( self.zoom, 20 ) ) )
-			
 			else:
 				self.params[ 'visible' ] = [ f'{lat},{lng}' for lat, lng in self.points ]
-			
 			return self.build_url( self.params )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
-			exception.method = 'pins( self, points: list, zoom: int=0, size: str=600x400 )'
+			exception.cause = 'StaticMapUrl'
+			exception.method = 'pins( self, *args )'
 			raise exception
 	
-	def path( self, points: list, size: str = '600x400', maptype: str = 'roadmap',
-			color: str = '0x0000ff', weight: int = 5 ) -> str | None:
+	def path( self, points: list, size: int = '600x400', maptype: int = 'roadmap',
+			color: int = '0x0000ff', weight: int = 5 ) -> str | None:
 		"""
 
 			Purpose:
@@ -442,12 +410,12 @@ class StaticMapURL( ):
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
+			exception.cause = 'StaticMap'
 			exception.method = 'path( self, points: list, size: str=600x400 )'
 			raise exception
 	
 	def bbox( self, west: float, south: float, east: float, north: float,
-			size: str = '600x400', maptype: str = 'roadmap' ) -> str | None:
+			size: int = '600x400', maptype: int = 'roadmap' ) -> str | None:
 		"""
 
 			Purpose:
@@ -513,6 +481,6 @@ class StaticMapURL( ):
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'mappy'
-			exception.cause = 'StaticMapURL'
+			exception.cause = 'StaticMap'
 			exception.method = 'bbox( self, west: float, south: float, east: float, north: float )'
 			raise exception

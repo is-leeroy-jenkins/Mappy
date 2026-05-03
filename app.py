@@ -22,7 +22,6 @@ CRITICAL ASSUMPTIONS (VERIFIED):
     - Cache is injected ONLY into services that support it
 ******************************************************************************************
 '''
-
 from __future__ import annotations
 
 from exceptions import NotFound
@@ -31,7 +30,9 @@ from typing import Optional
 import matplotlib
 import pandas as pd
 import plotly.graph_objects as go
+import pydeck as pdk
 import streamlit as st
+from streamlit_js_eval import get_geolocation
 import sqlite3
 import re
 import datetime as dt
@@ -42,10 +43,10 @@ import config as cfg
 from maps import Maps
 from typing import Any, Optional, Dict, List, Tuple
 from geocode import Geocoder
-from places import Places
+from places import Place
 from distances import DistanceMatrix
 from timezones import Timezone
-from staticmaps import StaticMapURL
+from staticmaps import StaticMap
 from excel import Excel
 from caches import InMemoryCache, SQLiteCache
 from fetchers import (
@@ -71,19 +72,14 @@ from fetchers import (
 	AstroCatalog,
 	AstroQuery,
 	StarMap,
-	StarChart
-)
+	StarChart)
 
 # ---------------------------------------------------------------------
 # SESSION STATE INITIALIZATION
 # ---------------------------------------------------------------------
 
-if 'mode' not in st.session_state:
-	st.session_state[ 'mode' ] = 'Geocoding'
+# ------- Data State
 
-if 'previous_mode' not in st.session_state:
-	st.session_state[ 'previous_mode' ] = ''
-	
 if 'source' not in st.session_state:
 	st.session_state[ 'source' ] = ''
 
@@ -93,20 +89,63 @@ if 'df_source' not in st.session_state:
 if 'df_frame' not in st.session_state:
 	st.session_state[ 'df_frame' ] = pd.DataFrame( )
 
+if 'df_default' not in st.session_state:
+	st.session_state[ 'df_default' ] = pd.DataFrame( )
+
 if 'df_original' not in st.session_state:
 	st.session_state[ 'df_original' ] = pd.DataFrame( )
-	
+
 if 'df_raw' not in st.session_state:
 	st.session_state[ 'df_raw' ] = pd.DataFrame( )
-	
+
 if 'df_dataset' not in st.session_state:
 	st.session_state[ 'df_dataset' ] = pd.DataFrame( )
+
+if 'df_reports_geocode_preview' not in st.session_state:
+	st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+
+if 'df_geocoding_map_results' not in st.session_state:
+	st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
 
 if 'pipeline_log' not in st.session_state:
 	st.session_state[ 'pipeline_log' ] = [ ]
 
+# ------- Mappy State
+
+if 'mode' not in st.session_state:
+	st.session_state[ 'mode' ] = 'Geocoding'
+
+if 'previous_mode' not in st.session_state:
+	st.session_state[ 'previous_mode' ] = ''
+
+if 'timezone' not in st.session_state:
+	st.session_state[ 'timezone' ] = dt.timezone
+
+if 'distances' not in st.session_state:
+	st.session_state[ 'distances' ] = None
+
+if 'geocoder' not in st.session_state:
+	st.session_state[ 'geocoder' ] = None
+
+if 'places' not in st.session_state:
+	st.session_state[ 'places' ] = None
+
+if 'static_maps' not in st.session_state:
+	st.session_state[ 'static_maps' ] = None
+
+if 'qps' not in st.session_state:
+	st.session_state[ 'qps' ] = 10
+
+# ------------ Location State
+
 if 'coordinates' not in st.session_state:
-	st.session_state[ 'coordinates' ] = None
+	st.session_state[ 'coordinates' ] = ( )
+
+if 'latitude' not in st.session_state:
+	st.session_state[ 'latitude' ] = 0.0
+
+if 'longitude' not in st.session_state:
+	st.session_state[ 'longitude' ] = 0.0
 
 if 'location' not in st.session_state:
 	st.session_state[ 'location' ] = ''
@@ -120,11 +159,202 @@ if 'state' not in st.session_state:
 if 'city' not in st.session_state:
 	st.session_state[ 'city' ] = ''
 
+if 'zipcode' not in st.session_state:
+	st.session_state[ 'zipcode' ] = ''
+
 if 'description' not in st.session_state:
 	st.session_state[ 'description' ] = ''
 
-if 'date' not in st.session_state:
-	st.session_state[ 'date' ] = ''
+if 'origin' not in st.session_state:
+	st.session_state[ 'origin' ] = ''
+
+if 'destination' not in st.session_state:
+	st.session_state[ 'destination' ] = ''
+
+if 'radius' not in st.session_state:
+	st.session_state[ 'radius' ] = 25.0
+
+if 'zoom' not in st.session_state:
+	st.session_state[ 'zoom' ] = 8
+
+if 'map_size' not in st.session_state:
+	st.session_state[ 'map_size' ] = '600x400'
+
+if 'year' not in st.session_state:
+	st.session_state[ 'year' ] = dt.datetime.now( ).year
+
+if 'month' not in st.session_state:
+	st.session_state[ 'month' ] = dt.datetime.now( ).month
+
+if 'day' not in st.session_state:
+	st.session_state[ 'day' ] = dt.datetime.now( ).day
+
+if 'calendar_date' not in st.session_state:
+	st.session_state[ 'calendar_date' ] = dt.date.today( )
+
+if 'browser_geolocation' not in st.session_state:
+	st.session_state[ 'browser_geolocation' ] = None
+
+if 'browser_geolocation_loaded' not in st.session_state:
+	st.session_state[ 'browser_geolocation_loaded' ] = False
+
+if 'browser_geolocation_enabled' not in st.session_state:
+	st.session_state[ 'browser_geolocation_enabled' ] = True
+
+if 'browser_geolocation_reverse_geocoded' not in st.session_state:
+	st.session_state[ 'browser_geolocation_reverse_geocoded' ] = False
+
+if 'browser_geolocation_error' not in st.session_state:
+	st.session_state[ 'browser_geolocation_error' ] = ''
+
+if 'browser_geolocation_permission_denied' not in st.session_state:
+	st.session_state[ 'browser_geolocation_permission_denied' ] = False
+
+# ------- API Key State
+
+if 'google_api_key' not in st.session_state:
+	st.session_state[ 'google_api_key' ] = ''
+
+if 'google_cse_id' not in st.session_state:
+	st.session_state[ 'google_cse_id' ] = ''
+
+if 'googlemaps_api_key' not in st.session_state:
+	st.session_state[ 'googlemaps_api_key' ] = ''
+
+if 'geocoding_api_key' not in st.session_state:
+	st.session_state[ 'geocoding_api_key' ] = ''
+
+if 'google_cloud_project_id' not in st.session_state:
+	st.session_state[ 'google_cloud_project_id' ] = ''
+
+if 'google_cloud_location' not in st.session_state:
+	st.session_state[ 'google_cloud_location' ] = ''
+
+if 'google_weather_api_key' not in st.session_state:
+	st.session_state[ 'google_weather_api_key' ] = ''
+
+if 'govinfo_api_key' not in st.session_state:
+	st.session_state[ 'govinfo_api_key' ] = ''
+
+if 'nasa_api_key' not in st.session_state:
+	st.session_state[ 'nasa_api_key' ] = ''
+
+if 'airnow_api_key' not in st.session_state:
+	st.session_state[ 'airnow_api_key' ] = ''
+
+if 'openaq_api_key' not in st.session_state:
+	st.session_state[ 'openaq_api_key' ] = ''
+
+if 'nasa_earthdata_token' not in st.session_state:
+	st.session_state[ 'nasa_earthdata_token' ] = ''
+
+if 'opensky_api_client_id' not in st.session_state:
+	st.session_state[ 'opensky_api_client_id' ] = ''
+
+if 'firms_map_key' not in st.session_state:
+	st.session_state[ 'firms_map_key' ] = ''
+
+if 'opensky_api_credentials' not in st.session_state:
+	st.session_state[ 'opensky_api_credentials' ] = ''
+
+if 'purpleair_api_key' not in st.session_state:
+	st.session_state[ 'purpleair_api_key' ] = ''
+
+if st.session_state.google_api_key == '':
+	default = cfg.GOOGLE_API_KEY
+	if default:
+		st.session_state.google_api_key = default
+		os.environ[ 'GOOGLE_API_KEY' ] = default
+
+if st.session_state.google_cse_id == '':
+	default = cfg.GOOGLE_CSE_ID
+	if default:
+		st.session_state.google_cse_id = default
+		os.environ[ 'GOOGLE_CSE_ID' ] = default
+
+if st.session_state.googlemaps_api_key == '':
+	default = cfg.GOOGLEMAPS_API_KEY
+	if default:
+		st.session_state.googlemaps_api_key = default
+		os.environ[ 'GOOGLEMAPS_API_KEY' ] = default
+
+if st.session_state.geocoding_api_key == '':
+	default = cfg.GEOCODING_API_KEY
+	if default:
+		st.session_state.geocoding_api_key = default
+		os.environ[ 'GEOCODING_API_KEY' ] = default
+
+if st.session_state.google_cloud_project_id == '':
+	default = cfg.GOOGLE_CLOUD_PROJECT_ID
+	if default:
+		st.session_state.google_cloud_project_id = default
+		os.environ[ 'GOOGLE_CLOUD_PROJECT_ID' ] = default
+
+if st.session_state.google_cloud_location == '':
+	default = cfg.GOOGLE_CLOUD_LOCATION
+	if default:
+		st.session_state.google_cloud_location = default
+		os.environ[ 'GOOGLE_CLOUD_LOCATION' ] = default
+
+if st.session_state.google_weather_api_key == '':
+	default = cfg.GOOGLE_WEATHER_API_KEY
+	if default:
+		st.session_state.google_weather_api_key = default
+		os.environ[ 'GOOGLE_WEATHER_API_KEY' ] = default
+
+if st.session_state.govinfo_api_key == '':
+	default = cfg.GOVINFO_API_KEY
+	if default:
+		st.session_state.govinfo_api_key = default
+		os.environ[ 'GOVINFO_API_KEY' ] = default
+
+if st.session_state.nasa_api_key == '':
+	default = cfg.NASA_API_KEY
+	if default:
+		st.session_state.nasa_api_key = default
+		os.environ[ 'NASA_API_KEY' ] = default
+
+if st.session_state.airnow_api_key == '':
+	default = cfg.AIRNOW_API_KEY
+	if default:
+		st.session_state.airnow_api_key = default
+		os.environ[ 'AIRNOW_API_KEY' ] = default
+
+if st.session_state.openaq_api_key == '':
+	default = cfg.OPENAQ_API_KEY
+	if default:
+		st.session_state.openaq_api_key = default
+		os.environ[ 'OPENAQ_API_KEY' ] = default
+
+if st.session_state.nasa_earthdata_token == '':
+	default = cfg.NASA_EARTHDATA_TOKEN
+	if default:
+		st.session_state.nasa_earthdata_token = default
+		os.environ[ 'NASA_EARTHDATA_TOKEN' ] = default
+
+if st.session_state.opensky_api_client_id == '':
+	default = cfg.OPENSKY_API_CLIENT_ID
+	if default:
+		st.session_state.opensky_api_client_id = default
+		os.environ[ 'OPENSKY_API_CLIENT_ID' ] = default
+
+if st.session_state.firms_map_key == '':
+	default = cfg.FIRMS_MAP_KEY
+	if default:
+		st.session_state.firms_map_key = default
+		os.environ[ 'FIRMS_MAP_KEY' ] = default
+
+if st.session_state.opensky_api_credentials == '':
+	default = cfg.OPENSKY_API_CREDENTIALS
+	if default:
+		st.session_state.opensky_api_credentials = default
+		os.environ[ 'OPENSKY_API_CREDENTIALS' ] = default
+
+if st.session_state.purpleair_api_key == '':
+	default = getattr( cfg, 'PURPLEAIR_API_KEY', '' )
+	if default:
+		st.session_state.purpleair_api_key = default
+		os.environ[ 'PURPLEAIR_API_KEY' ] = default
 
 # ---------------------------------------------------------------------
 # UTILITIES
@@ -152,7 +382,7 @@ def throw_if( name: str, value: object ) -> None:
 	
 	if isinstance( value, str ) and not value.strip( ):
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
-	
+
 def style_subheaders( ) -> None:
 	"""
 	
@@ -241,6 +471,1384 @@ def set_blue_divider( ) -> None:
 
 def log_step( msg: str ) -> None:
 	st.session_state.pipeline_log.append( msg )
+
+# ------------- LOCATION STATE UTILITIES
+
+def has_valid_coordinates( latitude: object, longitude: object ) -> bool:
+	"""
+	
+		Purpose:
+		--------
+		Determine whether latitude and longitude values represent usable coordinates.
+
+		Parameters:
+		-----------
+		latitude (object): Latitude value to validate.
+		longitude (object): Longitude value to validate.
+
+		Returns:
+		--------
+		bool: True when both values are numeric, within valid geographic ranges, and not
+			the placeholder coordinate pair (0, 0).
+		
+	"""
+	try:
+		lat_value = float( latitude )
+		lon_value = float( longitude )
+	except Exception:
+		return False
+	
+	if not (-90.0 <= lat_value <= 90.0):
+		return False
+	
+	if not (-180.0 <= lon_value <= 180.0):
+		return False
+	
+	if lat_value == 0.0 and lon_value == 0.0:
+		return False
+	
+	return True
+
+def has_valid_global_coordinates( ) -> bool:
+	"""
+	
+		Purpose:
+		--------
+		Determine whether the global Location State contains usable coordinates.
+
+		Parameters:
+		-----------
+		None
+
+		Returns:
+		--------
+		bool: True when global latitude and longitude are usable.
+		
+	"""
+	return has_valid_coordinates(
+		st.session_state.get( 'latitude', None ),
+		st.session_state.get( 'longitude', None ) )
+
+def set_coordinates( latitude: object, longitude: object ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Update global latitude, longitude, and coordinates state together.
+
+		Parameters:
+		-----------
+		latitude (object): Latitude value.
+		longitude (object): Longitude value.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	if not has_valid_coordinates( latitude, longitude ):
+		return
+	
+	lat_value = float( latitude )
+	lon_value = float( longitude )
+	
+	st.session_state[ 'latitude' ] = lat_value
+	st.session_state[ 'longitude' ] = lon_value
+	st.session_state[ 'coordinates' ] = (lat_value, lon_value)
+
+def get_location_state( ) -> Dict[ str, object ]:
+	"""
+	
+		Purpose:
+		--------
+		Return the canonical global Location State values.
+
+		Parameters:
+		-----------
+		None
+
+		Returns:
+		--------
+		Dict[str, object]: Dictionary containing global geospatial state values.
+		
+	"""
+	return {
+			'coordinates': st.session_state.get( 'coordinates', ( ) ),
+			'latitude': st.session_state.get( 'latitude', 0.0 ),
+			'longitude': st.session_state.get( 'longitude', 0.0 ),
+			'location': st.session_state.get( 'location', '' ),
+			'country': st.session_state.get( 'country', '' ),
+			'state': st.session_state.get( 'state', '' ),
+			'city': st.session_state.get( 'city', '' ),
+			'zipcode': st.session_state.get( 'zipcode', '' ),
+			'description': st.session_state.get( 'description', '' ),
+			'origin': st.session_state.get( 'origin', '' ),
+			'destination': st.session_state.get( 'destination', '' ),
+			'radius': st.session_state.get( 'radius', 25.0 ),
+			'zoom': st.session_state.get( 'zoom', 8 ),
+			'map_size': st.session_state.get( 'map_size', '600x400' ),
+			'year': st.session_state.get( 'year', dt.datetime.now( ).year ),
+			'month': st.session_state.get( 'month', dt.datetime.now( ).month ),
+			'day': st.session_state.get( 'day', dt.datetime.now( ).day ),
+			'calendar_date': st.session_state.get( 'calendar_date', dt.date.today( ) ),
+	}
+
+def set_location_state( location: Optional[ str ] = None, city: Optional[ str ] = None,
+		state: Optional[ str ] = None, country: Optional[ str ] = None,
+		zipcode: Optional[ str ] = None, description: Optional[ str ] = None,
+		latitude: Optional[ float ] = None, longitude: Optional[ float ] = None ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Update global Location State values without touching unrelated state keys.
+
+		Parameters:
+		-----------
+		location (Optional[str]): Freeform location string.
+		city (Optional[str]): City value.
+		state (Optional[str]): State, province, or region value.
+		country (Optional[str]): Country value.
+		zipcode (Optional[str]): ZIP or postal code value.
+		description (Optional[str]): Description for the current location.
+		latitude (Optional[float]): Latitude value.
+		longitude (Optional[float]): Longitude value.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	if location is not None:
+		st.session_state[ 'location' ] = str( location ).strip( )
+	
+	if city is not None:
+		st.session_state[ 'city' ] = str( city ).strip( )
+	
+	if state is not None:
+		st.session_state[ 'state' ] = str( state ).strip( )
+	
+	if country is not None:
+		st.session_state[ 'country' ] = str( country ).strip( )
+	
+	if zipcode is not None:
+		st.session_state[ 'zipcode' ] = str( zipcode ).strip( )
+	
+	if description is not None:
+		st.session_state[ 'description' ] = str( description ).strip( )
+	
+	if latitude is not None and longitude is not None:
+		set_coordinates( latitude, longitude )
+
+def compose_location_from_state( ) -> str:
+	"""
+	
+		Purpose:
+		--------
+		Compose a geocoding query from the canonical global Location State.
+
+		Parameters:
+		-----------
+		None
+
+		Returns:
+		--------
+		str: Freeform location query.
+		
+	"""
+	location = str( st.session_state.get( 'location', '' ) ).strip( )
+	if location:
+		return location
+	
+	parts = [ ]
+	
+	for key in [ 'city', 'state', 'zipcode', 'country' ]:
+		value = st.session_state.get( key, '' )
+		text = str( value ).strip( )
+		
+		if text and text.lower( ) not in [ 'nan', 'none', 'null' ]:
+			parts.append( text )
+	
+	return ', '.join( parts )
+
+def resolve_table_name( requested: str, tables: List[ str ] ) -> Optional[ str ]:
+	"""
+	
+		Purpose:
+		--------
+		Resolve a requested SQLite table name using case-insensitive matching.
+
+		Parameters:
+		-----------
+		requested (str): Requested table name.
+		tables (List[str]): Available table names.
+
+		Returns:
+		--------
+		Optional[str]: Actual table name when found; otherwise None.
+		
+	"""
+	if not requested or not tables:
+		return None
+	
+	for table in tables:
+		if table == requested:
+			return table
+	
+	requested_lower = requested.lower( )
+	for table in tables:
+		if str( table ).lower( ) == requested_lower:
+			return table
+	
+	return None
+
+def get_global_location_default( fallback: str = 'Washington, DC' ) -> str:
+	"""
+	
+		Purpose:
+		--------
+		Return the best available global location text for location-based controls.
+
+		Parameters:
+		-----------
+		fallback (str): Fallback location text used when global Location State has no
+			usable location value.
+
+		Returns:
+		--------
+		str: Location text suitable for geospatial query controls.
+		
+	"""
+	location = compose_location_from_state( )
+	if location:
+		return location
+	
+	return fallback
+
+def get_global_zipcode_default( fallback: str = '20001' ) -> str:
+	"""
+	
+		Purpose:
+		--------
+		Return the best available global ZIP or postal code value.
+
+		Parameters:
+		-----------
+		fallback (str): Fallback ZIP or postal code.
+
+		Returns:
+		--------
+		str: ZIP or postal code value.
+		
+	"""
+	zipcode = str( st.session_state.get( 'zipcode', '' ) ).strip( )
+	if zipcode:
+		return zipcode
+	
+	return fallback
+
+def get_global_latitude_default( fallback: float = 38.907200 ) -> float:
+	"""
+	
+		Purpose:
+		--------
+		Return the best available global latitude value.
+
+		Parameters:
+		-----------
+		fallback (float): Fallback latitude.
+
+		Returns:
+		--------
+		float: Latitude value.
+		
+	"""
+	if has_valid_global_coordinates( ):
+		return float( st.session_state.get( 'latitude', fallback ) )
+	
+	return float( fallback )
+
+def get_global_longitude_default( fallback: float = -77.036900 ) -> float:
+	"""
+	
+		Purpose:
+		--------
+		Return the best available global longitude value.
+
+		Parameters:
+		-----------
+		fallback (float): Fallback longitude.
+
+		Returns:
+		--------
+		float: Longitude value.
+		
+	"""
+	if has_valid_global_coordinates( ):
+		return float( st.session_state.get( 'longitude', fallback ) )
+	
+	return float( fallback )
+
+def set_global_coordinates_from_result( latitude: object, longitude: object,
+		location: Optional[ str ] = None, description: Optional[ str ] = None ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Update global Location State from a service result when valid coordinates exist.
+
+		Parameters:
+		-----------
+		latitude (object): Latitude value returned by a service or derived from controls.
+		longitude (object): Longitude value returned by a service or derived from controls.
+		location (Optional[str]): Optional location text to save globally.
+		description (Optional[str]): Optional description of the source result.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	if not has_valid_coordinates( latitude, longitude ):
+		return
+	
+	set_location_state(
+		location=location,
+		description=description,
+		latitude=float( latitude ),
+		longitude=float( longitude ) )
+
+def create_bounding_box_from_center( latitude: object, longitude: object,
+		delta: float = 0.125 ) -> Dict[ str, float ]:
+	"""
+	
+		Purpose:
+		--------
+		Create a simple bounding box around a center latitude and longitude.
+
+		Parameters:
+		-----------
+		latitude (object): Center latitude.
+		longitude (object): Center longitude.
+		delta (float): Decimal-degree offset used to build the box.
+
+		Returns:
+		--------
+		Dict[str, float]: Bounding box values with west, south, east, north, northwest,
+			and southeast coordinate keys.
+		
+	"""
+	lat_value = get_global_latitude_default( )
+	lng_value = get_global_longitude_default( )
+	
+	if has_valid_coordinates( latitude, longitude ):
+		lat_value = float( latitude )
+		lng_value = float( longitude )
+	
+	return {
+			'west': lng_value - float( delta ),
+			'south': lat_value - float( delta ),
+			'east': lng_value + float( delta ),
+			'north': lat_value + float( delta ),
+			'nw_lng': lng_value - float( delta ),
+			'nw_lat': lat_value + float( delta ),
+			'se_lng': lng_value + float( delta ),
+			'se_lat': lat_value - float( delta ),
+			'center_lat': lat_value,
+			'center_lng': lng_value,
+	}
+
+# ------------- BROWSER GEOLOCATION UTILITIES
+
+def get_geolocation_error_message( error_code: object, error_message: object ) -> str:
+	"""
+	
+		Purpose:
+		--------
+		Convert a browser geolocation error code into a readable application message.
+
+		Parameters:
+		-----------
+		error_code (object): Browser geolocation error code.
+		error_message (object): Browser geolocation error message.
+
+		Returns:
+		--------
+		str: User-facing error message.
+		
+	"""
+	try:
+		code = int( error_code )
+	except Exception:
+		code = -1
+	
+	message = str( error_message or '' ).strip( )
+	
+	if code == 0:
+		return f'Browser does not support geolocation. {message}'.strip( )
+	
+	if code == 1:
+		return f'Browser location permission was denied. {message}'.strip( )
+	
+	if code == 2:
+		return f'Browser position is unavailable. {message}'.strip( )
+	
+	if code == 3:
+		return f'Browser location request timed out. {message}'.strip( )
+	
+	if message:
+		return message
+	
+	return 'Browser geolocation failed.'
+
+def update_location_state_from_browser_geolocation( geo: Dict[ str, object ] ) -> bool:
+	"""
+	
+		Purpose:
+		--------
+		Update global Location State from a browser geolocation payload.
+
+		Parameters:
+		-----------
+		geo (Dict[str, object]): Geolocation payload returned by streamlit-js-eval.
+
+		Returns:
+		--------
+		bool: True when global coordinates were updated.
+		
+	"""
+	try:
+		if not geo:
+			return False
+		
+		if 'error' in geo:
+			error = geo.get( 'error', { } )
+			error_code = None
+			error_message = ''
+			
+			if isinstance( error, dict ):
+				error_code = error.get( 'code', None )
+				error_message = error.get( 'message', '' )
+			
+			st.session_state[ 'browser_geolocation_error' ] = get_geolocation_error_message(
+				error_code,
+				error_message )
+			
+			if error_code == 1:
+				st.session_state[ 'browser_geolocation_permission_denied' ] = True
+			
+			st.session_state[ 'browser_geolocation_loaded' ] = False
+			return False
+		
+		coords = geo.get( 'coords', { } )
+		
+		if not coords:
+			st.session_state[ 'browser_geolocation_error' ] = (
+					'Browser geolocation did not return coordinates.')
+			return False
+		
+		latitude = coords.get( 'latitude', None )
+		longitude = coords.get( 'longitude', None )
+		accuracy = coords.get( 'accuracy', None )
+		
+		if not has_valid_coordinates( latitude, longitude ):
+			st.session_state[ 'browser_geolocation_error' ] = (
+					'Browser geolocation returned invalid coordinates.')
+			return False
+		
+		set_location_state(
+			description=f'Browser geolocation. Accuracy: {accuracy} meters.',
+			latitude=float( latitude ),
+			longitude=float( longitude ) )
+		
+		st.session_state[ 'browser_geolocation' ] = geo
+		st.session_state[ 'browser_geolocation_loaded' ] = True
+		st.session_state[ 'browser_geolocation_permission_denied' ] = False
+		st.session_state[ 'browser_geolocation_error' ] = ''
+		
+		return True
+	
+	except Exception as ex:
+		st.session_state[ 'browser_geolocation_error' ] = str( ex )
+		return False
+
+def bootstrap_browser_geolocation( geocoder: Geocoder ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Request browser geolocation once per session and update global Location State
+		before mode controls consume geospatial defaults.
+
+		Parameters:
+		-----------
+		geocoder (Geocoder): Existing geocoder instance used only to optionally label
+			the resolved coordinates.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	try:
+		if not st.session_state.get( 'browser_geolocation_enabled', True ):
+			return
+		
+		if st.session_state.get( 'browser_geolocation_loaded', False ):
+			return
+		
+		if st.session_state.get( 'browser_geolocation_permission_denied', False ):
+			return
+		
+		geo_payload = get_geolocation( )
+		
+		if not geo_payload:
+			return
+		
+		updated = update_location_state_from_browser_geolocation( geo_payload )
+		
+		if not updated:
+			return
+		
+		if not st.session_state.get( 'browser_geolocation_reverse_geocoded', False ):
+			latitude = st.session_state.get( 'latitude', None )
+			longitude = st.session_state.get( 'longitude', None )
+			
+			if geocoder is not None and has_valid_coordinates( latitude, longitude ):
+				try:
+					location_text = f'{float( latitude ):.6f},{float( longitude ):.6f}'
+					geocoder.freeform( location_text )
+					
+					if not st.session_state.get( 'location', '' ):
+						st.session_state[ 'location' ] = location_text
+					
+					st.session_state[ 'browser_geolocation_reverse_geocoded' ] = True
+				
+				except Exception:
+					st.session_state[ 'location' ] = (
+							f'{float( latitude ):.6f},{float( longitude ):.6f}')
+		
+		st.rerun( )
+	
+	except Exception as ex:
+		st.session_state[ 'browser_geolocation_error' ] = str( ex )
+
+# ------------- VISUALIZATION UTILITIES
+
+def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] = None,
+		use_user_location: bool = True, key_prefix: str = 'reports_map' ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Render an interactive PyDeck map for records containing Latitude and Longitude
+		fields. The function supports base report records, optional overlay records, a
+		user-location fallback, and a dynamic map-style selector.
+
+		Parameters:
+		-----------
+		df (pd.DataFrame): Source DataFrame containing geospatial report records.
+		df_overlay (Optional[pd.DataFrame]): Optional DataFrame containing temporary
+			geocoded results to overlay on top of the base report layer.
+		use_user_location (bool): Use the global/user location as a fallback map point
+			when no valid base or overlay coordinates are available.
+		key_prefix (str): Unique Streamlit widget key prefix for this map instance.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	try:
+		st.subheader( 'Location Map' )
+		df_source = pd.DataFrame( ) if df is None else df.copy( )
+		df_overlay_source = pd.DataFrame( ) if df_overlay is None else df_overlay.copy( )
+		required_cols = [ 'Latitude', 'Longitude' ]
+		
+		if not df_source.empty:
+			missing_cols = [ col for col in required_cols if col not in df_source.columns ]
+			if missing_cols:
+				st.warning( f'Map requires missing column(s): {", ".join( missing_cols )}' )
+				return
+		
+		if not df_overlay_source.empty:
+			overlay_missing_cols = [
+					col for col in required_cols if col not in df_overlay_source.columns ]
+			
+			if overlay_missing_cols:
+				df_overlay_source = pd.DataFrame( )
+		
+		total_count = len( df_source )
+		df_base_map = pd.DataFrame( )
+		
+		if not df_source.empty:
+			df_source[ 'Latitude' ] = pd.to_numeric( df_source[ 'Latitude' ], errors='coerce' )
+			df_source[ 'Longitude' ] = pd.to_numeric( df_source[ 'Longitude' ], errors='coerce' )
+			
+			base_mask = (df_source[ 'Latitude' ].notna( )
+			             & df_source[ 'Longitude' ].notna( )
+			             & df_source[ 'Latitude' ].between( -90.0, 90.0 )
+			             & df_source[ 'Longitude' ].between( -180.0, 180.0 )
+			             & ~((df_source[ 'Latitude' ] == 0.0)
+			                 & (df_source[ 'Longitude' ] == 0.0)))
+			
+			df_base_map = df_source.loc[ base_mask ].copy( )
+		
+		mapped_count = len( df_base_map )
+		missing_count = total_count - mapped_count
+		df_overlay_map = pd.DataFrame( )
+		
+		if not df_overlay_source.empty:
+			df_overlay_source[ 'Latitude' ] = pd.to_numeric( df_overlay_source[ 'Latitude' ],
+				errors='coerce' )
+			
+			df_overlay_source[ 'Longitude' ] = pd.to_numeric( df_overlay_source[ 'Longitude' ],
+				errors='coerce' )
+			
+			overlay_mask = (df_overlay_source[ 'Latitude' ].notna( )
+			                & df_overlay_source[ 'Longitude' ].notna( )
+			                & df_overlay_source[ 'Latitude' ].between( -90.0, 90.0 )
+			                & df_overlay_source[ 'Longitude' ].between( -180.0, 180.0 )
+			                & ~((df_overlay_source[ 'Latitude' ] == 0.0)
+			                    & (df_overlay_source[ 'Longitude' ] == 0.0)))
+			
+			df_overlay_map = df_overlay_source.loc[ overlay_mask ].copy( )
+		
+		df_user_map = pd.DataFrame( )
+		
+		if use_user_location and df_base_map.empty and df_overlay_map.empty:
+			user_latitude = st.session_state.get( 'latitude', None )
+			user_longitude = st.session_state.get( 'longitude', None )
+			
+			if has_valid_coordinates( user_latitude, user_longitude ):
+				user_location = compose_location_from_state( )
+				user_description = st.session_state.get( 'description', '' )
+				
+				if not user_location:
+					user_location = (f'{float( user_latitude ):.4f},'
+					                 f'{float( user_longitude ):.4f}')
+				
+				df_user_map = pd.DataFrame( [ {
+						'ID': 'USER-LOCATION',
+						'CalendarDate': dt.datetime.now( ).strftime( '%Y-%m-%d %H:%M:%S' ),
+						'City': user_location,
+						'State': '',
+						'Country': '',
+						'Latitude': float( user_latitude ),
+						'Longitude': float( user_longitude ),
+						'Shape': 'User Location',
+						'Summary': (user_description
+						            or 'Current user location fallback.'), } ] )
+		
+		metric_c1, metric_c2, metric_c3, metric_c4 = st.columns( 4, border=True )
+		metric_c1.metric( 'Total Records', f'{total_count:,}' )
+		metric_c2.metric( 'Mapped Records', f'{mapped_count:,}' )
+		metric_c3.metric( 'Missing / Invalid Coordinates', f'{missing_count:,}' )
+		metric_c4.metric( 'Overlay / User Records',
+			f'{len( df_overlay_map ) + len( df_user_map ):,}' )
+		
+		if df_base_map.empty and df_overlay_map.empty and df_user_map.empty:
+			st.info( 'No usable base, overlay, or user-location coordinates are available.' )
+			return
+		
+		if not df_base_map.empty:
+			filter_c1, filter_c2, filter_c3, filter_c4 = st.columns(
+				[ 0.25, 0.25, 0.25, 0.25 ], border=True )
+			
+			with filter_c1:
+				if 'Year' in df_base_map.columns:
+					year_options = sorted(
+						[ str( value ) for value in df_base_map[ 'Year' ].dropna( ).unique( ) ] )
+					selected_years = st.multiselect( 'Year', year_options,
+						key=f'{key_prefix}_years' )
+					
+					if selected_years:
+						df_base_map = df_base_map[
+							df_base_map[ 'Year' ].astype( str ).isin( selected_years ) ]
+			
+			with filter_c2:
+				if 'Country' in df_base_map.columns:
+					country_options = sorted(
+						[ str( value ) for value in df_base_map[ 'Country' ].dropna( ).unique( ) ] )
+					selected_countries = st.multiselect( 'Country', country_options,
+						key=f'{key_prefix}_countries' )
+					
+					if selected_countries:
+						df_base_map = df_base_map[
+							df_base_map[ 'Country' ].astype( str ).isin( selected_countries ) ]
+			
+			with filter_c3:
+				if 'State' in df_base_map.columns:
+					state_options = sorted(
+						[ str( value ) for value in df_base_map[ 'State' ].dropna( ).unique( ) ] )
+					selected_states = st.multiselect( 'State', state_options,
+						key=f'{key_prefix}_states' )
+					
+					if selected_states:
+						df_base_map = df_base_map[
+							df_base_map[ 'State' ].astype( str ).isin( selected_states ) ]
+			
+			with filter_c4:
+				if 'Shape' in df_base_map.columns:
+					shape_options = sorted(
+						[ str( value ) for value in df_base_map[ 'Shape' ].dropna( ).unique( ) ] )
+					selected_shapes = st.multiselect( 'Shape', shape_options,
+						key=f'{key_prefix}_shapes' )
+					
+					if selected_shapes:
+						df_base_map = df_base_map[
+							df_base_map[ 'Shape' ].astype( str ).isin( selected_shapes ) ]
+		
+		if df_base_map.empty and df_overlay_map.empty and df_user_map.empty:
+			st.info( 'No mapped records match the selected filters.' )
+			return
+		
+		map_style_options = {
+				'Carto Positron': 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+				'Carto Dark Matter': 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+				'Carto Voyager': 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+				'Dark': 'dark',
+				'Light': 'light',
+				'Road': 'road',
+				'Satellite': 'satellite',
+				'Dark - No Labels': 'dark_no_labels',
+				'Light - No Labels': 'light_no_labels',
+				'Streamlit Theme': None,
+		}
+		
+		control_c1, control_c2, control_c3, control_c4 = st.columns(
+			[ 0.20, 0.20, 0.30, 0.30 ], border=True )
+		
+		with control_c1:
+			zoom_level = st.slider( 'Initial Zoom', min_value=0, max_value=50, step=1,
+				value=5, key=f'{key_prefix}_zoom' )
+		
+		with control_c2:
+			point_radius = st.slider( 'Point Radius', min_value=1, max_value=50, value=1,
+				step=5, key=f'{key_prefix}_radius' )
+		
+		with control_c3:
+			selected_map_style = st.selectbox(
+				'Map Style',
+				list( map_style_options.keys( ) ),
+				index=1,
+				key=f'{key_prefix}_style' )
+			
+			map_style = map_style_options[ selected_map_style ]
+		
+		with control_c4:
+			if len( df_base_map ) > 100:
+				max_records = st.slider( 'Maximum Records', min_value=100,
+					max_value=len( df_base_map ), value=min( 2500, len( df_base_map ) ),
+					step=500, key=f'{key_prefix}_limit' )
+				
+				df_base_map = df_base_map.head( max_records )
+			elif not df_base_map.empty:
+				st.caption( f'Displaying all {len( df_base_map ):,} mapped base records.' )
+			elif not df_overlay_map.empty:
+				st.caption( f'Displaying {len( df_overlay_map ):,} overlay record(s).' )
+			else:
+				st.caption( 'Displaying current user/global location fallback.' )
+		
+		for df_target in [ df_base_map, df_overlay_map, df_user_map ]:
+			if df_target.empty:
+				continue
+			
+			for col in [ 'ID', 'CalendarDate', 'City', 'State', 'Country', 'Shape', 'Summary' ]:
+				if col not in df_target.columns:
+					df_target[ col ] = ''
+			
+			df_target[ 'MapSummary' ] = df_target[ 'Summary' ].astype( str ).str.slice( 0, 300 )
+			df_target[ 'Position' ] = df_target.apply(
+				lambda row: [ float( row[ 'Longitude' ] ), float( row[ 'Latitude' ] ) ],
+				axis=1 )
+		
+		if not df_base_map.empty:
+			df_view = df_base_map
+		elif not df_overlay_map.empty:
+			df_view = df_overlay_map
+		else:
+			df_view = df_user_map
+		
+		view_state = pdk.ViewState( latitude=float( df_view[ 'Latitude' ].median( ) ),
+			longitude=float( df_view[ 'Longitude' ].median( ) ), zoom=zoom_level, pitch=0 )
+		
+		layers = [ ]
+		
+		if not df_base_map.empty:
+			layers.append( pdk.Layer( 'ScatterplotLayer', data=df_base_map,
+				get_position='Position', get_radius=point_radius,
+				get_fill_color=[ 0, 120, 252, 160 ],
+				get_line_color=[ 255, 255, 255, 180 ], line_width_min_pixels=1,
+				radius_min_pixels=4, radius_max_pixels=24, filled=True,
+				stroked=True, pickable=True ) )
+		
+		if not df_overlay_map.empty:
+			layers.append( pdk.Layer( 'ScatterplotLayer', data=df_overlay_map,
+				get_position='Position', get_radius=max( point_radius * 2, 20000 ),
+				get_fill_color=[ 255, 80, 0, 220 ], get_line_color=[ 255, 255, 255, 255 ],
+				line_width_min_pixels=2, radius_min_pixels=8, radius_max_pixels=40, filled=True,
+				stroked=True, pickable=True ) )
+		
+		if not df_user_map.empty:
+			layers.append( pdk.Layer( 'ScatterplotLayer', data=df_user_map,
+				get_position='Position', get_radius=max( point_radius * 2, 20000 ),
+				get_fill_color=[ 0, 180, 80, 230 ],
+				get_line_color=[ 255, 255, 255, 255 ], line_width_min_pixels=2,
+				radius_min_pixels=10, radius_max_pixels=42, filled=True, stroked=True,
+				pickable=True ) )
+		
+		tooltip = {
+				'html': (
+						'<b>ID:</b> {ID}<br/>'
+						'<b>Date:</b> {CalendarDate}<br/>'
+						'<b>Location:</b> {City}, {State}, {Country}<br/>'
+						'<b>Coordinates:</b> {Latitude}, {Longitude}<br/>'
+						'<b>Shape:</b> {Shape}<br/>'
+						'<b>Summary:</b> {MapSummary}'
+				),
+				'style': {
+						'backgroundColor': 'rgba(0, 0, 0, 0.85)',
+						'color': 'white',
+						'fontSize': '12px',
+				},
+		}
+		
+		set_blue_divider( )
+		
+		deck = pdk.Deck( layers=layers, initial_view_state=view_state,
+			map_style=map_style, tooltip=tooltip )
+		
+		st.pydeck_chart( deck, use_container_width=True )
+		
+		show_table = st.checkbox( 'Show mapped records table', value=False,
+			key=f'{key_prefix}_show_table' )
+		
+		if show_table:
+			if df_base_map.empty:
+				if not df_user_map.empty:
+					st.info( 'No base mapped records are available.' )
+					st.data_editor( df_user_map, key=f'{key_prefix}_user_location_table',
+						use_container_width=True, disabled=True )
+				else:
+					st.info( 'No base mapped records are available to display.' )
+			
+			else:
+				display_cols = [ 'ID', 'Year', 'Month', 'Day', 'CalendarDate', 'City', 'State',
+				                 'Country', 'Latitude', 'Longitude', 'Shape', 'Summary' ]
+				display_cols = [ col for col in display_cols if col in df_base_map.columns ]
+				
+				st.data_editor( df_base_map[ display_cols ], key=f'{key_prefix}_table',
+					use_container_width=True, disabled=True )
+	
+	except Exception as e:
+		st.error( f'Interactive map failed: {e}' )
+
+# ------------ GIS MAPPING UTILITIES
+
+def compose_location_query( city: object, state: object, country: object ) -> str:
+	"""
+	
+		Purpose:
+		--------
+		Compose a clean geocoding query from city, state, and country values.
+
+		Parameters:
+		-----------
+		city (object): City value from the source row.
+		state (object): State, province, region, or equivalent value from the source row.
+		country (object): Country value from the source row.
+
+		Returns:
+		--------
+		str: Comma-delimited location query.
+		
+	"""
+	parts = [ ]
+	
+	for value in [ city, state, country ]:
+		if value is None:
+			continue
+		
+		text = str( value ).strip( )
+		if text and text.lower( ) not in [ 'nan', 'none', 'null' ]:
+			parts.append( text )
+	
+	return ', '.join( parts )
+
+def get_value_by_path( obj: object, path: List[ object ] ) -> object:
+	"""
+	
+		Purpose:
+		--------
+		Read a nested value from dictionaries, lists, tuples, or simple objects using a
+		specified lookup path.
+
+		Parameters:
+		-----------
+		obj (object): Source object to inspect.
+		path (List[object]): Lookup path containing dictionary keys, object attributes,
+			or integer sequence indexes.
+
+		Returns:
+		--------
+		object: Resolved value or None.
+		
+	"""
+	current = obj
+	
+	for key in path:
+		if current is None:
+			return None
+		
+		if isinstance( current, dict ):
+			current = current.get( key )
+			continue
+		
+		if isinstance( current, (list, tuple) ) and isinstance( key, int ):
+			if 0 <= key < len( current ):
+				current = current[ key ]
+				continue
+			return None
+		
+		if hasattr( current, str( key ) ):
+			current = getattr( current, str( key ) )
+			continue
+		
+		return None
+	
+	return current
+
+def extract_coordinates( result: object ) -> Tuple[ Optional[ float ], Optional[ float ] ]:
+	"""
+	
+		Purpose:
+		--------
+		Extract latitude and longitude from common geocoding and places response shapes.
+
+		Parameters:
+		-----------
+		result (object): Geocoder or Places response object.
+
+		Returns:
+		--------
+		Tuple[Optional[float], Optional[float]]: Latitude and longitude when available.
+		
+	"""
+	if result is None:
+		return None, None
+	
+	lat_paths = [
+			[ 'lat' ],
+			[ 'latitude' ],
+			[ 'location', 'lat' ],
+			[ 'location', 'latitude' ],
+			[ 'geometry', 'location', 'lat' ],
+			[ 'geometry', 'location', 'latitude' ],
+			[ 'result', 'geometry', 'location', 'lat' ],
+			[ 'results', 0, 'geometry', 'location', 'lat' ],
+			[ 'candidates', 0, 'geometry', 'location', 'lat' ],
+	]
+	
+	lon_paths = [
+			[ 'lng' ],
+			[ 'lon' ],
+			[ 'longitude' ],
+			[ 'location', 'lng' ],
+			[ 'location', 'lon' ],
+			[ 'location', 'longitude' ],
+			[ 'geometry', 'location', 'lng' ],
+			[ 'geometry', 'location', 'lon' ],
+			[ 'geometry', 'location', 'longitude' ],
+			[ 'result', 'geometry', 'location', 'lng' ],
+			[ 'results', 0, 'geometry', 'location', 'lng' ],
+			[ 'candidates', 0, 'geometry', 'location', 'lng' ],
+	]
+	
+	lat_value = None
+	lon_value = None
+	
+	for path in lat_paths:
+		lat_value = get_value_by_path( result, path )
+		if lat_value is not None:
+			break
+	
+	for path in lon_paths:
+		lon_value = get_value_by_path( result, path )
+		if lon_value is not None:
+			break
+	
+	try:
+		latitude = float( lat_value ) if lat_value is not None else None
+		longitude = float( lon_value ) if lon_value is not None else None
+	except Exception:
+		return None, None
+	
+	if not has_valid_coordinates( latitude, longitude ):
+		return None, None
+	
+	return latitude, longitude
+
+def count_missing_report_coordinate_rows( table_name: str ) -> int:
+	"""
+	
+		Purpose:
+		--------
+		Count rows in a Reports-like table with missing, invalid, or placeholder
+		coordinates.
+
+		Parameters:
+		-----------
+		table_name (str): SQLite table name to inspect.
+
+		Returns:
+		--------
+		int: Count of rows requiring coordinate enrichment.
+		
+	"""
+	try:
+		throw_if( 'table_name', table_name )
+		query = f"""
+			SELECT COUNT(*) AS RowCount
+			FROM "{table_name}"
+			WHERE (
+			          Latitude IS NULL
+			          OR Longitude IS NULL
+			          OR Latitude < -90
+			          OR Latitude > 90
+			          OR Longitude < -180
+			          OR Longitude > 180
+			          OR (Latitude = 0 AND Longitude = 0)
+			      )
+			  AND City IS NOT NULL
+			  AND TRIM(City) <> ''
+			  AND Country IS NOT NULL
+			  AND TRIM(Country) <> '';
+		"""
+		with create_connection( ) as conn:
+			row = conn.execute( query ).fetchone( )
+			return int( row[ 0 ] or 0 )
+	
+	except Exception as e:
+		st.error( f'Unable to count missing coordinate rows: {e}' )
+		return 0
+
+def read_missing_report_locations( table_name: str, limit: Optional[ int ] = None ) -> pd.DataFrame:
+	"""
+	
+		Purpose:
+		--------
+		Read distinct City, State, and Country combinations from a Reports-like table
+		where coordinates are missing, invalid, or placeholder values.
+
+		Parameters:
+		-----------
+		table_name (str): SQLite table name to inspect.
+		limit (Optional[int]): Optional maximum number of distinct locations to return.
+
+		Returns:
+		--------
+		pd.DataFrame: Distinct location records requiring geocoding.
+		
+	"""
+	try:
+		throw_if( 'table_name', table_name )
+		query = f"""
+			SELECT
+			    TRIM(City) AS City,
+			    TRIM(COALESCE(State, '')) AS State,
+			    TRIM(Country) AS Country,
+			    COUNT(*) AS RowCount
+			FROM "{table_name}"
+			WHERE (
+			          Latitude IS NULL
+			          OR Longitude IS NULL
+			          OR Latitude < -90
+			          OR Latitude > 90
+			          OR Longitude < -180
+			          OR Longitude > 180
+			          OR (Latitude = 0 AND Longitude = 0)
+			      )
+			  AND City IS NOT NULL
+			  AND TRIM(City) <> ''
+			  AND Country IS NOT NULL
+			  AND TRIM(Country) <> ''
+			GROUP BY TRIM(City), TRIM(COALESCE(State, '')), TRIM(Country)
+			ORDER BY RowCount DESC, City, State, Country
+		"""
+		if limit:
+			query += f' LIMIT {int( limit )}'
+		
+		with create_connection( ) as conn:
+			return pd.read_sql_query( query, conn )
+	
+	except Exception as e:
+		st.error( f'Unable to read missing report locations: {e}' )
+		return pd.DataFrame( )
+
+def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, places: Place,
+		use_places: bool = True, limit: Optional[ int ] = None ) -> pd.DataFrame:
+	"""
+	
+		Purpose:
+		--------
+		Geocode distinct missing City, State, and Country combinations and return a
+		dry-run preview without updating SQLite.
+
+		Parameters:
+		-----------
+		table_name (str): SQLite table name to inspect.
+		geocoder (Geocoder): Existing Geocoder service instance.
+		places (Place): Existing Places service instance.
+		use_places (bool): Use Places fallback when Geocoder lookup fails.
+		limit (Optional[int]): Optional maximum number of distinct locations to process.
+
+		Returns:
+		--------
+		pd.DataFrame: Preview of proposed coordinate updates.
+		
+	"""
+	try:
+		throw_if( 'table_name', table_name )
+		throw_if( 'geocoder', geocoder )
+		
+		df_locations = read_missing_report_locations( table_name, limit )
+		
+		if df_locations.empty:
+			return pd.DataFrame( )
+		
+		records: List[ Dict[ str, object ] ] = [ ]
+		
+		for row in df_locations.itertuples( index=False ):
+			query = compose_location_query( row.City, row.State, row.Country )
+			
+			record = {
+					'City': row.City,
+					'State': row.State,
+					'Country': row.Country,
+					'Query': query,
+					'RowCount': row.RowCount,
+					'Latitude': None,
+					'Longitude': None,
+					'Source': '',
+					'Status': '',
+					'Message': '',
+			}
+			
+			if not query:
+				record[ 'Status' ] = 'Skipped'
+				record[ 'Message' ] = 'Location query could not be composed.'
+				records.append( record )
+				continue
+			
+			try:
+				result = geocoder.freeform( query )
+				latitude, longitude = extract_coordinates( result )
+				
+				if latitude is None or longitude is None:
+					raise NotFound( 'No usable coordinates returned by Geocoder.' )
+				
+				record[ 'Latitude' ] = latitude
+				record[ 'Longitude' ] = longitude
+				record[ 'Source' ] = 'Geocoder'
+				record[ 'Status' ] = 'Matched'
+				record[ 'Message' ] = 'Resolved by Geocoder.'
+			
+			except NotFound as e:
+				if use_places and places is not None:
+					try:
+						result = places.text_to_location( query )
+						latitude, longitude = extract_coordinates( result )
+						
+						if latitude is None or longitude is None:
+							record[ 'Source' ] = 'Places'
+							record[ 'Status' ] = 'Failed'
+							record[ 'Message' ] = 'No usable coordinates returned by Places.'
+						else:
+							record[ 'Latitude' ] = latitude
+							record[ 'Longitude' ] = longitude
+							record[ 'Source' ] = 'Places'
+							record[ 'Status' ] = 'Matched'
+							record[ 'Message' ] = 'Resolved by Places fallback.'
+					
+					except Exception as ex:
+						record[ 'Source' ] = 'Places'
+						record[ 'Status' ] = 'Failed'
+						record[ 'Message' ] = str( ex )
+				else:
+					record[ 'Source' ] = 'Geocoder'
+					record[ 'Status' ] = 'Failed'
+					record[ 'Message' ] = str( e )
+			
+			except Exception as e:
+				record[ 'Source' ] = 'Geocoder'
+				record[ 'Status' ] = 'Failed'
+				record[ 'Message' ] = str( e )
+			
+			records.append( record )
+		
+		return pd.DataFrame( records )
+	
+	except Exception as e:
+		st.error( f'Unable to preview coordinate updates: {e}' )
+		return pd.DataFrame( )
+
+def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame ) -> int:
+	"""
+	
+		Purpose:
+		--------
+		Apply matched latitude and longitude values to all missing-coordinate rows in a
+		Reports-like table that share the same City, State, and Country values.
+
+		Parameters:
+		-----------
+		table_name (str): SQLite table name to update.
+		df_updates (pd.DataFrame): Preview DataFrame containing matched coordinates.
+
+		Returns:
+		--------
+		int: Number of SQLite rows updated.
+		
+	"""
+	try:
+		throw_if( 'table_name', table_name )
+		
+		if df_updates is None or df_updates.empty:
+			return 0
+		
+		required_cols = [ 'City', 'State', 'Country', 'Latitude', 'Longitude', 'Status' ]
+		missing_cols = [ col for col in required_cols if col not in df_updates.columns ]
+		
+		if missing_cols:
+			raise ValueError( f'Missing update column(s): {", ".join( missing_cols )}' )
+		
+		df_apply = df_updates.copy( )
+		df_apply = df_apply[ df_apply[ 'Status' ].astype( str ).str.lower( ) == 'matched' ]
+		df_apply[ 'Latitude' ] = pd.to_numeric( df_apply[ 'Latitude' ], errors='coerce' )
+		df_apply[ 'Longitude' ] = pd.to_numeric( df_apply[ 'Longitude' ], errors='coerce' )
+		
+		valid_mask = (
+				df_apply[ 'Latitude' ].notna( )
+				& df_apply[ 'Longitude' ].notna( )
+				& df_apply[ 'Latitude' ].between( -90.0, 90.0 )
+				& df_apply[ 'Longitude' ].between( -180.0, 180.0 )
+				& ~(
+				(df_apply[ 'Latitude' ] == 0.0)
+				& (df_apply[ 'Longitude' ] == 0.0)
+		)
+		)
+		
+		df_apply = df_apply.loc[ valid_mask ].copy( )
+		
+		if df_apply.empty:
+			return 0
+		
+		updated_count = 0
+		with create_connection( ) as conn:
+			cursor = conn.cursor( )
+			cursor.execute( 'BEGIN' )
+			for row in df_apply.itertuples( index=False ):
+				cursor.execute(
+					f"""
+					UPDATE "{table_name}"
+					SET Latitude = ?,
+					    Longitude = ?
+					WHERE (
+					          Latitude IS NULL
+					          OR Longitude IS NULL
+					          OR Latitude < -90
+					          OR Latitude > 90
+					          OR Longitude < -180
+					          OR Longitude > 180
+					          OR (Latitude = 0 AND Longitude = 0)
+					      )
+					  AND TRIM(City) = ?
+					  AND TRIM(COALESCE(State, '')) = ?
+					  AND TRIM(Country) = ?;
+					""",
+					(
+							float( row.Latitude ),
+							float( row.Longitude ),
+							str( row.City ).strip( ),
+							str( row.State ).strip( ),
+							str( row.Country ).strip( ),
+					) )
+				
+				updated_count += int( cursor.rowcount or 0 )
+			
+			conn.commit( )
+		
+		return updated_count
+	
+	except Exception as e:
+		st.error( f'Unable to apply coordinate updates: {e}' )
+		return 0
+
+def append_geocoding_map_result( query: str, source: str, result: object ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Append a resolved geocoding result to the temporary Geocoding Mode map overlay and
+		update the global Location State with the resolved coordinates.
+
+		Parameters:
+		-----------
+		query (str): User-entered location query.
+		source (str): Source label such as Geocoder or Places.
+		result (object): Raw geocoding response object.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	try:
+		throw_if( 'query', query )
+		throw_if( 'source', source )
+		
+		latitude, longitude = extract_coordinates( result )
+		
+		if latitude is None or longitude is None:
+			st.warning( 'The geocoding result did not contain usable coordinates for the map.' )
+			return
+		
+		set_location_state(
+			location=query,
+			description=f'{source} result for {query}',
+			latitude=latitude,
+			longitude=longitude )
+		
+		df_new = pd.DataFrame(
+			[
+					{
+							'ID': f'GEOCODED-{int( time.time( ) )}',
+							'CalendarDate': dt.datetime.now( ).strftime( '%Y-%m-%d %H:%M:%S' ),
+							'City': query,
+							'State': '',
+							'Country': '',
+							'Latitude': latitude,
+							'Longitude': longitude,
+							'Shape': 'Geocoded Result',
+							'Summary': f'{source} result for {query}',
+							'Source': source,
+							'Query': query,
+					}
+			]
+		)
+		
+		df_current = st.session_state.get( 'df_geocoding_map_results', pd.DataFrame( ) )
+		
+		if df_current is None or df_current.empty:
+			st.session_state[ 'df_geocoding_map_results' ] = df_new
+		else:
+			st.session_state[ 'df_geocoding_map_results' ] = pd.concat(
+				[ df_current, df_new ],
+				ignore_index=True )
+	
+	except Exception as e:
+		st.error( f'Unable to append geocoding result to map: {e}' )
 
 # ------------ DATABASE UTILITIES
 
@@ -616,7 +2224,10 @@ def create_visualization( df: pd.DataFrame ) -> None:
 		None
 		
 	"""
-	st.subheader( 'Visualization Engine' )
+	
+	set_blue_divider( )
+	
+	st.markdown( '##### Visualization Engine' )
 	
 	if df is None or df.empty:
 		st.info( 'No data available.' )
@@ -626,9 +2237,7 @@ def create_visualization( df: pd.DataFrame ) -> None:
 	
 	for col in df_plot.columns:
 		if df_plot[ col ].dtype == object:
-			df_plot[ col ] = df_plot[ col ].map(
-				lambda x: '' if x is None else str( x )
-			)
+			df_plot[ col ] = df_plot[ col ].map( lambda x: '' if x is None else str( x ) )
 	
 	numeric_cols: List[ str ] = [ ]
 	for col in df_plot.columns:
@@ -638,8 +2247,7 @@ def create_visualization( df: pd.DataFrame ) -> None:
 	
 	categorical_cols: List[ str ] = [ col for col in df_plot.columns if col not in numeric_cols ]
 	
-	chart = st.selectbox(
-		'Chart Type',
+	chart = st.selectbox( 'Chart Type',
 		[ 'Histogram', 'Bar', 'Line', 'Scatter', 'Box', 'Pie', 'Correlation' ] )
 	
 	if chart == 'Histogram':
@@ -1343,7 +2951,8 @@ def get_loaded_dataset( ) -> pd.DataFrame | None:
 	
 	return df_frame.copy( )
 
-def store_loaded_dataset( df_dataset: pd.DataFrame, df_original: pd.DataFrame | None = None ) -> None:
+def store_loaded_dataset( df_dataset: pd.DataFrame,
+		df_original: pd.DataFrame | None = None ) -> None:
 	"""
 		Purpose:
 		--------
@@ -1367,57 +2976,93 @@ def store_loaded_dataset( df_dataset: pd.DataFrame, df_original: pd.DataFrame | 
 	st.session_state[ 'df_raw' ] = df_source.copy( )
 	st.session_state[ 'df_original' ] = df_base.copy( )
 	st.session_state[ 'df_dataset' ] = df_source.copy( )
-	
+
 # ---------------------------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------------------------
-st.set_page_config(  page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
-    initial_sidebar_state='expanded', )
+st.set_page_config( page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
+	initial_sidebar_state='expanded', )
 
 style_subheaders( )
 
 # ==============================================================================
 # SIDEBAR
 # ==============================================================================
-
-st.logo( cfg.LOGO, size='large' )
+st.logo( cfg.LOGO, size='small' )
 
 with st.sidebar:
-	# ------- Mode Selection
 	set_blue_divider( )
-	
-	st.subheader( 'Mappy Mode' )
-	
-	mode = st.sidebar.radio( 'Select', cfg.MODES, index=0 )
-	previous_mode = st.session_state.get( 'previous_mode', None )
-	
-	if previous_mode != mode:
+	st.markdown( '#### Configuration' )
+	# ------- Mode
+	with st.expander( label='Function', icon='🌍', expanded=False ):
+		mode = st.radio( label='Mode', options=cfg.MODES, label_visibility='collapsed' )
+		if mode:
+			st.session_state[ 'mode' ] = mode
+		else:
+			st.session_state[ 'mode' ] = 'Geocoding'
+		
+		previous_mode = st.session_state.get( 'previous_mode', None )
+		if previous_mode != mode:
+			st.session_state[ 'previous_mode' ] = mode
+			st.rerun( )
+		
 		st.session_state[ 'previous_mode' ] = mode
-		st.rerun( )
 	
-	st.session_state[ 'previous_mode' ] = mode
+	# ------- User Location
+	with st.sidebar.expander( label='Location', icon='📍', expanded=False ):
+		st.checkbox( 'Use browser location on load',
+			value=st.session_state.get( 'browser_geolocation_enabled', True ),
+			key='browser_geolocation_enabled' )
+		
+		if st.session_state.get( 'browser_geolocation_loaded', False ):
+			st.success( 'Browser location loaded.' )
+			st.write( f"Latitude: {float( st.session_state.get( 'latitude', 0.0 ) ):.6f}" )
+			st.write( f"Longitude: {float( st.session_state.get( 'longitude', 0.0 ) ):.6f}" )
+		
+		elif st.session_state.get( 'browser_geolocation_permission_denied', False ):
+			st.warning( 'Browser location permission was denied.' )
+		
+		else:
+			st.info( 'Browser location has not been loaded yet.' )
+		
+		error = st.session_state.get( 'browser_geolocation_error', '' )
+		if error:
+			st.warning( error )
+		
+		if st.button( 'Reset', key='browser_geolocation_reset', width='stretch' ):
+			st.session_state[ 'browser_geolocation' ] = None
+			st.session_state[ 'browser_geolocation_loaded' ] = False
+			st.session_state[ 'browser_geolocation_reverse_geocoded' ] = False
+			st.session_state[ 'browser_geolocation_error' ] = ''
+			st.session_state[ 'browser_geolocation_permission_denied' ] = False
+			st.rerun( )
 	
-	# ------- Data Selection
-	set_blue_divider( )
+	# ------- Query
+	with st.expander( label='Frequency', icon='⌛', expanded=False ):
+		qps = st.slider( 'Queries Per Second', min_value=1, max_value=50, value=10, )
 	
-	st.subheader( 'Data Source' )
+	# ------- Cache
+	with st.expander( label='Persistence', icon='📦', expanded=False ):
+		cache_backend = st.selectbox( 'Select', options=[ 'none', 'memory', 'sqlite' ],
+			key='cache_backend' )
+		cache: Optional[ object ] = None
+		if cache_backend == 'memory':
+			cache = InMemoryCache( )
+		elif cache_backend == 'sqlite':
+			cache_path = st.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
+			cache = SQLiteCache( cache_path )
 	
-	with st.expander( 'Database', expanded=False ):
-		source = st.selectbox( label='Select',
+	# ------- Data
+	st.markdown( '#### Data' )
+	with st.expander( label='Source', icon='🏛️', expanded=False ):
+		st.caption( 'Sources' )
+		source = st.selectbox( label='Select Table',
 			options=[ 'Default Data', 'Database Data', 'Custom Data' ], key='source_selectbox' )
-	
-	uploaded = st.file_uploader( label='Upload Spreadsheet', type=[ 'xlsx', 'xls', 'csv' ],
-		key='source_uploader' )
-	
-	loaded_df: pd.DataFrame | None = None
-	loaded_original: pd.DataFrame | None = None
-	
-	if source == 'Default Data':
-		loaded_df = pd.read_excel( cfg.DEFAULT_DATA )
-		loaded_original = loaded_df.copy( )
-	
-	elif source == 'Database Data':
-		try:
+		
+		uploaded = st.file_uploader( label='Upload Spreadsheet', type=[ 'xlsx', 'xls', 'csv' ],
+			key='source_uploader' )
+		
+		if source == 'Default Data':
 			with sqlite3.connect( cfg.DB_PATH ) as connection:
 				df_tables = pd.read_sql_query(
 					"""
@@ -1429,72 +3074,183 @@ with st.sidebar:
 					""",
 					connection )
 				
-				table_options = df_tables[ 'name' ].tolist( )[ :3 ]
+				df_default = pd.read_sql_query( f'SELECT * FROM "{cfg.DEFAULT_DATA}"',
+					connection )
 				
-				if table_options:
-					selected_table = st.selectbox( label='Select Database Table',
-						options=table_options, key='database_table_selectbox' )
-					
-					if selected_table:
-						loaded_df = pd.read_sql_query( f'SELECT * FROM "{selected_table}"',
-							connection )
-						
-						loaded_original = loaded_df.copy( )
-						log_step( f'Loaded Database Table: {selected_table}' )
-				else:
-					st.warning( 'No tables were found in the database.' )
-		except Exception as ex:
-			st.error( f'Error loading database data: {ex}' )
-	
-	elif source == 'Custom Data':
-		if uploaded is not None:
-			if uploaded.name.lower( ).endswith( ('.xlsx', '.xls') ):
-				loaded_df = pd.read_excel( uploaded )
-			else:
-				loaded_df = pd.read_csv( uploaded )
-			
-			loaded_original = loaded_df.copy( )
-			log_step( f'Loaded uploaded file: {uploaded.name}' )
-		else:
-			st.info( 'Upload a spreadsheet to load data.' )
-	
-	if has_loaded_dataset( loaded_df ):
-		store_loaded_dataset( loaded_df, loaded_original )
-	
-	# ------- Mappy Configuration
-	set_blue_divider( )
-
-	with st.sidebar.expander( 'Configuration', expanded=False ):
-			api_keys = { name: value for name, value in vars( cfg ).items( )
-			             if name.endswith( '_API_KEY' ) and value }
-			if not api_keys:
-				st.error( 'No API keys found in config.py' )
-			
-			selected_key = st.selectbox( 'API Key', options=list( api_keys.keys( ) ), key='api_key' )
-			api_key = api_keys[ selected_key ]
+				df_original = df_default.copy( )
+				log_step( f'Loaded Database Table: {cfg.DEFAULT_DATA}' )
 		
-	with st.sidebar.expander( 'Query', expanded=False ):
-		qps = st.slider( 'Queries Per Second', min_value=1, max_value=50, value=10, )
+		elif source == 'Database Data':
+			try:
+				with sqlite3.connect( cfg.DB_PATH ) as connection:
+					df_tables = pd.read_sql_query(
+						"""
+                        SELECT name
+                        FROM sqlite_master
+                        WHERE type = 'table'
+                          AND name NOT LIKE 'sqlite_%'
+                        ORDER BY name;
+						""",
+						connection )
+					
+					table_options = df_tables[ 'name' ].tolist( )[ :3 ]
+					if table_options:
+						selected_table = st.selectbox( label='Select Database Table',
+							options=table_options, key='database_table_selectbox' )
+						
+						if selected_table:
+							df_default = pd.read_sql_query( f'SELECT * FROM "{selected_table}"',
+								connection )
+							
+							loaded_original = df_default.copy( )
+							log_step( f'Loaded Database Table: {selected_table}' )
+					else:
+						st.warning( 'No tables were found in the database.' )
+			except Exception as ex:
+				st.error( f'Error loading database data: {ex}' )
+		
+		elif source == 'Custom Data':
+			if uploaded is not None:
+				if uploaded.name.lower( ).endswith( ('.xlsx', '.xls') ):
+					df_default = pd.read_excel( uploaded )
+				else:
+					df_default = pd.read_csv( uploaded )
+				
+				loaded_original = df_default.copy( )
+				log_step( f'Loaded uploaded file: {uploaded.name}' )
+			else:
+				st.info( 'Upload a spreadsheet to load data.' )
+		
+		if has_loaded_dataset( df_default ):
+			store_loaded_dataset( df_default, df_original )
 	
-	with st.sidebar.expander( 'Cache', expanded=False ):
-		cache_backend = st.selectbox( 'Cache Backend', options=[ 'none', 'memory', 'sqlite' ],
-			key='cache_backend' )
-		cache: Optional[ object ] = None
-		if cache_backend == 'memory':
-			cache = InMemoryCache( )
-		elif cache_backend == 'sqlite':
-			cache_path = st.text_input( 'SQLite Cache Path', value='mappy_cache.db', )
-			cache = SQLiteCache( cache_path )
+	# ------- Configuration
+	set_blue_divider( )
+	st.markdown( '#### Security' )
+	with st.expander( label='API Keys', icon='🔑', expanded=False ):
+		google_key = st.text_input( 'Google API Key', type='password',
+			value=st.session_state.google_api_key or '',
+			help='Overrides GOOGLE_API_KEY from config.py for this session only.' )
+		
+		if google_key:
+			st.session_state.google_api_key = google_key
+			os.environ[ 'GOOGLE_API_KEY' ] = google_key
+		
+		googlemaps_key = st.text_input( 'Google Maps API Key', type='password',
+			value=st.session_state.googlemaps_api_key or '',
+			help='Overrides GOOGLEMAPS_API_KEY from config.py for this session only.' )
+		
+		if googlemaps_key:
+			st.session_state.googlemaps_api_key = googlemaps_key
+			os.environ[ 'GOOGLEMAPS_API_KEY' ] = googlemaps_key
+		
+		googleweather_key = st.text_input( 'Google Weather API Key', type='password',
+			value=st.session_state.google_weather_api_key or '',
+			help='Overrides GOOGLE_WEATHER_API_KEY from config.py for this session only.' )
+		
+		if googleweather_key:
+			st.session_state.google_weather_api_key = googleweather_key
+			os.environ[ 'GOOGLE_WEATHER_API_KEY' ] = googleweather_key
+		
+		geocoding_key = st.text_input( 'Geocoding API Key', type='password',
+			value=st.session_state.geocoding_api_key or '',
+			help='Overrides GEOCODING_API_KEY from config.py for this session only.' )
+		
+		if geocoding_key:
+			st.session_state.geocoding_api_key = geocoding_key
+			os.environ[ 'GEOCODING_API_KEY' ] = geocoding_key
+		
+		google_cse_id = st.text_input( 'Google Custom Search ID', type='password',
+			value=st.session_state.google_cse_id or '',
+			help='Overrides GOOGLE_CSE_ID from config.py for this session only.' )
+		
+		if google_cse_id:
+			st.session_state.google_cse_id = google_cse_id
+			os.environ[ 'GOOGLE_CSE_ID' ] = google_cse_id
+		
+		govinfo_key = st.text_input( 'Gov Info API', type='password',
+			value=st.session_state.govinfo_api_key or '',
+			help='Overrides GOVINFO_API_KEY from config.py for this session only.' )
+		
+		if govinfo_key:
+			st.session_state.govinfo_api_key = govinfo_key
+			os.environ[ 'GOVINFO_API_KEY' ] = govinfo_key
+		
+		airnow_key = st.text_input( 'Air Quality Now', type='password',
+			value=st.session_state.airnow_api_key or '',
+			help='Overrides AIRNOW_API_KEY from config.py for this session only.' )
+		
+		if airnow_key:
+			st.session_state.airnow_api_key = airnow_key
+			os.environ[ 'AIRNOW_API_KEY' ] = airnow_key
+		
+		nasa_key = st.text_input( 'NASA API Key', type='password',
+			value=st.session_state.nasa_api_key or '',
+			help='Overrides NASA_API_KEY from config.py for this session only.' )
+		
+		if nasa_key:
+			st.session_state.nasa_api_key = nasa_key
+			os.environ[ 'NASA_API_KEY' ] = nasa_key
+		
+		nasa_token = st.text_input( 'NASA Earth Data', type='password',
+			value=st.session_state.nasa_earthdata_token or '',
+			help='Overrides NASA_EARTHDATA_TOKEN from config.py for this session only.' )
+		
+		if nasa_token:
+			st.session_state.nasa_earthdata_token = nasa_token
+			os.environ[ 'NASA_EARTHDATA_TOKEN' ] = nasa_token
+		
+		openaq_key = st.text_input( 'Open Air Quality', type='password',
+			value=st.session_state.openaq_api_key or '',
+			help='Overrides OPENAQ_API_KEY from config.py for this session only.' )
+		
+		if openaq_key:
+			st.session_state.openaq_api_key = openaq_key
+			os.environ[ 'AIRNOW_API_KEY' ] = openaq_key
+		
+		opensky_client = st.text_input( 'Open Sky Client ID', type='password',
+			value=st.session_state.opensky_api_client_id or '',
+			help='Overrides OPENSKY_API_CLIENT_ID from config.py for this session only.' )
+		
+		if opensky_client:
+			st.session_state.opensky_api_client_id = opensky_client
+			os.environ[ 'OPENSKY_API_CLIENT_ID' ] = opensky_client
+		
+		firms_key = st.text_input( 'FIRMS Map Client', type='password',
+			value=st.session_state.opensky_api_client_id or '',
+			help='Overrides FIRMS_MAP_KEY from config.py for this session only.' )
+		
+		if firms_key:
+			st.session_state.firms_map_key = firms_key
+			os.environ[ 'FIRMS_MAP_KEY' ] = firms_key
+		
+		opensky_credentials = st.text_input( 'Open Sky Credentials', type='password',
+			value=st.session_state.opensky_api_credentials or '',
+			help='Overrides OPENSKY_API_CREDENTIALS from config.py for this session only.' )
+		
+		if opensky_client:
+			st.session_state.opensky_api_credentials = opensky_credentials
+			os.environ[ 'OPENSKY_API_CREDENTIALS' ] = opensky_credentials
+		
+		purpleair_key = st.text_input( 'Purple Air API', type='password',
+			value=st.session_state.purpleair_api_key or '',
+			help='Overrides Purple Air API from config.py for this session only.' )
+		
+		if purpleair_key:
+			st.session_state.purpleair_key = purpleair_key
+			os.environ[ 'PURPLEAIR_API_KEY' ] = purpleair_key
+	
+	maps = Maps( qps=qps, )
+	distances = DistanceMatrix( maps )
+	timezone = Timezone( maps )
+	geocoder = Geocoder( maps, cache=cache )
+	places = Place( maps, cache=cache )
+	static_maps = StaticMap( )
 
-# -----------  Core Maps Gateway (NO cache argument — VERIFIED)
-
-maps = Maps( api_key=api_key, qps=qps, )
-geocoder = Geocoder( maps, cache=cache )
-places = Places( maps, cache=cache )
-distances = DistanceMatrix( maps )
-timezone = Timezone( maps )
-static_maps = StaticMapURL( api_key=api_key )
-
+# ------------------------------------------------------------------------------
+# BROWSER GEOLOCATION BOOTSTRAP
+# ------------------------------------------------------------------------------
+bootstrap_browser_geolocation( geocoder )
 
 # ==============================================================================
 # GEOCODING MODE
@@ -1502,41 +3258,126 @@ static_maps = StaticMapURL( api_key=api_key )
 if mode == 'Geocoding':
 	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
 	with center:
-		st.subheader( 'Geocoding & Places' )
+		st.subheader( 'Geocoding' )
 		st.divider( )
 		
-		geo_c1, geo_c2 = st.columns( [ 0.60, 0.40  ], border=True, gap='xsmall' )
+		geo_c1, geo_c2 = st.columns( [ 0.60, 0.40 ], border=True, gap='small' )
+		with geo_c2:
+			st.caption( '' )
+			geosub_c1, geosub_c2 = st.columns( 2 )
+			with geosub_c1:
+				use_places = st.checkbox( 'Use Places fallback', value=True,
+					key='geocoding_fallback' )
+			
+			with geosub_c2:
+				if st.button( label='Clear', icon='🧹', width='stretch', key='clear_map_results' ):
+					st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
+					st.rerun( )
+		
 		with geo_c1:
 			query = st.text_input( 'Enter Address or Location', key='location' )
-			
 			btn_c1, btn_c2 = st.columns( 2 )
 			with btn_c1:
 				if st.button( 'Resolve Location', width='stretch' ):
 					if not query:
-						st.warning( 'Enter a location.' )
+						st.warning( 'Enter a Location.' )
 					else:
 						try:
 							result = geocoder.freeform( query )
+							append_geocoding_map_result( query, 'Geocoder', result )
 							st.json( result )
-						
 						except NotFound:
-							st.warning( 'Geocoding failed. Trying Places search.' )
-							result = places.text_to_location( query )
-							st.json( result )
-							
+							if use_places:
+								try:
+									st.warning( 'Geocoding failed.' )
+									result = places.text_to_location( query )
+									append_geocoding_map_result( query, 'Places', result )
+									st.json( result )
+								except Exception as e:
+									st.error( str( e ) )
+							else:
+								st.warning( 'Geocoding failed and Places fallback is disabled.' )
 						except Exception as e:
 							st.error( str( e ) )
+			
 			with btn_c2:
-				if st.button( 'Clear Location', width='stretch' ):
-					if not query:
-						st.warning( 'Nothing to clear' )
-					else:
-						query = None
-						st.json( query )
-					
-		with geo_c2:
-			use_places = st.checkbox( 'Use Places fallback if geocoding fails', value=True )
+				if st.button( label='Clear', icon='🧹', width='stretch' ):
+					st.info( 'Use Ctrl+A / Backspace to clear the location field.' )
+		
+		st.divider( )
+		
+		# ------------------------------------------------------------------------------
+		# REPORTS MAP
+		# ------------------------------------------------------------------------------
+		try:
+			tables = list_tables( )
+			if cfg.DEFAULT_DATA not in tables:
+				st.warning( f'Default table "{cfg.DEFAULT_DATA}" was not found in {cfg.DB_PATH}.' )
+			else:
+				df_reports = read_table( cfg.DEFAULT_DATA )
+				df_overlay = st.session_state.get( 'df_geocoding_map_results', pd.DataFrame( ) )
+				create_reports_map( df_reports, df_overlay=df_overlay )
+				if df_overlay is not None and not df_overlay.empty:
+					with st.expander( 'Geocoded Map Results', expanded=False ):
+						st.data_editor( df_overlay, key='geocoding_map_results_table',
+							use_container_width=True, disabled=True )
+		
+		except Exception as e:
+			st.error( f'Reports map failed: {e}' )
 
+# ==============================================================================
+# MAP MODE
+# ==============================================================================
+elif mode == 'Map':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Interactive Map' )
+		st.divider( )
+		
+		tables = list_tables( )
+		
+		if not tables:
+			st.info( 'No tables available.' )
+		else:
+			default_table = resolve_table_name( cfg.DEFAULT_DATA, tables )
+			if default_table is None:
+				default_table = tables[ 0 ]
+			
+			default_index = tables.index( default_table )
+			
+			control_c1, control_c2, control_c3 = st.columns(
+				[ 0.35, 0.35, 0.30 ], border=True )
+			
+			with control_c1:
+				table = st.selectbox( 'Table', tables, index=default_index,
+					key='map_mode_table' )
+			
+			with control_c2:
+				include_overlay = st.checkbox( 'Show Geocoded Overlay', value=True,
+					key='map_mode_show_overlay' )
+			
+			with control_c3:
+				refresh_map = st.button( 'Refresh Map', key='map_mode_refresh',
+					width='stretch' )
+				if refresh_map:
+					st.rerun( )
+			
+			df_map_source = read_table( table )
+			df_overlay = pd.DataFrame( )
+			
+			if include_overlay:
+				df_overlay = st.session_state.get( 'df_geocoding_map_results',
+					pd.DataFrame( ) )
+			
+			create_reports_map( df_map_source, df_overlay=df_overlay )
+			
+			if include_overlay and df_overlay is not None and not df_overlay.empty:
+				with st.expander( 'Geocoded Overlay Records', expanded=False ):
+					st.data_editor(
+						df_overlay,
+						key='map_mode_overlay_records',
+						use_container_width=True,
+						disabled=True )
 
 # ==============================================================================
 # WEATHER MODE
@@ -1544,19 +3385,30 @@ if mode == 'Geocoding':
 elif mode == 'Weather':
 	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
 	with center:
-		st.subheader( 'Weather & Climate Data' )
+		st.subheader( 'Weather Data' )
 		st.divider( )
 		
-		met_c1, met_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		global_location = get_global_location_default( )
+		global_latitude = get_global_latitude_default( )
+		global_longitude = get_global_longitude_default( )
 		
-		with met_c1:
+		location_c1, location_c2, location_c3 = st.columns( 3, border=True )
+		location_c1.metric( 'Location', global_location )
+		location_c2.metric( 'Latitude', f'{float( global_latitude ):.4f}' )
+		location_c3.metric( 'Longitude', f'{float( global_longitude ):.4f}' )
+		
+		set_blue_divider( )
+		
+		weather_c1, weather_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		
+		with weather_c1:
 			# ------------------------------------------------------------------
 			# GOOGLE WEATHER
 			# ------------------------------------------------------------------
 			with st.expander( '🌦️ Google Weather', expanded=True ):
 				google_address = st.text_input(
 					'Address or Location',
-					value='Washington, DC',
+					value=global_location,
 					key='weather_google_address' )
 				
 				google_product = st.selectbox(
@@ -1574,23 +3426,27 @@ elif mode == 'Weather':
 					value='en',
 					key='weather_google_language' )
 				
-				google_hours = st.number_input(
-					'Hours',
-					min_value=1,
-					max_value=240,
-					value=24,
-					step=1,
-					key='weather_google_hours',
-					disabled=(google_product != 'Hourly Forecast') )
+				if google_product == 'Hourly Forecast':
+					google_hours = st.number_input(
+						'Hours',
+						min_value=1,
+						max_value=240,
+						value=24,
+						step=1,
+						key='weather_google_hours' )
+				else:
+					google_hours = 24
 				
-				google_days = st.number_input(
-					'Days',
-					min_value=1,
-					max_value=10,
-					value=5,
-					step=1,
-					key='weather_google_days',
-					disabled=(google_product != 'Daily Forecast') )
+				if google_product == 'Daily Forecast':
+					google_days = st.number_input(
+						'Days',
+						min_value=1,
+						max_value=10,
+						value=5,
+						step=1,
+						key='weather_google_days' )
+				else:
+					google_days = 5
 				
 				google_timeout = st.number_input(
 					'Timeout',
@@ -1601,8 +3457,9 @@ elif mode == 'Weather':
 					key='weather_google_timeout' )
 				
 				google_btn_c1, google_btn_c2 = st.columns( 2 )
+				
 				with google_btn_c1:
-					if st.button( 'Run Google Weather', key='weather_google_run',
+					if st.button( label='Run', icon='🏃', key='weather_google_run',
 							use_container_width=True ):
 						if not google_address:
 							st.warning( 'Enter an address or location.' )
@@ -1639,17 +3496,27 @@ elif mode == 'Weather':
 										language_code=google_language,
 										time=int( google_timeout ) )
 								
+								weather_latitude = getattr( weather, 'latitude', None )
+								weather_longitude = getattr( weather, 'longitude', None )
+								
 								st.session_state[ 'weather_last_source' ] = 'Google Weather'
 								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = weather.latitude
-								st.session_state[ 'weather_last_longitude' ] = weather.longitude
+								st.session_state[ 'weather_last_latitude' ] = weather_latitude
+								st.session_state[ 'weather_last_longitude' ] = weather_longitude
+								
+								set_global_coordinates_from_result(
+									weather_latitude,
+									weather_longitude,
+									location=google_address,
+									description='Google Weather result' )
+								
 								st.success( 'Google Weather request completed.' )
 							
 							except Exception as ex:
 								st.error( f'Google Weather request failed: {ex}' )
 				
 				with google_btn_c2:
-					if st.button( 'Clear Google Result', key='weather_google_clear',
+					if st.button( label='Clear', icon='🧹', key='weather_google_clear',
 							use_container_width=True ):
 						st.session_state[ 'weather_last_source' ] = ''
 						st.session_state[ 'weather_last_result' ] = { }
@@ -1662,7 +3529,7 @@ elif mode == 'Weather':
 			with st.expander( '🌤️ OpenWeather / Open-Meteo', expanded=False ):
 				open_location = st.text_input(
 					'Location',
-					value='Washington, DC',
+					value=global_location,
 					key='weather_open_location' )
 				
 				open_mode = st.selectbox(
@@ -1702,13 +3569,14 @@ elif mode == 'Weather':
 				open_btn_c1, open_btn_c2 = st.columns( 2 )
 				
 				with open_btn_c1:
-					if st.button( 'Run OpenWeather', key='weather_open_run',
+					if st.button( label='Run', icon='🏃', key='weather_open_run',
 							use_container_width=True ):
 						if not open_location:
 							st.warning( 'Enter a location.' )
 						else:
 							try:
 								weather = OpenWeather( )
+								
 								result = weather.fetch(
 									location=open_location,
 									mode=open_mode,
@@ -1717,20 +3585,28 @@ elif mode == 'Weather':
 									past_days=int( open_past_days ),
 									count=int( open_count ) )
 								
+								weather_latitude = getattr( weather, 'latitude', None )
+								weather_longitude = getattr( weather, 'longitude', None )
+								
 								st.session_state[
 									'weather_last_source' ] = 'OpenWeather / Open-Meteo'
 								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = getattr(
-									weather, 'latitude', None )
-								st.session_state[ 'weather_last_longitude' ] = getattr(
-									weather, 'longitude', None )
+								st.session_state[ 'weather_last_latitude' ] = weather_latitude
+								st.session_state[ 'weather_last_longitude' ] = weather_longitude
+								
+								set_global_coordinates_from_result(
+									weather_latitude,
+									weather_longitude,
+									location=open_location,
+									description='OpenWeather / Open-Meteo result' )
+								
 								st.success( 'OpenWeather request completed.' )
 							
 							except Exception as ex:
 								st.error( f'OpenWeather request failed: {ex}' )
 				
 				with open_btn_c2:
-					if st.button( 'Clear OpenWeather Result', key='weather_open_clear',
+					if st.button( label='Clear', icon='🧹', key='weather_open_clear',
 							use_container_width=True ):
 						st.session_state[ 'weather_last_source' ] = ''
 						st.session_state[ 'weather_last_result' ] = { }
@@ -1743,7 +3619,7 @@ elif mode == 'Weather':
 			with st.expander( '🕰️ Historical Weather', expanded=False ):
 				historical_location = st.text_input(
 					'Location',
-					value='Washington, DC',
+					value=global_location,
 					key='weather_historical_location' )
 				
 				historical_date = st.date_input(
@@ -1767,32 +3643,41 @@ elif mode == 'Weather':
 				historical_btn_c1, historical_btn_c2 = st.columns( 2 )
 				
 				with historical_btn_c1:
-					if st.button( 'Run Historical Weather', key='weather_historical_run',
+					if st.button( label='Run', icon='🏃', key='weather_historical_run',
 							use_container_width=True ):
 						if not historical_location:
 							st.warning( 'Enter a location.' )
 						else:
 							try:
 								weather = HistoricalWeather( )
+								
 								result = weather.fetch(
 									location=historical_location,
 									date=historical_date,
 									zone=historical_zone,
 									count=int( historical_count ) )
 								
+								weather_latitude = getattr( weather, 'latitude', None )
+								weather_longitude = getattr( weather, 'longitude', None )
+								
 								st.session_state[ 'weather_last_source' ] = 'Historical Weather'
 								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = getattr(
-									weather, 'latitude', None )
-								st.session_state[ 'weather_last_longitude' ] = getattr(
-									weather, 'longitude', None )
+								st.session_state[ 'weather_last_latitude' ] = weather_latitude
+								st.session_state[ 'weather_last_longitude' ] = weather_longitude
+								
+								set_global_coordinates_from_result(
+									weather_latitude,
+									weather_longitude,
+									location=historical_location,
+									description='Historical Weather result' )
+								
 								st.success( 'Historical Weather request completed.' )
 							
 							except Exception as ex:
 								st.error( f'Historical Weather request failed: {ex}' )
 				
 				with historical_btn_c2:
-					if st.button( 'Clear Historical Result', key='weather_historical_clear',
+					if st.button( label='Clear', icon='🧹', key='weather_historical_clear',
 							use_container_width=True ):
 						st.session_state[ 'weather_last_source' ] = ''
 						st.session_state[ 'weather_last_result' ] = { }
@@ -1898,7 +3783,7 @@ elif mode == 'Weather':
 				climate_btn_c1, climate_btn_c2 = st.columns( 2 )
 				
 				with climate_btn_c1:
-					if st.button( 'Run Climate Data', key='weather_climate_run',
+					if st.button( label='Run', icon='🏃', key='weather_climate_run',
 							use_container_width=True ):
 						try:
 							service = ClimateData( )
@@ -1937,7 +3822,7 @@ elif mode == 'Weather':
 							st.error( f'Climate Data request failed: {ex}' )
 				
 				with climate_btn_c2:
-					if st.button( 'Clear Climate Result', key='weather_climate_clear',
+					if st.button( label='Clear', icon='🧹', key='weather_climate_clear',
 							use_container_width=True ):
 						st.session_state[ 'weather_last_source' ] = ''
 						st.session_state[ 'weather_last_result' ] = { }
@@ -2018,7 +3903,7 @@ elif mode == 'Weather':
 				tides_btn_c1, tides_btn_c2 = st.columns( 2 )
 				
 				with tides_btn_c1:
-					if st.button( 'Run Tides & Currents', key='weather_tides_run',
+					if st.button( label='Run', icon='🏃', key='weather_tides_run',
 							use_container_width=True ):
 						try:
 							service = TidesAndCurrents( )
@@ -2044,14 +3929,14 @@ elif mode == 'Weather':
 							st.error( f'Tides & Currents request failed: {ex}' )
 				
 				with tides_btn_c2:
-					if st.button( 'Clear Tides Result', key='weather_tides_clear',
+					if st.button( label='Clear', icon='🧹', key='weather_tides_clear',
 							use_container_width=True ):
 						st.session_state[ 'weather_last_source' ] = ''
 						st.session_state[ 'weather_last_result' ] = { }
 						st.session_state[ 'weather_last_latitude' ] = None
 						st.session_state[ 'weather_last_longitude' ] = None
 		
-		with met_c2:
+		with weather_c2:
 			# ------------------------------------------------------------------
 			# WEATHER RESULTS
 			# ------------------------------------------------------------------
@@ -2102,8 +3987,21 @@ elif mode == 'Environmental':
 		st.subheader( 'Environmental Data' )
 		st.divider( )
 		
-		enviro_c1, enviro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		global_location = get_global_location_default( )
+		global_zipcode = get_global_zipcode_default( )
+		global_latitude = get_global_latitude_default( )
+		global_longitude = get_global_longitude_default( )
+		global_box = create_bounding_box_from_center( global_latitude, global_longitude )
 		
+		location_c1, location_c2, location_c3, location_c4 = st.columns( 4, border=True )
+		location_c1.metric( 'Location', global_location )
+		location_c2.metric( 'ZIP Code', global_zipcode )
+		location_c3.metric( 'Latitude', f'{float( global_latitude ):.4f}' )
+		location_c4.metric( 'Longitude', f'{float( global_longitude ):.4f}' )
+		
+		set_blue_divider( )
+		
+		enviro_c1, enviro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
 		with enviro_c1:
 			# ------------------------------------------------------------------
 			# AIRNOW AIR QUALITY
@@ -2125,7 +4023,7 @@ elif mode == 'Environmental':
 					max_value=250,
 					value=25,
 					step=1,
-					key='env_airnow_distance' )
+					key='input_env_airnow_distance' )
 				
 				airnow_timeout = st.number_input(
 					'Timeout',
@@ -2133,51 +4031,56 @@ elif mode == 'Environmental':
 					max_value=60,
 					value=20,
 					step=1,
-					key='env_airnow_timeout' )
+					key='input_env_airnow_timeout' )
 				
 				if 'ZIP' in airnow_mode:
 					airnow_zip = st.text_input(
 						'ZIP Code',
-						value='20001',
-						key='env_airnow_zip' )
+						value=global_zipcode,
+						key='input_env_airnow_zip' )
 					
 					airnow_latitude = None
 					airnow_longitude = None
 				
 				else:
 					airnow_zip = ''
-					airnow_latitude = st.number_input(
-						'Latitude',
-						value=38.907200,
-						format='%.6f',
-						key='env_airnow_latitude' )
 					
-					airnow_longitude = st.number_input(
-						'Longitude',
-						value=-77.036900,
-						format='%.6f',
-						key='env_airnow_longitude' )
+					airnow_coord_c1, airnow_coord_c2 = st.columns( 2 )
+					
+					with airnow_coord_c1:
+						airnow_latitude = st.number_input(
+							'Latitude',
+							value=float( global_latitude ),
+							format='%.6f',
+							key='input_env_airnow_latitude' )
+					
+					with airnow_coord_c2:
+						airnow_longitude = st.number_input(
+							'Longitude',
+							value=float( global_longitude ),
+							format='%.6f',
+							key='input_env_airnow_longitude' )
 				
 				if 'Forecast' in airnow_mode:
 					airnow_date = st.date_input(
 						'Forecast Date',
 						value=dt.date.today( ),
-						key='env_airnow_date' )
+						key='input_env_airnow_date' )
 				else:
 					airnow_date = None
 				
 				airnow_btn_c1, airnow_btn_c2 = st.columns( 2 )
 				
 				with airnow_btn_c1:
-					if st.button( 'Run AirNow', key='env_airnow_run',
+					if st.button( label='Run', icon='🏃', key='input_env_airnow_run',
 							use_container_width=True ):
 						try:
 							service = AirNow( )
+							result = None
 							
 							if airnow_mode == 'Current by ZIP':
 								if not airnow_zip:
 									st.warning( 'Enter a ZIP code.' )
-									result = None
 								else:
 									result = service.fetch_current_zip(
 										zip_code=airnow_zip,
@@ -2185,16 +4088,18 @@ elif mode == 'Environmental':
 										time=int( airnow_timeout ) )
 							
 							elif airnow_mode == 'Current by Coordinates':
-								result = service.fetch_current_latlon(
-									latitude=float( airnow_latitude ),
-									longitude=float( airnow_longitude ),
-									distance=int( airnow_distance ),
-									time=int( airnow_timeout ) )
+								if not has_valid_coordinates( airnow_latitude, airnow_longitude ):
+									st.warning( 'Provide valid coordinates.' )
+								else:
+									result = service.fetch_current_latlon(
+										latitude=float( airnow_latitude ),
+										longitude=float( airnow_longitude ),
+										distance=int( airnow_distance ),
+										time=int( airnow_timeout ) )
 							
 							elif airnow_mode == 'Forecast by ZIP':
 								if not airnow_zip:
 									st.warning( 'Enter a ZIP code.' )
-									result = None
 								else:
 									result = service.fetch_forecast_zip(
 										zip_code=airnow_zip,
@@ -2203,25 +4108,38 @@ elif mode == 'Environmental':
 										time=int( airnow_timeout ) )
 							
 							else:
-								result = service.fetch_forecast_latlon(
-									latitude=float( airnow_latitude ),
-									longitude=float( airnow_longitude ),
-									date=airnow_date.isoformat( ),
-									distance=int( airnow_distance ),
-									time=int( airnow_timeout ) )
+								if not has_valid_coordinates( airnow_latitude, airnow_longitude ):
+									st.warning( 'Provide valid coordinates.' )
+								else:
+									result = service.fetch_forecast_latlon(
+										latitude=float( airnow_latitude ),
+										longitude=float( airnow_longitude ),
+										date=airnow_date.isoformat( ),
+										distance=int( airnow_distance ),
+										time=int( airnow_timeout ) )
 							
 							if result is not None:
 								st.session_state[ 'env_last_source' ] = 'AirNow'
 								st.session_state[ 'env_last_result' ] = result or { }
 								st.session_state[ 'env_last_latitude' ] = airnow_latitude
 								st.session_state[ 'env_last_longitude' ] = airnow_longitude
+								
+								set_global_coordinates_from_result(
+									airnow_latitude,
+									airnow_longitude,
+									location=global_location,
+									description='AirNow coordinate result' )
+								
+								if airnow_zip:
+									st.session_state[ 'zipcode' ] = str( airnow_zip ).strip( )
+								
 								st.success( 'AirNow request completed.' )
 						
 						except Exception as ex:
 							st.error( f'AirNow request failed: {ex}' )
 				
 				with airnow_btn_c2:
-					if st.button( 'Clear AirNow Result', key='env_airnow_clear',
+					if st.button( label='Clear', icon='🧹', key='env_airnow_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
@@ -2274,7 +4192,7 @@ elif mode == 'Environmental':
 				uv_btn_c1, uv_btn_c2 = st.columns( 2 )
 				
 				with uv_btn_c1:
-					if st.button( 'Run UV Index', key='env_uv_run',
+					if st.button( label='Run', icon='🏃', key='env_uv_run',
 							use_container_width=True ):
 						try:
 							service = UvIndex( )
@@ -2328,7 +4246,7 @@ elif mode == 'Environmental':
 							st.error( f'UV Index request failed: {ex}' )
 				
 				with uv_btn_c2:
-					if st.button( 'Clear UV Result', key='env_uv_clear',
+					if st.button( label='Clear', icon='🧹', key='env_uv_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
@@ -2339,30 +4257,19 @@ elif mode == 'Environmental':
 			# OPENAQ
 			# ------------------------------------------------------------------
 			with st.expander( '🧪 OpenAQ', expanded=False ):
-				openaq_mode = st.selectbox(
-					'Mode',
-					options=[ 'Locations', 'Latest Measurements' ],
-					key='env_openaq_mode' )
+				openaq_mode = st.selectbox( 'Mode',
+					options=[ 'Locations', 'Latest Measurements' ], key='sb_openaq_mode' )
 				
-				openaq_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=20,
-					step=1,
-					key='env_openaq_timeout' )
+				openaq_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=20, step=1, key='ib_env_openaq_timeout' )
 				
 				if openaq_mode == 'Locations':
-					openaq_country_id = st.number_input(
-						'Country ID',
-						min_value=0,
-						value=0,
-						step=1,
-						key='env_openaq_country_id' )
+					openaq_country_id = st.number_input( 'Country ID', min_value=0,
+						value=0, step=1, key='in_env_openaq_country_id' )
 					
 					openaq_coordinates = st.text_input(
 						'Coordinates',
-						value='38.9072,-77.0369',
+						value=f'{global_latitude:.6f},{global_longitude:.6f}',
 						help='OpenAQ expects a latitude,longitude string.',
 						key='env_openaq_coordinates' )
 					
@@ -2421,7 +4328,7 @@ elif mode == 'Environmental':
 				openaq_btn_c1, openaq_btn_c2 = st.columns( 2 )
 				
 				with openaq_btn_c1:
-					if st.button( 'Run OpenAQ', key='env_openaq_run',
+					if st.button( label='Run', icon='🏃', key='env_openaq_run',
 							use_container_width=True ):
 						try:
 							service = OpenAQ( )
@@ -2443,6 +4350,7 @@ elif mode == 'Environmental':
 								
 								lat_value = None
 								lng_value = None
+								
 								try:
 									parts = [ p.strip( ) for p in openaq_coordinates.split( ',' ) ]
 									if len( parts ) == 2:
@@ -2464,13 +4372,20 @@ elif mode == 'Environmental':
 							st.session_state[ 'env_last_result' ] = result or { }
 							st.session_state[ 'env_last_latitude' ] = lat_value
 							st.session_state[ 'env_last_longitude' ] = lng_value
+							
+							set_global_coordinates_from_result(
+								lat_value,
+								lng_value,
+								location=global_location,
+								description='OpenAQ coordinate result' )
+							
 							st.success( 'OpenAQ request completed.' )
 						
 						except Exception as ex:
 							st.error( f'OpenAQ request failed: {ex}' )
 				
 				with openaq_btn_c2:
-					if st.button( 'Clear OpenAQ Result', key='env_openaq_clear',
+					if st.button( label='Clear', icon='🧹', key='env_openaq_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
@@ -2496,32 +4411,33 @@ elif mode == 'Environmental':
 				
 				if purple_mode == 'Sensors by Bounding Box':
 					st.caption(
-						'Bounding box uses northwest longitude/latitude and southeast longitude/latitude.' )
+						'Bounding box defaults are centered on the global latitude and longitude.' )
 					
 					purple_box_c1, purple_box_c2 = st.columns( 2 )
+					
 					with purple_box_c1:
 						purple_nwlng = st.number_input(
 							'NW Longitude',
-							value=-77.150000,
+							value=float( global_box[ 'nw_lng' ] ),
 							format='%.6f',
 							key='env_purple_nwlng' )
 						
 						purple_nwlat = st.number_input(
 							'NW Latitude',
-							value=39.000000,
+							value=float( global_box[ 'nw_lat' ] ),
 							format='%.6f',
 							key='env_purple_nwlat' )
 					
 					with purple_box_c2:
 						purple_selng = st.number_input(
 							'SE Longitude',
-							value=-76.900000,
+							value=float( global_box[ 'se_lng' ] ),
 							format='%.6f',
 							key='env_purple_selng' )
 						
 						purple_selat = st.number_input(
 							'SE Latitude',
-							value=38.800000,
+							value=float( global_box[ 'se_lat' ] ),
 							format='%.6f',
 							key='env_purple_selat' )
 					
@@ -2553,6 +4469,8 @@ elif mode == 'Environmental':
 						key='env_purple_modified_since' )
 					
 					purple_sensor_index = 0
+					purple_center_latitude = (float( purple_nwlat ) + float( purple_selat )) / 2.0
+					purple_center_longitude = (float( purple_nwlng ) + float( purple_selng )) / 2.0
 				
 				else:
 					purple_nwlng = 0.0
@@ -2562,6 +4480,8 @@ elif mode == 'Environmental':
 					purple_location_type = 0
 					purple_max_age = 0
 					purple_modified_since = 0
+					purple_center_latitude = None
+					purple_center_longitude = None
 					
 					purple_sensor_index = st.number_input(
 						'Sensor Index',
@@ -2573,7 +4493,7 @@ elif mode == 'Environmental':
 				purple_btn_c1, purple_btn_c2 = st.columns( 2 )
 				
 				with purple_btn_c1:
-					if st.button( 'Run PurpleAir', key='env_purple_run',
+					if st.button( label='Run', icon='🏃', key='env_purple_run',
 							use_container_width=True ):
 						try:
 							service = PurpleAir( )
@@ -2588,29 +4508,30 @@ elif mode == 'Environmental':
 									max_age=int( purple_max_age ),
 									modified_since=int( purple_modified_since ),
 									time=int( purple_timeout ) )
-								
-								map_lat = (float( purple_nwlat ) + float( purple_selat )) / 2.0
-								map_lng = (float( purple_nwlng ) + float( purple_selng )) / 2.0
 							
 							else:
 								result = service.fetch_sensor(
 									sensor_index=int( purple_sensor_index ),
 									time=int( purple_timeout ) )
-								
-								map_lat = None
-								map_lng = None
 							
 							st.session_state[ 'env_last_source' ] = 'PurpleAir'
 							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = map_lat
-							st.session_state[ 'env_last_longitude' ] = map_lng
+							st.session_state[ 'env_last_latitude' ] = purple_center_latitude
+							st.session_state[ 'env_last_longitude' ] = purple_center_longitude
+							
+							set_global_coordinates_from_result(
+								purple_center_latitude,
+								purple_center_longitude,
+								location=global_location,
+								description='PurpleAir bounding-box center' )
+							
 							st.success( 'PurpleAir request completed.' )
 						
 						except Exception as ex:
 							st.error( f'PurpleAir request failed: {ex}' )
 				
 				with purple_btn_c2:
-					if st.button( 'Clear PurpleAir Result', key='env_purple_clear',
+					if st.button( label='Clear', icon='🧹', key='env_purple_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
@@ -2657,7 +4578,7 @@ elif mode == 'Environmental':
 				envirofacts_btn_c1, envirofacts_btn_c2 = st.columns( 2 )
 				
 				with envirofacts_btn_c1:
-					if st.button( 'Run EnviroFacts', key='env_envirofacts_run',
+					if st.button( label='Run', icon='🏃', key='env_envirofacts_run',
 							use_container_width=True ):
 						try:
 							service = EnviroFacts( )
@@ -2678,7 +4599,7 @@ elif mode == 'Environmental':
 							st.error( f'EnviroFacts request failed: {ex}' )
 				
 				with envirofacts_btn_c2:
-					if st.button( 'Clear EnviroFacts Result', key='env_envirofacts_clear',
+					if st.button( label='Clear', icon='🧹', key='env_envirofacts_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
@@ -2707,46 +4628,6 @@ elif mode == 'Environmental':
 					'Area Mode',
 					options=[ 'World', 'Bounding Box' ],
 					key='env_firms_area_mode' )
-				
-				if firms_area_mode == 'World':
-					firms_area_coordinates = 'world'
-					firms_center_lat = None
-					firms_center_lng = None
-				
-				else:
-					firms_box_c1, firms_box_c2 = st.columns( 2 )
-					with firms_box_c1:
-						firms_west = st.number_input(
-							'West',
-							value=-77.150000,
-							format='%.6f',
-							key='env_firms_west' )
-						
-						firms_south = st.number_input(
-							'South',
-							value=38.800000,
-							format='%.6f',
-							key='env_firms_south' )
-					
-					with firms_box_c2:
-						firms_east = st.number_input(
-							'East',
-							value=-76.900000,
-							format='%.6f',
-							key='env_firms_east' )
-						
-						firms_north = st.number_input(
-							'North',
-							value=39.000000,
-							format='%.6f',
-							key='env_firms_north' )
-					
-					firms_area_coordinates = (
-							f'{float( firms_west )},{float( firms_south )},'
-							f'{float( firms_east )},{float( firms_north )}'
-					)
-					firms_center_lat = (float( firms_south ) + float( firms_north )) / 2.0
-					firms_center_lng = (float( firms_west ) + float( firms_east )) / 2.0
 				
 				firms_day_range = st.number_input(
 					'Day Range',
@@ -2778,13 +4659,63 @@ elif mode == 'Environmental':
 					step=1,
 					key='env_firms_timeout' )
 				
+				if firms_area_mode == 'World':
+					firms_area_coordinates = 'world'
+					firms_center_latitude = None
+					firms_center_longitude = None
+					
+					st.info(
+						'World mode does not update global latitude and longitude because it '
+						'does not represent a single geographic center.' )
+				
+				else:
+					st.caption(
+						'Bounding box defaults are centered on the global latitude and longitude.' )
+					
+					firms_box_c1, firms_box_c2 = st.columns( 2 )
+					
+					with firms_box_c1:
+						firms_west = st.number_input(
+							'West',
+							value=float( global_box[ 'west' ] ),
+							format='%.6f',
+							key='env_firms_west' )
+						
+						firms_south = st.number_input(
+							'South',
+							value=float( global_box[ 'south' ] ),
+							format='%.6f',
+							key='env_firms_south' )
+					
+					with firms_box_c2:
+						firms_east = st.number_input(
+							'East',
+							value=float( global_box[ 'east' ] ),
+							format='%.6f',
+							key='env_firms_east' )
+						
+						firms_north = st.number_input(
+							'North',
+							value=float( global_box[ 'north' ] ),
+							format='%.6f',
+							key='env_firms_north' )
+					
+					firms_area_coordinates = (
+							f'{float( firms_west )},{float( firms_south )},'
+							f'{float( firms_east )},{float( firms_north )}'
+					)
+					
+					firms_center_latitude = (float( firms_south ) + float( firms_north )) / 2.0
+					firms_center_longitude = (float( firms_west ) + float( firms_east )) / 2.0
+				
 				firms_btn_c1, firms_btn_c2 = st.columns( 2 )
 				
 				with firms_btn_c1:
-					if st.button( 'Run FIRMS', key='env_firms_run',
+					if st.button( label='Run', icon='🏃', key='btn_env_firms_run',
 							use_container_width=True ):
 						try:
 							service = Firms( )
+							
 							result = service.fetch_area(
 								source=firms_source,
 								area_coordinates=firms_area_coordinates,
@@ -2794,15 +4725,22 @@ elif mode == 'Environmental':
 							
 							st.session_state[ 'env_last_source' ] = 'FIRMS'
 							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = firms_center_lat
-							st.session_state[ 'env_last_longitude' ] = firms_center_lng
+							st.session_state[ 'env_last_latitude' ] = firms_center_latitude
+							st.session_state[ 'env_last_longitude' ] = firms_center_longitude
+							
+							set_global_coordinates_from_result(
+								firms_center_latitude,
+								firms_center_longitude,
+								location=global_location,
+								description='FIRMS bounding-box center' )
+							
 							st.success( 'FIRMS request completed.' )
 						
 						except Exception as ex:
 							st.error( f'FIRMS request failed: {ex}' )
 				
 				with firms_btn_c2:
-					if st.button( 'Clear FIRMS Result', key='env_firms_clear',
+					if st.button( label='Clear', icon='🧹', key='btn_env_firms_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
@@ -2867,6 +4805,7 @@ elif mode == 'Environmental':
 					
 					if eonet_use_dates:
 						eonet_date_c1, eonet_date_c2 = st.columns( 2 )
+						
 						with eonet_date_c1:
 							eonet_start_value = st.date_input(
 								'Start Date',
@@ -2892,30 +4831,34 @@ elif mode == 'Environmental':
 						key='env_eonet_use_bbox' )
 					
 					if eonet_use_bbox:
+						st.caption(
+							'Bounding box defaults are centered on the global latitude and longitude.' )
+						
 						eonet_box_c1, eonet_box_c2 = st.columns( 2 )
+						
 						with eonet_box_c1:
 							eonet_min_lon = st.number_input(
 								'Min Longitude',
-								value=-77.150000,
+								value=float( global_box[ 'west' ] ),
 								format='%.6f',
 								key='env_eonet_min_lon' )
 							
 							eonet_max_lat = st.number_input(
 								'Max Latitude',
-								value=39.000000,
+								value=float( global_box[ 'north' ] ),
 								format='%.6f',
 								key='env_eonet_max_lat' )
 						
 						with eonet_box_c2:
 							eonet_max_lon = st.number_input(
 								'Max Longitude',
-								value=-76.900000,
+								value=float( global_box[ 'east' ] ),
 								format='%.6f',
 								key='env_eonet_max_lon' )
 							
 							eonet_min_lat = st.number_input(
 								'Min Latitude',
-								value=38.800000,
+								value=float( global_box[ 'south' ] ),
 								format='%.6f',
 								key='env_eonet_min_lat' )
 						
@@ -2923,13 +4866,21 @@ elif mode == 'Environmental':
 								f'{float( eonet_min_lon )},{float( eonet_max_lat )},'
 								f'{float( eonet_max_lon )},{float( eonet_min_lat )}'
 						)
-						eonet_center_lat = (float( eonet_min_lat ) + float( eonet_max_lat )) / 2.0
-						eonet_center_lng = (float( eonet_min_lon ) + float( eonet_max_lon )) / 2.0
+						
+						eonet_center_latitude = (
+								                        float( eonet_min_lat ) + float(
+							                        eonet_max_lat )
+						                        ) / 2.0
+						
+						eonet_center_longitude = (
+								                         float( eonet_min_lon ) + float(
+							                         eonet_max_lon )
+						                         ) / 2.0
 					
 					else:
 						eonet_bbox = ''
-						eonet_center_lat = None
-						eonet_center_lng = None
+						eonet_center_latitude = None
+						eonet_center_longitude = None
 				
 				else:
 					eonet_source = ''
@@ -2940,16 +4891,17 @@ elif mode == 'Environmental':
 					eonet_start_date = ''
 					eonet_end_date = ''
 					eonet_bbox = ''
-					eonet_center_lat = None
-					eonet_center_lng = None
+					eonet_center_latitude = None
+					eonet_center_longitude = None
 				
 				eonet_btn_c1, eonet_btn_c2 = st.columns( 2 )
 				
 				with eonet_btn_c1:
-					if st.button( 'Run EONET', key='env_eonet_run',
+					if st.button( label='Run', icon='🏃', key='env_eonet_run',
 							use_container_width=True ):
 						try:
 							service = EoNet( )
+							
 							result = service.fetch(
 								mode=eonet_mode,
 								source=eonet_source,
@@ -2964,21 +4916,28 @@ elif mode == 'Environmental':
 							
 							st.session_state[ 'env_last_source' ] = 'EONET'
 							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = eonet_center_lat
-							st.session_state[ 'env_last_longitude' ] = eonet_center_lng
+							st.session_state[ 'env_last_latitude' ] = eonet_center_latitude
+							st.session_state[ 'env_last_longitude' ] = eonet_center_longitude
+							
+							set_global_coordinates_from_result(
+								eonet_center_latitude,
+								eonet_center_longitude,
+								location=global_location,
+								description='EONET bounding-box center' )
+							
 							st.success( 'EONET request completed.' )
 						
 						except Exception as ex:
 							st.error( f'EONET request failed: {ex}' )
 				
 				with eonet_btn_c2:
-					if st.button( 'Clear EONET Result', key='env_eonet_clear',
+					if st.button( label='Clear', icon='🧹', key='env_eonet_clear',
 							use_container_width=True ):
 						st.session_state[ 'env_last_source' ] = ''
 						st.session_state[ 'env_last_result' ] = { }
 						st.session_state[ 'env_last_latitude' ] = None
 						st.session_state[ 'env_last_longitude' ] = None
-						
+		
 		with enviro_c2:
 			# ------------------------------------------------------------------
 			# ENVIRONMENTAL RESULTS
@@ -3052,6 +5011,17 @@ elif mode == 'Astronomical':
 		st.subheader( 'Astronomical Data' )
 		st.divider( )
 		
+		global_location = get_global_location_default( )
+		global_latitude = get_global_latitude_default( )
+		global_longitude = get_global_longitude_default( )
+		
+		location_c1, location_c2, location_c3 = st.columns( 3, border=True )
+		location_c1.metric( 'Observer Location', global_location )
+		location_c2.metric( 'Observer Latitude', f'{float( global_latitude ):.4f}' )
+		location_c3.metric( 'Observer Longitude', f'{float( global_longitude ):.4f}' )
+		
+		set_blue_divider( )
+		
 		astro_c1, astro_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
 		
 		with astro_c1:
@@ -3071,23 +5041,24 @@ elif mode == 'Astronomical':
 					key='astro_naval_time_value' )
 				
 				naval_c1, naval_c2 = st.columns( 2 )
+				
 				with naval_c1:
 					naval_latitude = st.number_input(
-						'Latitude',
-						value=38.907200,
+						'Observer Latitude',
+						value=float( global_latitude ),
 						format='%.6f',
 						key='astro_naval_latitude' )
 				
 				with naval_c2:
 					naval_longitude = st.number_input(
-						'Longitude',
-						value=-77.036900,
+						'Observer Longitude',
+						value=float( global_longitude ),
 						format='%.6f',
 						key='astro_naval_longitude' )
 				
 				naval_location_label = st.text_input(
 					'Location Label',
-					value='Washington, DC',
+					value=global_location,
 					key='astro_naval_location_label' )
 				
 				naval_timeout = st.number_input(
@@ -3099,33 +5070,44 @@ elif mode == 'Astronomical':
 					key='astro_naval_timeout' )
 				
 				naval_btn_c1, naval_btn_c2 = st.columns( 2 )
-				
 				with naval_btn_c1:
-					if st.button( 'Run Naval Observatory', key='astro_naval_run',
+					if st.button( label='Run', icon='🏃', key='astro_naval_run',
 							use_container_width=True ):
-						try:
-							service = NavalObservatory( )
-							result = service.fetch(
-								mode='celnav',
-								date_value=naval_date.isoformat( ),
-								time_value=naval_time_value,
-								latitude=float( naval_latitude ),
-								longitude=float( naval_longitude ),
-								location_label=naval_location_label,
-								time=int( naval_timeout ) )
+						if not has_valid_coordinates( naval_latitude, naval_longitude ):
+							st.warning( 'Provide valid observer latitude and longitude.' )
+						else:
+							try:
+								service = NavalObservatory( )
+								
+								result = service.fetch(
+									mode='celnav',
+									date_value=naval_date.isoformat( ),
+									time_value=naval_time_value,
+									latitude=float( naval_latitude ),
+									longitude=float( naval_longitude ),
+									location_label=naval_location_label,
+									time=int( naval_timeout ) )
+								
+								st.session_state[ 'astro_last_source' ] = 'Naval Observatory'
+								st.session_state[ 'astro_last_result' ] = result or { }
+								st.session_state[ 'astro_last_latitude' ] = float( naval_latitude )
+								st.session_state[ 'astro_last_longitude' ] = float(
+									naval_longitude )
+								st.session_state[ 'astro_last_url' ] = ''
+								
+								set_global_coordinates_from_result(
+									naval_latitude,
+									naval_longitude,
+									location=naval_location_label,
+									description='Naval Observatory observer location' )
+								
+								st.success( 'Naval Observatory request completed.' )
 							
-							st.session_state[ 'astro_last_source' ] = 'Naval Observatory'
-							st.session_state[ 'astro_last_result' ] = result or { }
-							st.session_state[ 'astro_last_latitude' ] = naval_latitude
-							st.session_state[ 'astro_last_longitude' ] = naval_longitude
-							st.session_state[ 'astro_last_url' ] = ''
-							st.success( 'Naval Observatory request completed.' )
-						
-						except Exception as ex:
-							st.error( f'Naval Observatory request failed: {ex}' )
+							except Exception as ex:
+								st.error( f'Naval Observatory request failed: {ex}' )
 				
 				with naval_btn_c2:
-					if st.button( 'Clear Naval Result', key='astro_naval_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_naval_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
@@ -3227,7 +5209,7 @@ elif mode == 'Astronomical':
 				space_btn_c1, space_btn_c2 = st.columns( 2 )
 				
 				with space_btn_c1:
-					if st.button( 'Run Space Weather', key='astro_space_run',
+					if st.button( label='Run', icon='🏃', key='astro_space_run',
 							use_container_width=True ):
 						try:
 							service = SpaceWeather( )
@@ -3257,7 +5239,7 @@ elif mode == 'Astronomical':
 							st.error( f'Space Weather request failed: {ex}' )
 				
 				with space_btn_c2:
-					if st.button( 'Clear Space Weather Result', key='astro_space_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_space_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
@@ -3396,7 +5378,7 @@ elif mode == 'Astronomical':
 				chart_btn_c1, chart_btn_c2 = st.columns( 2 )
 				
 				with chart_btn_c1:
-					if st.button( 'Run Star Chart', key='astro_chart_run',
+					if st.button( label='Run', icon='🏃', key='astro_chart_run',
 							use_container_width=True ):
 						try:
 							service = StarChart( )
@@ -3462,7 +5444,7 @@ elif mode == 'Astronomical':
 							st.error( f'Star Chart request failed: {ex}' )
 				
 				with chart_btn_c2:
-					if st.button( 'Clear Star Chart Result', key='astro_chart_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_chart_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
@@ -3542,7 +5524,7 @@ elif mode == 'Astronomical':
 				satellite_btn_c1, satellite_btn_c2 = st.columns( 2 )
 				
 				with satellite_btn_c1:
-					if st.button( 'Run Satellite Center', key='astro_satellite_run',
+					if st.button( label='Run', icon='🏃', key='astro_satellite_run',
 							use_container_width=True ):
 						try:
 							service = SatelliteCenter( )
@@ -3574,7 +5556,7 @@ elif mode == 'Astronomical':
 							st.error( f'Satellite Center request failed: {ex}' )
 				
 				with satellite_btn_c2:
-					if st.button( 'Clear Satellite Result', key='astro_satellite_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_satellite_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
@@ -3655,7 +5637,7 @@ elif mode == 'Astronomical':
 				catalog_btn_c1, catalog_btn_c2 = st.columns( 2 )
 				
 				with catalog_btn_c1:
-					if st.button( 'Run Astro Catalog', key='astro_catalog_run',
+					if st.button( label='Run', icon='🏃', key='astro_catalog_run',
 							use_container_width=True ):
 						try:
 							service = AstroCatalog( )
@@ -3682,7 +5664,7 @@ elif mode == 'Astronomical':
 							st.error( f'Astro Catalog request failed: {ex}' )
 				
 				with catalog_btn_c2:
-					if st.button( 'Clear Astro Catalog Result', key='astro_catalog_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_catalog_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
@@ -3747,7 +5729,7 @@ elif mode == 'Astronomical':
 				astroquery_btn_c1, astroquery_btn_c2 = st.columns( 2 )
 				
 				with astroquery_btn_c1:
-					if st.button( 'Run AstroQuery', key='astro_astroquery_run',
+					if st.button( label='Run', icon='🏃', key='astro_astroquery_run',
 							use_container_width=True ):
 						try:
 							service = AstroQuery( )
@@ -3771,7 +5753,7 @@ elif mode == 'Astronomical':
 							st.error( f'AstroQuery request failed: {ex}' )
 				
 				with astroquery_btn_c2:
-					if st.button( 'Clear AstroQuery Result', key='astro_astroquery_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_astroquery_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
@@ -3871,7 +5853,7 @@ elif mode == 'Astronomical':
 				starmap_btn_c1, starmap_btn_c2 = st.columns( 2 )
 				
 				with starmap_btn_c1:
-					if st.button( 'Run Star Map', key='astro_starmap_run',
+					if st.button( label='Run', icon='🏃', key='astro_starmap_run',
 							use_container_width=True ):
 						try:
 							service = StarMap( )
@@ -3911,14 +5893,14 @@ elif mode == 'Astronomical':
 							st.error( f'Star Map request failed: {ex}' )
 				
 				with starmap_btn_c2:
-					if st.button( 'Clear Star Map Result', key='astro_starmap_clear',
+					if st.button( label='Clear', icon='🧹', key='astro_starmap_clear',
 							use_container_width=True ):
 						st.session_state[ 'astro_last_source' ] = ''
 						st.session_state[ 'astro_last_result' ] = { }
 						st.session_state[ 'astro_last_latitude' ] = None
 						st.session_state[ 'astro_last_longitude' ] = None
 						st.session_state[ 'astro_last_url' ] = ''
-						
+		
 		with astro_c2:
 			# ------------------------------------------------------------------
 			# ASTRONOMICAL RESULTS
@@ -3932,7 +5914,8 @@ elif mode == 'Astronomical':
 			astro_url = st.session_state.get( 'astro_last_url', '' )
 			
 			if not astro_result:
-				st.info( 'No astronomical results available. Run one of the Astronomical expanders.' )
+				st.info(
+					'No astronomical results available. Run one of the Astronomical expanders.' )
 			
 			else:
 				if astro_source:
@@ -3965,8 +5948,8 @@ elif mode == 'Astronomical':
 					st.markdown( f'[Open Generated Astronomical Resource]({astro_url})' )
 					
 					try:
-						if any( astro_url.lower( ).endswith( ext ) for ext in
-						        [ '.png', '.jpg', '.jpeg' ] ):
+						ext = [ '.png', '.jpg', '.jpeg' ]
+						if any( astro_url.lower( ).endswith( ext ) for ext in ext ):
 							st.image( astro_url )
 					except Exception:
 						pass
@@ -3982,10 +5965,10 @@ elif mode == 'Astronomical':
 						use_container_width=True,
 						disabled=True )
 				
-					
 				columns = astro_result.get( 'columns', None ) if isinstance( astro_result,
 					dict ) else None
-				rows = astro_result.get( 'rows', None ) if isinstance( astro_result, dict ) else None
+				rows = astro_result.get( 'rows', None ) if isinstance( astro_result,
+					dict ) else None
 				
 				if isinstance( rows, list ) and rows:
 					st.markdown( '##### Rows' )
@@ -3997,7 +5980,7 @@ elif mode == 'Astronomical':
 					
 					st.data_editor( df_astro_rows, key='astro_rows_table',
 						use_container_width=True, disabled=True )
-					
+				
 				st.markdown( '##### Raw Result' )
 				st.json( astro_result )
 
@@ -4010,29 +5993,32 @@ elif mode == 'Geological':
 		st.subheader( 'Geological Data' )
 		st.divider( )
 		
-		geo_c1, geo_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
+		global_location = get_global_location_default( )
+		global_latitude = get_global_latitude_default( )
+		global_longitude = get_global_longitude_default( )
+		global_box = create_bounding_box_from_center( global_latitude, global_longitude )
 		
+		location_c1, location_c2, location_c3 = st.columns( 3, border=True )
+		location_c1.metric( 'Location', global_location )
+		location_c2.metric( 'Latitude', f'{float( global_latitude ):.4f}' )
+		location_c3.metric( 'Longitude', f'{float( global_longitude ):.4f}' )
+		
+		set_blue_divider( )
+		
+		geo_c1, geo_c2 = st.columns( [ 0.40, 0.60 ], border=True, gap='xsmall' )
 		with geo_c1:
 			# ------------------------------------------------------------------
 			# USGS EARTHQUAKES
 			# ------------------------------------------------------------------
 			with st.expander( '🌎 USGS Earthquakes', expanded=True ):
-				quake_mode = st.selectbox(
-					'Mode',
-					options=[ 'feed', 'search' ],
+				quake_mode = st.selectbox( 'Mode', options=[ 'feed', 'search' ],
 					key='geo_quake_mode' )
 				
-				quake_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=20,
-					step=1,
-					key='geo_quake_timeout' )
+				quake_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=20, step=1, key='geo_quake_timeout' )
 				
 				if quake_mode == 'feed':
-					quake_feed = st.selectbox(
-						'Feed',
+					quake_feed = st.selectbox( 'Feed',
 						options=[
 								'all_hour.geojson',
 								'all_day.geojson',
@@ -4054,8 +6040,7 @@ elif mode == 'Geological':
 								'significant_day.geojson',
 								'significant_week.geojson',
 								'significant_month.geojson'
-						],
-						key='geo_quake_feed' )
+						], key='geo_quake_feed' )
 					
 					quake_start_date = ''
 					quake_end_date = ''
@@ -4073,15 +6058,14 @@ elif mode == 'Geological':
 					quake_feed = 'all_day.geojson'
 					
 					search_c1, search_c2 = st.columns( 2 )
+					
 					with search_c1:
-						quake_start = st.date_input(
-							'Start Date',
+						quake_start = st.date_input( 'Start Date',
 							value=dt.date.today( ) - dt.timedelta( days=7 ),
 							key='geo_quake_start_date' )
+					
 					with search_c2:
-						quake_end = st.date_input(
-							'End Date',
-							value=dt.date.today( ),
+						quake_end = st.date_input( 'End Date', value=dt.date.today( ),
 							key='geo_quake_end_date' )
 					
 					quake_start_date = quake_start.isoformat( )
@@ -4089,67 +6073,45 @@ elif mode == 'Geological':
 					
 					mag_c1, mag_c2 = st.columns( 2 )
 					with mag_c1:
-						quake_min_magnitude = st.number_input(
-							'Minimum Magnitude',
-							min_value=0.0,
-							max_value=10.0,
-							value=1.0,
-							step=0.1,
-							format='%.1f',
-							key='geo_quake_min_magnitude' )
+						quake_min_magnitude = st.number_input( 'Minimum Magnitude', min_value=0.0,
+							max_value=10.0, value=1.0, step=0.1,
+							format='%.1f', key='geo_quake_min_magnitude' )
+					
 					with mag_c2:
-						quake_max_magnitude = st.number_input(
-							'Maximum Magnitude',
-							min_value=0.0,
-							max_value=10.0,
-							value=10.0,
-							step=0.1,
-							format='%.1f',
-							key='geo_quake_max_magnitude' )
+						quake_max_magnitude = st.number_input( 'Maximum Magnitude', min_value=0.0,
+							max_value=10.0, value=10.0, step=0.1,
+							format='%.1f', key='geo_quake_max_magnitude' )
 					
-					quake_limit = st.number_input(
-						'Limit',
-						min_value=1,
-						max_value=20000,
-						value=25,
-						step=1,
-						key='geo_quake_limit' )
+					quake_limit = st.number_input( 'Limit', min_value=1, max_value=20000, value=25,
+						step=1, key='geo_quake_limit' )
 					
-					quake_order_by = st.selectbox(
-						'Order By',
+					quake_order_by = st.selectbox( 'Order By',
 						options=[ 'time', 'time-asc', 'magnitude', 'magnitude-asc' ],
 						key='geo_quake_order_by' )
 					
-					quake_event_type = st.text_input(
-						'Event Type',
-						value='earthquake',
+					quake_event_type = st.text_input( 'Event Type', value='earthquake',
 						key='geo_quake_event_type' )
 					
-					quake_use_location = st.checkbox(
-						'Use Location Radius Filter',
-						value=False,
-						key='geo_quake_use_location' )
+					quake_use_location = st.checkbox( 'Use Location Radius Filter',
+						value=False, key='geo_quake_use_location' )
 					
 					if quake_use_location:
 						loc_c1, loc_c2 = st.columns( 2 )
+						
 						with loc_c1:
-							quake_latitude = st.number_input(
-								'Latitude',
-								value=38.907200,
-								format='%.6f',
+							quake_latitude = st.number_input( 'Latitude',
+								value=float( global_latitude ), format='%.6f',
 								key='geo_quake_latitude' )
+						
 						with loc_c2:
-							quake_longitude = st.number_input(
-								'Longitude',
-								value=-77.036900,
-								format='%.6f',
+							quake_longitude = st.number_input( 'Longitude',
+								value=float( global_longitude ), format='%.6f',
 								key='geo_quake_longitude' )
 						
-						quake_radius = st.number_input(
-							'Maximum Radius KM',
+						quake_radius = st.number_input( 'Maximum Radius KM',
 							min_value=1.0,
 							max_value=20000.0,
-							value=500.0,
+							value=float( st.session_state.get( 'radius', 500.0 ) or 500.0 ),
 							step=10.0,
 							format='%.1f',
 							key='geo_quake_radius' )
@@ -4160,39 +6122,40 @@ elif mode == 'Geological':
 						quake_radius = None
 				
 				quake_btn_c1, quake_btn_c2 = st.columns( 2 )
-				
 				with quake_btn_c1:
-					if st.button( 'Run USGS Earthquakes', key='geo_quake_run',
+					if st.button( label='Run', icon='🏃', key='geo_quake_run',
 							use_container_width=True ):
 						try:
 							service = USGSEarthquakes( )
 							
-							result = service.fetch(
-								mode=quake_mode,
-								feed=quake_feed,
-								start_date=quake_start_date,
-								end_date=quake_end_date,
+							result = service.fetch( mode=quake_mode, feed=quake_feed,
+								start_date=quake_start_date, end_date=quake_end_date,
 								min_magnitude=float( quake_min_magnitude ),
 								max_magnitude=float( quake_max_magnitude ),
-								limit=int( quake_limit ),
-								order_by=quake_order_by,
-								event_type=quake_event_type,
-								latitude=quake_latitude,
-								longitude=quake_longitude,
-								max_radius_km=quake_radius,
+								limit=int( quake_limit ), order_by=quake_order_by,
+								event_type=quake_event_type, latitude=quake_latitude,
+								longitude=quake_longitude, max_radius_km=quake_radius,
 								time=int( quake_timeout ) )
 							
 							st.session_state[ 'geo_last_source' ] = 'USGS Earthquakes'
 							st.session_state[ 'geo_last_result' ] = result or { }
 							st.session_state[ 'geo_last_latitude' ] = quake_latitude
 							st.session_state[ 'geo_last_longitude' ] = quake_longitude
+							
+							if quake_radius is not None:
+								st.session_state[ 'radius' ] = float( quake_radius )
+							
+							set_global_coordinates_from_result( quake_latitude, quake_longitude,
+								location=global_location,
+								description='USGS Earthquake search center' )
+							
 							st.success( 'USGS Earthquake request completed.' )
 						
 						except Exception as ex:
 							st.error( f'USGS Earthquake request failed: {ex}' )
 				
 				with quake_btn_c2:
-					if st.button( 'Clear Earthquake Result', key='geo_quake_clear',
+					if st.button( label='Clear', icon='🧹', key='geo_quake_clear',
 							use_container_width=True ):
 						st.session_state[ 'geo_last_source' ] = ''
 						st.session_state[ 'geo_last_result' ] = { }
@@ -4209,15 +6172,14 @@ elif mode == 'Geological':
 					'writes the default NASA GIBS image to python-examples.'
 				)
 				
-				imagery_product = st.selectbox(
-					'Product',
+				imagery_product = st.selectbox( 'Product',
 					options=[ 'NASA GIBS EPSG:4326 Default Map Service' ],
 					key='geo_imagery_product' )
 				
 				imagery_btn_c1, imagery_btn_c2 = st.columns( 2 )
 				
 				with imagery_btn_c1:
-					if st.button( 'Run Global Imagery', key='geo_imagery_run',
+					if st.button( label='Run', icon='🏃', key='geo_imagery_run',
 							use_container_width=True ):
 						try:
 							Path( 'python-examples' ).mkdir( parents=True, exist_ok=True )
@@ -4246,7 +6208,7 @@ elif mode == 'Geological':
 							st.error( f'Global Imagery request failed: {ex}' )
 				
 				with imagery_btn_c2:
-					if st.button( 'Clear Imagery Result', key='geo_imagery_clear',
+					if st.button( label='Clear', icon='🧹', key='geo_imagery_clear',
 							use_container_width=True ):
 						st.session_state[ 'geo_last_source' ] = ''
 						st.session_state[ 'geo_last_result' ] = { }
@@ -4258,15 +6220,12 @@ elif mode == 'Geological':
 			# USGS WATER DATA
 			# ------------------------------------------------------------------
 			with st.expander( '💧 USGS Water Data', expanded=False ):
-				water_mode = st.selectbox(
-					'Mode',
-					options=[
-							'monitoring-locations',
-							'time-series-metadata',
-							'latest-continuous',
-							'latest-daily'
-					],
-					key='geo_water_mode' )
+				water_mode = st.selectbox( 'Mode', options=[
+						'monitoring-locations',
+						'time-series-metadata',
+						'latest-continuous',
+						'latest-daily'
+				], key='geo_water_mode' )
 				
 				water_timeout = st.number_input(
 					'Timeout',
@@ -4329,9 +6288,8 @@ elif mode == 'Geological':
 					water_site_type = ''
 				
 				water_btn_c1, water_btn_c2 = st.columns( 2 )
-				
 				with water_btn_c1:
-					if st.button( 'Run USGS Water Data', key='geo_water_run',
+					if st.button( label='Run', icon='🏃', key='geo_water_run',
 							use_container_width=True ):
 						try:
 							service = USGSWaterData( )
@@ -4356,7 +6314,7 @@ elif mode == 'Geological':
 							st.error( f'USGS Water Data request failed: {ex}' )
 				
 				with water_btn_c2:
-					if st.button( 'Clear Water Data Result', key='geo_water_clear',
+					if st.button( label='Clear', icon='🧹', key='geo_water_clear',
 							use_container_width=True ):
 						st.session_state[ 'geo_last_source' ] = ''
 						st.session_state[ 'geo_last_result' ] = { }
@@ -4388,8 +6346,12 @@ elif mode == 'Geological':
 					tnm_prod_formats = ''
 					tnm_max_items = 25
 					tnm_offset = 0
-					tnm_center_lat = None
-					tnm_center_lng = None
+					tnm_center_latitude = None
+					tnm_center_longitude = None
+					
+					st.caption(
+						'Datasets mode lists available National Map datasets and does not use '
+						'global coordinates.' )
 				
 				else:
 					tnm_dataset = st.text_input(
@@ -4416,30 +6378,34 @@ elif mode == 'Geological':
 						key='geo_tnm_use_bbox' )
 					
 					if tnm_use_bbox:
+						st.caption(
+							'Bounding box defaults are centered on the global latitude and longitude.' )
+						
 						tnm_box_c1, tnm_box_c2 = st.columns( 2 )
+						
 						with tnm_box_c1:
 							tnm_min_x = st.number_input(
 								'Min X / West Longitude',
-								value=-77.150000,
+								value=float( global_box[ 'west' ] ),
 								format='%.6f',
 								key='geo_tnm_min_x' )
 							
 							tnm_min_y = st.number_input(
 								'Min Y / South Latitude',
-								value=38.800000,
+								value=float( global_box[ 'south' ] ),
 								format='%.6f',
 								key='geo_tnm_min_y' )
 						
 						with tnm_box_c2:
 							tnm_max_x = st.number_input(
 								'Max X / East Longitude',
-								value=-76.900000,
+								value=float( global_box[ 'east' ] ),
 								format='%.6f',
 								key='geo_tnm_max_x' )
 							
 							tnm_max_y = st.number_input(
 								'Max Y / North Latitude',
-								value=39.000000,
+								value=float( global_box[ 'north' ] ),
 								format='%.6f',
 								key='geo_tnm_max_y' )
 						
@@ -4447,13 +6413,14 @@ elif mode == 'Geological':
 								f'{float( tnm_min_x )},{float( tnm_min_y )},'
 								f'{float( tnm_max_x )},{float( tnm_max_y )}'
 						)
-						tnm_center_lat = (float( tnm_min_y ) + float( tnm_max_y )) / 2.0
-						tnm_center_lng = (float( tnm_min_x ) + float( tnm_max_x )) / 2.0
+						
+						tnm_center_latitude = (float( tnm_min_y ) + float( tnm_max_y )) / 2.0
+						tnm_center_longitude = (float( tnm_min_x ) + float( tnm_max_x )) / 2.0
 					
 					else:
 						tnm_bbox = ''
-						tnm_center_lat = None
-						tnm_center_lng = None
+						tnm_center_latitude = None
+						tnm_center_longitude = None
 					
 					tnm_max_items = st.number_input(
 						'Max Items',
@@ -4474,39 +6441,42 @@ elif mode == 'Geological':
 				tnm_btn_c1, tnm_btn_c2 = st.columns( 2 )
 				
 				with tnm_btn_c1:
-					if st.button( 'Run The National Map', key='geo_tnm_run',
+					if st.button( label='Run', icon='🏃', key='geo_tnm_run',
 							use_container_width=True ):
 						try:
 							service = USGSTheNationalMap( )
-							result = service.fetch(
-								mode=tnm_mode,
-								dataset=tnm_dataset,
-								q=tnm_query,
-								bbox=tnm_bbox,
-								prod_formats=tnm_prod_formats,
-								max_items=int( tnm_max_items ),
-								offset=int( tnm_offset ),
+							
+							result = service.fetch( mode=tnm_mode, dataset=tnm_dataset, q=tnm_query,
+								bbox=tnm_bbox, prod_formats=tnm_prod_formats,
+								max_items=int( tnm_max_items ), offset=int( tnm_offset ),
 								time=int( tnm_timeout ) )
 							
 							st.session_state[ 'geo_last_source' ] = 'USGS The National Map'
 							st.session_state[ 'geo_last_result' ] = result or { }
-							st.session_state[ 'geo_last_latitude' ] = tnm_center_lat
-							st.session_state[ 'geo_last_longitude' ] = tnm_center_lng
+							st.session_state[ 'geo_last_latitude' ] = tnm_center_latitude
+							st.session_state[ 'geo_last_longitude' ] = tnm_center_longitude
 							st.session_state[ 'geo_last_image_path' ] = ''
+							
+							set_global_coordinates_from_result(
+								tnm_center_latitude,
+								tnm_center_longitude,
+								location=global_location,
+								description='USGS The National Map bounding-box center' )
+							
 							st.success( 'USGS The National Map request completed.' )
 						
 						except Exception as ex:
 							st.error( f'USGS The National Map request failed: {ex}' )
 				
 				with tnm_btn_c2:
-					if st.button( 'Clear National Map Result', key='geo_tnm_clear',
+					if st.button( label='Clear', icon='🧹', key='geo_tnm_clear',
 							use_container_width=True ):
 						st.session_state[ 'geo_last_source' ] = ''
 						st.session_state[ 'geo_last_result' ] = { }
 						st.session_state[ 'geo_last_latitude' ] = None
 						st.session_state[ 'geo_last_longitude' ] = None
 						st.session_state[ 'geo_last_image_path' ] = ''
-						
+		
 		with geo_c2:
 			# ------------------------------------------------------------------
 			# GEOLOGICAL RESULTS
@@ -4520,7 +6490,7 @@ elif mode == 'Geological':
 			geo_image_path = st.session_state.get( 'geo_last_image_path', '' )
 			
 			if not geo_result:
-				st.info( 'No geological results available. Run one of the Geological expanders.' )
+				st.info( 'No geological results available.' )
 			
 			else:
 				if geo_source:
@@ -4536,11 +6506,8 @@ elif mode == 'Geological':
 				
 				if isinstance( summary, dict ) and summary:
 					st.markdown( '##### Summary' )
-					st.data_editor(
-						pd.DataFrame( [ summary ] ),
-						key='geo_summary_table',
-						use_container_width=True,
-						disabled=True )
+					st.data_editor( pd.DataFrame( [ summary ] ), key='geo_summary_table',
+						use_container_width=True, disabled=True )
 				
 				if geo_latitude is not None and geo_longitude is not None:
 					try:
@@ -4553,10 +6520,7 @@ elif mode == 'Geological':
 						with lng_c:
 							st.metric( 'Longitude', f'{lng_value:.6f}' )
 						
-						preview_url = static_maps.pin(
-							lat=lat_value,
-							lng=lng_value,
-							zoom=5,
+						preview_url = static_maps.pin( lat=lat_value, lng=lng_value, zoom=5,
 							size='600x400' )
 						
 						st.image( preview_url )
@@ -4567,195 +6531,441 @@ elif mode == 'Geological':
 				if isinstance( rows, list ) and rows:
 					st.markdown( '##### Rows' )
 					df_geo_rows = pd.DataFrame( rows )
-					st.data_editor(
-						df_geo_rows,
-						key='geo_rows_table',
-						use_container_width=True,
+					st.data_editor( df_geo_rows, key='geo_rows_table', use_container_width=True,
 						disabled=True )
 				
 				st.markdown( '##### Raw Result' )
 				st.json( geo_result )
-		
-# ==============================================================================
-# Distance Matrix Tab
-# ==============================================================================
-elif mode == 'Distances':
-	st.subheader( 'Distance Matrix' )
-	st.divider( )
-	
-	col1, col2 = st.columns( 2 )
-	with col1:
-		origin = st.text_input( 'Origin', key='distance_origin' )
-	
-	with col2:
-		destination = st.text_input( 'Destination', key='distance_destination' )
-	
-	travel_mode = st.selectbox(
-		'Travel Mode',
-		[ 'driving', 'walking', 'bicycling', 'transit' ],
-		key='travel_key' )
-	
-	if st.button( 'Calculate Distance', key='distance_calculate' ):
-		if not origin or not destination:
-			st.warning( 'Provide both origin and destination.' )
-		else:
-			summary = distances.summary( origin, destination, mode=travel_mode )
-			st.table( pd.DataFrame( [ summary ] ) )
 
 # ==============================================================================
-# STATIC MAPS
+# DISTANCES MODE
 # ==============================================================================
-elif mode == 'Maps':
-	st.header( 'Static Map Preview' )
-	st.divider( )
-	
-	lat = st.number_input( 'Latitude', value=0.0, format='%.6f' )
-	lng = st.number_input( 'Longitude', value=0.0, format='%.6f' )
-	zoom = st.slider( 'Zoom', 1, 20, 12 )
-	size = st.selectbox( 'Image Size', [ '400x400', '600x400', '800x600' ], key='size_key' )
-	
-	if st.button( 'Generate Map' ):
-		url = static_maps.pin( lat=lat, lng=lng, zoom=zoom, size=size, )
-		st.image( url )
-		st.code( url )
+elif mode == 'Distances':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Distance Matrix' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		current_location = compose_location_from_state( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', current_location if current_location else global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		dist_c1, dist_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		
+		with dist_c1:
+			use_global_origin = st.checkbox( 'Use User-Location as Origin',
+				value=bool( current_location ), key='distance_use_global_origin' )
+			
+			if use_global_origin:
+				origin = current_location
+				st.text_input( 'Origin', value=origin, key='distance_origin_display',
+					disabled=True )
+			else:
+				origin_default = st.session_state.get( 'origin', '' ) or current_location
+				origin = st.text_input( 'Origin', value=origin_default,
+					key='distance_origin_input' )
+		
+		with dist_c2:
+			use_global_destination = st.checkbox( 'Use User-Location as Destination', value=False,
+				key='distance_use_global_destination' )
+			
+			if use_global_destination:
+				destination = current_location
+				st.text_input( 'Destination', value=destination, key='distance_destination_display',
+					disabled=True )
+			else:
+				destination_default = st.session_state.get( 'destination', '' )
+				destination = st.text_input( 'Destination', value=destination_default,
+					key='distance_destination_input' )
+		
+		ctl_c1, ctl_c2, ctl_c3 = st.columns( [ 0.30, 0.30, 0.40 ], border=True )
+		with ctl_c1:
+			travel_mode = st.selectbox( 'Travel Mode',
+				[ 'driving', 'walking', 'bicycling', 'transit' ], key='travel_key' )
+		
+		with ctl_c2:
+			update_global_route = st.checkbox( 'Save Route to Global State', value=True,
+				key='distance_save_route_state' )
+		
+		with ctl_c3:
+			run_distance = st.button( 'Calculate Distance', key='distance_calculate',
+				width='stretch' )
+		
+		if run_distance:
+			if not origin or not destination:
+				st.warning( 'Provide both origin and destination.' )
+			else:
+				try:
+					if update_global_route:
+						st.session_state[ 'origin' ] = str( origin ).strip( )
+						st.session_state[ 'destination' ] = str( destination ).strip( )
+					
+					summary = distances.summary( origin, destination, mode=travel_mode )
+					st.session_state[ 'distance_last_result' ] = summary or { }
+					st.success( 'Distance Matrix request completed.' )
+				
+				except Exception as ex:
+					st.error( f'Distance Matrix request failed: {ex}' )
+		
+		result = st.session_state.get( 'distance_last_result', { } )
+		if result:
+			set_blue_divider( )
+			st.markdown( '##### Distance Result' )
+			st.data_editor( pd.DataFrame( [ result ] ), key='distance_result_table',
+				use_container_width=True, disabled=True )
+			st.json( result )
+
+# ==============================================================================
+# MAPS MODE
+# ==============================================================================
+elif mode == 'Static Maps':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Static Map' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		has_global_coords = has_valid_global_coordinates( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		map_c1, map_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		with map_c1:
+			use_global_coordinates = st.checkbox( 'Use User-Location', value=has_global_coords,
+				key='maps_use_global_coordinates' )
+			
+			if use_global_coordinates:
+				lat = float( location_state[ 'latitude' ] )
+				lng = float( location_state[ 'longitude' ] )
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					st.number_input( 'Latitude', value=lat, format='%.4f',
+						key='maps_global_latitude_display', disabled=True )
+				
+				with coord_c2:
+					st.number_input( 'Longitude', value=lng, format='%.4f',
+						key='maps_global_longitude_display', disabled=True )
+			
+			else:
+				manual_default_lat = (float( location_state[ 'latitude' ] )
+				                      if has_global_coords
+				                      else 0.0)
+				
+				manual_default_lng = (float( location_state[ 'longitude' ] )
+				                      if has_global_coords
+				                      else 0.0)
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					lat = st.number_input( 'Latitude', value=manual_default_lat, format='%.4f',
+						key='maps_manual_latitude' )
+				
+				with coord_c2:
+					lng = st.number_input( 'Longitude', value=manual_default_lng, format='%.4f',
+						key='maps_manual_longitude' )
+		
+		with map_c2:
+			zoom_default = int( st.session_state.get( 'zoom', 8 ) or 8 )
+			size_default = str( st.session_state.get( 'map_size', '600x400' ) or '600x400' )
+			size_options = [ '400x400', '600x400', '800x600' ]
+			
+			if size_default not in size_options:
+				size_default = '600x400'
+			
+			zoom = st.slider( 'Zoom', min_value=1, max_value=20, value=zoom_default,
+				key='maps_zoom' )
+			
+			size = st.selectbox( 'Image Size', size_options,
+				index=size_options.index( size_default ), key='maps_size' )
+			
+			save_coordinates = st.checkbox( 'Save Coordinates to Global State', value=True,
+				key='maps_save_coordinates' )
+		
+		if st.button( 'Generate Map', key='maps_generate', width='stretch' ):
+			if use_global_coordinates and not has_global_coords:
+				st.warning( 'User coordinates are not set.' )
+			elif not has_valid_coordinates( lat, lng ):
+				st.warning( 'Provide valid coordinates before generating a map.' )
+			else:
+				try:
+					if save_coordinates:
+						set_coordinates( lat, lng )
+						st.session_state[ 'zoom' ] = int( zoom )
+						st.session_state[ 'map_size' ] = str( size )
+					
+					url = static_maps.pin(
+						lat=float( lat ),
+						lng=float( lng ),
+						zoom=int( zoom ),
+						size=str( size ) )
+					
+					st.session_state[ 'maps_last_url' ] = url
+					st.session_state[ 'maps_last_latitude' ] = float( lat )
+					st.session_state[ 'maps_last_longitude' ] = float( lng )
+					st.success( 'Static map generated.' )
+				
+				except Exception as ex:
+					st.error( f'Static map generation failed: {ex}' )
+		
+		map_url = st.session_state.get( 'maps_last_url', '' )
+		
+		if map_url:
+			set_blue_divider( )
+			st.markdown( '##### Static Map Result' )
+			st.image( map_url )
+			st.code( map_url )
 
 # ==============================================================================
 # TIME ZONE MODE
 # ==============================================================================
 elif mode == 'Time Zones':
-	st.subheader( 'Time Zone Lookup' )
-	st.divider( )
-	lat_tz = st.number_input( 'Latitude', key='tz_lat', value=0.0, format='%.6f', )
-	lng_tz = st.number_input( 'Longitude', key='tz_lng', value=0.0, format='%.6f', )
-	
-	if st.button( 'Lookup Time Zone' ):
-		result = timezone.lookup( lat_tz, lng_tz )
-		st.json( result )
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Time Zone Lookup' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		has_global_coords = has_valid_global_coordinates( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		tz_c1, tz_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		with tz_c1:
+			use_global_coordinates = st.checkbox( 'User Location', value=has_global_coords,
+				key='timezone_use_global_coordinates' )
+			
+			if use_global_coordinates:
+				lat_tz = float( location_state[ 'latitude' ] )
+				lng_tz = float( location_state[ 'longitude' ] )
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					st.number_input(
+						'Latitude',
+						value=lat_tz,
+						format='%.6f',
+						key='timezone_global_latitude_display',
+						disabled=True )
+				
+				with coord_c2:
+					st.number_input(
+						'Longitude',
+						value=lng_tz,
+						format='%.6f',
+						key='timezone_global_longitude_display',
+						disabled=True )
+			
+			else:
+				manual_default_lat = (
+						float( location_state[ 'latitude' ] )
+						if has_global_coords
+						else 0.0
+				)
+				
+				manual_default_lng = (
+						float( location_state[ 'longitude' ] )
+						if has_global_coords
+						else 0.0
+				)
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					lat_tz = st.number_input(
+						'Latitude',
+						value=manual_default_lat,
+						format='%.6f',
+						key='timezone_manual_latitude' )
+				
+				with coord_c2:
+					lng_tz = st.number_input(
+						'Longitude',
+						value=manual_default_lng,
+						format='%.6f',
+						key='timezone_manual_longitude' )
+		
+		with tz_c2:
+			save_coordinates = st.checkbox(
+				'Save Coordinates to Global State',
+				value=True,
+				key='timezone_save_coordinates' )
+			
+			run_timezone = st.button(
+				'Lookup Time Zone',
+				key='timezone_lookup',
+				width='stretch' )
+		
+		if run_timezone:
+			if use_global_coordinates and not has_global_coords:
+				st.warning(
+					'Global coordinates are not set. Resolve a location first or enter manually.' )
+			elif not has_valid_coordinates( lat_tz, lng_tz ):
+				st.warning( 'Provide valid coordinates before looking up a time zone.' )
+			else:
+				try:
+					if save_coordinates:
+						set_coordinates( lat_tz, lng_tz )
+					
+					result = timezone.lookup( float( lat_tz ), float( lng_tz ) )
+					
+					st.session_state[ 'timezone_last_result' ] = result or { }
+					st.session_state[ 'timezone_last_latitude' ] = float( lat_tz )
+					st.session_state[ 'timezone_last_longitude' ] = float( lng_tz )
+					st.success( 'Time zone lookup completed.' )
+				
+				except Exception as ex:
+					st.error( f'Time zone lookup failed: {ex}' )
+		
+		result = st.session_state.get( 'timezone_last_result', { } )
+		
+		if result:
+			set_blue_divider( )
+			st.markdown( '##### Time Zone Result' )
+			
+			lat_c, lng_c = st.columns( 2 )
+			with lat_c:
+				st.metric(
+					'Latitude',
+					f'{float( st.session_state.get( "timezone_last_latitude", 0.0 ) ):.6f}' )
+			with lng_c:
+				st.metric(
+					'Longitude',
+					f'{float( st.session_state.get( "timezone_last_longitude", 0.0 ) ):.6f}' )
+			
+			st.json( result )
 
 # ==============================================================================
 # DATA UPLOAD MODE
 # ==============================================================================
 elif mode == 'Data Upload':
-	st.subheader( 'Excel / CSV' )
-	st.divider( )
-	
-	uploaded = st.file_uploader(
-		'Upload CSV or XLSX',
-		type=[ 'csv', 'xlsx' ],
-		key='data_upload_file' )
-	
-	enrichment_mode = st.selectbox(
-		'Enrichment Mode',
-		options=[ 'City / State / Country', 'Address Column' ],
-		key='data_upload_enrichment_mode' )
-	
-	if enrichment_mode == 'City / State / Country':
-		city_col = st.text_input( 'City Column', value='City', key='data_upload_city_col' )
-		state_col = st.text_input( 'State Column', value='State', key='data_upload_state_col' )
-		country_col = st.text_input( 'Country Column', value='Country',
-			key='data_upload_country_col' )
-		address_col = ''
-	
-	else:
-		address_col = st.text_input( 'Address Column', value='Address',
-			key='data_upload_address_col' )
-		country_col = st.text_input(
-			'Country Bias Column',
-			value='Country',
-			help='Optional. Leave as-is if the uploaded file has no country-bias column.',
-			key='data_upload_address_country_col' )
-		city_col = ''
-		state_col = ''
-	
-	sheet_name = st.text_input(
-		'Worksheet',
-		value='Sheet1',
-		help='Used for Excel files. For CSV files this value is ignored.',
-		key='data_upload_sheet_name' )
-	
-	if uploaded:
-		input_path = f'_input_{uploaded.name}'
-		output_path = f'_output_{uploaded.name}'
+	left, center, right = st.columns( [ 0.05, 0.90, 0.05 ] )
+	with center:
+		st.subheader( 'Excel / CSV' )
+		st.divider( )
 		
-		with open( input_path, 'wb' ) as f:
-			f.write( uploaded.read( ) )
+		uploaded = st.file_uploader( 'Upload CSV or XLSX', type=[ 'csv', 'xlsx' ],
+			key='data_upload_file' )
 		
-		if st.button( 'Enrich File', key='data_upload_enrich' ):
-			try:
-				excel = Excel( api=api_key, cache=cache )
-				sheet_value = sheet_name if input_path.lower( ).endswith( '.xlsx' ) else None
-				
-				if enrichment_mode == 'City / State / Country':
-					excel.enrich(
-						inpath=input_path,
-						outpath=output_path,
-						city=city_col,
-						state=state_col,
-						cntry=country_col,
-						sheet=sheet_value )
-				
-				else:
-					excel.enrich_from_address(
-						inpath=input_path,
-						outpath=output_path,
-						address=address_col,
-						sheet=sheet_value,
-						cntry=country_col )
-				
-				if output_path.lower( ).endswith( '.csv' ):
-					df_output = pd.read_csv( output_path )
-				else:
-					df_output = pd.read_excel( output_path )
-				
-				st.data_editor(
-					df_output,
-					key='data_upload_enriched_preview',
-					use_container_width=True,
-					disabled=True )
-				
-				with open( output_path, 'rb' ) as f:
-					output_bytes = f.read( )
-				
-				st.download_button(
-					'Download Enriched File',
-					data=output_bytes,
-					file_name=Path( output_path ).name,
-					key='data_upload_download' )
+		enrichment_mode = st.selectbox( 'Enrichment Mode',
+			options=[ 'City / State / Country', 'Address Column' ],
+			key='data_upload_enrichment_mode' )
+		
+		if enrichment_mode == 'City / State / Country':
+			city_col = st.text_input( 'City Column', value='City', key='data_upload_city_col' )
+			state_col = st.text_input( 'State Column', value='State', key='data_upload_state_col' )
+			country_col = st.text_input( 'Country Column', value='Country',
+				key='data_upload_country_col' )
+			address_col = ''
+		
+		else:
+			address_col = st.text_input( 'Address Column', value='Address',
+				key='data_upload_address_col' )
+			country_col = st.text_input(
+				'Country Bias Column',
+				value='Country',
+				help='Optional. Leave as-is if the uploaded file has no country-bias column.',
+				key='data_upload_address_country_col' )
+			city_col = ''
+			state_col = ''
+		
+		sheet_name = st.text_input( 'Worksheet', value='Sheet1',
+			help='Used for Excel files. For CSV files this value is ignored.',
+			key='data_upload_sheet_name' )
+		
+		if uploaded:
+			input_path = f'_input_{uploaded.name}'
+			output_path = f'_output_{uploaded.name}'
 			
-			except Exception as e:
-				st.error( f'Enrichment failed: {e}' )
+			with open( input_path, 'wb' ) as f:
+				f.write( uploaded.read( ) )
 			
-			finally:
+			if st.button( 'Enrich File', key='data_upload_enrich' ):
 				try:
-					if os.path.exists( input_path ):
-						os.remove( input_path )
-					if os.path.exists( output_path ):
-						os.remove( output_path )
-				except Exception:
-					pass
-		
+					excel = Excel( api=cfg.GOOGLE_API_KEY, cache=cache )
+					sheet_value = sheet_name if input_path.lower( ).endswith( '.xlsx' ) else None
+					
+					if enrichment_mode == 'City / State / Country':
+						excel.enrich( inpath=input_path, outpath=output_path, city=city_col,
+							state=state_col, cntry=country_col,
+							sheet=sheet_value )
+					
+					else:
+						excel.enrich_from_address( inpath=input_path, outpath=output_path,
+							address=address_col, sheet=sheet_value,
+							cntry=country_col )
+					
+					if output_path.lower( ).endswith( '.csv' ):
+						df_output = pd.read_csv( output_path )
+					else:
+						df_output = pd.read_excel( output_path )
+					
+					st.data_editor( df_output, key='data_upload_enriched_preview',
+						use_container_width=True, disabled=True )
+					
+					with open( output_path, 'rb' ) as f:
+						output_bytes = f.read( )
+					
+					st.download_button(
+						'Download Enriched File',
+						data=output_bytes,
+						file_name=Path( output_path ).name,
+						key='data_upload_download' )
+				
+				except Exception as e:
+					st.error( f'Enrichment failed: {e}' )
+				
+				finally:
+					try:
+						if os.path.exists( input_path ):
+							os.remove( input_path )
+						if os.path.exists( output_path ):
+							os.remove( output_path )
+					except Exception:
+						pass
+
 # ==============================================================================
 # DATA MANAGEMENT MODE
 # ==============================================================================
 elif mode == 'Data Management':
-	st.subheader( 'Data Management' )
-	st.divider( )
 	left, center, right = st.columns( [ 0.05, 0.90, 0.05 ] )
 	with center:
-		st.markdown( '##### 🏛️ Database'  )
+		st.subheader( 'Data Management' )
 		tabs = st.tabs( [ 'Import', 'Browse', 'CRUD', 'Explore', 'Filter',
-		                  'Aggregate', 'Visualize', 'Admin', 'SQL' ] )
-		 
+		                  'Aggregate', 'Visualize', 'Geocode', 'Admin', 'SQL' ] )
+		
 		tables = list_tables( )
 		if not tables:
-			st.info( "No tables available." )
+			st.info( 'No tables available.' )
 		
 		# ------------------------------------------------------------------------------
 		# UPLOAD TAB
 		# ------------------------------------------------------------------------------
 		with tabs[ 0 ]:
-			uploaded_file = st.file_uploader( 'Upload Excel File', type=[ 'xlsx' ] )
-			overwrite = st.checkbox( 'Overwrite existing tables', value=True )
+			upl_c1, upl_c2 = st.columns( [ 0.70, 0.30 ] )
+			with upl_c1:
+				uploaded_file = st.file_uploader( 'Upload Excel File', type=[ 'xlsx' ] )
+			with upl_c2:
+				overwrite = st.checkbox( 'Overwrite existing tables', value=True )
+			
 			if uploaded_file:
 				try:
 					sheets = pd.read_excel( uploaded_file, sheet_name=None )
@@ -4773,10 +6983,8 @@ elif mode == 'Data Management':
 								sql_type = get_sqlite_type( df[ col ].dtype )
 								columns.append( f'"{col}" {sql_type}' )
 							
-							create_stmt = (
-									f'CREATE TABLE "{table_name}" '
-									f'({", ".join( columns )});'
-							)
+							create_stmt = (f'CREATE TABLE "{table_name}" '
+							               f'({", ".join( columns )});')
 							
 							conn.execute( create_stmt )
 							
@@ -4784,8 +6992,7 @@ elif mode == 'Data Management':
 							placeholders = ", ".join( [ "?" ] * len( df.columns ) )
 							insert_stmt = (
 									f'INSERT INTO "{table_name}" '
-									f'VALUES ({placeholders});'
-							)
+									f'VALUES ({placeholders});')
 							
 							conn.executemany( insert_stmt,
 								df.where( pd.notnull( df ), None ).values.tolist( ) )
@@ -4794,7 +7001,6 @@ elif mode == 'Data Management':
 					
 					st.success( 'Import completed successfully (transaction committed).' )
 					st.rerun( )
-				
 				except Exception as e:
 					try:
 						conn.rollback( )
@@ -4809,21 +7015,24 @@ elif mode == 'Data Management':
 			tables = list_tables( )
 			if tables:
 				table = st.selectbox( 'Table', tables, key='table_name' )
+				
+				set_blue_divider( )
+				
 				df = read_table( table )
-				st.data_editor( df )
+				st.data_editor( df, key='dm_browse_key' )
 			else:
 				st.info( 'No tables available.' )
 		
 		# ------------------------------------------------------------------------------
-		# CRUD (Schema-Aware)
+		# CRUD
 		# ------------------------------------------------------------------------------
 		with tabs[ 2 ]:
 			tables = list_tables( )
 			if not tables:
 				st.info( 'No tables available.' )
 			else:
-				crud_header_c1, crud_header_c2, crud_header_c3 = st.columns(
-					[ 0.45, 0.25, 0.30 ], border=True )
+				crud_header_c1, crud_header_c2, crud_header_c3 = st.columns( [ 0.45, 0.25, 0.30 ],
+					border=True )
 				
 				with crud_header_c1:
 					table = st.selectbox( 'Select Table', tables, key='crud_table' )
@@ -4839,7 +7048,7 @@ elif mode == 'Data Management':
 				with crud_header_c3:
 					st.metric( 'Columns', len( type_map ) )
 				
-				st.divider( )
+				set_blue_divider( )
 				
 				insert_col, update_col = st.columns( [ 0.50, 0.50 ], border=True )
 				
@@ -4849,20 +7058,16 @@ elif mode == 'Data Management':
 				with insert_col:
 					st.markdown( '##### Insert Row' )
 					insert_data = { }
-					
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
 							insert_data[ column ] = st.number_input( column, step=1,
 								key=f'ins_{table}_{column}' )
-						
 						elif 'REAL' in col_type:
 							insert_data[ column ] = st.number_input( column, format='%.6f',
 								key=f'ins_{table}_{column}' )
-						
 						elif 'BOOL' in col_type:
 							insert_data[ column ] = 1 if st.checkbox( column,
 								key=f'ins_{table}_{column}' ) else 0
-						
 						else:
 							insert_data[ column ] = st.text_input( column,
 								key=f'ins_{table}_{column}' )
@@ -4872,9 +7077,8 @@ elif mode == 'Data Management':
 						cols = list( insert_data.keys( ) )
 						quoted_cols = [ f'"{c}"' for c in cols ]
 						placeholders = ', '.join( [ '?' ] * len( cols ) )
-						stmt = (
-								f'INSERT INTO "{table}" ({", ".join( quoted_cols )}) '
-								f'VALUES ({placeholders});')
+						stmt = (f'INSERT INTO "{table}" ({", ".join( quoted_cols )}) '
+						        f'VALUES ({placeholders});')
 						
 						with create_connection( ) as conn:
 							conn.execute( stmt, list( insert_data.values( ) ) )
@@ -4899,7 +7103,8 @@ elif mode == 'Data Management':
 							update_data[ column ] = val
 						
 						elif 'REAL' in col_type:
-							val = st.number_input( column, format='%.6f', key=f'upd_{table}_{column}' )
+							val = st.number_input( column, format='%.6f',
+								key=f'upd_{table}_{column}' )
 							update_data[ column ] = val
 						
 						elif 'BOOL' in col_type:
@@ -4923,7 +7128,8 @@ elif mode == 'Data Management':
 						st.success( 'Row updated.' )
 						st.rerun( )
 				
-				st.divider( )
+				set_blue_divider( )
+				
 				delete_col, preview_col = st.columns( [ 0.35, 0.65 ], border=True )
 				
 				# ------------------------------------------------------------------
@@ -4934,7 +7140,8 @@ elif mode == 'Data Management':
 					delete_id = st.number_input( 'Row ID to Delete', min_value=1, step=1,
 						key=f'crud_delete_rowid_{table}' )
 					
-					if st.button( 'Delete Row', key=f'delete_row_{table}', use_container_width=True ):
+					if st.button( 'Delete Row', key=f'delete_row_{table}',
+							use_container_width=True ):
 						with create_connection( ) as conn:
 							conn.execute( f'DELETE FROM "{table}" WHERE rowid=?;', (delete_id,) )
 							conn.commit( )
@@ -4966,6 +7173,8 @@ elif mode == 'Data Management':
 					offset = (page - 1) * page_size
 					df_page = read_table( table, page_size, offset )
 				
+				set_blue_divider( )
+				
 				st.data_editor( data=df_page, num_rows='dynamic', hide_index=False )
 		
 		# ------------------------------------------------------------------------------
@@ -4978,14 +7187,18 @@ elif mode == 'Data Management':
 				with tbl_c1:
 					table = st.selectbox( 'Select Table', tables, key='filter_table' )
 					df = read_table( table )
+				
 				with tbl_c2:
 					column = st.selectbox( 'Select Field', df.columns, key='selected_column' )
+				
 				with tbl_c3:
 					value = st.text_input( 'Contains', placeholder='Enter Text for Lookup' )
 					if value:
 						df = df[ df[ column ].astype( str ).str.contains( value ) ]
 				
-				st.data_editor( df )
+				set_blue_divider( )
+				
+				st.data_editor( df, key='dm_filter_key' )
 		
 		# ------------------------------------------------------------------------------
 		# AGGREGATE
@@ -5007,11 +7220,9 @@ elif mode == 'Data Management':
 						if agg == 'SUM':
 							st.metric( 'Result', df[ col ].sum( ), width='stretch',
 								format='accounting' )
-						
 						elif agg == 'AVG':
 							st.metric( 'Result', df[ col ].mean( ), width='stretch',
 								format='accounting' )
-						
 						elif agg == 'COUNT':
 							st.metric( 'Result', df[ col ].count( ), width='stretch',
 								format='accounting' )
@@ -5027,16 +7238,151 @@ elif mode == 'Data Management':
 				create_visualization( df )
 		
 		# ------------------------------------------------------------------------------
-		# ADMIN
+		# GEOCODE
 		# ------------------------------------------------------------------------------
 		with tabs[ 7 ]:
+			st.subheader( 'Geocode Missing Report Coordinates' )
+			
+			tables = list_tables( )
+			
+			if not tables:
+				st.info( 'No tables available.' )
+			else:
+				default_table = resolve_table_name( cfg.DEFAULT_DATA, tables )
+				if default_table is None:
+					default_table = tables[ 0 ]
+				
+				default_index = tables.index( default_table )
+				
+				control_c1, control_c2, control_c3, control_c4 = st.columns(
+					[ 0.25, 0.25, 0.25, 0.25 ], border=True )
+				
+				with control_c1:
+					table = st.selectbox( 'Table', tables, index=default_index,
+						key='reports_geocode_table' )
+				
+				with control_c2:
+					use_places = st.checkbox( 'Use Places Fallback', value=True,
+						key='reports_geocode_use_places' )
+				
+				with control_c3:
+					limit_enabled = st.checkbox( 'Limit Locations', value=True,
+						key='reports_geocode_limit_enabled' )
+				
+				with control_c4:
+					limit = st.number_input( 'Location Limit', min_value=1, max_value=10000,
+						value=100, step=25, key='reports_geocode_limit' )
+				
+				location_limit = int( limit ) if limit_enabled else None
+				
+				required_cols = [ 'City', 'State', 'Country', 'Latitude', 'Longitude' ]
+				schema = create_schema( table )
+				table_cols = [ row[ 1 ] for row in schema ]
+				missing_cols = [ col for col in required_cols if col not in table_cols ]
+				
+				if missing_cols:
+					st.warning(
+						f'Table is missing required column(s): {", ".join( missing_cols )}' )
+				else:
+					missing_rows = count_missing_report_coordinate_rows( table )
+					df_locations = read_missing_report_locations( table, location_limit )
+					distinct_total = len( read_missing_report_locations( table, None ) )
+					
+					status_c1, status_c2, status_c3, status_c4 = st.columns( 4 )
+					status_c1.metric( 'Rows Missing Coordinates', f'{missing_rows:,}' )
+					status_c2.metric( 'Distinct Locations', f'{distinct_total:,}' )
+					status_c3.metric( 'Preview Locations', f'{len( df_locations ):,}' )
+					status_c4.metric( 'Fallback', 'Enabled' if use_places else 'Disabled' )
+					
+					with st.expander( 'Distinct Locations Missing Coordinates', expanded=False ):
+						if df_locations.empty:
+							st.info( 'No missing coordinate locations found.' )
+						else:
+							st.data_editor(
+								df_locations,
+								key='reports_geocode_locations',
+								use_container_width=True,
+								disabled=True )
+					
+					action_c1, action_c2, action_c3 = st.columns( [ 0.25, 0.25, 0.50 ] )
+					
+					with action_c1:
+						if st.button( 'Preview Geocoding', key='reports_geocode_preview_button',
+								width='stretch' ):
+							df_preview = preview_report_coordinate_updates(
+								table_name=table,
+								geocoder=geocoder,
+								places=places,
+								use_places=use_places,
+								limit=location_limit )
+							
+							st.session_state[ 'df_reports_geocode_preview' ] = df_preview
+					
+					with action_c2:
+						if st.button( 'Clear', icon='🧹', key='reports_geocode_clear_button',
+								width='stretch' ):
+							st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+					
+					df_preview = st.session_state.get( 'df_reports_geocode_preview',
+						pd.DataFrame( ) )
+					
+					if df_preview is not None and not df_preview.empty:
+						status_series = df_preview[ 'Status' ].astype( str ).str.lower( )
+						matched_count = int( (status_series == 'matched').sum( ) )
+						failed_count = int( (status_series == 'failed').sum( ) )
+						skipped_count = int( (status_series == 'skipped').sum( ) )
+						
+						matched_rows = int(
+							df_preview.loc[ status_series == 'matched', 'RowCount' ].sum( ) )
+						
+						result_c1, result_c2, result_c3, result_c4 = st.columns( 4 )
+						result_c1.metric( 'Matched Locations', f'{matched_count:,}' )
+						result_c2.metric( 'Failed Locations', f'{failed_count:,}' )
+						result_c3.metric( 'Skipped Locations', f'{skipped_count:,}' )
+						result_c4.metric( 'Rows Eligible For Update', f'{matched_rows:,}' )
+						
+						st.data_editor(
+							df_preview,
+							key='reports_geocode_preview_table',
+							use_container_width=True,
+							disabled=True )
+						
+						st.warning(
+							'Apply Updates writes Latitude and Longitude values back to SQLite '
+							'for all missing-coordinate rows matching the previewed City, State, '
+							'and Country combinations. Review the preview before applying.' )
+						
+						apply_c1, apply_c2 = st.columns( [ 0.25, 0.75 ] )
+						
+						with apply_c1:
+							apply_updates = st.checkbox( 'Confirm Apply Updates',
+								value=False, key='reports_geocode_confirm_apply' )
+						
+						with apply_c2:
+							if st.button( 'Apply Updates', key='reports_geocode_apply_button',
+									width='stretch', disabled=not apply_updates ):
+								updated_count = apply_report_coordinate_updates( table, df_preview )
+								
+								if updated_count:
+									st.success(
+										f'Updated {updated_count:,} report coordinate row(s).' )
+									st.session_state[
+										'df_reports_geocode_preview' ] = pd.DataFrame( )
+									st.rerun( )
+								else:
+									st.info( 'No rows were updated.' )
+		
+		# ------------------------------------------------------------------------------
+		# ADMIN
+		# ------------------------------------------------------------------------------
+		with tabs[ 8 ]:
 			tables = list_tables( )
 			if tables:
 				table = st.selectbox( 'Table', tables, key='admin_table' )
 			
-			st.divider( )
+			set_blue_divider( )
 			
-			st.subheader( 'Data Profiling' )
+			st.markdown( '##### Data Profiling' )
 			tables = list_tables( )
 			if tables:
 				table = st.selectbox( 'Select Table', tables, key='profile_table' )
@@ -5044,7 +7390,7 @@ elif mode == 'Data Management':
 					profile_df = create_profile_table( table )
 					render_table( profile_df )
 			
-			st.subheader( 'Drop Table' )
+			st.markdown( '##### Drop Table' )
 			
 			tables = list_tables( )
 			if tables:
@@ -5064,7 +7410,6 @@ elif mode == 'Data Management':
 					            'This action cannot be undone.' )
 					
 					col1, col2 = st.columns( 2 )
-					
 					if col1.button( 'Confirm Drop', key='admin_confirm_drop' ):
 						try:
 							drop_table( table )
@@ -5086,15 +7431,16 @@ elif mode == 'Data Management':
 					create_index( table, col )
 					st.success( 'Index created.' )
 			
-			st.divider( )
+			set_blue_divider( )
 			
-			st.subheader( 'Create Custom Table' )
+			st.markdown( '##### Create Custom Table' )
 			new_table_name = st.text_input( 'Table Name' )
-			column_count = st.number_input( 'Number of Columns', min_value=1, max_value=20,
-				value=1 )
+			column_count = st.number_input( 'Number of Columns', min_value=1,
+				max_value=20, value=1 )
+			
 			columns = [ ]
 			for i in range( column_count ):
-				st.markdown( f'### Column {i + 1}' )
+				st.markdown( f'##### Column {i + 1}' )
 				col_name = st.text_input( 'Column Name', key=f'col_name_{i}' )
 				col_type = st.selectbox( 'Column Type', [ 'INTEGER', 'REAL', 'TEXT' ],
 					key=f'col_type_{i}' )
@@ -5119,8 +7465,8 @@ elif mode == 'Data Management':
 				except Exception as e:
 					st.error( f'Error: {e}' )
 			
-			st.divider( )
-			st.subheader( 'Schema Viewer' )
+			set_blue_divider( )
+			st.markdown( '##### Schema Viewer' )
 			
 			tables = list_tables( )
 			if tables:
@@ -5128,43 +7474,33 @@ elif mode == 'Data Management':
 				
 				# Column schema
 				schema = create_schema( table )
-				schema_df = pd.DataFrame(
-					schema,
+				schema_df = pd.DataFrame( schema,
 					columns=[ 'cid', 'name', 'type', 'notnull', 'default', 'pk' ] )
 				
-				st.markdown( "### Columns" )
-				st.data_editor(
-					make_display_safe( schema_df ),
-					hide_index=True,
-					use_container_width=True,
-					disabled=True )
+				st.markdown( "##### Columns" )
+				st.data_editor( make_display_safe( schema_df ), hide_index=True,
+					use_container_width=True, disabled=True )
 				
 				# Row count
 				with create_connection( ) as conn:
-					count = conn.execute(
-						f'SELECT COUNT(*) FROM "{table}"'
-					).fetchone( )[ 0 ]
+					count = conn.execute( f'SELECT COUNT(*) FROM "{table}"' ).fetchone( )[ 0 ]
 				
 				st.metric( "Row Count", f"{count:,}" )
 				
 				# Indexes
 				indexes = get_indexes( table )
 				if indexes:
-					idx_df = pd.DataFrame(
-						indexes,
-						columns=[ 'seq', 'name', 'unique', 'origin', 'partial' ]
-					)
-					st.markdown( "### Indexes" )
-					st.data_editor(
-						make_display_safe( idx_df ),
-						hide_index=True,
-						use_container_width=True,
-						disabled=True )
+					idx_df = pd.DataFrame( indexes,
+						columns=[ 'seq', 'name', 'unique', 'origin', 'partial' ] )
+					
+					st.markdown( "##### Indexes" )
+					st.data_editor( make_display_safe( idx_df ), hide_index=True,
+						use_container_width=True, disabled=True )
 				else:
 					st.info( "No indexes defined." )
 			
-			st.divider( )
-			st.subheader( "ALTER TABLE Operations" )
+			set_blue_divider( )
+			st.markdown( '##### ALTER TABLE Operations' )
 			
 			tables = list_tables( )
 			if tables:
@@ -5216,10 +7552,10 @@ elif mode == 'Data Management':
 		# ------------------------------------------------------------------------------
 		# SQL
 		# ------------------------------------------------------------------------------
-		with tabs[ 8 ]:
+		with tabs[ 9 ]:
 			st.subheader( 'SQL Console' )
 			query = st.text_area( 'Enter SQL Query' )
-			if st.button( 'Run Query' ):
+			if st.button( label='Run', icon='🏃', ):
 				if not is_safe_query( query ):
 					st.error( 'Query blocked: Only read-only SELECT statements are allowed.' )
 				else:

@@ -72,7 +72,7 @@ def throw_if( name: str, value: object ) -> None:
 	if isinstance( value, str ) and not value.strip( ):
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
-class Places( ):
+class Place( ):
 	"""
 
 		Purpose:
@@ -104,7 +104,7 @@ class Places( ):
 	key: Optional[ str ]
 	output: Optional[ Dict ]
 	
-	def __init__( self, maps: Maps, cache: Optional[ BaseCache ]=None ) -> None:
+	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
 		self.maps = maps
 		self.cache = cache
 		self.country = None
@@ -139,17 +139,18 @@ class Places( ):
 		"""
 		try:
 			throw_if( 'prefix', prefix )
+			throw_if( 'parts', parts )
 			joined = ' '.join( str( p ).strip( ) for p in parts if p and str( p ).strip( ) )
 			return f'{prefix}::{joined}'
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Places'
-			exception.method = 'key_for( self, prefix: str, *parts: str )'
+			exception.method = 'key_for( self, *args )'
 			raise exception
 	
 	def component_value( self, components: List[ Dict[ str, Any ] ], kind: str,
-			want_long: bool=False ) -> Optional[ str ]:
+			want_long: bool = False ) -> Optional[ str ]:
 		"""
 
 			Purpose:
@@ -178,15 +179,15 @@ class Places( ):
 					return component.get( 'short_name' ) or None
 			
 			return None
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Places'
-			exception.method = 'component_value( self, components: List[ Dict ], kind: str )'
+			exception.method = 'component_value( self, *args )'
 			raise exception
 	
-	def flatten_place_details( self, details: Dict[ str, Any ], query: str='' ) -> Dict[ str, Any ]:
+	def flatten_place_details( self, details: Dict[ str, Any ], query: str = '' ) -> Dict[
+		str, Any ]:
 		"""
 
 			Purpose:
@@ -208,7 +209,6 @@ class Places( ):
 			throw_if( 'details', details )
 			geometry = (details.get( 'geometry' ) or { }).get( 'location' ) or { }
 			components = details.get( 'address_components', [ ] ) or [ ]
-			
 			return {
 					'formatted_address': details.get( 'formatted_address' ),
 					'lat': geometry.get( 'lat' ),
@@ -236,12 +236,11 @@ class Places( ):
 					'source': 'places',
 					'query': query
 			}
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Places'
-			exception.method = 'flatten_place_details( self, details: Dict[ str, Any ] )'
+			exception.method = 'flatten_place_details( self, *args )'
 			raise exception
 	
 	def place_details( self, place_id: str ) -> Dict[ str, Any ] | None:
@@ -267,22 +266,15 @@ class Places( ):
 				if self.hit:
 					return self.hit
 			
-			fields = (
-					'formatted_address,geometry,address_component,place_id,type,'
-					'name,business_status,rating,user_ratings_total,website,'
-					'formatted_phone_number'
-			)
-			
-			self.details = self.maps.request(
-				'place/details/json',
-				{
-						'place_id': place_id,
-						'fields': fields
-				} ).get( 'result', { } )
-			
+			fields = ('formatted_address,geometry,address_component,place_id,type,'
+			          'name,business_status,rating,user_ratings_total,website,'
+			          'formatted_phone_number')
+			self.details = self.maps.request( 'place/details/json', {
+					'place_id': place_id,
+					'fields': fields
+			} ).get( 'result', { } )
 			if not self.details:
 				raise NotFound( f'No place details found for "{place_id}" ' )
-			
 			self.output = self.flatten_place_details( self.details, query=place_id )
 			if self.cache:
 				self.cache.set( self.key, self.output )
@@ -291,10 +283,10 @@ class Places( ):
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Places'
-			exception.method = 'place_details( self, place_id: str )'
+			exception.method = 'place_details( self, *args )'
 			raise exception
 	
-	def text_to_location( self, query: str, country: str='US' ) -> Dict[ str, Any ] | None:
+	def text_to_location( self, query: str, country: str = 'US' ) -> Dict[ str, Any ] | None:
 		"""
 
 			Purpose:
@@ -321,61 +313,43 @@ class Places( ):
 			self.query = query.strip( )
 			self.country = str( country or '' ).strip( )
 			self.key = self.key_for( 'places', self.query, self.country.upper( ) )
-			
 			if self.cache:
 				self.hit = self.cache.get( self.key )
 				if self.hit:
 					return self.hit
-			
 			self.params = { 'query': self.query }
-			
 			if self.country:
 				self.params[ 'region' ] = self.country.upper( )
-			
 			self.search = self.maps.request( 'place/textsearch/json', self.params )
 			self.results = self.search.get( 'results' ) or [ ]
-			
 			if not self.results:
 				raise NotFound( f'No places match for "{self.query}" ' )
-			
 			top = self.results[ 0 ]
 			place_id = top.get( 'place_id' )
-			
 			if not place_id:
 				raise NotFound( 'Top place had no place_id' )
-			
-			fields = (
-					'formatted_address,geometry,address_component,place_id,type,'
-					'name,business_status,rating,user_ratings_total,website,'
-					'formatted_phone_number'
-			)
-			
-			self.details = self.maps.request(
-				'place/details/json',
-				{
-						'place_id': place_id,
-						'fields': fields
-				} ).get( 'result', { } )
-			
+			fields = ('formatted_address,geometry,address_component,place_id,type,'
+			          'name,business_status,rating,user_ratings_total,website,'
+			          'formatted_phone_number')
+			self.details = self.maps.request( 'place/details/json', {
+					'place_id': place_id,
+					'fields': fields
+			} ).get( 'result', { } )
 			if not self.details:
 				raise NotFound( f'No place details found for "{self.query}" ' )
-			
 			self.output = self.flatten_place_details( self.details, query=self.query )
-			
 			if self.cache:
 				self.cache.set( self.key, self.output )
-			
 			return self.output
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Places'
-			exception.method = 'text_to_location( self, query: str, country: str=US )'
+			exception.method = 'text_to_location( self, *args )'
 			raise exception
 	
-	def search_candidates( self, query: str, country: str='US',
-			limit: int=5 ) -> List[ Dict[ str, Any ] ]:
+	def search_candidates( self, query: str, country: str = 'US', lmt: int = 5 ) -> List[
+		Dict[ str, Any ] ]:
 		"""
 
 			Purpose:
@@ -400,21 +374,16 @@ class Places( ):
 			self.query = query.strip( )
 			self.country = str( country or '' ).strip( )
 			self.params = { 'query': self.query }
-			
 			if self.country:
 				self.params[ 'region' ] = self.country.upper( )
-			
 			self.search = self.maps.request( 'place/textsearch/json', self.params )
 			self.results = self.search.get( 'results' ) or [ ]
-			
 			if not self.results:
 				raise NotFound( f'No places match for "{self.query}" ' )
-			
-			return self.results[ :max( 1, int( limit ) ) ]
-		
+			return self.results[ :max( 1, int( lmt ) ) ]
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Places'
-			exception.method = 'search_candidates( self, query: str, country: str=US, limit: int=5 )'
+			exception.method = 'search_candidates( self, *args )'
 			raise exception

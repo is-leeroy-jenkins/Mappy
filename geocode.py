@@ -92,13 +92,13 @@ def flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 	geometry = result.get( 'geometry', { } ) or { }
 	loc = geometry.get( 'location', { } ) or { }
 	comps = result.get( 'address_components', [ ] ) or [ ]
-
+	
 	def comp( kind: str, want_long: bool = False ) -> Optional[ str ]:
 		for c in comps:
 			if kind in (c.get( 'types' ) or [ ]):
 				return (c.get( 'long_name' ) if want_long else c.get( 'short_name' )) or None
 		return None
-
+	
 	return {
 			'formatted_address': result.get( 'formatted_address' ),
 			'lat': loc.get( 'lat' ),
@@ -106,7 +106,7 @@ def flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 			'place_id': result.get( 'place_id' ),
 			'types': ','.join( result.get( 'types', [ ] ) ) if result.get( 'types' ) else None,
 			'country_code': comp( 'country' ),
-			'country_name': comp( 'country', want_long = True ),
+			'country_name': comp( 'country', want_long=True ),
 			'admin_level_1': comp( 'administrative_area_level_1' ),
 			'admin_level_2': comp( 'administrative_area_level_2' ),
 			'locality': comp( 'locality' ) or comp( 'postal_town' ),
@@ -183,6 +183,7 @@ class Geocoder( ):
 		"""
 		try:
 			throw_if( 'prefix', prefix )
+			throw_if( 'parts', parts )
 			self.prefix = prefix
 			self.parts = parts
 			joined = ' '.join( str( p ).strip( ) for p in parts if p and str( p ).strip( ) )
@@ -191,7 +192,7 @@ class Geocoder( ):
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'key_for( self, prefix: str, *parts: str )'
+			exception.method = 'key_for( self, *kwargs )'
 			raise exception
 	
 	def validate_coordinates( self, latitude: float, longitude: float ) -> Tuple[ float, float ]:
@@ -259,23 +260,18 @@ class Geocoder( ):
 				hit = self._cache.get( self.key )
 				if hit:
 					return hit
-			
 			self.comps = { 'country': self.country.upper( ) } if self.country else None
-			self.data = self._maps.request(
-				'geocode/json',
+			self.data = self._maps.request( 'geocode/json',
 				{ 'address': self.address, **(self.comps or { }) } )
 			
 			if self.data.get( 'status' ) != 'OK' or not self.data.get( 'results' ):
 				raise NotFound( f'No geocode for "{self.address}" ' )
-			
 			self.output = flatten_geocode( self.data[ 'results' ][ 0 ] )
 			self.output[ 'source' ] = 'geocode'
 			self.output[ 'query' ] = self.address
 			if self._cache:
 				self._cache.set( self.key, self.output )
-			
 			return self.output
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -361,9 +357,9 @@ class Geocoder( ):
 			self.country = country
 			self.parts = tuple( [ p for p in [ self.city, self.state, self.country ] if p ] )
 			self.query = ', '.join( self.parts )
-			hint = ( self.country.strip( ).upper( )
-					if self.country and len( self.country.strip( ) ) <= 3
-					else '' )
+			hint = (self.country.strip( ).upper( )
+			        if self.country and len( self.country.strip( ) ) <= 3
+			        else '')
 			return self.freeform( self.query, hint )
 		except Exception as e:
 			exception = Error( e )
@@ -372,7 +368,8 @@ class Geocoder( ):
 			exception.method = 'city_state_country( self, city: str, state: str, country: str )'
 			raise exception
 	
-	def batch_freeform( self, addresses: List[ str ], country: str='US' ) -> List[ Dict[ str, Any ] ]:
+	def batch_freeform( self, addresses: List[ str ], country: str = 'US' ) -> List[
+		Dict[ str, Any ] ]:
 		"""
 
 			Purpose:
@@ -400,22 +397,22 @@ class Geocoder( ):
 				value = str( address or '' ).strip( )
 				if not value:
 					results.append( {
-								'formatted_address': None,
-								'lat': None,
-								'lng': None,
-								'place_id': None,
-								'types': None,
-								'country_code': None,
-								'country_name': None,
-								'admin_level_1': None,
-								'admin_level_2': None,
-								'locality': None,
-								'postal_code': None,
-								'source': 'geocode',
-								'query': value,
-								'geocode_status': 'skipped_empty',
-								'geocode_error': None
-						} )
+							'formatted_address': None,
+							'lat': None,
+							'lng': None,
+							'place_id': None,
+							'types': None,
+							'country_code': None,
+							'country_name': None,
+							'admin_level_1': None,
+							'admin_level_2': None,
+							'locality': None,
+							'postal_code': None,
+							'source': 'geocode',
+							'query': value,
+							'geocode_status': 'skipped_empty',
+							'geocode_error': None
+					} )
 					continue
 				try:
 					item = self.freeform( value, country=country ) or { }
@@ -424,26 +421,26 @@ class Geocoder( ):
 					results.append( item )
 				except Exception as row_error:
 					results.append( {
-								'formatted_address': None,
-								'lat': None,
-								'lng': None,
-								'place_id': None,
-								'types': None,
-								'country_code': None,
-								'country_name': None,
-								'admin_level_1': None,
-								'admin_level_2': None,
-								'locality': None,
-								'postal_code': None,
-								'source': 'geocode',
-								'query': value,
-								'geocode_status': 'error',
-								'geocode_error': str( row_error )
-						} )
+							'formatted_address': None,
+							'lat': None,
+							'lng': None,
+							'place_id': None,
+							'types': None,
+							'country_code': None,
+							'country_name': None,
+							'admin_level_1': None,
+							'admin_level_2': None,
+							'locality': None,
+							'postal_code': None,
+							'source': 'geocode',
+							'query': value,
+							'geocode_status': 'error',
+							'geocode_error': str( row_error )
+					} )
 			return results
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'batch_freeform( self, addresses: List[ str ], country: str=US )'
+			exception.method = 'batch_freeform( self, *kwargs )'
 			raise exception

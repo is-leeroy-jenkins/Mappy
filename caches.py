@@ -100,7 +100,15 @@ class BaseCache:
 		raise NotImplementedError
 	
 	def contains( self, key: str ) -> bool:
-		return self.get( key ) is not None
+		try:
+			throw_if( 'key', key )
+			return self.get( key ) is not None
+		except Exception as e:
+			exception = Error( e )
+			exception.module = ''
+			exception.cause = ''
+			exception.method = ''
+			raise exception
 	
 	def namespace_key( self, namespace: str, key: str ) -> str:
 		"""
@@ -121,9 +129,16 @@ class BaseCache:
 					Namespace-qualified cache key.
 
 		"""
-		throw_if( 'namespace', namespace )
-		throw_if( 'key', key )
-		return f'{namespace}::{key}'
+		try:
+			throw_if( 'namespace', namespace )
+			throw_if( 'key', key )
+			return f'{namespace}::{key}'
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'Mappy'
+			exception.cause = 'BaseCache'
+			exception.method = 'namespace_key( self, namespace: str, key: str ) -> str'
+			raise exception
 	
 	def stats( self ) -> Dict[ str, Any ]:
 		raise NotImplementedError
@@ -222,7 +237,7 @@ class InMemoryCache( BaseCache ):
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'InMemoryCache'
-			exception.method = 'make_record( self, key: str, value: Dict[ str, Any ], ttl: Optional[ int ]=None )'
+			exception.method = 'make_record( self, **kwargs )'
 			raise exception
 	
 	def is_expired( self, record: Dict[ str, Any ] ) -> bool:
@@ -243,7 +258,6 @@ class InMemoryCache( BaseCache ):
 		try:
 			throw_if( 'record', record )
 			expires_at = record.get( 'expires_at' )
-			
 			if expires_at is None:
 				return False
 			
@@ -273,9 +287,7 @@ class InMemoryCache( BaseCache ):
 		"""
 		try:
 			throw_if( 'key', key )
-			
 			record = self._store.get( key )
-			
 			if not record:
 				self._misses += 1
 				return None
@@ -288,9 +300,7 @@ class InMemoryCache( BaseCache ):
 			record[ 'hit_count' ] = int( record.get( 'hit_count', 0 ) or 0 ) + 1
 			record[ 'last_accessed' ] = self.now( )
 			self._hits += 1
-			
 			return record.get( 'value' )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -321,15 +331,13 @@ class InMemoryCache( BaseCache ):
 		try:
 			throw_if( 'key', key )
 			throw_if( 'value', value )
-			
 			self._store[ key ] = self.make_record( key, value, ttl )
 			self._sets += 1
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'InMemoryCache'
-			exception.method = 'set( self, key: str, value: Dict[ str, Any ], ttl: Optional[ int ]=None )'
+			exception.method = 'set( self, **kwargs )'
 			raise exception
 	
 	def delete( self, key: str ) -> None:
@@ -348,11 +356,9 @@ class InMemoryCache( BaseCache ):
 		"""
 		try:
 			throw_if( 'key', key )
-			
 			if key in self._store:
 				del self._store[ key ]
 				self._deletes += 1
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -378,14 +384,12 @@ class InMemoryCache( BaseCache ):
 			if namespace:
 				prefix = f'{namespace}::'
 				keys = [ key for key in self._store if key.startswith( prefix ) ]
-				
 				for key in keys:
 					self.delete( key )
 			else:
 				deleted = len( self._store )
 				self._store.clear( )
 				self._deletes += deleted
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -433,11 +437,9 @@ class InMemoryCache( BaseCache ):
 		"""
 		try:
 			expired = 0
-			
 			for record in self._store.values( ):
 				if self.is_expired( record ):
 					expired += 1
-			
 			return {
 					'backend': 'memory',
 					'entries': len( self._store ),
@@ -447,7 +449,6 @@ class InMemoryCache( BaseCache ):
 					'sets': self._sets,
 					'deletes': self._deletes
 			}
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -495,37 +496,33 @@ class SQLiteCache( BaseCache ):
 
 		"""
 		try:
-			self._conn.execute(
-				'''
-                CREATE TABLE IF NOT EXISTS kv
-                (
-                    k
-                    TEXT
-                    PRIMARY
-                    KEY,
-                    v
-                    TEXT
-                    NOT
-                    NULL,
-                    created_at
-                    REAL,
-                    updated_at
-                    REAL,
-                    expires_at
-                    REAL,
-                    hit_count
-                    INTEGER
-                    DEFAULT
-                    0,
-                    last_accessed
-                    REAL
-                )
-				'''
-			)
-			
+			self._conn.execute( '''
+                                CREATE TABLE IF NOT EXISTS kv
+                                (
+                                    k
+                                    TEXT
+                                    PRIMARY
+                                    KEY,
+                                    v
+                                    TEXT
+                                    NOT
+                                    NULL,
+                                    created_at
+                                    REAL,
+                                    updated_at
+                                    REAL,
+                                    expires_at
+                                    REAL,
+                                    hit_count
+                                    INTEGER
+                                    DEFAULT
+                                    0,
+                                    last_accessed
+                                    REAL
+                                )
+			                     ''' )
 			self.migrate( )
 			self._conn.commit( )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -549,7 +546,6 @@ class SQLiteCache( BaseCache ):
 		try:
 			cursor = self._conn.execute( 'PRAGMA table_info(kv)' )
 			columns = { row[ 1 ] for row in cursor.fetchall( ) }
-			
 			additions = {
 					'created_at': 'ALTER TABLE kv ADD COLUMN created_at REAL',
 					'updated_at': 'ALTER TABLE kv ADD COLUMN updated_at REAL',
@@ -609,19 +605,15 @@ class SQLiteCache( BaseCache ):
 		"""
 		try:
 			throw_if( 'key', key )
-			
-			cursor = self._conn.execute(
-				'SELECT v, expires_at, hit_count FROM kv WHERE k = ?',
+			cursor = self._conn.execute( 'SELECT v, expires_at, hit_count FROM kv WHERE k = ?',
 				(key,) )
 			row = cursor.fetchone( )
-			
 			if not row:
 				return None
 			
 			payload = row[ 0 ]
 			expires_at = row[ 1 ]
 			hit_count = int( row[ 2 ] or 0 )
-			
 			if expires_at is not None and float( expires_at ) <= self.now( ):
 				self.delete( key )
 				return None
@@ -630,14 +622,12 @@ class SQLiteCache( BaseCache ):
 				'UPDATE kv SET hit_count = ?, last_accessed = ? WHERE k = ?',
 				(hit_count + 1, self.now( ), key) )
 			self._conn.commit( )
-			
 			return json.loads( payload )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
 			exception.cause = 'SQLiteCache'
-			exception.method = 'get( self, key: str )'
+			exception.method = 'get( self, key: str ) -> Dict[ str, Any ]'
 			raise exception
 	
 	def set( self, key: str, value: Dict[ str, Any ], ttl: Optional[ int ] = None ) -> None:
@@ -663,31 +653,27 @@ class SQLiteCache( BaseCache ):
 		try:
 			throw_if( 'key', key )
 			throw_if( 'value', value )
-			
 			now_value = self.now( )
 			ttl_value = int( ttl ) if ttl is not None and int( ttl ) > 0 else None
 			expires_value = now_value + ttl_value if ttl_value else None
 			payload = json.dumps( value, ensure_ascii=False )
-			
-			self._conn.execute(
-				'''
-                INSERT INTO kv
-                (k,
-                 v,
-                 created_at,
-                 updated_at,
-                 expires_at,
-                 hit_count,
-                 last_accessed)
-                VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(k) DO
-                UPDATE SET
-                    v = excluded.v,
-                    updated_at = excluded.updated_at,
-                    expires_at = excluded.expires_at
-				''',
-				(key, payload, now_value, now_value, expires_value, 0, None) )
+			self._conn.execute( '''
+                                INSERT INTO kv
+                                (k,
+                                 v,
+                                 created_at,
+                                 updated_at,
+                                 expires_at,
+                                 hit_count,
+                                 last_accessed)
+                                VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(k) DO
+                                UPDATE SET
+                                    v = excluded.v,
+                                    updated_at = excluded.updated_at,
+                                    expires_at = excluded.expires_at
+			                    ''', (key, payload, now_value,
+			                          now_value, expires_value, 0, None) )
 			self._conn.commit( )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -713,7 +699,6 @@ class SQLiteCache( BaseCache ):
 			throw_if( 'key', key )
 			self._conn.execute( 'DELETE FROM kv WHERE k = ?', (key,) )
 			self._conn.commit( )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -743,7 +728,6 @@ class SQLiteCache( BaseCache ):
 				self._conn.execute( 'DELETE FROM kv' )
 			
 			self._conn.commit( )
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -767,6 +751,7 @@ class SQLiteCache( BaseCache ):
 
 		"""
 		try:
+			throw_if( 'key', key )
 			return self.get( key ) is not None
 		except Exception as e:
 			exception = Error( e )
@@ -799,7 +784,6 @@ class SQLiteCache( BaseCache ):
 				(self.now( ),) )
 			self._conn.commit( )
 			return count
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
@@ -828,7 +812,6 @@ class SQLiteCache( BaseCache ):
 				(self.now( ),) ).fetchone( )[ 0 ]
 			hits = self._conn.execute(
 				'SELECT COALESCE(SUM(hit_count), 0) FROM kv' ).fetchone( )[ 0 ]
-			
 			return {
 					'backend': 'sqlite',
 					'path': self.path,
@@ -836,7 +819,6 @@ class SQLiteCache( BaseCache ):
 					'expired_entries': int( expired or 0 ),
 					'hits': int( hits or 0 )
 			}
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'Mappy'
