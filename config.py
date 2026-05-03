@@ -50,7 +50,7 @@ BLUE_DIVIDER = "<div style='height:1.5px;align:left;background:#0078FC;margin:20
 APP_TITLE = 'Mappy'
 APP_SUBTITLE = 'Geospatial Toolkit'
 DB_PATH = 'stores/sqlite/data.db'
-DEFAULT_DATA = r'stores/excel/Reports.xlsx'
+DEFAULT_DATA = r'Reports'
 BASE_DIR = Path( __file__ ).resolve( ).parent
 FAVICON = r'resources/images/favicon.ico'
 LOGO = r'resources/images/mappy_logo.png'
