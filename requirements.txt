@@ -5,7 +5,9 @@ openpyxl
 xlrd
 streamlit
 streamlit-extras
+streamlit-js-eval>=1.0.0
 plotly
+pydeck>=0.8.0
 matplotlib
 beautifulsoup4
 Pillow

@@ -1470,7 +1470,7 @@ with st.sidebar:
 			if not api_keys:
 				st.error( 'No API keys found in config.py' )
 			
-			selected_key = st.selectbox( 'API Key', options=list( api_keys.keys( ) ), key='sel_api' )
+			selected_key = st.selectbox( 'API Key', options=list( api_keys.keys( ) ), key='api_key' )
 			api_key = api_keys[ selected_key ]
 		
 	with st.sidebar.expander( 'Query', expanded=False ):
