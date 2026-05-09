@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="6e8897af-3ee3-4d4e-83df-27a4ae217e01" name="Changes" comment="updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/starmap/js/modules/LocationPicker.js" beforeDir="false" afterPath="$PROJECT_DIR$/assets/starmap/js/modules/LocationPicker.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -60,6 +59,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "javascript.nodejs.core.library.configured.version": "18.18.0",
     "javascript.nodejs.core.library.typings.version": "18.18.14",
     "last_opened_file_path": "C:/Users/terry/source/repos/Mappy",
@@ -110,7 +110,7 @@
       <workItem from="1777635753327" duration="31000" />
       <workItem from="1777772862093" duration="2103000" />
       <workItem from="1778274008043" duration="7985000" />
-      <workItem from="1778328316680" duration="2436000" />
+      <workItem from="1778328316680" duration="3271000" />
     </task>
     <task id="LOCAL-00001" summary="updates">
       <option name="closed" value="true" />
@@ -384,7 +384,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778327047356</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="updates">
+      <option name="closed" value="true" />
+      <created>1778330820437</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1778330820437</updated>
+    </task>
+    <task id="LOCAL-00036" summary="updates">
+      <option name="closed" value="true" />
+      <created>1778330890457</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1778330890457</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

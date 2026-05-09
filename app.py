@@ -89,280 +89,280 @@ from fetchers import (
 # ------- Data State
 
 if 'source' not in st.session_state:
-	st.session_state[ 'source' ] = ''
+	st.session_state[ 'source' ]=''
 
 if 'df_source' not in st.session_state:
-	st.session_state[ 'df_source' ] = pd.DataFrame( )
+	st.session_state[ 'df_source' ]=pd.DataFrame( )
 
 if 'df_frame' not in st.session_state:
-	st.session_state[ 'df_frame' ] = pd.DataFrame( )
+	st.session_state[ 'df_frame' ]=pd.DataFrame( )
 
 if 'df_default' not in st.session_state:
-	st.session_state[ 'df_default' ] = pd.DataFrame( )
+	st.session_state[ 'df_default' ]=pd.DataFrame( )
 
 if 'df_original' not in st.session_state:
-	st.session_state[ 'df_original' ] = pd.DataFrame( )
+	st.session_state[ 'df_original' ]=pd.DataFrame( )
 
 if 'df_raw' not in st.session_state:
-	st.session_state[ 'df_raw' ] = pd.DataFrame( )
+	st.session_state[ 'df_raw' ]=pd.DataFrame( )
 
 if 'df_dataset' not in st.session_state:
-	st.session_state[ 'df_dataset' ] = pd.DataFrame( )
+	st.session_state[ 'df_dataset' ]=pd.DataFrame( )
 
 if 'df_reports_geocode_preview' not in st.session_state:
-	st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+	st.session_state[ 'df_reports_geocode_preview' ]=pd.DataFrame( )
 
 if 'df_geocoding_map_results' not in st.session_state:
-	st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
+	st.session_state[ 'df_geocoding_map_results' ]=pd.DataFrame( )
 
 if 'pipeline_log' not in st.session_state:
-	st.session_state[ 'pipeline_log' ] = [ ]
+	st.session_state[ 'pipeline_log' ]=[ ]
 
 # ------- Mappy State
 
 if 'mode' not in st.session_state:
-	st.session_state[ 'mode' ] = 'Geocoding'
+	st.session_state[ 'mode' ]='Geocoding'
 
 if 'previous_mode' not in st.session_state:
-	st.session_state[ 'previous_mode' ] = ''
+	st.session_state[ 'previous_mode' ]=''
 
 if 'timezone' not in st.session_state:
-	st.session_state[ 'timezone' ] = dt.timezone
+	st.session_state[ 'timezone' ]=dt.timezone
 
 if 'distances' not in st.session_state:
-	st.session_state[ 'distances' ] = None
+	st.session_state[ 'distances' ]=None
 
 if 'geocoder' not in st.session_state:
-	st.session_state[ 'geocoder' ] = None
+	st.session_state[ 'geocoder' ]=None
 
 if 'places' not in st.session_state:
-	st.session_state[ 'places' ] = None
+	st.session_state[ 'places' ]=None
 
 if 'static_maps' not in st.session_state:
-	st.session_state[ 'static_maps' ] = None
+	st.session_state[ 'static_maps' ]=None
 
 if 'qps' not in st.session_state:
-	st.session_state[ 'qps' ] = 10
+	st.session_state[ 'qps' ]=10
 
 # ------------ Location State
 
 if 'coordinates' not in st.session_state:
-	st.session_state[ 'coordinates' ] = ( )
+	st.session_state[ 'coordinates' ]=( )
 
 if 'latitude' not in st.session_state:
-	st.session_state[ 'latitude' ] = 0.0
+	st.session_state[ 'latitude' ]=0.0
 
 if 'longitude' not in st.session_state:
-	st.session_state[ 'longitude' ] = 0.0
+	st.session_state[ 'longitude' ]=0.0
 
 if 'location' not in st.session_state:
-	st.session_state[ 'location' ] = ''
+	st.session_state[ 'location' ]=''
 
 if 'country' not in st.session_state:
-	st.session_state[ 'country' ] = ''
+	st.session_state[ 'country' ]=''
 
 if 'state' not in st.session_state:
-	st.session_state[ 'state' ] = ''
+	st.session_state[ 'state' ]=''
 
 if 'city' not in st.session_state:
-	st.session_state[ 'city' ] = ''
+	st.session_state[ 'city' ]=''
 
 if 'zipcode' not in st.session_state:
-	st.session_state[ 'zipcode' ] = ''
+	st.session_state[ 'zipcode' ]=''
 
 if 'description' not in st.session_state:
-	st.session_state[ 'description' ] = ''
+	st.session_state[ 'description' ]=''
 
 if 'origin' not in st.session_state:
-	st.session_state[ 'origin' ] = ''
+	st.session_state[ 'origin' ]=''
 
 if 'destination' not in st.session_state:
-	st.session_state[ 'destination' ] = ''
+	st.session_state[ 'destination' ]=''
 
 if 'radius' not in st.session_state:
-	st.session_state[ 'radius' ] = 25.0
+	st.session_state[ 'radius' ]=25.0
 
 if 'zoom' not in st.session_state:
-	st.session_state[ 'zoom' ] = 8
+	st.session_state[ 'zoom' ]=8
 
 if 'map_size' not in st.session_state:
-	st.session_state[ 'map_size' ] = '600x400'
+	st.session_state[ 'map_size' ]='600x400'
 
 if 'year' not in st.session_state:
-	st.session_state[ 'year' ] = dt.datetime.now( ).year
+	st.session_state[ 'year' ]=dt.datetime.now( ).year
 
 if 'month' not in st.session_state:
-	st.session_state[ 'month' ] = dt.datetime.now( ).month
+	st.session_state[ 'month' ]=dt.datetime.now( ).month
 
 if 'day' not in st.session_state:
-	st.session_state[ 'day' ] = dt.datetime.now( ).day
+	st.session_state[ 'day' ]=dt.datetime.now( ).day
 
 if 'calendar_date' not in st.session_state:
-	st.session_state[ 'calendar_date' ] = dt.date.today( )
+	st.session_state[ 'calendar_date' ]=dt.date.today( )
 
 if 'browser_geolocation' not in st.session_state:
-	st.session_state[ 'browser_geolocation' ] = None
+	st.session_state[ 'browser_geolocation' ]=None
 
 if 'browser_geolocation_loaded' not in st.session_state:
-	st.session_state[ 'browser_geolocation_loaded' ] = False
+	st.session_state[ 'browser_geolocation_loaded' ]=False
 
 if 'browser_geolocation_enabled' not in st.session_state:
-	st.session_state[ 'browser_geolocation_enabled' ] = True
+	st.session_state[ 'browser_geolocation_enabled' ]=True
 
 if 'browser_geolocation_reverse_geocoded' not in st.session_state:
-	st.session_state[ 'browser_geolocation_reverse_geocoded' ] = False
+	st.session_state[ 'browser_geolocation_reverse_geocoded' ]=False
 
 if 'browser_geolocation_error' not in st.session_state:
-	st.session_state[ 'browser_geolocation_error' ] = ''
+	st.session_state[ 'browser_geolocation_error' ]=''
 
 if 'browser_geolocation_permission_denied' not in st.session_state:
-	st.session_state[ 'browser_geolocation_permission_denied' ] = False
+	st.session_state[ 'browser_geolocation_permission_denied' ]=False
 
 # ------- API Key State
 
 if 'google_api_key' not in st.session_state:
-	st.session_state[ 'google_api_key' ] = ''
+	st.session_state[ 'google_api_key' ]=''
 
 if 'google_cse_id' not in st.session_state:
-	st.session_state[ 'google_cse_id' ] = ''
+	st.session_state[ 'google_cse_id' ]=''
 
 if 'googlemaps_api_key' not in st.session_state:
-	st.session_state[ 'googlemaps_api_key' ] = ''
+	st.session_state[ 'googlemaps_api_key' ]=''
 
 if 'geocoding_api_key' not in st.session_state:
-	st.session_state[ 'geocoding_api_key' ] = ''
+	st.session_state[ 'geocoding_api_key' ]=''
 
 if 'google_cloud_project_id' not in st.session_state:
-	st.session_state[ 'google_cloud_project_id' ] = ''
+	st.session_state[ 'google_cloud_project_id' ]=''
 
 if 'google_cloud_location' not in st.session_state:
-	st.session_state[ 'google_cloud_location' ] = ''
+	st.session_state[ 'google_cloud_location' ]=''
 
 if 'google_weather_api_key' not in st.session_state:
-	st.session_state[ 'google_weather_api_key' ] = ''
+	st.session_state[ 'google_weather_api_key' ]=''
 
 if 'govinfo_api_key' not in st.session_state:
-	st.session_state[ 'govinfo_api_key' ] = ''
+	st.session_state[ 'govinfo_api_key' ]=''
 
 if 'nasa_api_key' not in st.session_state:
-	st.session_state[ 'nasa_api_key' ] = ''
+	st.session_state[ 'nasa_api_key' ]=''
 
 if 'airnow_api_key' not in st.session_state:
-	st.session_state[ 'airnow_api_key' ] = ''
+	st.session_state[ 'airnow_api_key' ]=''
 
 if 'openaq_api_key' not in st.session_state:
-	st.session_state[ 'openaq_api_key' ] = ''
+	st.session_state[ 'openaq_api_key' ]=''
 
 if 'nasa_earthdata_token' not in st.session_state:
-	st.session_state[ 'nasa_earthdata_token' ] = ''
+	st.session_state[ 'nasa_earthdata_token' ]=''
 
 if 'opensky_api_client_id' not in st.session_state:
-	st.session_state[ 'opensky_api_client_id' ] = ''
+	st.session_state[ 'opensky_api_client_id' ]=''
 
 if 'firms_map_key' not in st.session_state:
-	st.session_state[ 'firms_map_key' ] = ''
+	st.session_state[ 'firms_map_key' ]=''
 
 if 'opensky_api_credentials' not in st.session_state:
-	st.session_state[ 'opensky_api_credentials' ] = ''
+	st.session_state[ 'opensky_api_credentials' ]=''
 
 if 'purpleair_api_key' not in st.session_state:
-	st.session_state[ 'purpleair_api_key' ] = ''
+	st.session_state[ 'purpleair_api_key' ]=''
 
 if st.session_state.google_api_key == '':
 	default = cfg.GOOGLE_API_KEY
 	if default:
 		st.session_state.google_api_key = default
-		os.environ[ 'GOOGLE_API_KEY' ] = default
+		os.environ[ 'GOOGLE_API_KEY' ]=default
 
 if st.session_state.google_cse_id == '':
 	default = cfg.GOOGLE_CSE_ID
 	if default:
 		st.session_state.google_cse_id = default
-		os.environ[ 'GOOGLE_CSE_ID' ] = default
+		os.environ[ 'GOOGLE_CSE_ID' ]=default
 
 if st.session_state.googlemaps_api_key == '':
 	default = cfg.GOOGLEMAPS_API_KEY
 	if default:
 		st.session_state.googlemaps_api_key = default
-		os.environ[ 'GOOGLEMAPS_API_KEY' ] = default
+		os.environ[ 'GOOGLEMAPS_API_KEY' ]=default
 
 if st.session_state.geocoding_api_key == '':
 	default = cfg.GEOCODING_API_KEY
 	if default:
 		st.session_state.geocoding_api_key = default
-		os.environ[ 'GEOCODING_API_KEY' ] = default
+		os.environ[ 'GEOCODING_API_KEY' ]=default
 
 if st.session_state.google_cloud_project_id == '':
 	default = cfg.GOOGLE_CLOUD_PROJECT_ID
 	if default:
 		st.session_state.google_cloud_project_id = default
-		os.environ[ 'GOOGLE_CLOUD_PROJECT_ID' ] = default
+		os.environ[ 'GOOGLE_CLOUD_PROJECT_ID' ]=default
 
 if st.session_state.google_cloud_location == '':
 	default = cfg.GOOGLE_CLOUD_LOCATION
 	if default:
 		st.session_state.google_cloud_location = default
-		os.environ[ 'GOOGLE_CLOUD_LOCATION' ] = default
+		os.environ[ 'GOOGLE_CLOUD_LOCATION' ]=default
 
 if st.session_state.google_weather_api_key == '':
 	default = cfg.GOOGLE_WEATHER_API_KEY
 	if default:
 		st.session_state.google_weather_api_key = default
-		os.environ[ 'GOOGLE_WEATHER_API_KEY' ] = default
+		os.environ[ 'GOOGLE_WEATHER_API_KEY' ]=default
 
 if st.session_state.govinfo_api_key == '':
 	default = cfg.GOVINFO_API_KEY
 	if default:
 		st.session_state.govinfo_api_key = default
-		os.environ[ 'GOVINFO_API_KEY' ] = default
+		os.environ[ 'GOVINFO_API_KEY' ]=default
 
 if st.session_state.nasa_api_key == '':
 	default = cfg.NASA_API_KEY
 	if default:
 		st.session_state.nasa_api_key = default
-		os.environ[ 'NASA_API_KEY' ] = default
+		os.environ[ 'NASA_API_KEY' ]=default
 
 if st.session_state.airnow_api_key == '':
 	default = cfg.AIRNOW_API_KEY
 	if default:
 		st.session_state.airnow_api_key = default
-		os.environ[ 'AIRNOW_API_KEY' ] = default
+		os.environ[ 'AIRNOW_API_KEY' ]=default
 
 if st.session_state.openaq_api_key == '':
 	default = cfg.OPENAQ_API_KEY
 	if default:
 		st.session_state.openaq_api_key = default
-		os.environ[ 'OPENAQ_API_KEY' ] = default
+		os.environ[ 'OPENAQ_API_KEY' ]=default
 
 if st.session_state.nasa_earthdata_token == '':
 	default = cfg.NASA_EARTHDATA_TOKEN
 	if default:
 		st.session_state.nasa_earthdata_token = default
-		os.environ[ 'NASA_EARTHDATA_TOKEN' ] = default
+		os.environ[ 'NASA_EARTHDATA_TOKEN' ]=default
 
 if st.session_state.opensky_api_client_id == '':
 	default = cfg.OPENSKY_API_CLIENT_ID
 	if default:
 		st.session_state.opensky_api_client_id = default
-		os.environ[ 'OPENSKY_API_CLIENT_ID' ] = default
+		os.environ[ 'OPENSKY_API_CLIENT_ID' ]=default
 
 if st.session_state.firms_map_key == '':
 	default = cfg.FIRMS_MAP_KEY
 	if default:
 		st.session_state.firms_map_key = default
-		os.environ[ 'FIRMS_MAP_KEY' ] = default
+		os.environ[ 'FIRMS_MAP_KEY' ]=default
 
 if st.session_state.opensky_api_credentials == '':
 	default = cfg.OPENSKY_API_CREDENTIALS
 	if default:
 		st.session_state.opensky_api_credentials = default
-		os.environ[ 'OPENSKY_API_CREDENTIALS' ] = default
+		os.environ[ 'OPENSKY_API_CREDENTIALS' ]=default
 
 if st.session_state.purpleair_api_key == '':
 	default = getattr( cfg, 'PURPLEAIR_API_KEY', '' )
 	if default:
 		st.session_state.purpleair_api_key = default
-		os.environ[ 'PURPLEAIR_API_KEY' ] = default
+		os.environ[ 'PURPLEAIR_API_KEY' ]=default
 
 # ---------------------------------------------------------------------
 # UTILITIES
@@ -430,7 +430,7 @@ def init_state( key: str, value: Any ) -> None:
 		
 	"""
 	if key not in st.session_state:
-		st.session_state[ key ] = value
+		st.session_state[ key ]=value
 
 def init_env_state( key: str, config_name: str, env_name: str ) -> None:
 	"""
@@ -455,8 +455,8 @@ def init_env_state( key: str, config_name: str, env_name: str ) -> None:
 	if st.session_state.get( key, '' ) == '':
 		default = getattr( cfg, config_name, '' )
 		if default:
-			st.session_state[ key ] = default
-			os.environ[ env_name ] = default
+			st.session_state[ key ]=default
+			os.environ[ env_name ]=default
 
 def normalize( obj ):
 	if obj is None or isinstance( obj, (str, int, float, bool) ):
@@ -482,11 +482,11 @@ def log_step( msg: str ) -> None:
 
 # ------------- CELESTIAL MAP UTILITY
 
-def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400,
-		latitude: Optional[ float ] = None, longitude: Optional[ float ] = None,
-		tile_url: Optional[ str ] = None, tile_attribution: Optional[ str ] = None,
-		tile_subdomains: Optional[ str ] = None, location: Optional[ str ] = None,
-		zoom: Optional[ int ] = None ) -> None:
+def render_celestial_map( asset_root: str='assets/starmap', height: int=1400,
+		latitude: Optional[ float ]=None, longitude: Optional[ float ]=None,
+		tile_url: Optional[ str ]=None, tile_attribution: Optional[ str ]=None,
+		tile_subdomains: Optional[ str ]=None, location: Optional[ str ]=None,
+		zoom: Optional[ int ]=None ) -> None:
 	"""
 	
 		Purpose:
@@ -539,8 +539,7 @@ def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400
 				root / 'js' / 'modules' / 'UIController.js',
 				root / 'js' / 'modules' / 'StarDetailsPanel.js',
 				root / 'js' / 'modules' / 'ImageExporter.js',
-				root / 'js' / 'main.js',
-		]
+				root / 'js' / 'main.js', ]
 		
 		required_paths = [ index_path, style_path, *data_paths.values( ), *module_paths ]
 		missing_paths = [ str( path ) for path in required_paths if not path.exists( ) ]
@@ -551,21 +550,21 @@ def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400
 		
 		html = index_path.read_text( encoding='utf-8' )
 		css = style_path.read_text( encoding='utf-8' )
-		local_data: Dict[ str, object ] = { }
+		local_data: Dict[ str, object ]={ }
 		for key, path in data_paths.items( ):
-			local_data[ key ] = json.loads( path.read_text( encoding='utf-8' ) )
+			local_data[ key ]=json.loads( path.read_text( encoding='utf-8' ) )
 		
 		if has_valid_coordinates( latitude, longitude ):
 			default_latitude = float( latitude )
 			default_longitude = float( longitude )
 		else:
-			default_latitude = get_global_latitude_default( )
-			default_longitude = get_global_longitude_default( )
+			default_latitude = get_default_latitude( )
+			default_longitude = get_default_longitude( )
 		
 		if location is not None and str( location ).strip( ):
 			default_location = str( location ).strip( )
 		else:
-			default_location = get_global_location_default( )
+			default_location = get_default_location( )
 		
 		default_zoom = int( zoom if zoom is not None else st.session_state.get( 'zoom', 8 ) or 8 )
 		default_payload = {
@@ -744,9 +743,9 @@ def set_coordinates( latitude: object, longitude: object ) -> None:
 	lat_value = float( latitude )
 	lon_value = float( longitude )
 	
-	st.session_state[ 'latitude' ] = lat_value
-	st.session_state[ 'longitude' ] = lon_value
-	st.session_state[ 'coordinates' ] = (lat_value, lon_value)
+	st.session_state[ 'latitude' ]=lat_value
+	st.session_state[ 'longitude' ]=lon_value
+	st.session_state[ 'coordinates' ]=(lat_value, lon_value)
 
 def get_location_state( ) -> Dict[ str, object ]:
 	"""
@@ -764,8 +763,7 @@ def get_location_state( ) -> Dict[ str, object ]:
 		Dict[str, object]: Dictionary containing global geospatial state values.
 		
 	"""
-	return {
-			'coordinates': st.session_state.get( 'coordinates', ( ) ),
+	return { 'coordinates': st.session_state.get( 'coordinates', ( ) ),
 			'latitude': st.session_state.get( 'latitude', 0.0 ),
 			'longitude': st.session_state.get( 'longitude', 0.0 ),
 			'location': st.session_state.get( 'location', '' ),
@@ -785,10 +783,10 @@ def get_location_state( ) -> Dict[ str, object ]:
 			'calendar_date': st.session_state.get( 'calendar_date', dt.date.today( ) ),
 	}
 
-def set_location_state( location: Optional[ str ] = None, city: Optional[ str ] = None,
-		state: Optional[ str ] = None, country: Optional[ str ] = None,
-		zipcode: Optional[ str ] = None, description: Optional[ str ] = None,
-		latitude: Optional[ float ] = None, longitude: Optional[ float ] = None ) -> None:
+def set_location_state( location: Optional[ str ]=None, city: Optional[ str ]=None,
+		state: Optional[ str ]=None, country: Optional[ str ]=None,
+		zipcode: Optional[ str ]=None, description: Optional[ str ]=None,
+		latitude: Optional[ float ]=None, longitude: Optional[ float ]=None ) -> None:
 	"""
 	
 		Purpose:
@@ -812,22 +810,22 @@ def set_location_state( location: Optional[ str ] = None, city: Optional[ str ] 
 		
 	"""
 	if location is not None:
-		st.session_state[ 'location' ] = str( location ).strip( )
+		st.session_state[ 'location' ]=str( location ).strip( )
 	
 	if city is not None:
-		st.session_state[ 'city' ] = str( city ).strip( )
+		st.session_state[ 'city' ]=str( city ).strip( )
 	
 	if state is not None:
-		st.session_state[ 'state' ] = str( state ).strip( )
+		st.session_state[ 'state' ]=str( state ).strip( )
 	
 	if country is not None:
-		st.session_state[ 'country' ] = str( country ).strip( )
+		st.session_state[ 'country' ]=str( country ).strip( )
 	
 	if zipcode is not None:
-		st.session_state[ 'zipcode' ] = str( zipcode ).strip( )
+		st.session_state[ 'zipcode' ]=str( zipcode ).strip( )
 	
 	if description is not None:
-		st.session_state[ 'description' ] = str( description ).strip( )
+		st.session_state[ 'description' ]=str( description ).strip( )
 	
 	if latitude is not None and longitude is not None:
 		set_coordinates( latitude, longitude )
@@ -894,7 +892,7 @@ def resolve_table_name( requested: str, tables: List[ str ] ) -> Optional[ str ]
 	
 	return None
 
-def get_global_location_default( fallback: str = 'Washington, DC' ) -> str:
+def get_default_location( fallback: str='Washington, DC' ) -> str:
 	"""
 	
 		Purpose:
@@ -917,7 +915,7 @@ def get_global_location_default( fallback: str = 'Washington, DC' ) -> str:
 	
 	return fallback
 
-def get_global_zipcode_default( fallback: str = '20001' ) -> str:
+def get_default_zipcode( fallback: str='20001' ) -> str:
 	"""
 	
 		Purpose:
@@ -939,7 +937,7 @@ def get_global_zipcode_default( fallback: str = '20001' ) -> str:
 	
 	return fallback
 
-def get_global_latitude_default( fallback: float = 38.907200 ) -> float:
+def get_default_latitude( fallback: float=38.907200 ) -> float:
 	"""
 	
 		Purpose:
@@ -960,7 +958,7 @@ def get_global_latitude_default( fallback: float = 38.907200 ) -> float:
 	
 	return float( fallback )
 
-def get_global_longitude_default( fallback: float = -77.036900 ) -> float:
+def get_default_longitude( fallback: float=-77.036900 ) -> float:
 	"""
 	
 		Purpose:
@@ -982,7 +980,7 @@ def get_global_longitude_default( fallback: float = -77.036900 ) -> float:
 	return float( fallback )
 
 def set_global_coordinates_from_result( latitude: object, longitude: object,
-		location: Optional[ str ] = None, description: Optional[ str ] = None ) -> None:
+		location: Optional[ str ]=None, description: Optional[ str ]=None ) -> None:
 	"""
 	
 		Purpose:
@@ -1011,7 +1009,7 @@ def set_global_coordinates_from_result( latitude: object, longitude: object,
 		longitude=float( longitude ) )
 
 def create_bounding_box_from_center( latitude: object, longitude: object,
-		delta: float = 0.125 ) -> Dict[ str, float ]:
+		delta: float=0.125 ) -> Dict[ str, float ]:
 	"""
 	
 		Purpose:
@@ -1030,8 +1028,8 @@ def create_bounding_box_from_center( latitude: object, longitude: object,
 			and southeast coordinate keys.
 		
 	"""
-	lat_value = get_global_latitude_default( )
-	lng_value = get_global_longitude_default( )
+	lat_value = get_default_latitude( )
+	lng_value = get_default_longitude( )
 	
 	if has_valid_coordinates( latitude, longitude ):
 		lat_value = float( latitude )
@@ -1093,7 +1091,7 @@ def get_geolocation_error_message( error_code: object, error_message: object ) -
 	
 	return 'Browser geolocation failed.'
 
-def update_location_state_from_browser_geolocation( geo: Dict[ str, object ] ) -> bool:
+def update_location_from_browser( geo: Dict[ str, object ] ) -> bool:
 	"""
 	
 		Purpose:
@@ -1122,20 +1120,20 @@ def update_location_state_from_browser_geolocation( geo: Dict[ str, object ] ) -
 				error_code = error.get( 'code', None )
 				error_message = error.get( 'message', '' )
 			
-			st.session_state[ 'browser_geolocation_error' ] = get_geolocation_error_message(
+			st.session_state[ 'browser_geolocation_error' ]=get_geolocation_error_message(
 				error_code,
 				error_message )
 			
 			if error_code == 1:
-				st.session_state[ 'browser_geolocation_permission_denied' ] = True
+				st.session_state[ 'browser_geolocation_permission_denied' ]=True
 			
-			st.session_state[ 'browser_geolocation_loaded' ] = False
+			st.session_state[ 'browser_geolocation_loaded' ]=False
 			return False
 		
 		coords = geo.get( 'coords', { } )
 		
 		if not coords:
-			st.session_state[ 'browser_geolocation_error' ] = (
+			st.session_state[ 'browser_geolocation_error' ]=(
 					'Browser geolocation did not return coordinates.')
 			return False
 		
@@ -1144,7 +1142,7 @@ def update_location_state_from_browser_geolocation( geo: Dict[ str, object ] ) -
 		accuracy = coords.get( 'accuracy', None )
 		
 		if not has_valid_coordinates( latitude, longitude ):
-			st.session_state[ 'browser_geolocation_error' ] = (
+			st.session_state[ 'browser_geolocation_error' ]=(
 					'Browser geolocation returned invalid coordinates.')
 			return False
 		
@@ -1153,15 +1151,15 @@ def update_location_state_from_browser_geolocation( geo: Dict[ str, object ] ) -
 			latitude=float( latitude ),
 			longitude=float( longitude ) )
 		
-		st.session_state[ 'browser_geolocation' ] = geo
-		st.session_state[ 'browser_geolocation_loaded' ] = True
-		st.session_state[ 'browser_geolocation_permission_denied' ] = False
-		st.session_state[ 'browser_geolocation_error' ] = ''
+		st.session_state[ 'browser_geolocation' ]=geo
+		st.session_state[ 'browser_geolocation_loaded' ]=True
+		st.session_state[ 'browser_geolocation_permission_denied' ]=False
+		st.session_state[ 'browser_geolocation_error' ]=''
 		
 		return True
 	
 	except Exception as ex:
-		st.session_state[ 'browser_geolocation_error' ] = str( ex )
+		st.session_state[ 'browser_geolocation_error' ]=str( ex )
 		return False
 
 def bootstrap_browser_geolocation( geocoder: Geocoder ) -> None:
@@ -1197,7 +1195,7 @@ def bootstrap_browser_geolocation( geocoder: Geocoder ) -> None:
 		if not geo_payload:
 			return
 		
-		updated = update_location_state_from_browser_geolocation( geo_payload )
+		updated = update_location_from_browser( geo_payload )
 		
 		if not updated:
 			return
@@ -1212,23 +1210,23 @@ def bootstrap_browser_geolocation( geocoder: Geocoder ) -> None:
 					geocoder.freeform( location_text )
 					
 					if not st.session_state.get( 'location', '' ):
-						st.session_state[ 'location' ] = location_text
+						st.session_state[ 'location' ]=location_text
 					
-					st.session_state[ 'browser_geolocation_reverse_geocoded' ] = True
+					st.session_state[ 'browser_geolocation_reverse_geocoded' ]=True
 				
 				except Exception:
-					st.session_state[ 'location' ] = (
+					st.session_state[ 'location' ]=(
 							f'{float( latitude ):.6f},{float( longitude ):.6f}')
 		
 		st.rerun( )
 	
 	except Exception as ex:
-		st.session_state[ 'browser_geolocation_error' ] = str( ex )
+		st.session_state[ 'browser_geolocation_error' ]=str( ex )
 
 # ------------- VISUALIZATION UTILITIES
 
-def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] = None,
-		use_user_location: bool = True, key_prefix: str = 'reports_map' ) -> None:
+def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ]=None,
+		use_user_location: bool=True, key_prefix: str='reports_map' ) -> None:
 	"""
 	
 		Purpose:
@@ -1274,8 +1272,8 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] =
 		df_base_map = pd.DataFrame( )
 		
 		if not df_source.empty:
-			df_source[ 'Latitude' ] = pd.to_numeric( df_source[ 'Latitude' ], errors='coerce' )
-			df_source[ 'Longitude' ] = pd.to_numeric( df_source[ 'Longitude' ], errors='coerce' )
+			df_source[ 'Latitude' ]=pd.to_numeric( df_source[ 'Latitude' ], errors='coerce' )
+			df_source[ 'Longitude' ]=pd.to_numeric( df_source[ 'Longitude' ], errors='coerce' )
 			
 			base_mask = (df_source[ 'Latitude' ].notna( )
 			             & df_source[ 'Longitude' ].notna( )
@@ -1291,10 +1289,10 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] =
 		df_overlay_map = pd.DataFrame( )
 		
 		if not df_overlay_source.empty:
-			df_overlay_source[ 'Latitude' ] = pd.to_numeric( df_overlay_source[ 'Latitude' ],
+			df_overlay_source[ 'Latitude' ]=pd.to_numeric( df_overlay_source[ 'Latitude' ],
 				errors='coerce' )
 			
-			df_overlay_source[ 'Longitude' ] = pd.to_numeric( df_overlay_source[ 'Longitude' ],
+			df_overlay_source[ 'Longitude' ]=pd.to_numeric( df_overlay_source[ 'Longitude' ],
 				errors='coerce' )
 			
 			overlay_mask = (df_overlay_source[ 'Latitude' ].notna( )
@@ -1448,10 +1446,10 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] =
 			
 			for col in [ 'ID', 'CalendarDate', 'City', 'State', 'Country', 'Shape', 'Summary' ]:
 				if col not in df_target.columns:
-					df_target[ col ] = ''
+					df_target[ col ]=''
 			
-			df_target[ 'MapSummary' ] = df_target[ 'Summary' ].astype( str ).str.slice( 0, 300 )
-			df_target[ 'Position' ] = df_target.apply(
+			df_target[ 'MapSummary' ]=df_target[ 'Summary' ].astype( str ).str.slice( 0, 300 )
+			df_target[ 'Position' ]=df_target.apply(
 				lambda row: [ float( row[ 'Longitude' ] ), float( row[ 'Latitude' ] ) ],
 				axis=1 )
 		
@@ -1725,7 +1723,7 @@ def count_missing_report_coordinate_rows( table_name: str ) -> int:
 		st.error( f'Unable to count missing coordinate rows: {e}' )
 		return 0
 
-def read_missing_report_locations( table_name: str, limit: Optional[ int ] = None ) -> pd.DataFrame:
+def read_missing_report_locations( table_name: str, limit: Optional[ int ]=None ) -> pd.DataFrame:
 	"""
 	
 		Purpose:
@@ -1779,7 +1777,7 @@ def read_missing_report_locations( table_name: str, limit: Optional[ int ] = Non
 		return pd.DataFrame( )
 
 def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, places: Place,
-		use_places: bool = True, limit: Optional[ int ] = None ) -> pd.DataFrame:
+		use_places: bool=True, limit: Optional[ int ]=None ) -> pd.DataFrame:
 	"""
 	
 		Purpose:
@@ -1809,7 +1807,7 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 		if df_locations.empty:
 			return pd.DataFrame( )
 		
-		records: List[ Dict[ str, object ] ] = [ ]
+		records: List[ Dict[ str, object ] ]=[ ]
 		
 		for row in df_locations.itertuples( index=False ):
 			query = compose_location_query( row.City, row.State, row.Country )
@@ -1828,8 +1826,8 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 			}
 			
 			if not query:
-				record[ 'Status' ] = 'Skipped'
-				record[ 'Message' ] = 'Location query could not be composed.'
+				record[ 'Status' ]='Skipped'
+				record[ 'Message' ]='Location query could not be composed.'
 				records.append( record )
 				continue
 			
@@ -1840,11 +1838,11 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 				if latitude is None or longitude is None:
 					raise NotFound( 'No usable coordinates returned by Geocoder.' )
 				
-				record[ 'Latitude' ] = latitude
-				record[ 'Longitude' ] = longitude
-				record[ 'Source' ] = 'Geocoder'
-				record[ 'Status' ] = 'Matched'
-				record[ 'Message' ] = 'Resolved by Geocoder.'
+				record[ 'Latitude' ]=latitude
+				record[ 'Longitude' ]=longitude
+				record[ 'Source' ]='Geocoder'
+				record[ 'Status' ]='Matched'
+				record[ 'Message' ]='Resolved by Geocoder.'
 			
 			except NotFound as e:
 				if use_places and places is not None:
@@ -1853,29 +1851,29 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 						latitude, longitude = extract_coordinates( result )
 						
 						if latitude is None or longitude is None:
-							record[ 'Source' ] = 'Places'
-							record[ 'Status' ] = 'Failed'
-							record[ 'Message' ] = 'No usable coordinates returned by Places.'
+							record[ 'Source' ]='Places'
+							record[ 'Status' ]='Failed'
+							record[ 'Message' ]='No usable coordinates returned by Places.'
 						else:
-							record[ 'Latitude' ] = latitude
-							record[ 'Longitude' ] = longitude
-							record[ 'Source' ] = 'Places'
-							record[ 'Status' ] = 'Matched'
-							record[ 'Message' ] = 'Resolved by Places fallback.'
+							record[ 'Latitude' ]=latitude
+							record[ 'Longitude' ]=longitude
+							record[ 'Source' ]='Places'
+							record[ 'Status' ]='Matched'
+							record[ 'Message' ]='Resolved by Places fallback.'
 					
 					except Exception as ex:
-						record[ 'Source' ] = 'Places'
-						record[ 'Status' ] = 'Failed'
-						record[ 'Message' ] = str( ex )
+						record[ 'Source' ]='Places'
+						record[ 'Status' ]='Failed'
+						record[ 'Message' ]=str( ex )
 				else:
-					record[ 'Source' ] = 'Geocoder'
-					record[ 'Status' ] = 'Failed'
-					record[ 'Message' ] = str( e )
+					record[ 'Source' ]='Geocoder'
+					record[ 'Status' ]='Failed'
+					record[ 'Message' ]=str( e )
 			
 			except Exception as e:
-				record[ 'Source' ] = 'Geocoder'
-				record[ 'Status' ] = 'Failed'
-				record[ 'Message' ] = str( e )
+				record[ 'Source' ]='Geocoder'
+				record[ 'Status' ]='Failed'
+				record[ 'Message' ]=str( e )
 			
 			records.append( record )
 		
@@ -1917,8 +1915,8 @@ def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame )
 		
 		df_apply = df_updates.copy( )
 		df_apply = df_apply[ df_apply[ 'Status' ].astype( str ).str.lower( ) == 'matched' ]
-		df_apply[ 'Latitude' ] = pd.to_numeric( df_apply[ 'Latitude' ], errors='coerce' )
-		df_apply[ 'Longitude' ] = pd.to_numeric( df_apply[ 'Longitude' ], errors='coerce' )
+		df_apply[ 'Latitude' ]=pd.to_numeric( df_apply[ 'Latitude' ], errors='coerce' )
+		df_apply[ 'Longitude' ]=pd.to_numeric( df_apply[ 'Longitude' ], errors='coerce' )
 		
 		valid_mask = (
 				df_apply[ 'Latitude' ].notna( )
@@ -2033,9 +2031,9 @@ def append_geocoding_map_result( query: str, source: str, result: object ) -> No
 		df_current = st.session_state.get( 'df_geocoding_map_results', pd.DataFrame( ) )
 		
 		if df_current is None or df_current.empty:
-			st.session_state[ 'df_geocoding_map_results' ] = df_new
+			st.session_state[ 'df_geocoding_map_results' ]=df_new
 		else:
-			st.session_state[ 'df_geocoding_map_results' ] = pd.concat(
+			st.session_state[ 'df_geocoding_map_results' ]=pd.concat(
 				[ df_current, df_new ],
 				ignore_index=True )
 	
@@ -2147,7 +2145,7 @@ def create_schema( table: str ) -> List[ Tuple ]:
 	with create_connection( ) as conn:
 		return conn.execute( f'PRAGMA table_info("{table}");' ).fetchall( )
 
-def read_table( table: str, limit: int = None, offset: int = 0 ) -> pd.DataFrame:
+def read_table( table: str, limit: int=None, offset: int=0 ) -> pd.DataFrame:
 	"""
 	
 		Purpose:
@@ -2158,9 +2156,9 @@ def read_table( table: str, limit: int = None, offset: int = 0 ) -> pd.DataFrame
 		-----------
 		table : str
 			Table name.
-		limit : int = None
+		limit : int=None
 			Optional row limit.
-		offset : int = 0
+		offset : int=0
 			Optional row offset.
 	
 		Returns:
@@ -2183,13 +2181,13 @@ def read_table( table: str, limit: int = None, offset: int = 0 ) -> pd.DataFrame
 		raw_columns = [ d[ 0 ] for d in (cur.description or [ ]) ]
 		rows = cur.fetchall( )
 	
-	seen: Dict[ str, int ] = { }
-	columns: List[ str ] = [ ]
+	seen: Dict[ str, int ]={ }
+	columns: List[ str ]=[ ]
 	
 	for col in raw_columns:
 		name = str( col )
 		if name not in seen:
-			seen[ name ] = 0
+			seen[ name ]=0
 			columns.append( name )
 		else:
 			seen[ name ] += 1
@@ -2219,11 +2217,11 @@ def read_table( table: str, limit: int = None, offset: int = 0 ) -> pd.DataFrame
 		
 		return str( value )
 	
-	normalized_rows: List[ Dict[ str, Any ] ] = [ ]
+	normalized_rows: List[ Dict[ str, Any ] ]=[ ]
 	for row in rows:
-		record: Dict[ str, Any ] = { }
+		record: Dict[ str, Any ]={ }
 		for idx, col in enumerate( columns ):
-			record[ col ] = _scalarize( row[ idx ] )
+			record[ col ]=_scalarize( row[ idx ] )
 		normalized_rows.append( record )
 	
 	return pd.DataFrame( normalized_rows, columns=columns )
@@ -2260,7 +2258,7 @@ def render_table( df: pd.DataFrame ) -> None:
 	fallback_df = fallback_df.where( pd.notnull( fallback_df ), '' )
 	
 	for col in fallback_df.columns:
-		fallback_df[ col ] = fallback_df[ col ].map(
+		fallback_df[ col ]=fallback_df[ col ].map(
 			lambda x: x if isinstance( x, (str, int, float, bool) ) or x == '' else str( x ) )
 	
 	st.markdown( fallback_df.to_html( index=False, escape=True ), unsafe_allow_html=True )
@@ -2269,9 +2267,7 @@ def make_display_safe( df: pd.DataFrame ) -> pd.DataFrame:
 	display_df = df.copy( )
 	
 	for col in display_df.columns:
-		display_df[ col ] = display_df[ col ].map(
-			lambda x: '' if x is None else str( x )
-		)
+		display_df[ col ]=display_df[ col ].map( lambda x: '' if x is None else str( x ) )
 	
 	return display_df
 
@@ -2373,9 +2369,7 @@ def apply_filters( df: pd.DataFrame ) -> pd.DataFrame:
 
 def create_aggregation( df: pd.DataFrame ):
 	st.subheader( 'Aggregation Engine' )
-	
 	numeric_cols = df.select_dtypes( include=[ 'number' ] ).columns.tolist( )
-	
 	if not numeric_cols:
 		st.info( 'No numeric columns available.' )
 		return
@@ -2429,15 +2423,15 @@ def create_visualization( df: pd.DataFrame ) -> None:
 	
 	for col in df_plot.columns:
 		if df_plot[ col ].dtype == object:
-			df_plot[ col ] = df_plot[ col ].map( lambda x: '' if x is None else str( x ) )
+			df_plot[ col ]=df_plot[ col ].map( lambda x: '' if x is None else str( x ) )
 	
-	numeric_cols: List[ str ] = [ ]
+	numeric_cols: List[ str ]=[ ]
 	for col in df_plot.columns:
 		series_num = pd.to_numeric( df_plot[ col ], errors='coerce' )
 		if series_num.notna( ).any( ):
 			numeric_cols.append( col )
 	
-	categorical_cols: List[ str ] = [ col for col in df_plot.columns if col not in numeric_cols ]
+	categorical_cols: List[ str ]=[ col for col in df_plot.columns if col not in numeric_cols ]
 	
 	chart = st.selectbox( 'Chart Type',
 		[ 'Histogram', 'Bar', 'Line', 'Scatter', 'Box', 'Pie', 'Correlation' ] )
@@ -2534,7 +2528,7 @@ def create_visualization( df: pd.DataFrame ) -> None:
 		
 		corr_df = pd.DataFrame( )
 		for col in numeric_cols:
-			corr_df[ col ] = pd.to_numeric( df_plot[ col ], errors='coerce' )
+			corr_df[ col ]=pd.to_numeric( df_plot[ col ], errors='coerce' )
 		
 		corr = corr_df.corr( )
 		
@@ -2553,7 +2547,6 @@ def convert_dataframe( table_name: str, df: pd.DataFrame ):
 		columns.append( f'{safe_col} {sql_type}' )
 	
 	create_stmt = f'CREATE TABLE IF NOT EXISTS {table_name} ({", ".join( columns )});'
-	
 	with create_connection( ) as conn:
 		conn.execute( create_stmt )
 		conn.commit( )
@@ -2561,10 +2554,8 @@ def convert_dataframe( table_name: str, df: pd.DataFrame ):
 def insert_data( table_name: str, df: pd.DataFrame ):
 	df = df.copy( )
 	df.columns = [ c.replace( ' ', '_' ) for c in df.columns ]
-	
 	placeholders = ', '.join( [ '?' ] * len( df.columns ) )
 	stmt = f'INSERT INTO {table_name} VALUES ({placeholders});'
-	
 	with create_connection( ) as conn:
 		conn.executemany( stmt, df.values.tolist( ) )
 		conn.commit( )
@@ -2841,7 +2832,7 @@ def rename_column( table_name: str, old_name: str, new_name: str ) -> None:
 		
 		temp_table = f"{table_name}__rebuild_temp"
 		
-		col_defs: List[ str ] = [ ]
+		col_defs: List[ str ]=[ ]
 		pk_cols = [ r for r in schema if int( r[ 5 ] or 0 ) > 0 ]
 		single_pk = len( pk_cols ) == 1
 		
@@ -2906,13 +2897,13 @@ def create_profile_table( table: str ):
 			}
 		
 		if pd.api.types.is_numeric_dtype( series ):
-			row[ 'min' ] = series.min( )
-			row[ 'max' ] = series.max( )
-			row[ 'mean' ] = series.mean( )
+			row[ 'min' ]=series.min( )
+			row[ 'max' ]=series.max( )
+			row[ 'mean' ]=series.mean( )
 		else:
-			row[ 'min' ] = None
-			row[ 'max' ] = None
-			row[ 'mean' ] = None
+			row[ 'min' ]=None
+			row[ 'max' ]=None
+			row[ 'mean' ]=None
 		
 		profile_rows.append( row )
 	
@@ -3165,14 +3156,15 @@ def store_loaded_dataset( df_dataset: pd.DataFrame,
 	df_source = df_dataset.copy( )
 	df_base = df_original.copy( ) if isinstance( df_original, pd.DataFrame ) else df_source.copy( )
 	
-	st.session_state[ 'df_raw' ] = df_source.copy( )
-	st.session_state[ 'df_original' ] = df_base.copy( )
-	st.session_state[ 'df_dataset' ] = df_source.copy( )
+	st.session_state[ 'df_raw' ]=df_source.copy( )
+	st.session_state[ 'df_original' ]=df_base.copy( )
+	st.session_state[ 'df_dataset' ]=df_source.copy( )
 
 # ---------------------------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------------------------
-st.set_page_config( page_title='Iyrin', layout='wide', page_icon=cfg.FAVICON,
+
+st.set_page_config( page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
 	initial_sidebar_state='expanded', )
 
 style_subheaders( )
@@ -3180,6 +3172,7 @@ style_subheaders( )
 # ==============================================================================
 # SIDEBAR
 # ==============================================================================
+
 st.logo( cfg.LOGO, size='Large' )
 
 with st.sidebar:
@@ -3189,13 +3182,13 @@ with st.sidebar:
 	with st.expander( 'Mode', expanded=True ):
 		mode = st.radio( label='Mode', options=cfg.MODES, label_visibility='collapsed' )
 		if mode:
-			st.session_state[ 'mode' ] = mode
+			st.session_state[ 'mode' ]=mode
 		else:
-			st.sessionn_state[ 'mode' ] = 'Geocoding'
+			st.sessionn_state[ 'mode' ]='Geocoding'
 		
 		previous_mode = st.session_state.get( 'previous_mode', None )
 		if previous_mode != mode:
-			st.session_state[ 'previous_mode' ] = mode
+			st.session_state[ 'previous_mode' ]=mode
 			st.rerun( )
 	
 	# -------- Settings
@@ -3224,11 +3217,11 @@ with st.sidebar:
 			st.warning( error )
 		
 		if st.button( 'Reset', key='browser_geolocation_reset', width='stretch' ):
-			st.session_state[ 'browser_geolocation' ] = None
-			st.session_state[ 'browser_geolocation_loaded' ] = False
-			st.session_state[ 'browser_geolocation_reverse_geocoded' ] = False
-			st.session_state[ 'browser_geolocation_error' ] = ''
-			st.session_state[ 'browser_geolocation_permission_denied' ] = False
+			st.session_state[ 'browser_geolocation' ]=None
+			st.session_state[ 'browser_geolocation_loaded' ]=False
+			st.session_state[ 'browser_geolocation_reverse_geocoded' ]=False
+			st.session_state[ 'browser_geolocation_error' ]=''
+			st.session_state[ 'browser_geolocation_permission_denied' ]=False
 			st.rerun( )
 	
 	# ------- Query
@@ -3239,7 +3232,7 @@ with st.sidebar:
 	with st.expander( label='Persistence', expanded=False ):
 		cache_backend = st.selectbox( 'Select', options=[ 'none', 'memory', 'sqlite' ],
 			key='cache_backend' )
-		cache: Optional[ object ] = None
+		cache: Optional[ object ]=None
 		if cache_backend == 'memory':
 			cache = InMemoryCache( )
 		elif cache_backend == 'sqlite':
@@ -3329,7 +3322,7 @@ with st.sidebar:
 		
 		if google_key:
 			st.session_state.google_api_key = google_key
-			os.environ[ 'GOOGLE_API_KEY' ] = google_key
+			os.environ[ 'GOOGLE_API_KEY' ]=google_key
 		
 		googlemaps_key = st.text_input( 'Google Maps API Key', type='password',
 			value=st.session_state.googlemaps_api_key or '',
@@ -3337,7 +3330,7 @@ with st.sidebar:
 		
 		if googlemaps_key:
 			st.session_state.googlemaps_api_key = googlemaps_key
-			os.environ[ 'GOOGLEMAPS_API_KEY' ] = googlemaps_key
+			os.environ[ 'GOOGLEMAPS_API_KEY' ]=googlemaps_key
 		
 		googleweather_key = st.text_input( 'Google Weather API Key', type='password',
 			value=st.session_state.google_weather_api_key or '',
@@ -3345,7 +3338,7 @@ with st.sidebar:
 		
 		if googleweather_key:
 			st.session_state.google_weather_api_key = googleweather_key
-			os.environ[ 'GOOGLE_WEATHER_API_KEY' ] = googleweather_key
+			os.environ[ 'GOOGLE_WEATHER_API_KEY' ]=googleweather_key
 		
 		geocoding_key = st.text_input( 'Geocoding API Key', type='password',
 			value=st.session_state.geocoding_api_key or '',
@@ -3353,7 +3346,7 @@ with st.sidebar:
 		
 		if geocoding_key:
 			st.session_state.geocoding_api_key = geocoding_key
-			os.environ[ 'GEOCODING_API_KEY' ] = geocoding_key
+			os.environ[ 'GEOCODING_API_KEY' ]=geocoding_key
 		
 		google_cse_id = st.text_input( 'Google Custom Search ID', type='password',
 			value=st.session_state.google_cse_id or '',
@@ -3361,7 +3354,7 @@ with st.sidebar:
 		
 		if google_cse_id:
 			st.session_state.google_cse_id = google_cse_id
-			os.environ[ 'GOOGLE_CSE_ID' ] = google_cse_id
+			os.environ[ 'GOOGLE_CSE_ID' ]=google_cse_id
 		
 		govinfo_key = st.text_input( 'Gov Info API', type='password',
 			value=st.session_state.govinfo_api_key or '',
@@ -3369,7 +3362,7 @@ with st.sidebar:
 		
 		if govinfo_key:
 			st.session_state.govinfo_api_key = govinfo_key
-			os.environ[ 'GOVINFO_API_KEY' ] = govinfo_key
+			os.environ[ 'GOVINFO_API_KEY' ]=govinfo_key
 		
 		airnow_key = st.text_input( 'Air Quality Now', type='password',
 			value=st.session_state.airnow_api_key or '',
@@ -3377,7 +3370,7 @@ with st.sidebar:
 		
 		if airnow_key:
 			st.session_state.airnow_api_key = airnow_key
-			os.environ[ 'AIRNOW_API_KEY' ] = airnow_key
+			os.environ[ 'AIRNOW_API_KEY' ]=airnow_key
 		
 		nasa_key = st.text_input( 'NASA API Key', type='password',
 			value=st.session_state.nasa_api_key or '',
@@ -3385,7 +3378,7 @@ with st.sidebar:
 		
 		if nasa_key:
 			st.session_state.nasa_api_key = nasa_key
-			os.environ[ 'NASA_API_KEY' ] = nasa_key
+			os.environ[ 'NASA_API_KEY' ]=nasa_key
 		
 		nasa_token = st.text_input( 'NASA Earth Data', type='password',
 			value=st.session_state.nasa_earthdata_token or '',
@@ -3393,7 +3386,7 @@ with st.sidebar:
 		
 		if nasa_token:
 			st.session_state.nasa_earthdata_token = nasa_token
-			os.environ[ 'NASA_EARTHDATA_TOKEN' ] = nasa_token
+			os.environ[ 'NASA_EARTHDATA_TOKEN' ]=nasa_token
 		
 		openaq_key = st.text_input( 'Open Air Quality', type='password',
 			value=st.session_state.openaq_api_key or '',
@@ -3401,7 +3394,7 @@ with st.sidebar:
 		
 		if openaq_key:
 			st.session_state.openaq_api_key = openaq_key
-			os.environ[ 'AIRNOW_API_KEY' ] = openaq_key
+			os.environ[ 'AIRNOW_API_KEY' ]=openaq_key
 		
 		opensky_client = st.text_input( 'Open Sky Client ID', type='password',
 			value=st.session_state.opensky_api_client_id or '',
@@ -3409,7 +3402,7 @@ with st.sidebar:
 		
 		if opensky_client:
 			st.session_state.opensky_api_client_id = opensky_client
-			os.environ[ 'OPENSKY_API_CLIENT_ID' ] = opensky_client
+			os.environ[ 'OPENSKY_API_CLIENT_ID' ]=opensky_client
 		
 		firms_key = st.text_input( 'FIRMS Map Client', type='password',
 			value=st.session_state.opensky_api_client_id or '',
@@ -3417,7 +3410,7 @@ with st.sidebar:
 		
 		if firms_key:
 			st.session_state.firms_map_key = firms_key
-			os.environ[ 'FIRMS_MAP_KEY' ] = firms_key
+			os.environ[ 'FIRMS_MAP_KEY' ]=firms_key
 		
 		opensky_credentials = st.text_input( 'Open Sky Credentials', type='password',
 			value=st.session_state.opensky_api_credentials or '',
@@ -3425,7 +3418,7 @@ with st.sidebar:
 		
 		if opensky_client:
 			st.session_state.opensky_api_credentials = opensky_credentials
-			os.environ[ 'OPENSKY_API_CREDENTIALS' ] = opensky_credentials
+			os.environ[ 'OPENSKY_API_CREDENTIALS' ]=opensky_credentials
 		
 		purpleair_key = st.text_input( 'Purple Air API', type='password',
 			value=st.session_state.purpleair_api_key or '',
@@ -3433,7 +3426,7 @@ with st.sidebar:
 		
 		if purpleair_key:
 			st.session_state.purpleair_key = purpleair_key
-			os.environ[ 'PURPLEAIR_API_KEY' ] = purpleair_key
+			os.environ[ 'PURPLEAIR_API_KEY' ]=purpleair_key
 	
 	maps = Maps( qps=qps, )
 	distances = DistanceMatrix( maps )
@@ -3467,7 +3460,7 @@ if mode == 'Geocoding':
 			with geosub_c2:
 				if st.button( label='Clear Map Results', icon='💫', width='stretch',
 						key='clear_map_results' ):
-					st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
+					st.session_state[ 'df_geocoding_map_results' ]=pd.DataFrame( )
 					st.rerun( )
 		
 		with geo_c1:
@@ -3577,7 +3570,7 @@ elif mode == 'Distances':
 		st.subheader( 'Distance Matrix' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
+		global_location = get_default_location( )
 		location_state = get_location_state( )
 		current_location = compose_location_from_state( )
 		
@@ -3635,11 +3628,11 @@ elif mode == 'Distances':
 			else:
 				try:
 					if update_global_route:
-						st.session_state[ 'origin' ] = str( origin ).strip( )
-						st.session_state[ 'destination' ] = str( destination ).strip( )
+						st.session_state[ 'origin' ]=str( origin ).strip( )
+						st.session_state[ 'destination' ]=str( destination ).strip( )
 					
 					summary = distances.summary( origin, destination, mode=travel_mode )
-					st.session_state[ 'distance_last_result' ] = summary or { }
+					st.session_state[ 'distance_last_result' ]=summary or { }
 					st.success( 'Distance Matrix request completed.' )
 				
 				except Exception as ex:
@@ -3662,7 +3655,7 @@ elif mode == 'Static Maps':
 		st.subheader( 'Static Map' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
+		global_location = get_default_location( )
 		location_state = get_location_state( )
 		has_global_coords = has_valid_global_coordinates( )
 		
@@ -3735,8 +3728,8 @@ elif mode == 'Static Maps':
 				try:
 					if save_coordinates:
 						set_coordinates( lat, lng )
-						st.session_state[ 'zoom' ] = int( zoom )
-						st.session_state[ 'map_size' ] = str( size )
+						st.session_state[ 'zoom' ]=int( zoom )
+						st.session_state[ 'map_size' ]=str( size )
 					
 					url = static_maps.pin(
 						lat=float( lat ),
@@ -3744,9 +3737,9 @@ elif mode == 'Static Maps':
 						zoom=int( zoom ),
 						size=str( size ) )
 					
-					st.session_state[ 'maps_last_url' ] = url
-					st.session_state[ 'maps_last_latitude' ] = float( lat )
-					st.session_state[ 'maps_last_longitude' ] = float( lng )
+					st.session_state[ 'maps_last_url' ]=url
+					st.session_state[ 'maps_last_latitude' ]=float( lat )
+					st.session_state[ 'maps_last_longitude' ]=float( lng )
 					st.success( 'Static map generated.' )
 				
 				except Exception as ex:
@@ -3769,7 +3762,7 @@ elif mode == 'Time Zones':
 		st.subheader( 'Time Zone Lookup' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
+		global_location = get_default_location( )
 		location_state = get_location_state( )
 		has_global_coords = has_valid_global_coordinates( )
 		
@@ -3852,9 +3845,9 @@ elif mode == 'Time Zones':
 					
 					result = timezone.lookup( float( lat_tz ), float( lng_tz ) )
 					
-					st.session_state[ 'timezone_last_result' ] = result or { }
-					st.session_state[ 'timezone_last_latitude' ] = float( lat_tz )
-					st.session_state[ 'timezone_last_longitude' ] = float( lng_tz )
+					st.session_state[ 'timezone_last_result' ]=result or { }
+					st.session_state[ 'timezone_last_latitude' ]=float( lat_tz )
+					st.session_state[ 'timezone_last_longitude' ]=float( lng_tz )
 					st.success( 'Time zone lookup completed.' )
 				
 				except Exception as ex:
@@ -3888,16 +3881,16 @@ elif mode == 'Site Crawler':
 		st.divider( )
 		
 		if 'webscrape_clear_request' not in st.session_state:
-			st.session_state[ 'webscrape_clear_request' ] = False
+			st.session_state[ 'webscrape_clear_request' ]=False
 		
 		if st.session_state.get( 'webscrape_clear_request', False ):
-			st.session_state[ 'webfetcher_url' ] = ''
-			st.session_state[ 'webscrape_results' ] = [ ]
-			st.session_state[ 'webscrape_summary' ] = { }
-			st.session_state[ 'webscrape_clear_request' ] = False
+			st.session_state[ 'webfetcher_url' ]=''
+			st.session_state[ 'webscrape_results' ]=[ ]
+			st.session_state[ 'webscrape_summary' ]={ }
+			st.session_state[ 'webscrape_clear_request' ]=False
 		
 		def _clear_webscrape_state( ) -> None:
-			st.session_state[ 'webscrape_clear_request' ] = True
+			st.session_state[ 'webscrape_clear_request' ]=True
 		
 		def _coerce_items( value: Any ) -> list[ str ]:
 			if value is None:
@@ -3924,7 +3917,7 @@ elif mode == 'Site Crawler':
 			except Exception:
 				return ''
 		
-		def _truncate_text( text: str, limit: int = 12000 ) -> str:
+		def _truncate_text( text: str, limit: int=12000 ) -> str:
 			if not isinstance( text, str ):
 				return ''
 			if len( text ) <= limit:
@@ -3964,8 +3957,8 @@ elif mode == 'Site Crawler':
 					return [ ]
 				
 				soup = BeautifulSoup( html, 'html.parser' )
-				results: list[ str ] = [ ]
-				seen: set[ str ] = set( )
+				results: list[ str ]=[ ]
+				seen: set[ str ]=set( )
 				for tag in soup.find_all( 'a', href=True ):
 					candidate = _normalize_url( base_url, tag.get( 'href', '' ) )
 					if candidate and candidate not in seen:
@@ -3982,7 +3975,7 @@ elif mode == 'Site Crawler':
 				include_basic_text: bool,
 				include_raw_html: bool,
 				selected_methods: list[ str ] ) -> dict[ str, Any ]:
-			page_result: dict[ str, Any ] = \
+			page_result: dict[ str, Any ]=\
 				{
 						'url': url,
 						'status_code': None,
@@ -4003,27 +3996,27 @@ elif mode == 'Site Crawler':
 					page_result[ 'errors' ].append( 'No response returned.' )
 					return page_result
 				
-				page_result[ 'status_code' ] = getattr( response, 'status_code', None )
-				page_result[ 'encoding' ] = getattr( response, 'encoding', None )
+				page_result[ 'status_code' ]=getattr( response, 'status_code', None )
+				page_result[ 'encoding' ]=getattr( response, 'encoding', None )
 				raw_html = getattr( response, 'text', '' ) or ''
-				page_result[ 'links_discovered' ] = _extract_links_from_html( url, raw_html )
+				page_result[ 'links_discovered' ]=_extract_links_from_html( url, raw_html )
 				if include_title:
-					page_result[ 'title' ] = _extract_title_from_html( raw_html )
+					page_result[ 'title' ]=_extract_title_from_html( raw_html )
 				
 				if include_basic_text:
 					try:
-						page_result[ 'plain_text' ] = fetcher.html_to_text( raw_html ) or ''
+						page_result[ 'plain_text' ]=fetcher.html_to_text( raw_html ) or ''
 					except Exception as exc:
 						page_result[ 'errors' ].append( f'Basic Text: {str( exc )}' )
 				
 				if include_raw_html:
-					page_result[ 'raw_html' ] = raw_html
+					page_result[ 'raw_html' ]=raw_html
 			
 			except Exception as exc:
 				page_result[ 'errors' ].append( f'Fetch: {str( exc )}' )
 				return page_result
 			
-			REGISTRY: dict[ str, tuple[ str, callable ] ] = \
+			REGISTRY: dict[ str, tuple[ str, callable ] ]=\
 				{
 						'scrape_headings': ('Headings', fetcher.scrape_headings),
 						'scrape_paragraphs': ('Paragraphs', fetcher.scrape_paragraphs),
@@ -4044,9 +4037,9 @@ elif mode == 'Site Crawler':
 				label, method = REGISTRY[ method_name ]
 				try:
 					data = method( url )
-					page_result[ 'data' ][ label ] = _coerce_items( data )
+					page_result[ 'data' ][ label ]=_coerce_items( data )
 				except Exception as exc:
-					page_result[ 'data' ][ label ] = [ ]
+					page_result[ 'data' ][ label ]=[ ]
 					page_result[ 'errors' ].append( f'{label}: {str( exc )}' )
 			
 			return page_result
@@ -4061,11 +4054,11 @@ elif mode == 'Site Crawler':
 				max_depth: int,
 				max_pages: int,
 				same_domain_only: bool ) -> tuple[ list[ dict[ str, Any ] ], dict[ str, Any ] ]:
-			results: list[ dict[ str, Any ] ] = [ ]
-			visited: set[ str ] = set( )
-			enqueued: set[ str ] = set( )
-			queue: deque[ tuple[ str, int ] ] = deque( )
-			skipped_urls: list[ str ] = [ ]
+			results: list[ dict[ str, Any ] ]=[ ]
+			visited: set[ str ]=set( )
+			enqueued: set[ str ]=set( )
+			queue: deque[ tuple[ str, int ] ]=deque( )
+			skipped_urls: list[ str ]=[ ]
 			
 			normalized_seed = _normalize_url( seed_url, seed_url )
 			if not normalized_seed:
@@ -4089,7 +4082,7 @@ elif mode == 'Site Crawler':
 					include_raw_html=include_raw_html,
 					selected_methods=selected_methods )
 				
-				page_result[ 'depth' ] = depth
+				page_result[ 'depth' ]=depth
 				results.append( page_result )
 				
 				if not recursive:
@@ -4113,7 +4106,7 @@ elif mode == 'Site Crawler':
 					queue.append( (next_url, depth + 1) )
 					enqueued.add( next_url )
 			
-			summary: dict[ str, Any ] = \
+			summary: dict[ str, Any ]=\
 				{
 						'mode': 'recursive' if recursive else 'single-page',
 						'seed_url': normalized_seed,
@@ -4151,7 +4144,7 @@ elif mode == 'Site Crawler':
 			
 			col1, col2 = st.columns( [ 0.5, 0.5 ] )
 			
-			REGISTRY_LABELS: dict[ str, str ] = \
+			REGISTRY_LABELS: dict[ str, str ]=\
 				{
 						'scrape_headings': 'Headings',
 						'scrape_paragraphs': 'Paragraphs',
@@ -4165,11 +4158,11 @@ elif mode == 'Site Crawler':
 						'scrape_images': 'Images',
 				}
 			
-			selected_methods: list[ str ] = [ ]
+			selected_methods: list[ str ]=[ ]
 			
-			_registry_items: list[ tuple[ str, str ] ] = list( REGISTRY_LABELS.items( ) )
-			_col1_items: list[ tuple[ str, str ] ] = _registry_items[ :5 ]
-			_col2_items: list[ tuple[ str, str ] ] = _registry_items[ 5: ]
+			_registry_items: list[ tuple[ str, str ] ]=list( REGISTRY_LABELS.items( ) )
+			_col1_items: list[ tuple[ str, str ] ]=_registry_items[ :5 ]
+			_col2_items: list[ tuple[ str, str ] ]=_registry_items[ 5: ]
 			
 			with col1:
 				for method_name, label in _col1_items:
@@ -4238,8 +4231,8 @@ elif mode == 'Site Crawler':
 						max_pages=int( max_pages ),
 						same_domain_only=bool( same_domain_only ) )
 					
-					st.session_state[ 'webscrape_results' ] = results
-					st.session_state[ 'webscrape_summary' ] = summary
+					st.session_state[ 'webscrape_results' ]=results
+					st.session_state[ 'webscrape_summary' ]=summary
 					st.rerun( )
 				
 				except Exception as exc:
@@ -4323,9 +4316,9 @@ elif mode == 'Weather':
 		st.subheader( 'Weather Data' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
-		global_latitude = get_global_latitude_default( )
-		global_longitude = get_global_longitude_default( )
+		global_location = get_default_location( )
+		global_latitude = get_default_latitude( )
+		global_longitude = get_default_longitude( )
 		
 		location_c1, location_c2, location_c3 = st.columns( 3, border=True )
 		location_c1.metric( 'Location', global_location )
@@ -4413,10 +4406,10 @@ elif mode == 'Weather':
 								weather_latitude = getattr( weather, 'latitude', None )
 								weather_longitude = getattr( weather, 'longitude', None )
 								
-								st.session_state[ 'weather_last_source' ] = 'Google Weather'
-								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = weather_latitude
-								st.session_state[ 'weather_last_longitude' ] = weather_longitude
+								st.session_state[ 'weather_last_source' ]='Google Weather'
+								st.session_state[ 'weather_last_result' ]=result or { }
+								st.session_state[ 'weather_last_latitude' ]=weather_latitude
+								st.session_state[ 'weather_last_longitude' ]=weather_longitude
 								
 								set_global_coordinates_from_result(
 									weather_latitude,
@@ -4432,10 +4425,10 @@ elif mode == 'Weather':
 				with google_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_google_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ] = ''
-						st.session_state[ 'weather_last_result' ] = { }
-						st.session_state[ 'weather_last_latitude' ] = None
-						st.session_state[ 'weather_last_longitude' ] = None
+						st.session_state[ 'weather_last_source' ]=''
+						st.session_state[ 'weather_last_result' ]={ }
+						st.session_state[ 'weather_last_latitude' ]=None
+						st.session_state[ 'weather_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# OPENWEATHER / OPEN-METEO
@@ -4482,10 +4475,10 @@ elif mode == 'Weather':
 								weather_longitude = getattr( weather, 'longitude', None )
 								
 								st.session_state[
-									'weather_last_source' ] = 'OpenWeather / Open-Meteo'
-								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = weather_latitude
-								st.session_state[ 'weather_last_longitude' ] = weather_longitude
+									'weather_last_source' ]='OpenWeather / Open-Meteo'
+								st.session_state[ 'weather_last_result' ]=result or { }
+								st.session_state[ 'weather_last_latitude' ]=weather_latitude
+								st.session_state[ 'weather_last_longitude' ]=weather_longitude
 								
 								set_global_coordinates_from_result( weather_latitude,
 									weather_longitude, location=open_location,
@@ -4499,10 +4492,10 @@ elif mode == 'Weather':
 				with open_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_open_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ] = ''
-						st.session_state[ 'weather_last_result' ] = { }
-						st.session_state[ 'weather_last_latitude' ] = None
-						st.session_state[ 'weather_last_longitude' ] = None
+						st.session_state[ 'weather_last_source' ]=''
+						st.session_state[ 'weather_last_result' ]={ }
+						st.session_state[ 'weather_last_latitude' ]=None
+						st.session_state[ 'weather_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# HISTORICAL WEATHER
@@ -4550,10 +4543,10 @@ elif mode == 'Weather':
 								weather_latitude = getattr( weather, 'latitude', None )
 								weather_longitude = getattr( weather, 'longitude', None )
 								
-								st.session_state[ 'weather_last_source' ] = 'Historical Weather'
-								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = weather_latitude
-								st.session_state[ 'weather_last_longitude' ] = weather_longitude
+								st.session_state[ 'weather_last_source' ]='Historical Weather'
+								st.session_state[ 'weather_last_result' ]=result or { }
+								st.session_state[ 'weather_last_latitude' ]=weather_latitude
+								st.session_state[ 'weather_last_longitude' ]=weather_longitude
 								
 								set_global_coordinates_from_result(
 									weather_latitude,
@@ -4569,10 +4562,10 @@ elif mode == 'Weather':
 				with historical_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_historical_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ] = ''
-						st.session_state[ 'weather_last_result' ] = { }
-						st.session_state[ 'weather_last_latitude' ] = None
-						st.session_state[ 'weather_last_longitude' ] = None
+						st.session_state[ 'weather_last_source' ]=''
+						st.session_state[ 'weather_last_result' ]={ }
+						st.session_state[ 'weather_last_latitude' ]=None
+						st.session_state[ 'weather_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# CLIMATE DATA
@@ -4702,10 +4695,10 @@ elif mode == 'Weather':
 										time=int( climate_timeout ) )
 							
 							if result is not None:
-								st.session_state[ 'weather_last_source' ] = 'Climate Data'
-								st.session_state[ 'weather_last_result' ] = result or { }
-								st.session_state[ 'weather_last_latitude' ] = None
-								st.session_state[ 'weather_last_longitude' ] = None
+								st.session_state[ 'weather_last_source' ]='Climate Data'
+								st.session_state[ 'weather_last_result' ]=result or { }
+								st.session_state[ 'weather_last_latitude' ]=None
+								st.session_state[ 'weather_last_longitude' ]=None
 								st.success( 'Climate Data request completed.' )
 						
 						except Exception as ex:
@@ -4714,10 +4707,10 @@ elif mode == 'Weather':
 				with climate_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_climate_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ] = ''
-						st.session_state[ 'weather_last_result' ] = { }
-						st.session_state[ 'weather_last_latitude' ] = None
-						st.session_state[ 'weather_last_longitude' ] = None
+						st.session_state[ 'weather_last_source' ]=''
+						st.session_state[ 'weather_last_result' ]={ }
+						st.session_state[ 'weather_last_latitude' ]=None
+						st.session_state[ 'weather_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# TIDES AND CURRENTS
@@ -4810,10 +4803,10 @@ elif mode == 'Weather':
 								interval=tides_interval,
 								time=int( tides_timeout ) )
 							
-							st.session_state[ 'weather_last_source' ] = 'Tides & Currents'
-							st.session_state[ 'weather_last_result' ] = result or { }
-							st.session_state[ 'weather_last_latitude' ] = None
-							st.session_state[ 'weather_last_longitude' ] = None
+							st.session_state[ 'weather_last_source' ]='Tides & Currents'
+							st.session_state[ 'weather_last_result' ]=result or { }
+							st.session_state[ 'weather_last_latitude' ]=None
+							st.session_state[ 'weather_last_longitude' ]=None
 							st.success( 'Tides & Currents request completed.' )
 						
 						except Exception as ex:
@@ -4822,10 +4815,10 @@ elif mode == 'Weather':
 				with tides_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_tides_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ] = ''
-						st.session_state[ 'weather_last_result' ] = { }
-						st.session_state[ 'weather_last_latitude' ] = None
-						st.session_state[ 'weather_last_longitude' ] = None
+						st.session_state[ 'weather_last_source' ]=''
+						st.session_state[ 'weather_last_result' ]={ }
+						st.session_state[ 'weather_last_latitude' ]=None
+						st.session_state[ 'weather_last_longitude' ]=None
 		
 		with weather_c2:
 			# ------------------------------------------------------------------
@@ -4878,10 +4871,10 @@ elif mode == 'Environmental':
 		st.subheader( 'Environmental Data' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
-		global_zipcode = get_global_zipcode_default( )
-		global_latitude = get_global_latitude_default( )
-		global_longitude = get_global_longitude_default( )
+		global_location = get_default_location( )
+		global_zipcode = get_default_zipcode( )
+		global_latitude = get_default_latitude( )
+		global_longitude = get_default_longitude( )
 		global_box = create_bounding_box_from_center( global_latitude, global_longitude )
 		
 		location_c1, location_c2, location_c3, location_c4 = st.columns( 4, border=True )
@@ -4999,10 +4992,10 @@ elif mode == 'Environmental':
 										time=int( airnow_timeout ) )
 							
 							if result is not None:
-								st.session_state[ 'env_last_source' ] = 'AirNow'
-								st.session_state[ 'env_last_result' ] = result or { }
-								st.session_state[ 'env_last_latitude' ] = airnow_latitude
-								st.session_state[ 'env_last_longitude' ] = airnow_longitude
+								st.session_state[ 'env_last_source' ]='AirNow'
+								st.session_state[ 'env_last_result' ]=result or { }
+								st.session_state[ 'env_last_latitude' ]=airnow_latitude
+								st.session_state[ 'env_last_longitude' ]=airnow_longitude
 								
 								set_global_coordinates_from_result(
 									airnow_latitude,
@@ -5011,7 +5004,7 @@ elif mode == 'Environmental':
 									description='AirNow coordinate result' )
 								
 								if airnow_zip:
-									st.session_state[ 'zipcode' ] = str( airnow_zip ).strip( )
+									st.session_state[ 'zipcode' ]=str( airnow_zip ).strip( )
 								
 								st.success( 'AirNow request completed.' )
 						
@@ -5021,10 +5014,10 @@ elif mode == 'Environmental':
 				with airnow_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_airnow_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# UV INDEX
@@ -5117,10 +5110,10 @@ elif mode == 'Environmental':
 										time=int( uv_timeout ) )
 							
 							if result is not None:
-								st.session_state[ 'env_last_source' ] = 'UV Index'
-								st.session_state[ 'env_last_result' ] = result or { }
-								st.session_state[ 'env_last_latitude' ] = None
-								st.session_state[ 'env_last_longitude' ] = None
+								st.session_state[ 'env_last_source' ]='UV Index'
+								st.session_state[ 'env_last_result' ]=result or { }
+								st.session_state[ 'env_last_latitude' ]=None
+								st.session_state[ 'env_last_longitude' ]=None
 								st.success( 'UV Index request completed.' )
 						
 						except Exception as ex:
@@ -5129,10 +5122,10 @@ elif mode == 'Environmental':
 				with uv_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_uv_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# OPENAQ
@@ -5250,10 +5243,10 @@ elif mode == 'Environmental':
 								lat_value = None
 								lng_value = None
 							
-							st.session_state[ 'env_last_source' ] = 'OpenAQ'
-							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = lat_value
-							st.session_state[ 'env_last_longitude' ] = lng_value
+							st.session_state[ 'env_last_source' ]='OpenAQ'
+							st.session_state[ 'env_last_result' ]=result or { }
+							st.session_state[ 'env_last_latitude' ]=lat_value
+							st.session_state[ 'env_last_longitude' ]=lng_value
 							
 							set_global_coordinates_from_result(
 								lat_value,
@@ -5269,10 +5262,10 @@ elif mode == 'Environmental':
 				with openaq_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_openaq_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# PURPLEAIR SENSORS
@@ -5397,10 +5390,10 @@ elif mode == 'Environmental':
 									sensor_index=int( purple_sensor_index ),
 									time=int( purple_timeout ) )
 							
-							st.session_state[ 'env_last_source' ] = 'PurpleAir'
-							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = purple_center_latitude
-							st.session_state[ 'env_last_longitude' ] = purple_center_longitude
+							st.session_state[ 'env_last_source' ]='PurpleAir'
+							st.session_state[ 'env_last_result' ]=result or { }
+							st.session_state[ 'env_last_latitude' ]=purple_center_latitude
+							st.session_state[ 'env_last_longitude' ]=purple_center_longitude
 							
 							set_global_coordinates_from_result(
 								purple_center_latitude,
@@ -5416,10 +5409,10 @@ elif mode == 'Environmental':
 				with purple_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_purple_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# ENVIROFACTS
@@ -5473,10 +5466,10 @@ elif mode == 'Environmental':
 								limit=int( envirofacts_limit ),
 								time=int( envirofacts_timeout ) )
 							
-							st.session_state[ 'env_last_source' ] = 'EnviroFacts'
-							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = None
-							st.session_state[ 'env_last_longitude' ] = None
+							st.session_state[ 'env_last_source' ]='EnviroFacts'
+							st.session_state[ 'env_last_result' ]=result or { }
+							st.session_state[ 'env_last_latitude' ]=None
+							st.session_state[ 'env_last_longitude' ]=None
 							st.success( 'EnviroFacts request completed.' )
 						
 						except Exception as ex:
@@ -5485,10 +5478,10 @@ elif mode == 'Environmental':
 				with envirofacts_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_envirofacts_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# FIRMS FIRE / THERMAL ANOMALIES
@@ -5608,10 +5601,10 @@ elif mode == 'Environmental':
 								date=firms_date,
 								time=int( firms_timeout ) )
 							
-							st.session_state[ 'env_last_source' ] = 'FIRMS'
-							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = firms_center_latitude
-							st.session_state[ 'env_last_longitude' ] = firms_center_longitude
+							st.session_state[ 'env_last_source' ]='FIRMS'
+							st.session_state[ 'env_last_result' ]=result or { }
+							st.session_state[ 'env_last_latitude' ]=firms_center_latitude
+							st.session_state[ 'env_last_longitude' ]=firms_center_longitude
 							
 							set_global_coordinates_from_result(
 								firms_center_latitude,
@@ -5627,10 +5620,10 @@ elif mode == 'Environmental':
 				with firms_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='btn_env_firms_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 			
 			# ------------------------------------------------------------------
 			# EONET NATURAL EVENTS
@@ -5800,10 +5793,10 @@ elif mode == 'Environmental':
 								bbox=eonet_bbox,
 								time=int( eonet_timeout ) )
 							
-							st.session_state[ 'env_last_source' ] = 'EONET'
-							st.session_state[ 'env_last_result' ] = result or { }
-							st.session_state[ 'env_last_latitude' ] = eonet_center_latitude
-							st.session_state[ 'env_last_longitude' ] = eonet_center_longitude
+							st.session_state[ 'env_last_source' ]='EONET'
+							st.session_state[ 'env_last_result' ]=result or { }
+							st.session_state[ 'env_last_latitude' ]=eonet_center_latitude
+							st.session_state[ 'env_last_longitude' ]=eonet_center_longitude
 							
 							set_global_coordinates_from_result(
 								eonet_center_latitude,
@@ -5819,10 +5812,10 @@ elif mode == 'Environmental':
 				with eonet_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_eonet_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ] = ''
-						st.session_state[ 'env_last_result' ] = { }
-						st.session_state[ 'env_last_latitude' ] = None
-						st.session_state[ 'env_last_longitude' ] = None
+						st.session_state[ 'env_last_source' ]=''
+						st.session_state[ 'env_last_result' ]={ }
+						st.session_state[ 'env_last_latitude' ]=None
+						st.session_state[ 'env_last_longitude' ]=None
 		
 		with enviro_c2:
 			# ------------------------------------------------------------------
@@ -5897,9 +5890,9 @@ elif mode == 'Astronomical':
 		st.subheader( 'Astronomical Data' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
-		global_latitude = get_global_latitude_default( )
-		global_longitude = get_global_longitude_default( )
+		global_location = get_default_location( )
+		global_latitude = get_default_latitude( )
+		global_longitude = get_default_longitude( )
 		
 		location_c1, location_c2, location_c3 = st.columns( 3, border=True )
 		location_c1.metric( 'Observer Location', global_location )
@@ -5970,12 +5963,12 @@ elif mode == 'Astronomical':
 									location_label=naval_location_label,
 									time=int( naval_timeout ) )
 								
-								st.session_state[ 'astro_last_source' ] = 'Naval Observatory'
-								st.session_state[ 'astro_last_result' ] = result or { }
-								st.session_state[ 'astro_last_latitude' ] = float( naval_latitude )
-								st.session_state[ 'astro_last_longitude' ] = float(
+								st.session_state[ 'astro_last_source' ]='Naval Observatory'
+								st.session_state[ 'astro_last_result' ]=result or { }
+								st.session_state[ 'astro_last_latitude' ]=float( naval_latitude )
+								st.session_state[ 'astro_last_longitude' ]=float(
 									naval_longitude )
-								st.session_state[ 'astro_last_url' ] = ''
+								st.session_state[ 'astro_last_url' ]=''
 								
 								set_global_coordinates_from_result(
 									naval_latitude,
@@ -5991,11 +5984,11 @@ elif mode == 'Astronomical':
 				with naval_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_naval_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 			
 			# ------------------------------------------------------------------
 			# SPACE WEATHER
@@ -6109,11 +6102,11 @@ elif mode == 'Astronomical':
 								keyword=space_keyword,
 								api_key=getattr( cfg, 'NASA_API_KEY', None ) )
 							
-							st.session_state[ 'astro_last_source' ] = 'Space Weather'
-							st.session_state[ 'astro_last_result' ] = result or { }
-							st.session_state[ 'astro_last_latitude' ] = None
-							st.session_state[ 'astro_last_longitude' ] = None
-							st.session_state[ 'astro_last_url' ] = ''
+							st.session_state[ 'astro_last_source' ]='Space Weather'
+							st.session_state[ 'astro_last_result' ]=result or { }
+							st.session_state[ 'astro_last_latitude' ]=None
+							st.session_state[ 'astro_last_longitude' ]=None
+							st.session_state[ 'astro_last_url' ]=''
 							st.success( 'Space Weather request completed.' )
 						
 						except Exception as ex:
@@ -6122,11 +6115,11 @@ elif mode == 'Astronomical':
 				with space_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_space_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 			
 			# ------------------------------------------------------------------
 			# STAR CHART
@@ -6296,11 +6289,11 @@ elif mode == 'Astronomical':
 											or result.get( 'snapshot_page_url', '' )
 									)
 								
-								st.session_state[ 'astro_last_source' ] = 'Star Chart'
-								st.session_state[ 'astro_last_result' ] = result or { }
-								st.session_state[ 'astro_last_latitude' ] = None
-								st.session_state[ 'astro_last_longitude' ] = None
-								st.session_state[ 'astro_last_url' ] = result_url
+								st.session_state[ 'astro_last_source' ]='Star Chart'
+								st.session_state[ 'astro_last_result' ]=result or { }
+								st.session_state[ 'astro_last_latitude' ]=None
+								st.session_state[ 'astro_last_longitude' ]=None
+								st.session_state[ 'astro_last_url' ]=result_url
 								st.success( 'Star Chart request completed.' )
 						
 						except Exception as ex:
@@ -6309,11 +6302,11 @@ elif mode == 'Astronomical':
 				with chart_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_chart_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 			
 			# ------------------------------------------------------------------
 			# SATELLITE CENTER
@@ -6401,11 +6394,11 @@ elif mode == 'Astronomical':
 								resolution_factor=int( satellite_resolution_factor ),
 								time=int( satellite_timeout ) )
 							
-							st.session_state[ 'astro_last_source' ] = 'Satellite Center'
-							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ] = None
-							st.session_state[ 'astro_last_longitude' ] = None
-							st.session_state[ 'astro_last_url' ] = ''
+							st.session_state[ 'astro_last_source' ]='Satellite Center'
+							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ]=None
+							st.session_state[ 'astro_last_longitude' ]=None
+							st.session_state[ 'astro_last_url' ]=''
 							st.success( 'Satellite Center request completed.' )
 						
 						except Exception as ex:
@@ -6414,11 +6407,11 @@ elif mode == 'Astronomical':
 				with satellite_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_satellite_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 			
 			# ------------------------------------------------------------------
 			# ASTRO CATALOG
@@ -6510,11 +6503,11 @@ elif mode == 'Astronomical':
 								data_format=catalog_data_format,
 								time=int( catalog_timeout ) )
 							
-							st.session_state[ 'astro_last_source' ] = 'Astro Catalog'
-							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ] = None
-							st.session_state[ 'astro_last_longitude' ] = None
-							st.session_state[ 'astro_last_url' ] = ''
+							st.session_state[ 'astro_last_source' ]='Astro Catalog'
+							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ]=None
+							st.session_state[ 'astro_last_longitude' ]=None
+							st.session_state[ 'astro_last_url' ]=''
 							st.success( 'Astro Catalog request completed.' )
 						
 						except Exception as ex:
@@ -6523,11 +6516,11 @@ elif mode == 'Astronomical':
 				with catalog_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_catalog_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 			
 			# ------------------------------------------------------------------
 			# ASTROQUERY / SIMBAD
@@ -6600,11 +6593,11 @@ elif mode == 'Astronomical':
 								radius_unit=astroquery_radius_unit,
 								row_limit=int( astroquery_row_limit ) )
 							
-							st.session_state[ 'astro_last_source' ] = 'AstroQuery / SIMBAD'
-							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ] = None
-							st.session_state[ 'astro_last_longitude' ] = None
-							st.session_state[ 'astro_last_url' ] = ''
+							st.session_state[ 'astro_last_source' ]='AstroQuery / SIMBAD'
+							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ]=None
+							st.session_state[ 'astro_last_longitude' ]=None
+							st.session_state[ 'astro_last_url' ]=''
 							st.success( 'AstroQuery request completed.' )
 						
 						except Exception as ex:
@@ -6613,11 +6606,11 @@ elif mode == 'Astronomical':
 				with astroquery_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_astroquery_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 			
 			# ------------------------------------------------------------------
 			# STAR MAP
@@ -6710,11 +6703,11 @@ elif mode == 'Astronomical':
 										or result.get( 'url', '' )
 								)
 							
-							st.session_state[ 'astro_last_source' ] = 'Star Map'
-							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ] = None
-							st.session_state[ 'astro_last_longitude' ] = None
-							st.session_state[ 'astro_last_url' ] = result_url
+							st.session_state[ 'astro_last_source' ]='Star Map'
+							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ]=None
+							st.session_state[ 'astro_last_longitude' ]=None
+							st.session_state[ 'astro_last_url' ]=result_url
 							st.success( 'Star Map request completed.' )
 						
 						except Exception as ex:
@@ -6723,11 +6716,11 @@ elif mode == 'Astronomical':
 				with starmap_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_starmap_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ] = ''
-						st.session_state[ 'astro_last_result' ] = { }
-						st.session_state[ 'astro_last_latitude' ] = None
-						st.session_state[ 'astro_last_longitude' ] = None
-						st.session_state[ 'astro_last_url' ] = ''
+						st.session_state[ 'astro_last_source' ]=''
+						st.session_state[ 'astro_last_result' ]={ }
+						st.session_state[ 'astro_last_latitude' ]=None
+						st.session_state[ 'astro_last_longitude' ]=None
+						st.session_state[ 'astro_last_url' ]=''
 		
 		with astro_c2:
 			# ------------------------------------------------------------------
@@ -6821,7 +6814,7 @@ elif mode == 'Celestial Map':
 		st.subheader( 'Celestial Map' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
+		global_location = get_default_location( )
 		location_state = get_location_state( )
 		has_global_coords = has_valid_global_coordinates( )
 		
@@ -6865,12 +6858,12 @@ elif mode == 'Celestial Map':
 				manual_default_latitude = (
 						float( location_state[ 'latitude' ] )
 						if has_global_coords
-						else get_global_latitude_default( ))
+						else get_default_latitude( ))
 				
 				manual_default_longitude = (
 						float( location_state[ 'longitude' ] )
 						if has_global_coords
-						else get_global_longitude_default( ))
+						else get_default_longitude( ))
 				
 				coord_c1, coord_c2 = st.columns( 2 )
 				with coord_c1:
@@ -6915,7 +6908,7 @@ elif mode == 'Celestial Map':
 				description='Celestial Map observer location',
 				latitude=float( celestial_latitude ),
 				longitude=float( celestial_longitude ) )
-			st.session_state[ 'zoom' ] = int( celestial_zoom )
+			st.session_state[ 'zoom' ]=int( celestial_zoom )
 		
 		set_blue_divider( )
 		
@@ -6936,9 +6929,9 @@ elif mode == 'Geological':
 		st.subheader( 'Geological Data' )
 		st.divider( )
 		
-		global_location = get_global_location_default( )
-		global_latitude = get_global_latitude_default( )
-		global_longitude = get_global_longitude_default( )
+		global_location = get_default_location( )
+		global_latitude = get_default_latitude( )
+		global_longitude = get_default_longitude( )
 		global_box = create_bounding_box_from_center( global_latitude, global_longitude )
 		
 		location_c1, location_c2, location_c3 = st.columns( 3, border=True )
@@ -7081,13 +7074,13 @@ elif mode == 'Geological':
 								longitude=quake_longitude, max_radius_km=quake_radius,
 								time=int( quake_timeout ) )
 							
-							st.session_state[ 'geo_last_source' ] = 'USGS Earthquakes'
-							st.session_state[ 'geo_last_result' ] = result or { }
-							st.session_state[ 'geo_last_latitude' ] = quake_latitude
-							st.session_state[ 'geo_last_longitude' ] = quake_longitude
+							st.session_state[ 'geo_last_source' ]='USGS Earthquakes'
+							st.session_state[ 'geo_last_result' ]=result or { }
+							st.session_state[ 'geo_last_latitude' ]=quake_latitude
+							st.session_state[ 'geo_last_longitude' ]=quake_longitude
 							
 							if quake_radius is not None:
-								st.session_state[ 'radius' ] = float( quake_radius )
+								st.session_state[ 'radius' ]=float( quake_radius )
 							
 							set_global_coordinates_from_result( quake_latitude, quake_longitude,
 								location=global_location,
@@ -7101,11 +7094,11 @@ elif mode == 'Geological':
 				with quake_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_quake_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ] = ''
-						st.session_state[ 'geo_last_result' ] = { }
-						st.session_state[ 'geo_last_latitude' ] = None
-						st.session_state[ 'geo_last_longitude' ] = None
-						st.session_state[ 'geo_last_image_path' ] = ''
+						st.session_state[ 'geo_last_source' ]=''
+						st.session_state[ 'geo_last_result' ]={ }
+						st.session_state[ 'geo_last_latitude' ]=None
+						st.session_state[ 'geo_last_longitude' ]=None
+						st.session_state[ 'geo_last_image_path' ]=''
 			
 			# ------------------------------------------------------------------
 			# GLOBAL IMAGERY
@@ -7137,16 +7130,16 @@ elif mode == 'Geological':
 									'MODIS_Terra_CorrectedReflectance_TrueColor.png'
 							)
 							
-							st.session_state[ 'geo_last_source' ] = 'Global Imagery'
-							st.session_state[ 'geo_last_result' ] = {
+							st.session_state[ 'geo_last_source' ]='Global Imagery'
+							st.session_state[ 'geo_last_result' ]={
 									'mode': 'fetch_map_services',
 									'product': imagery_product,
 									'image_path': image_path,
 									'result': str( result )
 							}
-							st.session_state[ 'geo_last_latitude' ] = None
-							st.session_state[ 'geo_last_longitude' ] = None
-							st.session_state[ 'geo_last_image_path' ] = image_path
+							st.session_state[ 'geo_last_latitude' ]=None
+							st.session_state[ 'geo_last_longitude' ]=None
+							st.session_state[ 'geo_last_image_path' ]=image_path
 							st.success( 'Global Imagery request completed.' )
 						
 						except Exception as ex:
@@ -7155,11 +7148,11 @@ elif mode == 'Geological':
 				with imagery_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_imagery_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ] = ''
-						st.session_state[ 'geo_last_result' ] = { }
-						st.session_state[ 'geo_last_latitude' ] = None
-						st.session_state[ 'geo_last_longitude' ] = None
-						st.session_state[ 'geo_last_image_path' ] = ''
+						st.session_state[ 'geo_last_source' ]=''
+						st.session_state[ 'geo_last_result' ]={ }
+						st.session_state[ 'geo_last_latitude' ]=None
+						st.session_state[ 'geo_last_longitude' ]=None
+						st.session_state[ 'geo_last_image_path' ]=''
 			
 			# ------------------------------------------------------------------
 			# USGS WATER DATA
@@ -7249,11 +7242,11 @@ elif mode == 'Geological':
 								limit=int( water_limit ),
 								time=int( water_timeout ) )
 							
-							st.session_state[ 'geo_last_source' ] = 'USGS Water Data'
-							st.session_state[ 'geo_last_result' ] = result or { }
-							st.session_state[ 'geo_last_latitude' ] = None
-							st.session_state[ 'geo_last_longitude' ] = None
-							st.session_state[ 'geo_last_image_path' ] = ''
+							st.session_state[ 'geo_last_source' ]='USGS Water Data'
+							st.session_state[ 'geo_last_result' ]=result or { }
+							st.session_state[ 'geo_last_latitude' ]=None
+							st.session_state[ 'geo_last_longitude' ]=None
+							st.session_state[ 'geo_last_image_path' ]=''
 							st.success( 'USGS Water Data request completed.' )
 						
 						except Exception as ex:
@@ -7262,11 +7255,11 @@ elif mode == 'Geological':
 				with water_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_water_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ] = ''
-						st.session_state[ 'geo_last_result' ] = { }
-						st.session_state[ 'geo_last_latitude' ] = None
-						st.session_state[ 'geo_last_longitude' ] = None
-						st.session_state[ 'geo_last_image_path' ] = ''
+						st.session_state[ 'geo_last_source' ]=''
+						st.session_state[ 'geo_last_result' ]={ }
+						st.session_state[ 'geo_last_latitude' ]=None
+						st.session_state[ 'geo_last_longitude' ]=None
+						st.session_state[ 'geo_last_image_path' ]=''
 			
 			# ------------------------------------------------------------------
 			# USGS THE NATIONAL MAP
@@ -7398,11 +7391,11 @@ elif mode == 'Geological':
 								max_items=int( tnm_max_items ), offset=int( tnm_offset ),
 								time=int( tnm_timeout ) )
 							
-							st.session_state[ 'geo_last_source' ] = 'USGS The National Map'
-							st.session_state[ 'geo_last_result' ] = result or { }
-							st.session_state[ 'geo_last_latitude' ] = tnm_center_latitude
-							st.session_state[ 'geo_last_longitude' ] = tnm_center_longitude
-							st.session_state[ 'geo_last_image_path' ] = ''
+							st.session_state[ 'geo_last_source' ]='USGS The National Map'
+							st.session_state[ 'geo_last_result' ]=result or { }
+							st.session_state[ 'geo_last_latitude' ]=tnm_center_latitude
+							st.session_state[ 'geo_last_longitude' ]=tnm_center_longitude
+							st.session_state[ 'geo_last_image_path' ]=''
 							
 							set_global_coordinates_from_result(
 								tnm_center_latitude,
@@ -7418,11 +7411,11 @@ elif mode == 'Geological':
 				with tnm_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_tnm_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ] = ''
-						st.session_state[ 'geo_last_result' ] = { }
-						st.session_state[ 'geo_last_latitude' ] = None
-						st.session_state[ 'geo_last_longitude' ] = None
-						st.session_state[ 'geo_last_image_path' ] = ''
+						st.session_state[ 'geo_last_source' ]=''
+						st.session_state[ 'geo_last_result' ]={ }
+						st.session_state[ 'geo_last_latitude' ]=None
+						st.session_state[ 'geo_last_longitude' ]=None
+						st.session_state[ 'geo_last_image_path' ]=''
 		
 		with geo_c2:
 			# ------------------------------------------------------------------
@@ -7691,16 +7684,16 @@ elif mode == 'Data Management':
 					insert_data = { }
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
-							insert_data[ column ] = st.number_input( column, step=1,
+							insert_data[ column ]=st.number_input( column, step=1,
 								key=f'ins_{table}_{column}' )
 						elif 'REAL' in col_type:
-							insert_data[ column ] = st.number_input( column, format='%.6f',
+							insert_data[ column ]=st.number_input( column, format='%.6f',
 								key=f'ins_{table}_{column}' )
 						elif 'BOOL' in col_type:
-							insert_data[ column ] = 1 if st.checkbox( column,
+							insert_data[ column ]=1 if st.checkbox( column,
 								key=f'ins_{table}_{column}' ) else 0
 						else:
-							insert_data[ column ] = st.text_input( column,
+							insert_data[ column ]=st.text_input( column,
 								key=f'ins_{table}_{column}' )
 					
 					if st.button( 'Insert Row', key=f'insert_row_{table}',
@@ -7731,21 +7724,21 @@ elif mode == 'Data Management':
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
 							val = st.number_input( column, step=1, key=f'upd_{table}_{column}' )
-							update_data[ column ] = val
+							update_data[ column ]=val
 						
 						elif 'REAL' in col_type:
 							val = st.number_input( column, format='%.6f',
 								key=f'upd_{table}_{column}' )
-							update_data[ column ] = val
+							update_data[ column ]=val
 						
 						elif 'BOOL' in col_type:
 							val = 1 if st.checkbox( column,
 								key=f'upd_{table}_{column}' ) else 0
-							update_data[ column ] = val
+							update_data[ column ]=val
 						
 						else:
 							val = st.text_input( column, key=f'upd_{table}_{column}' )
-							update_data[ column ] = val
+							update_data[ column ]=val
 					
 					if st.button( 'Update Row', key=f'update_row_{table}',
 							use_container_width=True ):
@@ -7947,12 +7940,12 @@ elif mode == 'Data Management':
 								use_places=use_places,
 								limit=location_limit )
 							
-							st.session_state[ 'df_reports_geocode_preview' ] = df_preview
+							st.session_state[ 'df_reports_geocode_preview' ]=df_preview
 					
 					with action_c2:
 						if st.button( 'Clear', icon='🧹', key='reports_geocode_clear_button',
 								width='stretch' ):
-							st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+							st.session_state[ 'df_reports_geocode_preview' ]=pd.DataFrame( )
 					
 					df_preview = st.session_state.get( 'df_reports_geocode_preview',
 						pd.DataFrame( ) )
@@ -7998,7 +7991,7 @@ elif mode == 'Data Management':
 									st.success(
 										f'Updated {updated_count:,} report coordinate row(s).' )
 									st.session_state[
-										'df_reports_geocode_preview' ] = pd.DataFrame( )
+										'df_reports_geocode_preview' ]=pd.DataFrame( )
 									st.rerun( )
 								else:
 									st.info( 'No rows were updated.' )
