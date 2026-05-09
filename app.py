@@ -573,11 +573,13 @@ def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400
 				'longitude': default_longitude,
 				'location': default_location,
 				'zoom': default_zoom,
-				'tileUrl': ( tile_url
-						or 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' ),
-				'tileAttribution': ( tile_attribution
-						or '&copy; OpenStreetMap contributors &copy; CARTO' ),
-				'tileSubdomains': tile_subdomains or 'abcd',
+				'tileUrl': (
+						'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+				),
+				'tileAttribution': (
+						'&copy; OpenStreetMap contributors &copy; CARTO'
+				),
+				'tileSubdomains': 'abcd',
 		}
 		
 		html = html.replace(

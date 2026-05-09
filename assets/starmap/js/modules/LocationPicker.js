@@ -19,7 +19,7 @@
 			this.initialZoom = Number.isFinite( Number( options.initialZoom ) )
 			                   ? Number( options.initialZoom )
 			                   : 8;
-			this.tileUrl = options.tileUrl || 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+			this.tileUrl = options.tileUrl || 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 			this.tileAttribution = options.tileAttribution || '&copy; OpenStreetMap contributors &copy; CARTO';
 			this.tileSubdomains = options.tileSubdomains || 'abcd';
 			this.marker = null;
