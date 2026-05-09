@@ -44,10 +44,7 @@
 			} ).addTo( this.map );
 			this.map.on( 'click', ( e ) =>
 			{
-				const {
-					      lat,
-					      lng
-				      } = e.latlng;
+				const { lat, lng  } = e.latlng;
 				this.setView( lat, lng, this.map.getZoom(), true );
 			} );
 			this.setView( this.initialLat, this.initialLon, this.initialZoom, false );
