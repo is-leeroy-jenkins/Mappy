@@ -8178,7 +8178,7 @@ elif mode == 'Data Management':
 		# SQL
 		# ------------------------------------------------------------------------------
 		with tabs[ 9 ]:
-			st.subheader( 'SQL Console' )
+			st.markdown( '#### SQL Console' )
 			query = st.text_area( 'Enter SQL Query' )
 			if st.button( label='Run', icon='🏃', ):
 				if not is_safe_query( query ):
