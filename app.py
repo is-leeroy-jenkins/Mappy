@@ -22,9 +22,14 @@ CRITICAL ASSUMPTIONS (VERIFIED):
     - Cache is injected ONLY into services that support it
 ******************************************************************************************
 '''
+
 from __future__ import annotations
 
+from bs4 import BeautifulSoup
+from collections import deque, Counter
 from exceptions import NotFound
+import html as html_lib
+import json
 import os
 from typing import Optional
 import matplotlib
@@ -32,12 +37,14 @@ import pandas as pd
 import plotly.graph_objects as go
 import pydeck as pdk
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_js_eval import get_geolocation
 import sqlite3
 import re
 import datetime as dt
 from typing import Optional
 import time
+from urllib.parse import urljoin, urlparse
 from pathlib import Path
 import config as cfg
 from maps import Maps
@@ -72,7 +79,8 @@ from fetchers import (
 	AstroCatalog,
 	AstroQuery,
 	StarMap,
-	StarChart)
+	StarChart,
+	WebFetcher )
 
 # ---------------------------------------------------------------------
 # SESSION STATE INITIALIZATION
@@ -471,6 +479,188 @@ def set_blue_divider( ) -> None:
 
 def log_step( msg: str ) -> None:
 	st.session_state.pipeline_log.append( msg )
+
+# ------------- CELESTIAL MAP UTILITY
+
+def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400,
+		latitude: Optional[ float ] = None, longitude: Optional[ float ] = None,
+		tile_url: Optional[ str ] = None, tile_attribution: Optional[ str ] = None,
+		tile_subdomains: Optional[ str ] = None, location: Optional[ str ] = None,
+		zoom: Optional[ int ] = None ) -> None:
+	"""
+	
+		Purpose:
+		--------
+		Render the browser-based Celestial Map application inside Streamlit as a
+		self-contained HTML component. The function preserves the existing HTML, CSS,
+		JavaScript, D3, Leaflet, Pickr, star-map rendering, location picker, star detail
+		panel, animation controls, and image-export behavior while loading local JSON data
+		from the configured asset folder and passing Iyrin's observer location into the
+		embedded JavaScript application.
+
+		Parameters:
+		-----------
+		asset_root (str): Root folder containing index.html, style.css, js/main.js,
+			js/modules/*.js, and data/*.json.
+		height (int): Component iframe height in pixels.
+		latitude (Optional[float]): Observer latitude supplied by Iyrin Location State or
+			manual Celestial Map controls.
+		longitude (Optional[float]): Observer longitude supplied by Iyrin Location State or
+			manual Celestial Map controls.
+		location (Optional[str]): Human-readable observer location label.
+		zoom (Optional[int]): Initial Leaflet location-picker zoom level.
+
+		Returns:
+		--------
+		None
+		
+	"""
+	try:
+		root = Path( asset_root )
+		index_path = root / 'index.html'
+		style_path = root / 'style.css'
+		data_paths = {
+				'constellations': root / 'data' / 'constellations.json',
+				'lines': root / 'data' / 'constellations.lines.json',
+				'stars': root / 'data' / 'stars.6.json',
+				'dsos': root / 'data' / 'dsos.bright.json',
+				'starnames': root / 'data' / 'starnames.json',
+				'planets': root / 'data' / 'planets.json',
+				'mw': root / 'data' / 'mw.json',
+				'constellationBorders': root / 'data' / 'constellations.borders.json',
+				'dsonames': root / 'data' / 'dsonames.json',
+		}
+		
+		module_paths = [
+				root / 'js' / 'modules' / 'CelestialMath.js',
+				root / 'js' / 'modules' / 'StarData.js',
+				root / 'js' / 'modules' / 'MapRenderer.js',
+				root / 'js' / 'modules' / 'LocationPicker.js',
+				root / 'js' / 'modules' / 'UIController.js',
+				root / 'js' / 'modules' / 'StarDetailsPanel.js',
+				root / 'js' / 'modules' / 'ImageExporter.js',
+				root / 'js' / 'main.js',
+		]
+		
+		required_paths = [ index_path, style_path, *data_paths.values( ), *module_paths ]
+		missing_paths = [ str( path ) for path in required_paths if not path.exists( ) ]
+		if missing_paths:
+			st.error( 'Celestial Map assets are missing.' )
+			st.code( '\n'.join( missing_paths ) )
+			return
+		
+		html = index_path.read_text( encoding='utf-8' )
+		css = style_path.read_text( encoding='utf-8' )
+		local_data: Dict[ str, object ] = { }
+		for key, path in data_paths.items( ):
+			local_data[ key ] = json.loads( path.read_text( encoding='utf-8' ) )
+		
+		if has_valid_coordinates( latitude, longitude ):
+			default_latitude = float( latitude )
+			default_longitude = float( longitude )
+		else:
+			default_latitude = get_global_latitude_default( )
+			default_longitude = get_global_longitude_default( )
+		
+		if location is not None and str( location ).strip( ):
+			default_location = str( location ).strip( )
+		else:
+			default_location = get_global_location_default( )
+		
+		default_zoom = int( zoom if zoom is not None else st.session_state.get( 'zoom', 8 ) or 8 )
+		default_payload = {
+				'latitude': default_latitude,
+				'longitude': default_longitude,
+				'location': default_location,
+				'zoom': default_zoom,
+				'tileUrl': ( tile_url
+						or 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' ),
+				'tileAttribution': ( tile_attribution
+						or '&copy; OpenStreetMap contributors &copy; CARTO' ),
+				'tileSubdomains': tile_subdomains or 'abcd',
+		}
+		
+		html = html.replace(
+			'<link rel="stylesheet" href="style.css">',
+			f'<style>\n{css}\n</style>' )
+		
+		for relative_path in [
+				'js/modules/CelestialMath.js',
+				'js/modules/StarData.js',
+				'js/modules/MapRenderer.js',
+				'js/modules/LocationPicker.js',
+				'js/modules/UIController.js',
+				'js/modules/StarDetailsPanel.js',
+				'js/modules/ImageExporter.js',
+				'js/main.js',
+		]:
+			html = re.sub( rf'\s*<script\s+src="{re.escape( relative_path )}"></script>',
+				'', html, flags=re.IGNORECASE )
+		
+		data_script = ( '<script>\n'
+				'window.StarMapApp = window.StarMapApp || {};\n'
+				f'window.StarMapApp.LOCAL_DATA = {json.dumps( local_data )};\n'
+				f'window.StarMapApp.DEFAULT_LOCATION = {json.dumps( default_payload )};\n'
+				'</script>' )
+		
+		inline_scripts = [ data_script ]
+		for path in module_paths:
+			source = path.read_text( encoding='utf-8' )
+			if path.name == 'main.js':
+				source = source.replace(
+					"this.locationPicker = new LocationPicker('locationPicker', {\n"
+					"                onLocationChange: (lat, lon) => this.handleLocationChange(lat, lon)\n"
+					"            });",
+					"const defaultLocation = window.StarMapApp.DEFAULT_LOCATION || {};\n"
+					"            this.locationPicker = new LocationPicker('locationPicker', {\n"
+					"                initialLat: defaultLocation.latitude,\n"
+					"                initialLon: defaultLocation.longitude,\n"
+					"                onLocationChange: (lat, lon) => this.handleLocationChange(lat, lon)\n"
+					"            });" )
+				
+				source = source.replace(
+					"this.selectedCoords = { lat: 30.0444, lon: 31.2357 };",
+					"this.selectedCoords = {\n"
+					"                lat: Number(defaultLocation.latitude || 30.0444),\n"
+					"                lon: Number(defaultLocation.longitude || 31.2357)\n"
+					"            };" )
+				
+				source = source.replace(
+					"this.locationPicker.setView(this.selectedCoords.lat, this.selectedCoords.lon);",
+					"this.locationPicker.setView(\n"
+					"                    this.selectedCoords.lat,\n"
+					"                    this.selectedCoords.lon,\n"
+					"                    Number(defaultLocation.zoom || 8)\n"
+					"                );\n"
+					"                this.ui.updateLocationDisplay(\n"
+					"                    this.selectedCoords.lat,\n"
+					"                    this.selectedCoords.lon\n"
+					"                );" )
+			
+			inline_scripts.append( f'<script>\n{source}\n</script>' )
+		
+		local_data_override = """
+		<script>
+		(function () {
+		    window.StarMapApp = window.StarMapApp || {};
+		
+		    if (!window.StarMapApp.StarData || !window.StarMapApp.LOCAL_DATA) {
+		        return;
+		    }
+		
+		    window.StarMapApp.StarData.prototype.load = async function () {
+		        this.data = window.StarMapApp.LOCAL_DATA;
+		        return this.data;
+		    };
+		})();
+		</script>
+		"""
+		
+		inline_scripts.append( local_data_override )
+		html = html.replace( '</body>', '\n'.join( inline_scripts ) + '\n</body>' )
+		components.html( html, height=int( height ), scrolling=True )
+	except Exception as ex:
+		st.error( f'Celestial Map failed to render: {ex}' )
 
 # ------------- LOCATION STATE UTILITIES
 
@@ -1060,7 +1250,7 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] =
 		
 	"""
 	try:
-		st.subheader( 'Location Map' )
+		st.subheader( 'Locations' )
 		df_source = pd.DataFrame( ) if df is None else df.copy( )
 		df_overlay_source = pd.DataFrame( ) if df_overlay is None else df_overlay.copy( )
 		required_cols = [ 'Latitude', 'Longitude' ]
@@ -2980,7 +3170,7 @@ def store_loaded_dataset( df_dataset: pd.DataFrame,
 # ---------------------------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------------------------
-st.set_page_config( page_title='Mappy', layout='wide', page_icon=cfg.FAVICON,
+st.set_page_config( page_title='Iyrin', layout='wide', page_icon=cfg.FAVICON,
 	initial_sidebar_state='expanded', )
 
 style_subheaders( )
@@ -2988,28 +3178,30 @@ style_subheaders( )
 # ==============================================================================
 # SIDEBAR
 # ==============================================================================
-st.logo( cfg.LOGO, size='small' )
+st.logo( cfg.LOGO, size='Large' )
 
 with st.sidebar:
+	# ------- Map Mode
 	set_blue_divider( )
-	st.markdown( '#### Configuration' )
-	# ------- Mode
-	with st.expander( label='Function', icon='🌍', expanded=False ):
+	st.markdown( '#### 🛰️ GIS Mapping' )
+	with st.expander( 'Mode', expanded=True ):
 		mode = st.radio( label='Mode', options=cfg.MODES, label_visibility='collapsed' )
 		if mode:
 			st.session_state[ 'mode' ] = mode
 		else:
-			st.session_state[ 'mode' ] = 'Geocoding'
+			st.sessionn_state[ 'mode' ] = 'Geocoding'
 		
 		previous_mode = st.session_state.get( 'previous_mode', None )
 		if previous_mode != mode:
 			st.session_state[ 'previous_mode' ] = mode
 			st.rerun( )
-		
-		st.session_state[ 'previous_mode' ] = mode
+	
+	# -------- Settings
+	set_blue_divider( )
+	st.markdown( '#### 🎚️ Configuration' )
 	
 	# ------- User Location
-	with st.sidebar.expander( label='Location', icon='📍', expanded=False ):
+	with st.expander( label='Location', expanded=False ):
 		st.checkbox( 'Use browser location on load',
 			value=st.session_state.get( 'browser_geolocation_enabled', True ),
 			key='browser_geolocation_enabled' )
@@ -3038,11 +3230,11 @@ with st.sidebar:
 			st.rerun( )
 	
 	# ------- Query
-	with st.expander( label='Frequency', icon='⌛', expanded=False ):
+	with st.expander( label='Frequency', expanded=False ):
 		qps = st.slider( 'Queries Per Second', min_value=1, max_value=50, value=10, )
 	
 	# ------- Cache
-	with st.expander( label='Persistence', icon='📦', expanded=False ):
+	with st.expander( label='Persistence', expanded=False ):
 		cache_backend = st.selectbox( 'Select', options=[ 'none', 'memory', 'sqlite' ],
 			key='cache_backend' )
 		cache: Optional[ object ] = None
@@ -3053,8 +3245,9 @@ with st.sidebar:
 			cache = SQLiteCache( cache_path )
 	
 	# ------- Data
-	st.markdown( '#### Data' )
-	with st.expander( label='Source', icon='🏛️', expanded=False ):
+	set_blue_divider( )
+	st.markdown( '#### 🏛️ Data' )
+	with st.expander( label='Source', expanded=False ):
 		st.caption( 'Sources' )
 		source = st.selectbox( label='Select Table',
 			options=[ 'Default Data', 'Database Data', 'Custom Data' ], key='source_selectbox' )
@@ -3124,10 +3317,10 @@ with st.sidebar:
 		if has_loaded_dataset( df_default ):
 			store_loaded_dataset( df_default, df_original )
 	
-	# ------- Configuration
+	# ------- Security
 	set_blue_divider( )
-	st.markdown( '#### Security' )
-	with st.expander( label='API Keys', icon='🔑', expanded=False ):
+	st.markdown( '#### 🔒 Credentials' )
+	with st.expander( label='API', expanded=False ):
 		google_key = st.text_input( 'Google API Key', type='password',
 			value=st.session_state.google_api_key or '',
 			help='Overrides GOOGLE_API_KEY from config.py for this session only.' )
@@ -3270,7 +3463,8 @@ if mode == 'Geocoding':
 					key='geocoding_fallback' )
 			
 			with geosub_c2:
-				if st.button( label='Clear', icon='🧹', width='stretch', key='clear_map_results' ):
+				if st.button( label='Clear Map Results', icon='💫', width='stretch',
+						key='clear_map_results' ):
 					st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
 					st.rerun( )
 		
@@ -3278,7 +3472,7 @@ if mode == 'Geocoding':
 			query = st.text_input( 'Enter Address or Location', key='location' )
 			btn_c1, btn_c2 = st.columns( 2 )
 			with btn_c1:
-				if st.button( 'Resolve Location', width='stretch' ):
+				if st.button( 'Resolve Location', width='stretch', icon='📍' ):
 					if not query:
 						st.warning( 'Enter a Location.' )
 					else:
@@ -3301,7 +3495,7 @@ if mode == 'Geocoding':
 							st.error( str( e ) )
 			
 			with btn_c2:
-				if st.button( label='Clear', icon='🧹', width='stretch' ):
+				if st.button( label='Clear Location', width='stretch', icon='🧹' ):
 					st.info( 'Use Ctrl+A / Backspace to clear the location field.' )
 		
 		st.divider( )
@@ -3328,14 +3522,12 @@ if mode == 'Geocoding':
 # ==============================================================================
 # MAP MODE
 # ==============================================================================
-elif mode == 'Map':
+elif mode == 'Interactive Map':
 	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
 	with center:
 		st.subheader( 'Interactive Map' )
 		st.divider( )
-		
 		tables = list_tables( )
-		
 		if not tables:
 			st.info( 'No tables available.' )
 		else:
@@ -3345,9 +3537,7 @@ elif mode == 'Map':
 			
 			default_index = tables.index( default_table )
 			
-			control_c1, control_c2, control_c3 = st.columns(
-				[ 0.35, 0.35, 0.30 ], border=True )
-			
+			control_c1, control_c2, control_c3 = st.columns( [ 0.35, 0.35, 0.30 ], border=True )
 			with control_c1:
 				table = st.selectbox( 'Table', tables, index=default_index,
 					key='map_mode_table' )
@@ -3357,8 +3547,9 @@ elif mode == 'Map':
 					key='map_mode_show_overlay' )
 			
 			with control_c3:
-				refresh_map = st.button( 'Refresh Map', key='map_mode_refresh',
+				refresh_map = st.button( label='Refresh Map', key='map_mode_refresh', icon='🔄',
 					width='stretch' )
+				
 				if refresh_map:
 					st.rerun( )
 			
@@ -3370,14 +3561,756 @@ elif mode == 'Map':
 					pd.DataFrame( ) )
 			
 			create_reports_map( df_map_source, df_overlay=df_overlay )
-			
 			if include_overlay and df_overlay is not None and not df_overlay.empty:
 				with st.expander( 'Geocoded Overlay Records', expanded=False ):
-					st.data_editor(
-						df_overlay,
-						key='map_mode_overlay_records',
-						use_container_width=True,
+					st.data_editor( df_overlay, key='map_mode_overlay_records',
+						use_container_width=True, disabled=True )
+
+# ==============================================================================
+# DISTANCES MODE
+# ==============================================================================
+elif mode == 'Distances':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Distance Matrix' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		current_location = compose_location_from_state( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', current_location if current_location else global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		dist_c1, dist_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		
+		with dist_c1:
+			use_global_origin = st.checkbox( 'Use User-Location as Origin',
+				value=bool( current_location ), key='distance_use_global_origin' )
+			
+			if use_global_origin:
+				origin = current_location
+				st.text_input( 'Origin', value=origin, key='distance_origin_display',
+					disabled=True )
+			else:
+				origin_default = st.session_state.get( 'origin', '' ) or current_location
+				origin = st.text_input( 'Origin', value=origin_default,
+					key='distance_origin_input' )
+		
+		with dist_c2:
+			use_global_destination = st.checkbox( 'Use User-Location as Destination', value=False,
+				key='distance_use_global_destination' )
+			
+			if use_global_destination:
+				destination = current_location
+				st.text_input( 'Destination', value=destination, key='distance_destination_display',
+					disabled=True )
+			else:
+				destination_default = st.session_state.get( 'destination', '' )
+				destination = st.text_input( 'Destination', value=destination_default,
+					key='distance_destination_input' )
+		
+		ctl_c1, ctl_c2, ctl_c3 = st.columns( [ 0.30, 0.30, 0.40 ], border=True )
+		with ctl_c1:
+			travel_mode = st.selectbox( 'Travel Mode',
+				[ 'driving', 'walking', 'bicycling', 'transit' ], key='travel_key' )
+		
+		with ctl_c2:
+			update_global_route = st.checkbox( 'Save Route to Global State', value=True,
+				key='distance_save_route_state' )
+		
+		with ctl_c3:
+			run_distance = st.button( 'Calculate Distance', key='distance_calculate', icon='📐',
+				width='stretch' )
+		
+		if run_distance:
+			if not origin or not destination:
+				st.warning( 'Provide both origin and destination.' )
+			else:
+				try:
+					if update_global_route:
+						st.session_state[ 'origin' ] = str( origin ).strip( )
+						st.session_state[ 'destination' ] = str( destination ).strip( )
+					
+					summary = distances.summary( origin, destination, mode=travel_mode )
+					st.session_state[ 'distance_last_result' ] = summary or { }
+					st.success( 'Distance Matrix request completed.' )
+				
+				except Exception as ex:
+					st.error( f'Distance Matrix request failed: {ex}' )
+		
+		result = st.session_state.get( 'distance_last_result', { } )
+		if result:
+			set_blue_divider( )
+			st.markdown( '##### Distance Result' )
+			st.data_editor( pd.DataFrame( [ result ] ), key='distance_result_table',
+				use_container_width=True, disabled=True )
+			st.json( result )
+
+# ==============================================================================
+# MAPS MODE
+# ==============================================================================
+elif mode == 'Static Maps':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Static Map' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		has_global_coords = has_valid_global_coordinates( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		map_c1, map_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		with map_c1:
+			use_global_coordinates = st.checkbox( 'Use User-Location', value=has_global_coords,
+				key='maps_use_global_coordinates' )
+			
+			if use_global_coordinates:
+				lat = float( location_state[ 'latitude' ] )
+				lng = float( location_state[ 'longitude' ] )
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					st.number_input( 'Latitude', value=lat, format='%.4f',
+						key='maps_global_latitude_display', disabled=True )
+				
+				with coord_c2:
+					st.number_input( 'Longitude', value=lng, format='%.4f',
+						key='maps_global_longitude_display', disabled=True )
+			
+			else:
+				manual_default_lat = (float( location_state[ 'latitude' ] )
+				                      if has_global_coords
+				                      else 0.0)
+				
+				manual_default_lng = (float( location_state[ 'longitude' ] )
+				                      if has_global_coords
+				                      else 0.0)
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					lat = st.number_input( 'Latitude', value=manual_default_lat, format='%.4f',
+						key='maps_manual_latitude' )
+				
+				with coord_c2:
+					lng = st.number_input( 'Longitude', value=manual_default_lng, format='%.4f',
+						key='maps_manual_longitude' )
+		
+		with map_c2:
+			zoom_default = int( st.session_state.get( 'zoom', 8 ) or 8 )
+			size_default = str( st.session_state.get( 'map_size', '600x400' ) or '600x400' )
+			size_options = [ '400x400', '600x400', '800x600' ]
+			
+			if size_default not in size_options:
+				size_default = '600x400'
+			
+			zoom = st.slider( 'Zoom', min_value=1, max_value=20, value=zoom_default,
+				key='maps_zoom' )
+			
+			size = st.selectbox( 'Image Size', size_options,
+				index=size_options.index( size_default ), key='maps_size' )
+			
+			save_coordinates = st.checkbox( 'Save Coordinates to Global State', value=True,
+				key='maps_save_coordinates' )
+		
+		if st.button( 'Generate Map', icon='🗺️', key='maps_generate', width='content' ):
+			if use_global_coordinates and not has_global_coords:
+				st.warning( 'User coordinates are not set.' )
+			elif not has_valid_coordinates( lat, lng ):
+				st.warning( 'Provide valid coordinates before generating a map.' )
+			else:
+				try:
+					if save_coordinates:
+						set_coordinates( lat, lng )
+						st.session_state[ 'zoom' ] = int( zoom )
+						st.session_state[ 'map_size' ] = str( size )
+					
+					url = static_maps.pin(
+						lat=float( lat ),
+						lng=float( lng ),
+						zoom=int( zoom ),
+						size=str( size ) )
+					
+					st.session_state[ 'maps_last_url' ] = url
+					st.session_state[ 'maps_last_latitude' ] = float( lat )
+					st.session_state[ 'maps_last_longitude' ] = float( lng )
+					st.success( 'Static map generated.' )
+				
+				except Exception as ex:
+					st.error( f'Static map generation failed: {ex}' )
+		
+		map_url = st.session_state.get( 'maps_last_url', '' )
+		
+		if map_url:
+			set_blue_divider( )
+			st.markdown( '##### Static Map Result' )
+			st.image( map_url )
+			st.code( map_url )
+
+# ==============================================================================
+# TIME ZONE MODE
+# ==============================================================================
+elif mode == 'Time Zones':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Time Zone Lookup' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		has_global_coords = has_valid_global_coordinates( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		tz_c1, tz_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		with tz_c1:
+			use_global_coordinates = st.checkbox( 'User Location', value=has_global_coords,
+				key='timezone_use_global_coordinates' )
+			
+			if use_global_coordinates:
+				lat_tz = float( location_state[ 'latitude' ] )
+				lng_tz = float( location_state[ 'longitude' ] )
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					st.number_input(
+						'Latitude',
+						value=lat_tz,
+						format='%.6f',
+						key='timezone_global_latitude_display',
 						disabled=True )
+				
+				with coord_c2:
+					st.number_input(
+						'Longitude',
+						value=lng_tz,
+						format='%.6f',
+						key='timezone_global_longitude_display',
+						disabled=True )
+			
+			else:
+				manual_default_lat = (
+						float( location_state[ 'latitude' ] )
+						if has_global_coords
+						else 0.0)
+				
+				manual_default_lng = (
+						float( location_state[ 'longitude' ] )
+						if has_global_coords
+						else 0.0)
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					lat_tz = st.number_input(
+						'Latitude',
+						value=manual_default_lat,
+						format='%.6f',
+						key='timezone_manual_latitude' )
+				
+				with coord_c2:
+					lng_tz = st.number_input(
+						'Longitude',
+						value=manual_default_lng,
+						format='%.6f',
+						key='timezone_manual_longitude' )
+		
+		with tz_c2:
+			save_coordinates = st.checkbox( 'Save Coordinates to Global State', value=True,
+				key='timezone_save_coordinates' )
+			
+			run_timezone = st.button( 'Lookup Time Zone', key='timezone_lookup', icon='🔍',
+				width='content' )
+		
+		if run_timezone:
+			if use_global_coordinates and not has_global_coords:
+				st.warning(
+					'Global coordinates are not set. Resolve a location first or enter manually.' )
+			elif not has_valid_coordinates( lat_tz, lng_tz ):
+				st.warning( 'Provide valid coordinates before looking up a time zone.' )
+			else:
+				try:
+					if save_coordinates:
+						set_coordinates( lat_tz, lng_tz )
+					
+					result = timezone.lookup( float( lat_tz ), float( lng_tz ) )
+					
+					st.session_state[ 'timezone_last_result' ] = result or { }
+					st.session_state[ 'timezone_last_latitude' ] = float( lat_tz )
+					st.session_state[ 'timezone_last_longitude' ] = float( lng_tz )
+					st.success( 'Time zone lookup completed.' )
+				
+				except Exception as ex:
+					st.error( f'Time zone lookup failed: {ex}' )
+		
+		result = st.session_state.get( 'timezone_last_result', { } )
+		
+		if result:
+			set_blue_divider( )
+			st.markdown( '##### Time Zone Result' )
+			
+			lat_c, lng_c = st.columns( 2 )
+			with lat_c:
+				st.metric(
+					'Latitude',
+					f'{float( st.session_state.get( "timezone_last_latitude", 0.0 ) ):.6f}' )
+			with lng_c:
+				st.metric(
+					'Longitude',
+					f'{float( st.session_state.get( "timezone_last_longitude", 0.0 ) ):.6f}' )
+			
+			st.json( result )
+
+# =============================================================================
+# SCRAPING MODE
+# ==============================================================================
+elif mode == 'Site Crawler':
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
+	with center:
+		st.subheader( f'🕷️ Web Scraping' )
+		st.divider( )
+		
+		if 'webscrape_clear_request' not in st.session_state:
+			st.session_state[ 'webscrape_clear_request' ] = False
+		
+		if st.session_state.get( 'webscrape_clear_request', False ):
+			st.session_state[ 'webfetcher_url' ] = ''
+			st.session_state[ 'webscrape_results' ] = [ ]
+			st.session_state[ 'webscrape_summary' ] = { }
+			st.session_state[ 'webscrape_clear_request' ] = False
+		
+		def _clear_webscrape_state( ) -> None:
+			st.session_state[ 'webscrape_clear_request' ] = True
+		
+		def _coerce_items( value: Any ) -> list[ str ]:
+			if value is None:
+				return [ ]
+			if isinstance( value, list ):
+				return [ str( item ) for item in value if item is not None ]
+			return [ str( value ) ]
+		
+		def _extract_title_from_html( html: str ) -> str:
+			try:
+				if not isinstance( html, str ) or not html.strip( ):
+					return ''
+				
+				match = re.search(
+					r'<title[^>]*>(.*?)</title>',
+					html,
+					flags=re.IGNORECASE | re.DOTALL )
+				
+				if not match:
+					return ''
+				
+				title = re.sub( r'\s+', ' ', match.group( 1 ) ).strip( )
+				return html_lib.unescape( title )
+			except Exception:
+				return ''
+		
+		def _truncate_text( text: str, limit: int = 12000 ) -> str:
+			if not isinstance( text, str ):
+				return ''
+			if len( text ) <= limit:
+				return text
+			return text[ : limit ] + '\n\n... [truncated]'
+		
+		def _normalize_url( base_url: str, href: str ) -> str:
+			try:
+				if not href or not isinstance( href, str ):
+					return ''
+				
+				href = href.strip( )
+				if not href:
+					return ''
+				
+				absolute = urljoin( base_url, href )
+				parsed = urlparse( absolute )
+				if parsed.scheme not in ('http', 'https'):
+					return ''
+				
+				normalized = parsed._replace( fragment='' )
+				return normalized.geturl( )
+			except Exception:
+				return ''
+		
+		def _same_domain( left: str, right: str ) -> bool:
+			try:
+				left_host = (urlparse( left ).netloc or '').lower( )
+				right_host = (urlparse( right ).netloc or '').lower( )
+				return bool( left_host ) and left_host == right_host
+			except Exception:
+				return False
+		
+		def _extract_links_from_html( base_url: str, html: str ) -> list[ str ]:
+			try:
+				if not isinstance( html, str ) or not html.strip( ):
+					return [ ]
+				
+				soup = BeautifulSoup( html, 'html.parser' )
+				results: list[ str ] = [ ]
+				seen: set[ str ] = set( )
+				for tag in soup.find_all( 'a', href=True ):
+					candidate = _normalize_url( base_url, tag.get( 'href', '' ) )
+					if candidate and candidate not in seen:
+						seen.add( candidate )
+						results.append( candidate )
+				
+				return results
+			except Exception:
+				return [ ]
+		
+		def _scrape_single_page(
+				url: str,
+				include_title: bool,
+				include_basic_text: bool,
+				include_raw_html: bool,
+				selected_methods: list[ str ] ) -> dict[ str, Any ]:
+			page_result: dict[ str, Any ] = \
+				{
+						'url': url,
+						'status_code': None,
+						'encoding': None,
+						'title': '',
+						'plain_text': '',
+						'raw_html': '',
+						'links_discovered': [ ],
+						'data': { },
+						'errors': [ ],
+				}
+			
+			fetcher = WebFetcher( )
+			
+			try:
+				response = fetcher.fetch( url )
+				if response is None:
+					page_result[ 'errors' ].append( 'No response returned.' )
+					return page_result
+				
+				page_result[ 'status_code' ] = getattr( response, 'status_code', None )
+				page_result[ 'encoding' ] = getattr( response, 'encoding', None )
+				raw_html = getattr( response, 'text', '' ) or ''
+				page_result[ 'links_discovered' ] = _extract_links_from_html( url, raw_html )
+				if include_title:
+					page_result[ 'title' ] = _extract_title_from_html( raw_html )
+				
+				if include_basic_text:
+					try:
+						page_result[ 'plain_text' ] = fetcher.html_to_text( raw_html ) or ''
+					except Exception as exc:
+						page_result[ 'errors' ].append( f'Basic Text: {str( exc )}' )
+				
+				if include_raw_html:
+					page_result[ 'raw_html' ] = raw_html
+			
+			except Exception as exc:
+				page_result[ 'errors' ].append( f'Fetch: {str( exc )}' )
+				return page_result
+			
+			REGISTRY: dict[ str, tuple[ str, callable ] ] = \
+				{
+						'scrape_headings': ('Headings', fetcher.scrape_headings),
+						'scrape_paragraphs': ('Paragraphs', fetcher.scrape_paragraphs),
+						'scrape_lists': ('Lists', fetcher.scrape_lists),
+						'scrape_tables': ('Tables', fetcher.scrape_tables),
+						'scrape_articles': ('Articles', fetcher.scrape_articles),
+						'scrape_sections': ('Sections', fetcher.scrape_sections),
+						'scrape_divisions': ('Divisions', fetcher.scrape_divisions),
+						'scrape_blockquotes': ('Blockquotes', fetcher.scrape_blockquotes),
+						'scrape_hyperlinks': ('Hyperlinks', fetcher.scrape_hyperlinks),
+						'scrape_images': ('Images', fetcher.scrape_images),
+				}
+			
+			for method_name in selected_methods:
+				if method_name not in REGISTRY:
+					continue
+				
+				label, method = REGISTRY[ method_name ]
+				try:
+					data = method( url )
+					page_result[ 'data' ][ label ] = _coerce_items( data )
+				except Exception as exc:
+					page_result[ 'data' ][ label ] = [ ]
+					page_result[ 'errors' ].append( f'{label}: {str( exc )}' )
+			
+			return page_result
+		
+		def _crawl_pages(
+				seed_url: str,
+				include_title: bool,
+				include_basic_text: bool,
+				include_raw_html: bool,
+				selected_methods: list[ str ],
+				recursive: bool,
+				max_depth: int,
+				max_pages: int,
+				same_domain_only: bool ) -> tuple[ list[ dict[ str, Any ] ], dict[ str, Any ] ]:
+			results: list[ dict[ str, Any ] ] = [ ]
+			visited: set[ str ] = set( )
+			enqueued: set[ str ] = set( )
+			queue: deque[ tuple[ str, int ] ] = deque( )
+			skipped_urls: list[ str ] = [ ]
+			
+			normalized_seed = _normalize_url( seed_url, seed_url )
+			if not normalized_seed:
+				raise ValueError( 'A valid absolute URL is required.' )
+			
+			queue.append( (normalized_seed, 0) )
+			enqueued.add( normalized_seed )
+			
+			while queue and len( results ) < max_pages:
+				current_url, depth = queue.popleft( )
+				
+				if current_url in visited:
+					continue
+				
+				visited.add( current_url )
+				
+				page_result = _scrape_single_page(
+					url=current_url,
+					include_title=include_title,
+					include_basic_text=include_basic_text,
+					include_raw_html=include_raw_html,
+					selected_methods=selected_methods )
+				
+				page_result[ 'depth' ] = depth
+				results.append( page_result )
+				
+				if not recursive:
+					continue
+				
+				if depth >= max_depth:
+					continue
+				
+				discovered_links = page_result.get( 'links_discovered', [ ] ) or [ ]
+				for next_url in discovered_links:
+					if len( results ) + len( queue ) >= max_pages:
+						break
+					
+					if not next_url or next_url in visited or next_url in enqueued:
+						continue
+					
+					if same_domain_only and not _same_domain( normalized_seed, next_url ):
+						skipped_urls.append( next_url )
+						continue
+					
+					queue.append( (next_url, depth + 1) )
+					enqueued.add( next_url )
+			
+			summary: dict[ str, Any ] = \
+				{
+						'mode': 'recursive' if recursive else 'single-page',
+						'seed_url': normalized_seed,
+						'pages_processed': len( results ),
+						'pages_visited': len( visited ),
+						'pages_skipped': len( skipped_urls ),
+						'recursive_requested': bool( recursive ),
+						'max_depth': int( max_depth ),
+						'max_pages': int( max_pages ),
+						'same_domain_only': bool( same_domain_only ),
+						'visited_urls': list( visited ),
+						'skipped_urls': skipped_urls,
+				}
+			
+			return results, summary
+		
+		col_left, col_right = st.columns( [ 1, 2 ], border=True )
+		with col_left:
+			target_url = st.text_input(
+				'Enter Target URL',
+				placeholder='https://example.com',
+				key='webfetcher_url' )
+			
+			st.markdown( '##### Core Output' )
+			
+			include_title = st.checkbox( 'Page Title', value=True, key='wf_page_title' )
+			
+			include_basic_text = st.checkbox( 'Basic Text', value=True, key='wf_basic_text' )
+			
+			include_raw_html = st.checkbox( 'Raw HTML', value=False, key='wf_raw_html' )
+			
+			st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
+			
+			st.markdown( '##### Structured Extraction' )
+			
+			col1, col2 = st.columns( [ 0.5, 0.5 ] )
+			
+			REGISTRY_LABELS: dict[ str, str ] = \
+				{
+						'scrape_headings': 'Headings',
+						'scrape_paragraphs': 'Paragraphs',
+						'scrape_lists': 'Lists',
+						'scrape_tables': 'Tables',
+						'scrape_articles': 'Articles',
+						'scrape_sections': 'Sections',
+						'scrape_divisions': 'Divisions',
+						'scrape_blockquotes': 'Blockquotes',
+						'scrape_hyperlinks': 'Hyperlinks',
+						'scrape_images': 'Images',
+				}
+			
+			selected_methods: list[ str ] = [ ]
+			
+			_registry_items: list[ tuple[ str, str ] ] = list( REGISTRY_LABELS.items( ) )
+			_col1_items: list[ tuple[ str, str ] ] = _registry_items[ :5 ]
+			_col2_items: list[ tuple[ str, str ] ] = _registry_items[ 5: ]
+			
+			with col1:
+				for method_name, label in _col1_items:
+					if st.checkbox( label, key=f'wf_{method_name}' ):
+						selected_methods.append( method_name )
+			
+			with col2:
+				for method_name, label in _col2_items:
+					if st.checkbox( label, key=f'wf_{method_name}' ):
+						selected_methods.append( method_name )
+			
+			st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
+			
+			st.markdown( '##### Crawl Controls' )
+			
+			enable_recursive = st.checkbox(
+				'Recursive Crawl',
+				value=False,
+				key='wf_recursive' )
+			
+			max_depth = st.number_input(
+				'Max Depth',
+				min_value=0,
+				max_value=10,
+				value=1,
+				step=1,
+				key='wf_max_depth',
+				disabled=(not enable_recursive) )
+			
+			max_pages = st.number_input(
+				'Max Pages',
+				min_value=1,
+				max_value=500,
+				value=10,
+				step=1,
+				key='wf_max_pages' )
+			
+			same_domain_only = st.checkbox(
+				'Same Domain Only',
+				value=True,
+				key='wf_same_domain_only',
+				disabled=(not enable_recursive) )
+			
+			b1, b2 = st.columns( 2 )
+			
+			with b1:
+				run_scraper = st.button( 'Run Scraper', key='webfetcher_run' )
+			
+			with b2:
+				st.button( 'Clear', key='webfetcher_clear', on_click=_clear_webscrape_state )
+		
+		with col_right:
+			if run_scraper:
+				try:
+					if not target_url or not target_url.strip( ):
+						raise ValueError( 'A target URL is required.' )
+					
+					results, summary = _crawl_pages(
+						seed_url=target_url.strip( ),
+						include_title=include_title,
+						include_basic_text=include_basic_text,
+						include_raw_html=include_raw_html,
+						selected_methods=selected_methods,
+						recursive=bool( enable_recursive ),
+						max_depth=int( max_depth ),
+						max_pages=int( max_pages ),
+						same_domain_only=bool( same_domain_only ) )
+					
+					st.session_state[ 'webscrape_results' ] = results
+					st.session_state[ 'webscrape_summary' ] = summary
+					st.rerun( )
+				
+				except Exception as exc:
+					st.error( str( exc ) )
+			
+			summary = st.session_state.get( 'webscrape_summary', { } )
+			results = st.session_state.get( 'webscrape_results', [ ] )
+			
+			if summary:
+				st.subheader( 'Summary' )
+				st.json( summary )
+			
+			if not results:
+				st.info( 'No results.' )
+			else:
+				st.subheader( 'Results' )
+				
+				for idx, page in enumerate( results, start=1 ):
+					title = page.get( 'title', '' ) or page.get( 'url', f'Page {idx}' )
+					depth = page.get( 'depth', 0 )
+					
+					with st.expander( f'Page {idx} [Depth {depth}]: {title}', expanded=(idx == 1) ):
+						meta_col1, meta_col2 = st.columns( 2 )
+						
+						with meta_col1:
+							st.markdown( f"**URL:** {page.get( 'url', '' )}" )
+							st.markdown( f"**Status Code:** {page.get( 'status_code', '' )}" )
+							st.markdown( f"**Depth:** {page.get( 'depth', 0 )}" )
+						
+						with meta_col2:
+							st.markdown( f"**Encoding:** {page.get( 'encoding', '' )}" )
+							st.markdown( f"**Title:** {page.get( 'title', '' )}" )
+						
+						plain_text = page.get( 'plain_text', '' )
+						if isinstance( plain_text, str ) and plain_text.strip( ):
+							st.subheader( 'Basic Text' )
+							st.text_area(
+								label='',
+								value=_truncate_text( plain_text, limit=12000 ),
+								height=280,
+								key=f'webscrape_plain_text_{idx}' )
+						
+						raw_html = page.get( 'raw_html', '' )
+						if isinstance( raw_html, str ) and raw_html.strip( ):
+							st.subheader( 'Raw HTML' )
+							st.text_area(
+								label='',
+								value=_truncate_text( raw_html, limit=12000 ),
+								height=240,
+								key=f'webscrape_raw_html_{idx}' )
+						
+						discovered_links = page.get( 'links_discovered', [ ] ) or [ ]
+						if discovered_links:
+							st.subheader( 'Links Discovered' )
+							for link_idx, link in enumerate( discovered_links, start=1 ):
+								st.write( f'{link_idx}. {link}' )
+						
+						data = page.get( 'data', { } ) or { }
+						for label, items in data.items( ):
+							st.subheader( f'{label}' )
+							
+							if not items:
+								st.info( 'No results returned.' )
+								continue
+							
+							for item_idx, item in enumerate( items, start=1 ):
+								st.write( f'{item_idx}. {item}' )
+						
+						errors = page.get( 'errors', [ ] ) or [ ]
+						if errors:
+							st.subheader( 'Errors' )
+							for err in errors:
+								st.error( err )
 
 # ==============================================================================
 # WEATHER MODE
@@ -3406,55 +4339,34 @@ elif mode == 'Weather':
 			# GOOGLE WEATHER
 			# ------------------------------------------------------------------
 			with st.expander( '🌦️ Google Weather', expanded=True ):
-				google_address = st.text_input(
-					'Address or Location',
-					value=global_location,
+				st.badge( label='About API', color='blue', help=cfg.GOOGLE_WEATHER )
+				google_address = st.text_input( 'Address or Location', value=global_location,
 					key='weather_google_address' )
 				
-				google_product = st.selectbox(
-					'Product',
+				google_product = st.selectbox( 'Product',
 					options=[ 'Current Conditions', 'Hourly Forecast', 'Daily Forecast', 'Alerts' ],
 					key='weather_google_product' )
 				
-				google_units = st.selectbox(
-					'Units System',
-					options=[ 'METRIC', 'IMPERIAL' ],
+				google_units = st.selectbox( 'Units System', options=[ 'METRIC', 'IMPERIAL' ],
 					key='weather_google_units' )
 				
-				google_language = st.text_input(
-					'Language Code',
-					value='en',
+				google_language = st.text_input( 'Language Code', value='en',
 					key='weather_google_language' )
 				
 				if google_product == 'Hourly Forecast':
-					google_hours = st.number_input(
-						'Hours',
-						min_value=1,
-						max_value=240,
-						value=24,
-						step=1,
-						key='weather_google_hours' )
+					google_hours = st.number_input( 'Hours', min_value=1, max_value=240,
+						value=24, step=1, key='weather_google_hours' )
 				else:
 					google_hours = 24
 				
 				if google_product == 'Daily Forecast':
-					google_days = st.number_input(
-						'Days',
-						min_value=1,
-						max_value=10,
-						value=5,
-						step=1,
-						key='weather_google_days' )
+					google_days = st.number_input( 'Days', min_value=1, max_value=10, value=5,
+						step=1, key='weather_google_days' )
 				else:
 					google_days = 5
 				
-				google_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=10,
-					step=1,
-					key='weather_google_timeout' )
+				google_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=10, step=1, key='weather_google_timeout' )
 				
 				google_btn_c1, google_btn_c2 = st.columns( 2 )
 				
@@ -3527,44 +4439,26 @@ elif mode == 'Weather':
 			# OPENWEATHER / OPEN-METEO
 			# ------------------------------------------------------------------
 			with st.expander( '🌤️ OpenWeather / Open-Meteo', expanded=False ):
-				open_location = st.text_input(
-					'Location',
-					value=global_location,
+				st.badge( label='About API', color='blue', help=cfg.OPEN_WEATHER )
+				open_location = st.text_input( 'Location', value=global_location,
 					key='weather_open_location' )
 				
-				open_mode = st.selectbox(
-					'Mode',
-					options=[ 'current', 'hourly', 'daily' ],
+				open_mode = st.selectbox( 'Mode', options=[ 'current', 'hourly', 'daily' ],
 					key='weather_open_mode' )
 				
-				open_zone = st.text_input(
-					'Timezone',
+				open_zone = st.text_input( 'Timezone',
 					value='auto',
 					key='weather_open_zone' )
 				
-				open_forecast_days = st.number_input(
-					'Forecast Days',
-					min_value=1,
-					max_value=16,
-					value=7,
-					step=1,
+				open_forecast_days = st.number_input( 'Forecast Days', min_value=1,
+					max_value=16, value=7, step=1,
 					key='weather_open_forecast_days' )
 				
-				open_past_days = st.number_input(
-					'Past Days',
-					min_value=0,
-					max_value=92,
-					value=0,
-					step=1,
-					key='weather_open_past_days' )
+				open_past_days = st.number_input( 'Past Days', min_value=0, max_value=92,
+					value=0, step=1, key='weather_open_past_days' )
 				
-				open_count = st.number_input(
-					'Geocoding Result Count',
-					min_value=1,
-					max_value=100,
-					value=10,
-					step=1,
-					key='weather_open_count' )
+				open_count = st.number_input( 'Geocoding Result Count', min_value=1, max_value=100,
+					value=10, step=1, key='weather_open_count' )
 				
 				open_btn_c1, open_btn_c2 = st.columns( 2 )
 				
@@ -3577,11 +4471,8 @@ elif mode == 'Weather':
 							try:
 								weather = OpenWeather( )
 								
-								result = weather.fetch(
-									location=open_location,
-									mode=open_mode,
-									zone=open_zone,
-									forecast_days=int( open_forecast_days ),
+								result = weather.fetch( location=open_location, mode=open_mode,
+									zone=open_zone, forecast_days=int( open_forecast_days ),
 									past_days=int( open_past_days ),
 									count=int( open_count ) )
 								
@@ -3594,10 +4485,8 @@ elif mode == 'Weather':
 								st.session_state[ 'weather_last_latitude' ] = weather_latitude
 								st.session_state[ 'weather_last_longitude' ] = weather_longitude
 								
-								set_global_coordinates_from_result(
-									weather_latitude,
-									weather_longitude,
-									location=open_location,
+								set_global_coordinates_from_result( weather_latitude,
+									weather_longitude, location=open_location,
 									description='OpenWeather / Open-Meteo result' )
 								
 								st.success( 'OpenWeather request completed.' )
@@ -3617,9 +4506,8 @@ elif mode == 'Weather':
 			# HISTORICAL WEATHER
 			# ------------------------------------------------------------------
 			with st.expander( '🕰️ Historical Weather', expanded=False ):
-				historical_location = st.text_input(
-					'Location',
-					value=global_location,
+				st.badge( label='About API', color='blue', help=cfg.HISTORICAL_WEATHER )
+				historical_location = st.text_input( 'Location', value=global_location,
 					key='weather_historical_location' )
 				
 				historical_date = st.date_input(
@@ -3688,8 +4576,8 @@ elif mode == 'Weather':
 			# CLIMATE DATA
 			# ------------------------------------------------------------------
 			with st.expander( '🌡️ Climate Data', expanded=False ):
-				climate_mode = st.selectbox(
-					'Mode',
+				st.badge( label='About API', color='blue', help=cfg.NOAA_CLIMATE_DATA )
+				climate_mode = st.selectbox( 'Mode',
 					options=[ 'datasets', 'data' ],
 					key='weather_climate_mode' )
 				
@@ -3833,6 +4721,7 @@ elif mode == 'Weather':
 			# TIDES AND CURRENTS
 			# ------------------------------------------------------------------
 			with st.expander( '🌊 Tides & Currents', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.NOAA_TIDES_CURRENTS )
 				tides_mode = st.selectbox(
 					'Mode',
 					options=[ 'station', 'water-level', 'tide-predictions' ],
@@ -4007,6 +4896,7 @@ elif mode == 'Environmental':
 			# AIRNOW AIR QUALITY
 			# ------------------------------------------------------------------
 			with st.expander( '🌫️ AirNow Air Quality', expanded=True ):
+				st.badge( label='About API', color='blue', help=cfg.AIR_NOW )
 				airnow_mode = st.selectbox(
 					'Mode',
 					options=[
@@ -4017,26 +4907,14 @@ elif mode == 'Environmental':
 					],
 					key='env_airnow_mode' )
 				
-				airnow_distance = st.number_input(
-					'Distance',
-					min_value=0,
-					max_value=250,
-					value=25,
-					step=1,
-					key='input_env_airnow_distance' )
+				airnow_distance = st.number_input( 'Distance', min_value=0, max_value=250,
+					value=25, step=1, key='input_env_airnow_distance' )
 				
-				airnow_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=20,
-					step=1,
-					key='input_env_airnow_timeout' )
+				airnow_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=20, step=1, key='input_env_airnow_timeout' )
 				
 				if 'ZIP' in airnow_mode:
-					airnow_zip = st.text_input(
-						'ZIP Code',
-						value=global_zipcode,
+					airnow_zip = st.text_input( 'ZIP Code', value=global_zipcode,
 						key='input_env_airnow_zip' )
 					
 					airnow_latitude = None
@@ -4150,6 +5028,7 @@ elif mode == 'Environmental':
 			# UV INDEX
 			# ------------------------------------------------------------------
 			with st.expander( '☀️ UV Index', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.AIR_NOW )
 				uv_mode = st.selectbox(
 					'Mode',
 					options=[
@@ -4257,6 +5136,7 @@ elif mode == 'Environmental':
 			# OPENAQ
 			# ------------------------------------------------------------------
 			with st.expander( '🧪 OpenAQ', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.OPEN_AQ )
 				openaq_mode = st.selectbox( 'Mode',
 					options=[ 'Locations', 'Latest Measurements' ], key='sb_openaq_mode' )
 				
@@ -4396,6 +5276,7 @@ elif mode == 'Environmental':
 			# PURPLEAIR SENSORS
 			# ------------------------------------------------------------------
 			with st.expander( '🟣 PurpleAir Sensors', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.PURPLE_AIR )
 				purple_mode = st.selectbox(
 					'Mode',
 					options=[ 'Sensors by Bounding Box', 'Single Sensor' ],
@@ -4541,7 +5422,8 @@ elif mode == 'Environmental':
 			# ------------------------------------------------------------------
 			# ENVIROFACTS
 			# ------------------------------------------------------------------
-			with st.expander( '🏭 EnviroFacts Facilities', expanded=False ):
+			with st.expander( '🏭 EPA EnviroFacts Facilities', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.EPA_ENVIROFACTS )
 				envirofacts_table = st.selectbox(
 					'Table',
 					options=[ 'TRI_FACILITY', 'TRI_RELEASE', 'EF_W_EMISSIONS_SOURCE_GHG' ],
@@ -4549,7 +5431,7 @@ elif mode == 'Environmental':
 				
 				envirofacts_state = st.text_input(
 					'State Code',
-					value='DC',
+					value='',
 					help='Optional two-letter state filter.',
 					key='env_envirofacts_state' )
 				
@@ -4609,7 +5491,8 @@ elif mode == 'Environmental':
 			# ------------------------------------------------------------------
 			# FIRMS FIRE / THERMAL ANOMALIES
 			# ------------------------------------------------------------------
-			with st.expander( '🔥 FIRMS Fire / Thermal Anomalies', expanded=False ):
+			with st.expander( '🔥 NASA FIRMS', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.NASA_FIRMS )
 				firms_source = st.selectbox(
 					'Source',
 					options=[
@@ -4750,7 +5633,8 @@ elif mode == 'Environmental':
 			# ------------------------------------------------------------------
 			# EONET NATURAL EVENTS
 			# ------------------------------------------------------------------
-			with st.expander( '🌎 EONET Natural Events', expanded=False ):
+			with st.expander( '🌎 NASA Earth Observatory Natural Events', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.NASA_EONET )
 				eonet_mode = st.selectbox(
 					'Mode',
 					options=[ 'events', 'categories' ],
@@ -5029,19 +5913,15 @@ elif mode == 'Astronomical':
 			# NAVAL OBSERVATORY
 			# ------------------------------------------------------------------
 			with st.expander( '🧭 Naval Observatory', expanded=True ):
-				naval_date = st.date_input(
-					'Date',
-					value=dt.date.today( ),
+				st.badge( label='About API', color='blue', help=cfg.US_NAVAL_OBSERVATORY )
+				naval_date = st.date_input( 'Date', value=dt.date.today( ),
 					key='astro_naval_date' )
 				
-				naval_time_value = st.text_input(
-					'Time',
-					value='12:00:00',
+				naval_time_value = st.text_input( 'Time', value='12:00:00',
 					help='Use HH:MM, HH:MM:SS, or HH:MM:SS.S format.',
 					key='astro_naval_time_value' )
 				
 				naval_c1, naval_c2 = st.columns( 2 )
-				
 				with naval_c1:
 					naval_latitude = st.number_input(
 						'Observer Latitude',
@@ -5119,8 +5999,8 @@ elif mode == 'Astronomical':
 			# SPACE WEATHER
 			# ------------------------------------------------------------------
 			with st.expander( '☀️ Space Weather', expanded=False ):
-				space_mode = st.selectbox(
-					'Mode',
+				st.badge( label='About API', color='blue', help=cfg.SPACE_WEATHER )
+				space_mode = st.selectbox( 'Mode',
 					options=[
 							'cme',
 							'cme_analysis',
@@ -5133,8 +6013,7 @@ elif mode == 'Astronomical':
 							'hss',
 							'wsa_enlil',
 							'notifications'
-					],
-					key='astro_space_mode' )
+					], key='astro_space_mode' )
 				
 				space_date_c1, space_date_c2 = st.columns( 2 )
 				with space_date_c1:
@@ -5251,26 +6130,15 @@ elif mode == 'Astronomical':
 			# STAR CHART
 			# ------------------------------------------------------------------
 			with st.expander( '✨ Star Chart', expanded=False ):
-				chart_mode = st.selectbox(
-					'Mode',
-					options=[
-							'Object Chart',
-							'Coordinate Chart',
-							'Static Chart'
-					],
+				st.badge( label='About API', color='blue', help=cfg.STAR_CHART )
+				chart_mode = st.selectbox( 'Mode',
+					options=[ 'Object Chart', 'Coordinate Chart', 'Static Chart' ],
 					key='astro_chart_mode' )
 				
-				chart_zoom = st.number_input(
-					'Zoom',
-					min_value=1,
-					max_value=20,
-					value=5,
-					step=1,
-					key='astro_chart_zoom' )
+				chart_zoom = st.number_input( 'Zoom', min_value=1, max_value=20,
+					value=5, step=1, key='astro_chart_zoom' )
 				
-				chart_image_source = st.text_input(
-					'Image Source',
-					value='DSS2',
+				chart_image_source = st.text_input( 'Image Source', value='DSS2',
 					key='astro_chart_image_source' )
 				
 				if chart_mode == 'Object Chart':
@@ -5299,27 +6167,20 @@ elif mode == 'Astronomical':
 							format='%.7f',
 							key='astro_chart_dec' )
 				
-				chart_box_color = st.selectbox(
-					'Box Color',
+				chart_box_color = st.selectbox( 'Box Color',
 					options=[ 'yellow', 'red', 'green', 'blue', 'white' ],
 					key='astro_chart_box_color' )
 				
 				chart_options_c1, chart_options_c2 = st.columns( 2 )
 				with chart_options_c1:
-					chart_show_box = st.checkbox(
-						'Show Box',
-						value=True,
+					chart_show_box = st.checkbox( 'Show Box', value=True,
 						key='astro_chart_show_box' )
 					
-					chart_show_grid = st.checkbox(
-						'Show Grid',
-						value=True,
+					chart_show_grid = st.checkbox( 'Show Grid', value=True,
 						key='astro_chart_show_grid' )
 				
 				with chart_options_c2:
-					chart_show_lines = st.checkbox(
-						'Show Lines',
-						value=True,
+					chart_show_lines = st.checkbox( 'Show Lines', value=True,
 						key='astro_chart_show_lines' )
 					
 					chart_show_boundaries = st.checkbox(
@@ -5456,23 +6317,16 @@ elif mode == 'Astronomical':
 			# SATELLITE CENTER
 			# ------------------------------------------------------------------
 			with st.expander( '🛰️ Satellite Center', expanded=False ):
-				satellite_mode = st.selectbox(
-					'Mode',
+				st.badge( label='About API', color='blue', help=cfg.SATELLITE_CENTER )
+				satellite_mode = st.selectbox( 'Mode',
 					options=[ 'observatories', 'ground_stations', 'locations' ],
 					key='astro_satellite_mode' )
 				
-				satellite_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=20,
-					step=1,
-					key='astro_satellite_timeout' )
+				satellite_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=20, step=1, key='astro_satellite_timeout' )
 				
 				if satellite_mode == 'locations':
-					satellite_query = st.text_input(
-						'Observatories',
-						value='iss',
+					satellite_query = st.text_input( 'Observatories', value='iss',
 						help='Comma-separated observatory identifiers such as iss or mms1,mms2.',
 						key='astro_satellite_query' )
 					
@@ -5568,6 +6422,7 @@ elif mode == 'Astronomical':
 			# ASTRO CATALOG
 			# ------------------------------------------------------------------
 			with st.expander( '🔭 Astro Catalog', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.ASTRONOMY_CATALOG )
 				catalog_mode = st.selectbox(
 					'Mode',
 					options=[ 'object_query', 'cone_search' ],
@@ -5676,6 +6531,7 @@ elif mode == 'Astronomical':
 			# ASTROQUERY / SIMBAD
 			# ------------------------------------------------------------------
 			with st.expander( '🌌 AstroQuery / SIMBAD', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.ASTRO_QUERY )
 				astroquery_mode = st.selectbox(
 					'Mode',
 					options=[ 'object_search', 'object_ids', 'region_search' ],
@@ -5765,33 +6621,24 @@ elif mode == 'Astronomical':
 			# STAR MAP
 			# ------------------------------------------------------------------
 			with st.expander( '🗺️ Star Map', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.STAR_MAP )
 				starmap_mode = st.selectbox(
 					'Mode',
 					options=[ 'object_link', 'coordinate_link', 'snapshot' ],
 					key='astro_starmap_mode' )
 				
-				starmap_zoom = st.number_input(
-					'Zoom',
-					min_value=1,
-					max_value=20,
-					value=5,
-					step=1,
-					key='astro_starmap_zoom' )
+				starmap_zoom = st.number_input( 'Zoom', min_value=1, max_value=20,
+					value=5, step=1, key='astro_starmap_zoom' )
 				
-				starmap_image_source = st.text_input(
-					'Image Source',
-					value='DSS2',
+				starmap_image_source = st.text_input( 'Image Source', value='DSS2',
 					key='astro_starmap_image_source' )
 				
-				starmap_box_color = st.selectbox(
-					'Box Color',
+				starmap_box_color = st.selectbox( 'Box Color',
 					options=[ 'yellow', 'red', 'green', 'blue', 'white' ],
 					key='astro_starmap_box_color' )
 				
 				if starmap_mode == 'object_link':
-					starmap_query = st.text_input(
-						'Object Name',
-						value='M31',
+					starmap_query = st.text_input( 'Object Name', value='M31',
 						key='astro_starmap_query' )
 					
 					starmap_ra = 0.0
@@ -5801,54 +6648,33 @@ elif mode == 'Astronomical':
 					starmap_query = ''
 					starmap_coord_c1, starmap_coord_c2 = st.columns( 2 )
 					with starmap_coord_c1:
-						starmap_ra = st.number_input(
-							'Right Ascension',
-							value=10.6847083,
-							format='%.7f',
-							key='astro_starmap_ra' )
+						starmap_ra = st.number_input( 'Right Ascension', value=10.6847083,
+							format='%.7f', key='astro_starmap_ra' )
 					
 					with starmap_coord_c2:
-						starmap_dec = st.number_input(
-							'Declination',
-							value=41.2687500,
-							format='%.7f',
-							key='astro_starmap_dec' )
+						starmap_dec = st.number_input( 'Declination', value=41.2687500,
+							format='%.7f', key='astro_starmap_dec' )
 				
 				starmap_options_c1, starmap_options_c2 = st.columns( 2 )
 				with starmap_options_c1:
-					starmap_show_box = st.checkbox(
-						'Show Box',
-						value=True,
+					starmap_show_box = st.checkbox( 'Show Box', value=True,
 						key='astro_starmap_show_box' )
 					
-					starmap_show_grid = st.checkbox(
-						'Show Grid',
-						value=True,
+					starmap_show_grid = st.checkbox( 'Show Grid', value=True,
 						key='astro_starmap_show_grid' )
 				
 				with starmap_options_c2:
-					starmap_show_lines = st.checkbox(
-						'Show Lines',
-						value=True,
+					starmap_show_lines = st.checkbox( 'Show Lines', value=True,
 						key='astro_starmap_show_lines' )
 					
-					starmap_show_boundaries = st.checkbox(
-						'Show Boundaries',
-						value=True,
+					starmap_show_boundaries = st.checkbox( 'Show Boundaries', value=True,
 						key='astro_starmap_show_boundaries' )
 				
-				starmap_show_const_names = st.checkbox(
-					'Show Constellation Names',
-					value=False,
+				starmap_show_const_names = st.checkbox( 'Show Constellation Names', value=False,
 					key='astro_starmap_show_const_names' )
 				
-				starmap_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=20,
-					step=1,
-					key='astro_starmap_timeout' )
+				starmap_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=20, step=1, key='astro_starmap_timeout' )
 				
 				starmap_btn_c1, starmap_btn_c2 = st.columns( 2 )
 				
@@ -5985,6 +6811,121 @@ elif mode == 'Astronomical':
 				st.json( astro_result )
 
 # ==============================================================================
+# CELESTIAL MAP MODE
+# ==============================================================================
+elif mode == 'Celestial Map':
+	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	with center:
+		st.subheader( 'Celestial Map' )
+		st.divider( )
+		
+		global_location = get_global_location_default( )
+		location_state = get_location_state( )
+		has_global_coords = has_valid_global_coordinates( )
+		
+		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
+		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
+		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
+		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
+		
+		set_blue_divider( )
+		
+		control_c1, control_c2 = st.columns( [ 0.50, 0.50 ], border=True )
+		
+		with control_c1:
+			use_global_coordinates = st.checkbox(
+				'Use User-Location',
+				value=has_global_coords,
+				key='celestial_use_global_coordinates' )
+			
+			if use_global_coordinates:
+				celestial_latitude = float( location_state[ 'latitude' ] )
+				celestial_longitude = float( location_state[ 'longitude' ] )
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					st.number_input(
+						'Latitude',
+						value=celestial_latitude,
+						format='%.6f',
+						key='celestial_global_latitude_display',
+						disabled=True )
+				
+				with coord_c2:
+					st.number_input(
+						'Longitude',
+						value=celestial_longitude,
+						format='%.6f',
+						key='celestial_global_longitude_display',
+						disabled=True )
+			
+			else:
+				manual_default_latitude = (
+						float( location_state[ 'latitude' ] )
+						if has_global_coords
+						else get_global_latitude_default( ))
+				
+				manual_default_longitude = (
+						float( location_state[ 'longitude' ] )
+						if has_global_coords
+						else get_global_longitude_default( ))
+				
+				coord_c1, coord_c2 = st.columns( 2 )
+				with coord_c1:
+					celestial_latitude = st.number_input(
+						'Latitude',
+						value=manual_default_latitude,
+						format='%.6f',
+						key='celestial_manual_latitude' )
+				
+				with coord_c2:
+					celestial_longitude = st.number_input(
+						'Longitude',
+						value=manual_default_longitude,
+						format='%.6f',
+						key='celestial_manual_longitude' )
+		
+		with control_c2:
+			celestial_location = st.text_input(
+				'Location Label',
+				value=compose_location_from_state( ) or global_location,
+				key='celestial_location_label' )
+			
+			celestial_zoom = st.slider(
+				'Location Picker Zoom',
+				min_value=1,
+				max_value=18,
+				value=int( st.session_state.get( 'zoom', 8 ) or 8 ),
+				key='celestial_location_picker_zoom' )
+			
+			save_coordinates = st.checkbox(
+				'Save Coordinates to Global State',
+				value=True,
+				key='celestial_save_coordinates' )
+		
+		if not has_valid_coordinates( celestial_latitude, celestial_longitude ):
+			st.warning( 'Provide valid coordinates before rendering the Celestial Map.' )
+			st.stop( )
+		
+		if save_coordinates:
+			set_location_state(
+				location=celestial_location,
+				description='Celestial Map observer location',
+				latitude=float( celestial_latitude ),
+				longitude=float( celestial_longitude ) )
+			st.session_state[ 'zoom' ] = int( celestial_zoom )
+		
+		set_blue_divider( )
+		
+		render_celestial_map(
+			asset_root='assets/starmap',
+			height=1400,
+			latitude=float( celestial_latitude ),
+			longitude=float( celestial_longitude ),
+			location=celestial_location,
+			zoom=int( celestial_zoom ) )
+
+# ==============================================================================
 # GEOLOGICAL MODE
 # ==============================================================================
 elif mode == 'Geological':
@@ -6011,6 +6952,7 @@ elif mode == 'Geological':
 			# USGS EARTHQUAKES
 			# ------------------------------------------------------------------
 			with st.expander( '🌎 USGS Earthquakes', expanded=True ):
+				st.badge( label='About API', color='blue', help=cfg.USGS_EARTHQUAKES )
 				quake_mode = st.selectbox( 'Mode', options=[ 'feed', 'search' ],
 					key='geo_quake_mode' )
 				
@@ -6167,6 +7109,7 @@ elif mode == 'Geological':
 			# GLOBAL IMAGERY
 			# ------------------------------------------------------------------
 			with st.expander( '🛰️ Global Imagery', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.NASA_GLOBAL_IMAGERY )
 				st.caption(
 					'Uses the original GlobalImagery fetcher. The current fetch_map_services() '
 					'writes the default NASA GIBS image to python-examples.'
@@ -6220,6 +7163,7 @@ elif mode == 'Geological':
 			# USGS WATER DATA
 			# ------------------------------------------------------------------
 			with st.expander( '💧 USGS Water Data', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.USGS_WATER )
 				water_mode = st.selectbox( 'Mode', options=[
 						'monitoring-locations',
 						'time-series-metadata',
@@ -6326,6 +7270,7 @@ elif mode == 'Geological':
 			# USGS THE NATIONAL MAP
 			# ------------------------------------------------------------------
 			with st.expander( '🗺️ USGS The National Map', expanded=False ):
+				st.badge( label='About API', color='blue', help=cfg.USGS_NATIONAL_MAP )
 				tnm_mode = st.selectbox(
 					'Mode',
 					options=[ 'datasets', 'products' ],
@@ -6536,322 +7481,6 @@ elif mode == 'Geological':
 				
 				st.markdown( '##### Raw Result' )
 				st.json( geo_result )
-
-# ==============================================================================
-# DISTANCES MODE
-# ==============================================================================
-elif mode == 'Distances':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
-	with center:
-		st.subheader( 'Distance Matrix' )
-		st.divider( )
-		
-		global_location = get_global_location_default( )
-		location_state = get_location_state( )
-		current_location = compose_location_from_state( )
-		
-		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
-		status_c1.metric( 'Location', current_location if current_location else global_location )
-		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
-		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
-		
-		set_blue_divider( )
-		
-		dist_c1, dist_c2 = st.columns( [ 0.50, 0.50 ], border=True )
-		
-		with dist_c1:
-			use_global_origin = st.checkbox( 'Use User-Location as Origin',
-				value=bool( current_location ), key='distance_use_global_origin' )
-			
-			if use_global_origin:
-				origin = current_location
-				st.text_input( 'Origin', value=origin, key='distance_origin_display',
-					disabled=True )
-			else:
-				origin_default = st.session_state.get( 'origin', '' ) or current_location
-				origin = st.text_input( 'Origin', value=origin_default,
-					key='distance_origin_input' )
-		
-		with dist_c2:
-			use_global_destination = st.checkbox( 'Use User-Location as Destination', value=False,
-				key='distance_use_global_destination' )
-			
-			if use_global_destination:
-				destination = current_location
-				st.text_input( 'Destination', value=destination, key='distance_destination_display',
-					disabled=True )
-			else:
-				destination_default = st.session_state.get( 'destination', '' )
-				destination = st.text_input( 'Destination', value=destination_default,
-					key='distance_destination_input' )
-		
-		ctl_c1, ctl_c2, ctl_c3 = st.columns( [ 0.30, 0.30, 0.40 ], border=True )
-		with ctl_c1:
-			travel_mode = st.selectbox( 'Travel Mode',
-				[ 'driving', 'walking', 'bicycling', 'transit' ], key='travel_key' )
-		
-		with ctl_c2:
-			update_global_route = st.checkbox( 'Save Route to Global State', value=True,
-				key='distance_save_route_state' )
-		
-		with ctl_c3:
-			run_distance = st.button( 'Calculate Distance', key='distance_calculate',
-				width='stretch' )
-		
-		if run_distance:
-			if not origin or not destination:
-				st.warning( 'Provide both origin and destination.' )
-			else:
-				try:
-					if update_global_route:
-						st.session_state[ 'origin' ] = str( origin ).strip( )
-						st.session_state[ 'destination' ] = str( destination ).strip( )
-					
-					summary = distances.summary( origin, destination, mode=travel_mode )
-					st.session_state[ 'distance_last_result' ] = summary or { }
-					st.success( 'Distance Matrix request completed.' )
-				
-				except Exception as ex:
-					st.error( f'Distance Matrix request failed: {ex}' )
-		
-		result = st.session_state.get( 'distance_last_result', { } )
-		if result:
-			set_blue_divider( )
-			st.markdown( '##### Distance Result' )
-			st.data_editor( pd.DataFrame( [ result ] ), key='distance_result_table',
-				use_container_width=True, disabled=True )
-			st.json( result )
-
-# ==============================================================================
-# MAPS MODE
-# ==============================================================================
-elif mode == 'Static Maps':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
-	with center:
-		st.subheader( 'Static Map' )
-		st.divider( )
-		
-		global_location = get_global_location_default( )
-		location_state = get_location_state( )
-		has_global_coords = has_valid_global_coordinates( )
-		
-		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
-		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
-		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
-		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
-		
-		set_blue_divider( )
-		
-		map_c1, map_c2 = st.columns( [ 0.50, 0.50 ], border=True )
-		with map_c1:
-			use_global_coordinates = st.checkbox( 'Use User-Location', value=has_global_coords,
-				key='maps_use_global_coordinates' )
-			
-			if use_global_coordinates:
-				lat = float( location_state[ 'latitude' ] )
-				lng = float( location_state[ 'longitude' ] )
-				
-				coord_c1, coord_c2 = st.columns( 2 )
-				with coord_c1:
-					st.number_input( 'Latitude', value=lat, format='%.4f',
-						key='maps_global_latitude_display', disabled=True )
-				
-				with coord_c2:
-					st.number_input( 'Longitude', value=lng, format='%.4f',
-						key='maps_global_longitude_display', disabled=True )
-			
-			else:
-				manual_default_lat = (float( location_state[ 'latitude' ] )
-				                      if has_global_coords
-				                      else 0.0)
-				
-				manual_default_lng = (float( location_state[ 'longitude' ] )
-				                      if has_global_coords
-				                      else 0.0)
-				
-				coord_c1, coord_c2 = st.columns( 2 )
-				with coord_c1:
-					lat = st.number_input( 'Latitude', value=manual_default_lat, format='%.4f',
-						key='maps_manual_latitude' )
-				
-				with coord_c2:
-					lng = st.number_input( 'Longitude', value=manual_default_lng, format='%.4f',
-						key='maps_manual_longitude' )
-		
-		with map_c2:
-			zoom_default = int( st.session_state.get( 'zoom', 8 ) or 8 )
-			size_default = str( st.session_state.get( 'map_size', '600x400' ) or '600x400' )
-			size_options = [ '400x400', '600x400', '800x600' ]
-			
-			if size_default not in size_options:
-				size_default = '600x400'
-			
-			zoom = st.slider( 'Zoom', min_value=1, max_value=20, value=zoom_default,
-				key='maps_zoom' )
-			
-			size = st.selectbox( 'Image Size', size_options,
-				index=size_options.index( size_default ), key='maps_size' )
-			
-			save_coordinates = st.checkbox( 'Save Coordinates to Global State', value=True,
-				key='maps_save_coordinates' )
-		
-		if st.button( 'Generate Map', key='maps_generate', width='stretch' ):
-			if use_global_coordinates and not has_global_coords:
-				st.warning( 'User coordinates are not set.' )
-			elif not has_valid_coordinates( lat, lng ):
-				st.warning( 'Provide valid coordinates before generating a map.' )
-			else:
-				try:
-					if save_coordinates:
-						set_coordinates( lat, lng )
-						st.session_state[ 'zoom' ] = int( zoom )
-						st.session_state[ 'map_size' ] = str( size )
-					
-					url = static_maps.pin(
-						lat=float( lat ),
-						lng=float( lng ),
-						zoom=int( zoom ),
-						size=str( size ) )
-					
-					st.session_state[ 'maps_last_url' ] = url
-					st.session_state[ 'maps_last_latitude' ] = float( lat )
-					st.session_state[ 'maps_last_longitude' ] = float( lng )
-					st.success( 'Static map generated.' )
-				
-				except Exception as ex:
-					st.error( f'Static map generation failed: {ex}' )
-		
-		map_url = st.session_state.get( 'maps_last_url', '' )
-		
-		if map_url:
-			set_blue_divider( )
-			st.markdown( '##### Static Map Result' )
-			st.image( map_url )
-			st.code( map_url )
-
-# ==============================================================================
-# TIME ZONE MODE
-# ==============================================================================
-elif mode == 'Time Zones':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
-	with center:
-		st.subheader( 'Time Zone Lookup' )
-		st.divider( )
-		
-		global_location = get_global_location_default( )
-		location_state = get_location_state( )
-		has_global_coords = has_valid_global_coordinates( )
-		
-		status_c1, status_c2, status_c3 = st.columns( 3, border=True )
-		status_c1.metric( 'Location', compose_location_from_state( ) or global_location )
-		status_c2.metric( 'Latitude', f'{float( location_state[ "latitude" ] ):.4f}' )
-		status_c3.metric( 'Longitude', f'{float( location_state[ "longitude" ] ):.4f}' )
-		
-		set_blue_divider( )
-		
-		tz_c1, tz_c2 = st.columns( [ 0.50, 0.50 ], border=True )
-		with tz_c1:
-			use_global_coordinates = st.checkbox( 'User Location', value=has_global_coords,
-				key='timezone_use_global_coordinates' )
-			
-			if use_global_coordinates:
-				lat_tz = float( location_state[ 'latitude' ] )
-				lng_tz = float( location_state[ 'longitude' ] )
-				
-				coord_c1, coord_c2 = st.columns( 2 )
-				with coord_c1:
-					st.number_input(
-						'Latitude',
-						value=lat_tz,
-						format='%.6f',
-						key='timezone_global_latitude_display',
-						disabled=True )
-				
-				with coord_c2:
-					st.number_input(
-						'Longitude',
-						value=lng_tz,
-						format='%.6f',
-						key='timezone_global_longitude_display',
-						disabled=True )
-			
-			else:
-				manual_default_lat = (
-						float( location_state[ 'latitude' ] )
-						if has_global_coords
-						else 0.0
-				)
-				
-				manual_default_lng = (
-						float( location_state[ 'longitude' ] )
-						if has_global_coords
-						else 0.0
-				)
-				
-				coord_c1, coord_c2 = st.columns( 2 )
-				with coord_c1:
-					lat_tz = st.number_input(
-						'Latitude',
-						value=manual_default_lat,
-						format='%.6f',
-						key='timezone_manual_latitude' )
-				
-				with coord_c2:
-					lng_tz = st.number_input(
-						'Longitude',
-						value=manual_default_lng,
-						format='%.6f',
-						key='timezone_manual_longitude' )
-		
-		with tz_c2:
-			save_coordinates = st.checkbox(
-				'Save Coordinates to Global State',
-				value=True,
-				key='timezone_save_coordinates' )
-			
-			run_timezone = st.button(
-				'Lookup Time Zone',
-				key='timezone_lookup',
-				width='stretch' )
-		
-		if run_timezone:
-			if use_global_coordinates and not has_global_coords:
-				st.warning(
-					'Global coordinates are not set. Resolve a location first or enter manually.' )
-			elif not has_valid_coordinates( lat_tz, lng_tz ):
-				st.warning( 'Provide valid coordinates before looking up a time zone.' )
-			else:
-				try:
-					if save_coordinates:
-						set_coordinates( lat_tz, lng_tz )
-					
-					result = timezone.lookup( float( lat_tz ), float( lng_tz ) )
-					
-					st.session_state[ 'timezone_last_result' ] = result or { }
-					st.session_state[ 'timezone_last_latitude' ] = float( lat_tz )
-					st.session_state[ 'timezone_last_longitude' ] = float( lng_tz )
-					st.success( 'Time zone lookup completed.' )
-				
-				except Exception as ex:
-					st.error( f'Time zone lookup failed: {ex}' )
-		
-		result = st.session_state.get( 'timezone_last_result', { } )
-		
-		if result:
-			set_blue_divider( )
-			st.markdown( '##### Time Zone Result' )
-			
-			lat_c, lng_c = st.columns( 2 )
-			with lat_c:
-				st.metric(
-					'Latitude',
-					f'{float( st.session_state.get( "timezone_last_latitude", 0.0 ) ):.6f}' )
-			with lng_c:
-				st.metric(
-					'Longitude',
-					f'{float( st.session_state.get( "timezone_last_longitude", 0.0 ) ):.6f}' )
-			
-			st.json( result )
 
 # ==============================================================================
 # DATA UPLOAD MODE

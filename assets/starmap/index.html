@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Star Map</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css" />
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Interactive Star Map</h1>
+            <p class="subtitle">View the night sky for any location and time</p>
+        </header>
+
+        <div class="controls">
+            <form id="inputForm" novalidate>
+                <div class="button-group">
+                    <button type="button" id="whatUpTonightBtn" class="secondary-btn">🌠 What's Up Tonight?</button>
+                </div>
+
+                <div class="form-group">
+                    <label>📍 Select Location (or search)</label>
+                    <div id="locationPicker"></div>
+                    <p class="coordinates-display">Selected: <span id="selectedLocation">No location selected</span></p>
+                    <div class="error" id="locationError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">📅 Date & Time (UTC)</label>
+                    <input type="datetime-local" id="date" required>
+                    <div class="error" id="dateError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>🔭 Star Appearance & View</label>
+                    <div class="slider-group">
+                        <label>Field of View: <input type="range" id="zoomScale" min="0.5" max="3" value="1"
+                                step="0.1"></label>
+                        <label>Brightness: <input type="range" id="starBrightness" min="0.1" max="2" value="1"
+                                step="0.1"></label>
+                        <label>Size Scale: <input type="range" id="starSize" min="0.5" max="3" value="1.5"
+                                step="0.1"></label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>🌌 Display Options</label>
+                    <div class="toggle-group">
+                        <label><input type="checkbox" name="constellations" checked> Const. Lines</label>
+                        <label><input type="checkbox" name="constellationBorders"> Const. Borders</label>
+                        <label><input type="checkbox" name="labels" checked> Labels</label>
+                        <label><input type="checkbox" name="dsos" checked> DSOs</label>
+                        <label><input type="checkbox" name="planets" checked> Planets</label>
+                        <label><input type="checkbox" name="graticule" checked> Celestial Grid</label>
+                        <label><input type="checkbox" name="milkyWay" checked> Milky Way</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="labelLanguage">🏷️ Label Language</label>
+                    <select id="labelLanguage" class="custom-select">
+                        <option value="en">English</option>
+                        <option value="ar">Arabic</option>
+                        <option value="es">Spanish</option>
+                        <option value="de">German</option>
+                        <option value="fr">French</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>🎨 Color Customization</label>
+                    <div class="color-pickers"></div>
+                </div>
+
+                <button type="submit" class="generate-btn">
+                    <span class="btn-text">Generate Star Map</span>
+                    <div class="spinner hidden"></div>
+                </button>
+            </form>
+
+            <div class="location-info hidden" id="locationInfo">
+                <h3>🌍 Viewing From:</h3>
+                <p>Latitude: <span id="lat"></span></p>
+                <p>Longitude: <span id="lon"></span></p>
+                <p>Local Sidereal Time: <span id="lst"></span></p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>▶️ Time Animation</label>
+            <div class="animation-controls">
+                <button type="button" id="playAnimationBtn" class="control-btn">Play</button>
+                <button type="button" id="pauseAnimationBtn" class="control-btn" disabled>Pause</button>
+                <select id="timeStep" class="custom-select">
+                    <option value="minute">Minute</option>
+                    <option value="hour" selected>Hour</option>
+                    <option value="day">Day</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="mapContainer">
+            <div id="map"></div>
+            <div class="loading-overlay hidden">
+                <div class="loading-spinner"></div>
+                <p>Rendering star map...</p>
+            </div>
+        </div>
+
+        <button id="downloadBtn" class="download-btn hidden">Download Star Map</button>
+
+        <div id="downloadModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Download Options</h2>
+
+                <div class="download-container">
+                    <div class="download-controls">
+                        <h3>1. Choose Template</h3>
+                        <div class="template-options">
+                            <div class="template-option active" data-template="clean">
+                                <div class="preview-thumb clean"></div>
+                                <span>Clean (PNG)</span>
+                            </div>
+                            <div class="template-option" data-template="polaroid">
+                                <div class="preview-thumb polaroid"></div>
+                                <span>Polaroid</span>
+                            </div>
+                            <div class="template-option" data-template="poster">
+                                <div class="preview-thumb poster"></div>
+                                <span>Modern Poster</span>
+                            </div>
+                        </div>
+
+                        <h3>2. Add Details</h3>
+                        <div class="input-group">
+                            <label>Title</label>
+                            <input type="text" id="mapTitle" placeholder="The Night We Met" maxlength="30">
+                        </div>
+                        <div class="input-group">
+                            <label>Date Label</label>
+                            <input type="text" id="mapDateLabel" placeholder="July 20, 1969">
+                        </div>
+
+                        <h3>3. Style Options</h3>
+                        <div class="input-group">
+                            <label>Font Style</label>
+                            <select id="templateFont" class="custom-select">
+                                <option value="'Montserrat', sans-serif">Modern (Sans)</option>
+                                <option value="'Georgia', serif">Classic (Serif)</option>
+                                <option value="'Courier New', monospace">Typewriter (Mono)</option>
+                                <option value="cursive">Handwritten</option>
+                            </select>
+                        </div>
+                        <div class="style-row">
+                            <div class="input-group">
+                                <label>Card Color</label>
+                                <input type="color" id="templateBgColor" value="#ffffff" class="color-input">
+                            </div>
+                            <div class="input-group">
+                                <label>Text Color</label>
+                                <input type="color" id="templateTextColor" value="#000000" class="color-input">
+                            </div>
+                        </div>
+
+                        <button id="finalDownloadBtn" class="generate-btn">Download Image</button>
+                    </div>
+
+                    <div class="preview-area">
+                        <h3>Preview</h3>
+                        <div id="canvasPreviewContainer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="star-example"></div><span>Stars</span>
+            </div>
+            <div class="legend-item">
+                <div class="planet-example"></div><span>Planets</span>
+            </div>
+            <div class="legend-item">
+                <div class="constellation-example"></div><span>Const. Lines</span>
+            </div>
+            <div class="legend-item">
+                <div class="dso-example"></div><span>DSOs</span>
+            </div>
+            <div class="legend-item">
+                <div class="milkyway-example"></div><span>Milky Way</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidePanel" class="side-panel hidden">
+        <div class="side-panel-header">
+            <h2 id="starName">Star Name</h2>
+            <button id="closeSidePanel" class="close-panel">&times;</button>
+        </div>
+        <div class="side-panel-content">
+            <div id="starImageContainer" class="star-image-container">
+                <img id="starImage" src="" alt="Star Image" class="hidden">
+                <div id="starImagePlaceholder" class="image-placeholder">✨</div>
+            </div>
+            <div class="star-details">
+                <div class="detail-item">
+                    <span class="detail-label">Distance from The Sun:</span>
+                    <span id="starDistance" class="detail-value">-</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Magnitude:</span>
+                    <span id="starMagnitude" class="detail-value">-</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Constellation:</span>
+                    <span id="starConstellation" class="detail-value">-</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">RA/Dec:</span>
+                    <span id="starCoords" class="detail-value">-</span>
+                </div>
+            </div>
+            <div id="starSummary" class="star-summary">
+                Click a star to see more details...
+            </div>
+            <a id="wikiLink" href="#" target="_blank" class="wiki-link hidden">Read more on Wikipedia</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-geo/3.1.0/d3-geo.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+    
+    <!-- StarMap Modules -->
+    <script src="js/modules/CelestialMath.js"></script>
+    <script src="js/modules/StarData.js"></script>
+    <script src="js/modules/MapRenderer.js"></script>
+    <script src="js/modules/LocationPicker.js"></script>
+    <script src="js/modules/UIController.js"></script>
+    <script src="js/modules/StarDetailsPanel.js"></script>
+    <script src="js/modules/ImageExporter.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
