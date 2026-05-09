@@ -5853,16 +5853,13 @@ elif mode == 'Environmental':
 			# ENVIRONMENTAL RESULTS
 			# ------------------------------------------------------------------
 			st.markdown( '##### Environmental Results' )
-			
 			env_source = st.session_state.get( 'env_last_source', '' )
 			env_result = st.session_state.get( 'env_last_result', { } )
 			env_latitude = st.session_state.get( 'env_last_latitude', None )
 			env_longitude = st.session_state.get( 'env_last_longitude', None )
-			
 			if not env_result:
 				st.info(
-					'No environmental results available. Run one of the Environmental expanders.' )
-			
+					'No environmental results available. Run one of the Environmental expanders.' )			
 			else:
 				if env_source:
 					st.caption( f'Source: {env_source}' )
@@ -5870,15 +5867,10 @@ elif mode == 'Environmental':
 				summary = env_result.get( 'summary', None ) if isinstance( env_result,
 					dict ) else None
 				rows = env_result.get( 'rows', None ) if isinstance( env_result, dict ) else None
-				
 				if isinstance( summary, dict ) and summary:
 					st.markdown( '##### Summary' )
-					st.data_editor(
-						pd.DataFrame( [ summary ] ),
-						key='env_summary_table',
-						use_container_width=True,
-						disabled=True )
-				
+					st.data_editor( pd.DataFrame( [ summary ] ), key='env_summary_table',
+						use_container_width=True, disabled=True )
 				if env_latitude is not None and env_longitude is not None:
 					try:
 						lat_value = float( env_latitude )
