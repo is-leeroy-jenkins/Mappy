@@ -82,7 +82,7 @@ PURPLEAIR_API_KEY = os.getenv( 'PURPLEAIR_API_KEY' )
 
 # -------------- SETTINGS
 
-MODES = [ 'Geocoding', 'Interactive Map', 'Distances', 'Static Maps', 'Time Zones', 'Site Crawler',
+MODES = [ 'Geocoding', 'Interactive Map', 'Distances', 'Static Maps', 'Time Zones', 'Web Crawler',
           'Weather', 'Environmental', 'Geological', 'Astronomical', 'Celestial Map',
           'Data Upload', 'Data Management' ]
 

@@ -3875,7 +3875,7 @@ elif mode == 'Time Zones':
 # =============================================================================
 # SCRAPING MODE
 # ==============================================================================
-elif mode == 'Site Crawler':
+elif mode == 'Web Crawler':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( f'🕷️ Web Scraping' )
