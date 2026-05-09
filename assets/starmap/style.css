@@ -2,7 +2,7 @@
 
 :root
 {
-	--primary: rgba(253, 145, 3, 0.99);
+	--primary: rgba(56, 55, 55, 0.99);
 	--primary-light: #A28DFF;
 	--primary-dark: #141414;
 	--background: #0A0A0A;
@@ -10,7 +10,7 @@
 	--surface-light: #1E1F3A;
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
-	--accent: #007AFC;
+	--accent: #022E5E;
 }
 
 body
@@ -128,8 +128,8 @@ label
 	color: var(--text);
 }
 
-input[type='text'],
-input[type='datetime-local'],
+input[ type='text' ],
+input[ type='datetime-local' ],
 .custom-select
 {
 	width: 100%;
@@ -146,8 +146,8 @@ input[type='datetime-local'],
 	appearance: none;
 }
 
-input[type='text']:focus,
-input[type='datetime-local']:focus,
+input[ type='text' ]:focus,
+input[ type='datetime-local' ]:focus,
 .custom-select:focus
 {
 	outline: none;
@@ -180,7 +180,7 @@ input[type='datetime-local']:focus,
 	cursor: pointer;
 }
 
-.toggle-group input[type='checkbox']
+.toggle-group input[ type='checkbox' ]
 {
 	appearance: none;
 	width: 1.2rem;
@@ -193,12 +193,12 @@ input[type='datetime-local']:focus,
 	flex-shrink: 0;
 }
 
-.toggle-group input[type='checkbox']:checked
+.toggle-group input[ type='checkbox' ]:checked
 {
 	background: var(--primary);
 }
 
-.toggle-group input[type='checkbox']:checked::after
+.toggle-group input[ type='checkbox' ]:checked::after
 {
 	content: '✓';
 	position: absolute;
@@ -444,7 +444,7 @@ input[type='datetime-local']:focus,
 	height: 12px;
 	background: #75FF04;
 	border-radius: 50%;
-	box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+	box-shadow: 0 0 8px rgb(115, 255, 0);
 }
 
 .constellation-example
@@ -480,7 +480,7 @@ input[type='datetime-local']:focus,
 
 .download-btn
 {
-	background: linear-gradient(135deg, var(--accent), #3DBFE6);
+	background: linear-gradient(135deg, var(--accent), #004356);
 	color: white;
 	padding: 1rem 2.5rem;
 	border: none;
@@ -497,7 +497,7 @@ input[type='datetime-local']:focus,
 
 .download-btn:hover
 {
-	background: linear-gradient(135deg, #3DBFE6, #FFFFFF);
+	background: linear-gradient(135deg, #01475D, #FFFFFF);
 	transform: translateY(-2px);
 	box-shadow: 0 6px 16px rgba(255, 107, 142, 0.4);
 }

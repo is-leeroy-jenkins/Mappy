@@ -21637,11 +21637,11 @@ class PurpleAir( Fetcher ):
 					'-> Dict[ str, Any ]' )
 			raise exception
 	
-	def fetch( self, mode: str = 'sensors', sensor_index: int = None,
+	def fetch( self, mode: str = 'sensors', sensor_index: int=None,
 			nwlng: float | None = None, nwlat: float | None = None,
 			selng: float | None = None, selat: float | None = None,
-			location_type: int = 0, max_age: int = 0, modified_since: int = 0,
-			fields: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+			location_type: int=0, max_age: int=0, modified_since: int=0,
+			fields: str = '', time: int=20 ) -> Dict[ str, Any ] | None:
 		'''
 			Purpose:
 			--------
@@ -21895,10 +21895,8 @@ class OpenAQ( Fetcher ):
 			Optional[str]
 		'''
 		try:
-			candidates: List[ Optional[ str ] ]=[
-					os.getenv( 'OPENAQ_API_KEY' ),
-					os.getenv( 'OPEN_AQ_API_KEY' )
-			]
+			candidates: List[ Optional[ str ] ]=[ os.getenv( 'OPENAQ_API_KEY' ),
+			                                      os.getenv( 'OPEN_AQ_API_KEY' ) ]
 			
 			for candidate in candidates:
 				if candidate is not None and str( candidate ).strip( ):
@@ -21937,11 +21935,9 @@ class OpenAQ( Fetcher ):
 		'''
 		try:
 			throw_if( 'endpoint', endpoint )
-			
 			if self.api_key is None or not str( self.api_key ).strip( ):
 				raise ValueError(
-					'OpenAQ API key not found. Set OPENAQ_API_KEY or OPEN_AQ_API_KEY.'
-				)
+					'OpenAQ API key not found. Set OPENAQ_API_KEY or OPEN_AQ_API_KEY.' )
 			
 			self.url = f'{self.base_url}/{str( endpoint ).strip( )}'
 			self.params = { }
@@ -21998,15 +21994,12 @@ class OpenAQ( Fetcher ):
 		try:
 			rows: List[ Dict[ str, Any ] ]=[ ]
 			results = payload.get( 'results', [ ] ) or [ ]
-			
 			for item in results:
 				country = item.get( 'country', { } ) or { }
 				provider = item.get( 'provider', { } ) or { }
 				owner = item.get( 'owner', { } ) or { }
 				coordinates = item.get( 'coordinates', { } ) or { }
-				
-				rows.append(
-					{
+				rows.append( {
 							'Location Id': item.get( 'id', '' ),
 							'Name': item.get( 'name', '' ),
 							'Locality': item.get( 'locality', '' ),
@@ -22019,19 +22012,14 @@ class OpenAQ( Fetcher ):
 							'Time Zone': item.get( 'timezone', '' ),
 							'Is Mobile': item.get( 'isMobile', None ),
 							'Is Monitor': item.get( 'isMonitor', None )
-					}
-				)
+					} )
 			
 			return rows
-		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
-			exception.method = (
-					'_shape_location_rows( self, payload: Dict[ str, Any ] ) '
-					'-> List[ Dict[ str, Any ] ]'
-			)
+			exception.method = '_shape_location_rows( self, *args ) -> List[ Dict[ str, Any ] ]'
 			raise exception
 	
 	def _shape_latest_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
@@ -22052,13 +22040,10 @@ class OpenAQ( Fetcher ):
 		try:
 			rows: List[ Dict[ str, Any ] ]=[ ]
 			results = payload.get( 'results', [ ] ) or [ ]
-			
 			for item in results:
 				parameter = item.get( 'parameter', { } ) or { }
 				datetime_local = item.get( 'datetime', { } ) or { }
-				
-				rows.append(
-					{
+				rows.append( {
 							'Parameter': (
 									parameter.get( 'displayName', None ) or
 									parameter.get( 'name', '' )
@@ -22078,8 +22063,7 @@ class OpenAQ( Fetcher ):
 									   and len( item.get( 'sensorsId', [ ] ) ) > 0
 									else None
 							)
-					}
-				)
+					} )
 			
 			return rows
 		
@@ -22113,17 +22097,14 @@ class OpenAQ( Fetcher ):
 			first_name = ''
 			first_country = ''
 			first_parameter = ''
-			
 			if rows:
 				first_name = str(
 					rows[ 0 ].get( 'Name', '' ) or
-					rows[ 0 ].get( 'Location Id', '' ) or ''
-				)
+					rows[ 0 ].get( 'Location Id', '' ) or '' )
 				first_country = str( rows[ 0 ].get( 'Country', '' ) or '' )
 				first_parameter = str(
 					rows[ 0 ].get( 'Parameter', '' ) or
-					rows[ 0 ].get( 'Parameter Name', '' ) or ''
-				)
+					rows[ 0 ].get( 'Parameter Name', '' ) or '' )
 			
 			return {
 					'count': count,
@@ -22131,21 +22112,312 @@ class OpenAQ( Fetcher ):
 					'first_country': first_country,
 					'first_parameter': first_parameter
 			}
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'OpenAQ'
+			exception.method = '_summarize_rows( self, *args )  -> Dict[ str, Any ]'
+			raise exception
+	
+	def _shape_resource_rows( self, payload: Dict[ str, Any ], resource: str ) -> List[ Dict[ str, Any ] ]:
+		'''
+			Purpose:
+			--------
+			Normalize OpenAQ lookup resources into a human-readable table.
+	
+			Parameters:
+			-----------
+			payload (Dict[str, Any]):
+				OpenAQ resource payload.
+	
+			resource (str):
+				Resource name used to shape common fields.
+	
+			Returns:
+			--------
+			List[Dict[str, Any]]
+		'''
+		try:
+			rows: List[ Dict[ str, Any ] ] = [ ]
+			results = payload.get( 'results', [ ] ) or [ ]
+			resource_name = str( resource or '' ).strip( ).lower( )
+			for item in results:
+				if not isinstance( item, dict ):
+					continue
+				
+				row = {
+						'Resource': resource_name,
+						'Id': item.get( 'id', '' ),
+						'Name': item.get( 'name', '' )
+				}
+				
+				if resource_name == 'countries':
+					row[ 'Code' ] = item.get( 'code', '' )
+					row[ 'Locations' ] = item.get( 'locations', None )
+					row[ 'Parameters' ] = item.get( 'parameters', None )
+				
+				elif resource_name == 'providers':
+					row[ 'Description' ] = item.get( 'description', '' )
+					row[ 'Source Name' ] = item.get( 'sourceName', '' )
+					row[ 'Export Prefix' ] = item.get( 'exportPrefix', '' )
+				
+				elif resource_name == 'parameters':
+					row[ 'Display Name' ] = item.get( 'displayName', '' )
+					row[ 'Units' ] = item.get( 'units', '' )
+					row[ 'Description' ] = item.get( 'description', '' )
+				
+				else:
+					for key, value in item.items( ):
+						if isinstance( value, (str, int, float, bool) ) or value is None:
+							row[ str( key ) ] = value
+				
+				rows.append( row )
+			
+			return rows
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'OpenAQ'
+			exception.method = '_shape_resource_rows( self, *args ) -> List[ Dict[ str, Any ] ]'
+			raise exception
+	
+	def fetch_countries( self, providers_id: str = '', parameters_id: str = '',
+			limit: int=100, page: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch OpenAQ countries for resource discovery.
+	
+			Parameters:
+			-----------
+			providers_id (str):
+				Optional provider ID filter.
+	
+			parameters_id (str):
+				Optional parameter ID filter.
+	
+			limit (int):
+				Maximum returned countries.
+	
+			page (int):
+				Result page number.
+	
+			time (int):
+				Request timeout in seconds.
+	
+			Returns:
+			--------
+			Dict[str, Any] | None
+		'''
+		try:
+			self.mode = 'countries'
+			base = self.request(
+				endpoint='countries',
+				params={
+						'providers_id': str( providers_id ).strip( ),
+						'parameters_id': str( parameters_id ).strip( ),
+						'limit': max( 1, int( limit ) ),
+						'page': max( 1, int( page ) )
+				},
+				time=int( time )
+			) or { }
+			
+			payload = base.get( 'raw', { } ) or { }
+			rows = self._shape_resource_rows( payload, 'countries' )
+			
+			return {
+					'mode': self.mode,
+					'url': base.get( 'url', '' ),
+					'params': base.get( 'params', { } ),
+					'summary': self._summarize_rows( rows ),
+					'rows': rows,
+					'raw': payload
+			}
 		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = (
-					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
-					'-> Dict[ str, Any ]'
+					'fetch_countries( self, providers_id: str="", parameters_id: str="", '
+					'limit: int=100, page: int=1, time: int=20 ) -> Dict[ str, Any ]'
 			)
 			raise exception
 	
-	def fetch_locations( self, country_id: int=None,
-			coordinates: str='', radius: int=25000,
-			providers_id: str='', parameters_id: str='',
-			limit: int=25, page: int=1,
+	def fetch_providers( self, limit: int=100, page: int=1,
+			time: int=20 ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch OpenAQ providers for resource discovery.
+	
+			Parameters:
+			-----------
+			limit (int):
+				Maximum returned providers.
+	
+			page (int):
+				Result page number.
+	
+			time (int):
+				Request timeout in seconds.
+	
+			Returns:
+			--------
+			Dict[str, Any] | None
+		'''
+		try:
+			self.mode = 'providers'
+			base = self.request(
+				endpoint='providers',
+				params={
+						'limit': max( 1, int( limit ) ),
+						'page': max( 1, int( page ) )
+				},
+				time=int( time )
+			) or { }
+			
+			payload = base.get( 'raw', { } ) or { }
+			rows = self._shape_resource_rows( payload, 'providers' )
+			
+			return {
+					'mode': self.mode,
+					'url': base.get( 'url', '' ),
+					'params': base.get( 'params', { } ),
+					'summary': self._summarize_rows( rows ),
+					'rows': rows,
+					'raw': payload
+			}
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'OpenAQ'
+			exception.method = (
+					'fetch_providers( self, limit: int=100, page: int=1, '
+					'time: int=20 ) -> Dict[ str, Any ]'
+			)
+			raise exception
+	
+	def fetch_parameters( self, limit: int=100, page: int=1,
+			time: int=20 ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch OpenAQ parameters for resource discovery.
+	
+			Parameters:
+			-----------
+			limit (int):
+				Maximum returned parameters.
+	
+			page (int):
+				Result page number.
+	
+			time (int):
+				Request timeout in seconds.
+	
+			Returns:
+			--------
+			Dict[str, Any] | None
+		'''
+		try:
+			self.mode = 'parameters'
+			base = self.request(
+				endpoint='parameters',
+				params={
+						'limit': max( 1, int( limit ) ),
+						'page': max( 1, int( page ) )
+				},
+				time=int( time )
+			) or { }
+			
+			payload = base.get( 'raw', { } ) or { }
+			rows = self._shape_resource_rows( payload, 'parameters' )
+			
+			return {
+					'mode': self.mode,
+					'url': base.get( 'url', '' ),
+					'params': base.get( 'params', { } ),
+					'summary': self._summarize_rows( rows ),
+					'rows': rows,
+					'raw': payload
+			}
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'OpenAQ'
+			exception.method = (
+					'fetch_parameters( self, limit: int=100, page: int=1, '
+					'time: int=20 ) -> Dict[ str, Any ]'
+			)
+			raise exception
+	
+	def fetch_parameter_latest( self, parameter_id: int, limit: int=100,
+			page: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch latest measurements for a single OpenAQ parameter.
+	
+			Parameters:
+			-----------
+			parameter_id (int):
+				OpenAQ parameter identifier.
+	
+			limit (int):
+				Maximum returned latest values.
+	
+			page (int):
+				Result page number.
+	
+			time (int):
+				Request timeout in seconds.
+	
+			Returns:
+			--------
+			Dict[str, Any] | None
+		'''
+		try:
+			self.mode = 'parameter_latest'
+			base = self.request(
+				endpoint=f'parameters/{int( parameter_id )}/latest',
+				params={
+						'limit': max( 1, int( limit ) ),
+						'page': max( 1, int( page ) )
+				},
+				time=int( time )
+			) or { }
+			
+			payload = base.get( 'raw', { } ) or { }
+			rows = self._shape_latest_rows( payload )
+			
+			return {
+					'mode': self.mode,
+					'url': base.get( 'url', '' ),
+					'params': {
+							'parameter_id': int( parameter_id ),
+							'limit': max( 1, int( limit ) ),
+							'page': max( 1, int( page ) )
+					},
+					'summary': self._summarize_rows( rows ),
+					'rows': rows,
+					'raw': payload
+			}
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'OpenAQ'
+			exception.method = (
+					'fetch_parameter_latest( self, parameter_id: int, limit: int=100, '
+					'page: int=1, time: int=20 ) -> Dict[ str, Any ]'
+			)
+			raise exception
+		
+	def fetch_locations( self, country_id: int=None, coordinates: str='', radius: int=25000,
+			providers_id: str='', parameters_id: str='', limit: int=25, page: int=1,
 			time: int=20 ) -> Dict[ str, Any ] | None:
 		'''
 			Purpose:
@@ -22214,15 +22486,10 @@ class OpenAQ( Fetcher ):
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
-			exception.method = (
-					'fetch_locations( self, country_id: int | None=None, coordinates: str=, '
-					'radius: int=25000, providers_id: str=, parameters_id: str=, '
-					'limit: int=25, page: int=1, time: int=20 ) -> Dict[ str, Any ]'
-			)
+			exception.method = 'fetch_locations( self, *args) -> Dict[ str, Any ]'
 			raise exception
 	
-	def fetch_latest( self, location_id: int,
-			time: int=20 ) -> Dict[ str, Any ] | None:
+	def fetch_latest( self, location_id: int, time: int=20 ) -> Dict[ str, Any ] | None:
 		'''
 			Purpose:
 			--------
@@ -22242,15 +22509,11 @@ class OpenAQ( Fetcher ):
 		'''
 		try:
 			self.mode = 'latest'
-			base = self.request(
-				endpoint=f'locations/{int( location_id )}/latest',
-				params={ },
-				time=int( time )
-			) or { }
+			base = self.request( endpoint=f'locations/{int( location_id )}/latest', params={ },
+				time=int( time ) ) or { }
 			
 			payload = base.get( 'raw', { } ) or { }
 			rows = self._shape_latest_rows( payload )
-			
 			return {
 					'mode': self.mode,
 					'url': base.get( 'url', '' ),
@@ -22264,98 +22527,104 @@ class OpenAQ( Fetcher ):
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
-			exception.method = (
-					'fetch_latest( self, location_id: int, time: int=20 ) '
-					'-> Dict[ str, Any ]'
-			)
+			exception.method = 'fetch_latest( self, *args ) -> Dict[ str, Any ]'
 			raise exception
 	
-	def fetch( self, mode: str='locations', location_id: int=None,
-			country_id: int=None, coordinates: str='',
-			radius: int=25000, providers_id: str='',
-			parameters_id: str='', limit: int=25, page: int=1,
-			time: int=20 ) -> Dict[ str, Any ] | None:
+	def fetch( self, mode: str = 'locations', location_id: int=None,
+			parameter_id: int=None, country_id: int=None, coordinates: str = '',
+			radius: int=25000, providers_id: str = '', parameters_id: str = '',
+			limit: int=25, page: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
 		'''
 			Purpose:
 			--------
-			Unified dispatcher for OpenAQ location discovery and latest measurement
+			Unified dispatcher for OpenAQ v3 discovery, location, and latest-measurement
 			retrieval.
-
+	
 			Parameters:
 			-----------
 			mode (str):
 				Supported modes:
+				- countries
+				- providers
+				- parameters
 				- locations
 				- latest
-
+				- parameter_latest
+	
 			location_id (int | None):
 				OpenAQ location identifier for latest mode.
-
+	
+			parameter_id (int | None):
+				OpenAQ parameter identifier for parameter_latest mode.
+	
 			country_id (int | None):
 				Optional OpenAQ country identifier.
-
+	
 			coordinates (str):
 				Optional latitude,longitude string.
-
+	
 			radius (int):
 				Geospatial radius in meters.
-
+	
 			providers_id (str):
 				Optional provider ID filter.
-
+	
 			parameters_id (str):
 				Optional parameter ID filter.
-
+	
 			limit (int):
-				Maximum returned locations.
-
+				Maximum returned rows.
+	
 			page (int):
 				Result page number.
-
+	
 			time (int):
 				Request timeout in seconds.
-
+	
 			Returns:
 			--------
 			Dict[str, Any] | None
-		'''
+		'''		
 		try:
 			active_mode = str( mode or 'locations' ).strip( ).lower( )
+			if active_mode == 'countries':
+				return self.fetch_countries( providers_id=providers_id, parameters_id=parameters_id,
+					limit=limit, page=page, time=int( time ) )
+			
+			if active_mode == 'providers':
+				return self.fetch_providers( limit=limit, page=page,
+					time=int( time ) )
+			
+			if active_mode == 'parameters':
+				return self.fetch_parameters( limit=limit, page=page,
+					time=int( time ) )
 			
 			if active_mode == 'locations':
-				return self.fetch_locations(
-					country_id=country_id,
-					coordinates=coordinates,
-					radius=radius,
-					providers_id=providers_id,
-					parameters_id=parameters_id,
+				return self.fetch_locations( country_id=country_id, coordinates=coordinates,
+					radius=radius, providers_id=providers_id, parameters_id=parameters_id,
+					limit=limit, page=page, time=int( time ) )
+			
+			if active_mode == 'latest':
+				return self.fetch_latest( location_id=int( location_id ),
+					time=int( time ) )
+			
+			if active_mode == 'parameter_latest':
+				return self.fetch_parameter_latest(
+					parameter_id=int( parameter_id ),
 					limit=limit,
 					page=page,
 					time=int( time )
 				)
 			
-			if active_mode == 'latest':
-				return self.fetch_latest(
-					location_id=int( location_id ),
-					time=int( time )
-				)
-			
-			raise ValueError( "Unsupported mode. Use 'locations' or 'latest'." )
-		
+			raise ValueError( "Unsupported mode" )
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
-			exception.method = (
-					'fetch( self, mode: str=locations, location_id: int | None=None, '
-					'country_id: int | None=None, coordinates: str=, radius: int=25000, '
-					'providers_id: str=, parameters_id: str=, limit: int=25, '
-					'page: int=1, time: int=20 ) -> Dict[ str, Any ]'
-			)
+			exception.method = 'fetch( self, *args ) -> Dict[ str, Any ]'
 			raise exception
 	
-	def create_schema( self, function: str, tool: str,
-			description: str, parameters: dict,
+	def create_schema( self, function: str, tool: str, description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
 		'''
 			Purpose:
@@ -22388,7 +22657,6 @@ class OpenAQ( Fetcher ):
 			throw_if( 'tool', tool )
 			throw_if( 'description', description )
 			throw_if( 'parameters', parameters )
-			
 			if required is None:
 				required = list( parameters.keys( ) )
 			
@@ -22409,10 +22677,7 @@ class OpenAQ( Fetcher ):
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
-			exception.method = (
-					'create_schema( self, function: str, tool: str, description: str, '
-					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
-			)
+			exception.method = 'create_schema( self, *args ) -> Dict[ str, str ]'
 			raise exception
 
 class Firms( Fetcher ):
