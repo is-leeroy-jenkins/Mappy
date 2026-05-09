@@ -27,7 +27,7 @@
 			this.init();
 		}
 		
-		init()
+		init( )
 		{
 			L.tileLayer( this.tileUrl, {
 				attribution: this.tileAttribution,
