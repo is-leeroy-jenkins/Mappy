@@ -5150,26 +5150,69 @@ elif mode == 'Environmental':
 						st.session_state[ 'env_last_result' ] = { }
 						st.session_state[ 'env_last_latitude' ] = None
 						st.session_state[ 'env_last_longitude' ] = None
-				
+		
 			# ------------------------------------------------------------------
 			# OPENAQ
 			# ------------------------------------------------------------------
 			with st.expander( '🧪 OpenAQ', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.OPEN_AQ )
-				openaq_mode = st.selectbox( 'Mode',
-					options=[ 'Locations', 'Latest Measurements' ], key='sb_openaq_mode' )
+				openaq_mode = st.selectbox(
+					'Mode',
+					options=[
+							'Locations',
+							'Latest Measurements by Location',
+							'Latest Measurements by Parameter',
+							'Countries',
+							'Providers',
+							'Parameters'
+					],
+					key='sb_openaq_mode' )
 				
-				openaq_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
-					value=20, step=1, key='ib_env_openaq_timeout' )
+				openaq_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='ib_env_openaq_timeout' )
+				
+				openaq_limit = st.number_input(
+					'Limit',
+					min_value=1,
+					max_value=1000,
+					value=100 if openaq_mode in [ 'Countries', 'Providers', 'Parameters' ] else 25,
+					step=1,
+					key='env_openaq_limit' )
+				
+				openaq_page = st.number_input(
+					'Page',
+					min_value=1,
+					max_value=10000,
+					value=1,
+					step=1,
+					key='env_openaq_page' )
+				
+				openaq_country_id = 0
+				openaq_coordinates = ''
+				openaq_radius = 25000
+				openaq_providers_id = ''
+				openaq_parameters_id = ''
+				openaq_location_id = None
+				openaq_parameter_id = None
 				
 				if openaq_mode == 'Locations':
-					openaq_country_id = st.number_input( 'Country ID', min_value=0,
-						value=0, step=1, key='in_env_openaq_country_id' )
+					openaq_country_id = st.number_input(
+						'Country ID',
+						min_value=0,
+						value=0,
+						step=1,
+						help='Optional. Use Countries mode to discover country IDs. 0 disables this filter.',
+						key='in_env_openaq_country_id' )
 					
 					openaq_coordinates = st.text_input(
 						'Coordinates',
 						value=f'{global_latitude:.6f},{global_longitude:.6f}',
-						help='OpenAQ expects a latitude,longitude string.',
+						help='OpenAQ examples use latitude,longitude for radial location filtering.',
 						key='env_openaq_coordinates' )
 					
 					openaq_radius = st.number_input(
@@ -5183,46 +5226,51 @@ elif mode == 'Environmental':
 					openaq_providers_id = st.text_input(
 						'Providers ID',
 						value='',
+						help='Optional. Use Providers mode to discover IDs. Comma-separated values are supported by OpenAQ.',
 						key='env_openaq_providers_id' )
 					
 					openaq_parameters_id = st.text_input(
 						'Parameters ID',
 						value='',
+						help='Optional. Use Parameters mode to discover IDs. Example: 2 is commonly PM2.5.',
 						key='env_openaq_parameters_id' )
-					
-					openaq_limit = st.number_input(
-						'Limit',
-						min_value=1,
-						max_value=1000,
-						value=25,
-						step=1,
-						key='env_openaq_limit' )
-					
-					openaq_page = st.number_input(
-						'Page',
-						min_value=1,
-						max_value=10000,
-						value=1,
-						step=1,
-						key='env_openaq_page' )
-					
-					openaq_location_id = None
 				
-				else:
-					openaq_country_id = 0
-					openaq_coordinates = ''
-					openaq_radius = 25000
-					openaq_providers_id = ''
-					openaq_parameters_id = ''
-					openaq_limit = 25
-					openaq_page = 1
-					
+				elif openaq_mode == 'Latest Measurements by Location':
 					openaq_location_id = st.number_input(
 						'Location ID',
 						min_value=1,
 						value=1,
 						step=1,
+						help='Use Locations mode first to discover location IDs.',
 						key='env_openaq_location_id' )
+				
+				elif openaq_mode == 'Latest Measurements by Parameter':
+					openaq_parameter_id = st.number_input(
+						'Parameter ID',
+						min_value=1,
+						value=2,
+						step=1,
+						help='Use Parameters mode first to discover parameter IDs. OpenAQ examples commonly use 2 for PM2.5.',
+						key='env_openaq_parameter_id' )
+				
+				elif openaq_mode == 'Countries':
+					openaq_providers_id = st.text_input(
+						'Providers ID',
+						value='',
+						help='Optional provider filter.',
+						key='env_openaq_countries_providers_id' )
+					
+					openaq_parameters_id = st.text_input(
+						'Parameters ID',
+						value='',
+						help='Optional parameter filter.',
+						key='env_openaq_countries_parameters_id' )
+				
+				elif openaq_mode == 'Providers':
+					st.caption( 'Returns OpenAQ provider IDs and provider names for later filtering.' )
+				
+				else:
+					st.caption( 'Returns OpenAQ parameter IDs, names, display names, and units.' )
 				
 				openaq_btn_c1, openaq_btn_c2 = st.columns( 2 )
 				
@@ -5231,6 +5279,8 @@ elif mode == 'Environmental':
 							use_container_width=True ):
 						try:
 							service = OpenAQ( )
+							lat_value = None
+							lng_value = None
 							
 							if openaq_mode == 'Locations':
 								country_id_value = None
@@ -5247,9 +5297,6 @@ elif mode == 'Environmental':
 									page=int( openaq_page ),
 									time=int( openaq_timeout ) )
 								
-								lat_value = None
-								lng_value = None
-								
 								try:
 									parts = [ p.strip( ) for p in openaq_coordinates.split( ',' ) ]
 									if len( parts ) == 2:
@@ -5259,18 +5306,42 @@ elif mode == 'Environmental':
 									lat_value = None
 									lng_value = None
 							
-							else:
+							elif openaq_mode == 'Latest Measurements by Location':
 								result = service.fetch_latest(
 									location_id=int( openaq_location_id ),
 									time=int( openaq_timeout ) )
-								
-								lat_value = None
-								lng_value = None
 							
-							st.session_state[ 'env_last_source' ]='OpenAQ'
-							st.session_state[ 'env_last_result' ]=result or { }
-							st.session_state[ 'env_last_latitude' ]=lat_value
-							st.session_state[ 'env_last_longitude' ]=lng_value
+							elif openaq_mode == 'Latest Measurements by Parameter':
+								result = service.fetch_parameter_latest(
+									parameter_id=int( openaq_parameter_id ),
+									limit=int( openaq_limit ),
+									page=int( openaq_page ),
+									time=int( openaq_timeout ) )
+							
+							elif openaq_mode == 'Countries':
+								result = service.fetch_countries(
+									providers_id=openaq_providers_id,
+									parameters_id=openaq_parameters_id,
+									limit=int( openaq_limit ),
+									page=int( openaq_page ),
+									time=int( openaq_timeout ) )
+							
+							elif openaq_mode == 'Providers':
+								result = service.fetch_providers(
+									limit=int( openaq_limit ),
+									page=int( openaq_page ),
+									time=int( openaq_timeout ) )
+							
+							else:
+								result = service.fetch_parameters(
+									limit=int( openaq_limit ),
+									page=int( openaq_page ),
+									time=int( openaq_timeout ) )
+							
+							st.session_state[ 'env_last_source' ] = 'OpenAQ'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = lat_value
+							st.session_state[ 'env_last_longitude' ] = lng_value
 							
 							set_global_coordinates_from_result(
 								lat_value,
@@ -5286,10 +5357,10 @@ elif mode == 'Environmental':
 				with openaq_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_openaq_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# PURPLEAIR SENSORS
