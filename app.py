@@ -3444,7 +3444,7 @@ bootstrap_browser_geolocation( geocoder )
 # GEOCODING MODE
 # ==============================================================================
 if mode == 'Geocoding':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Geocoding' )
 		st.divider( )
@@ -3518,7 +3518,7 @@ if mode == 'Geocoding':
 # MAP MODE
 # ==============================================================================
 elif mode == 'Interactive Map':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Interactive Map' )
 		st.divider( )
@@ -3564,8 +3564,9 @@ elif mode == 'Interactive Map':
 # ==============================================================================
 # DISTANCES MODE
 # ==============================================================================
+
 elif mode == 'Distances':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Distance Matrix' )
 		st.divider( )
@@ -3650,7 +3651,7 @@ elif mode == 'Distances':
 # MAPS MODE
 # ==============================================================================
 elif mode == 'Static Maps':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Static Map' )
 		st.divider( )
@@ -3757,7 +3758,7 @@ elif mode == 'Static Maps':
 # TIME ZONE MODE
 # ==============================================================================
 elif mode == 'Time Zones':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Time Zone Lookup' )
 		st.divider( )
@@ -3875,7 +3876,7 @@ elif mode == 'Time Zones':
 # SCRAPING MODE
 # ==============================================================================
 elif mode == 'Site Crawler':
-	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( f'🕷️ Web Scraping' )
 		st.divider( )
@@ -4311,7 +4312,7 @@ elif mode == 'Site Crawler':
 # WEATHER MODE
 # ==============================================================================
 elif mode == 'Weather':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Weather Data' )
 		st.divider( )
@@ -4866,7 +4867,7 @@ elif mode == 'Weather':
 # ENVIRONMENTAL MODE
 # ==============================================================================
 elif mode == 'Environmental':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Environmental Data' )
 		st.divider( )
@@ -5885,7 +5886,7 @@ elif mode == 'Environmental':
 # ASTRONOMICAL MODE
 # ==============================================================================
 elif mode == 'Astronomical':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Astronomical Data' )
 		st.divider( )
@@ -6809,7 +6810,7 @@ elif mode == 'Astronomical':
 # CELESTIAL MAP MODE
 # ==============================================================================
 elif mode == 'Celestial Map':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Celestial Map' )
 		st.divider( )
@@ -6924,7 +6925,7 @@ elif mode == 'Celestial Map':
 # GEOLOGICAL MODE
 # ==============================================================================
 elif mode == 'Geological':
-	left, center, right = st.columns( [ 0.025, 0.95, 0.025 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Geological Data' )
 		st.divider( )
@@ -7481,7 +7482,7 @@ elif mode == 'Geological':
 # DATA UPLOAD MODE
 # ==============================================================================
 elif mode == 'Data Upload':
-	left, center, right = st.columns( [ 0.05, 0.90, 0.05 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Excel / CSV' )
 		st.divider( )
@@ -7570,7 +7571,7 @@ elif mode == 'Data Upload':
 # DATA MANAGEMENT MODE
 # ==============================================================================
 elif mode == 'Data Management':
-	left, center, right = st.columns( [ 0.05, 0.90, 0.05 ] )
+	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( 'Data Management' )
 		tabs = st.tabs( [ 'Import', 'Browse', 'CRUD', 'Explore', 'Filter',
