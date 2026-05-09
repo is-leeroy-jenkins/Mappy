@@ -46,6 +46,7 @@ from typing import Optional, List, Dict
 from pathlib import Path
 
 # ------------ CONSTANT
+
 BLUE_DIVIDER = "<div style='height:1.5px;align:left;background:#0078FC;margin:20px 0px 30px 0px;'></div>"
 APP_TITLE = 'Mappy'
 APP_SUBTITLE = 'Geospatial Toolkit'
@@ -62,6 +63,7 @@ STYLE_ID = r'86d00019936c16f936cc936c'
 STYLE_NAME = r'uap-dark'
 
 # ----------- API KEYS
+
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
 GOOGLE_API_KEY = os.getenv( 'GOOGLE_API_KEY' )
 GOOGLE_CSE_ID = os.getenv( 'GOOGLE_CSE_ID' )
@@ -82,7 +84,7 @@ PURPLEAIR_API_KEY = os.getenv( 'PURPLEAIR_API_KEY' )
 
 # -------------- SETTINGS
 
-MODES = [ 'Geocoding', 'Interactive Map', 'Distances', 'Static Maps', 'Time Zones', 'Web Crawler',
+MODES = [ 'Geocoding', 'Interactive Map', 'Distances', 'Static Maps', 'Time Zones', 'Web Scraper',
           'Weather', 'Environmental', 'Geological', 'Astronomical', 'Celestial Map',
           'Data Upload', 'Data Management' ]
 
@@ -91,25 +93,25 @@ AGENTS = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
           'Chrome/147.0.0.0 Safari/537.36')
 
 # --------------- API
+
 AIR_NOW = r'''AirNow is the official U.S. government website and app providing real-time,
 		local air quality data and forecasts using the color-coded Air Quality Index (AQI).
 		It covers ozone and particle pollution ( and  ) via a partnership of the EPA, NOAA, and
 		local agencies, offering a "Fire and Smoke Map" to monitor smoke impacts. https://docs.airnowapi.org/
 '''
 
-PURPLE_AIR = r'''PurpleAir provides low-cost, real-time air quality monitors and a public,
-		crowdsourced map to measure, visualize, and share hyper-local,, particulate matter data.
-		Using laser counters, these sensors empower communities to track pollution, particularly
-		during wildfire events. Data is accessible via the PurpleAir Map and is used by researchers,
-		public agencies, and individuals worldwide. https://api.purpleair.com/
+PURPLE_AIR = r'''PurpleAir provides low-cost, real-time air quality monitoring through public and
+		private sensor networks. The API supports sensor lookup, sensor data retrieval, field
+		selection, and geographic filtering such as bounding-box requests. API requests require a
+		valid PurpleAir API key and commonly use fields such as pm2.5, temperature, humidity,
+		pressure, and related sensor metadata. https://api.purpleair.com/
 '''
 
-OPEN_AQ = r'''OpenAQ is a non-profit organization that aggregates, harmonizes, and shares open-source,
-		global air quality data to fight "air inequality". It provides real-time and historical
-		data—primarily on PM2.5, PM10, and other pollutants—from over 48,000 locations across 150 c
-		ountries. The platform empowers researchers, journalists, and communities to access, analyze,
-		and use air quality data through an open API, fostering collaboration to improve public
-		health and policy. https://docs.openaq.org/
+OPEN_AQ = r'''OpenAQ provides open air-quality data through a resource-oriented API. Version 3
+		exposes resources such as locations, latest measurements, parameters, providers, sensors,
+		licenses, owners, manufacturers, countries, and measurements. Location resources describe
+		monitoring stations, geographic coordinates, providers, sensors, and the parameters measured
+		at each location. https://docs.openaq.org/
 '''
 
 NOAA_CLIMATE_DATA = r'''NOAA climate data is provided primarily through the National Centers for
@@ -163,42 +165,41 @@ OPEN_SKY = r'''The OpenSky Network consists of a multitude of sensors connected 
 		information over the publicly accessible 1090 MHz radio frequency channel.
 '''
 
-EPA_ENVIROFACTS = r'''The Envirofacts Data Warehouse contains information from select EPA Environmental
-		program office databases and provides access about environmental activities that may affect air,
-		water, and land anywhere in the United States. https://www.epa.gov/enviro/envirofacts-data-service-api
+EPA_ENVIROFACTS = r'''The EPA Envirofacts Data Warehouse contains information from selected EPA
+		environmental program databases and provides REST access to environmental activities that
+		may affect air, water, and land in the United States. The Envirofacts API supports table-based
+		queries, filter paths, row limits, and output formats such as JSON.
+		https://www.epa.gov/enviro/envirofacts-data-service-api
 '''
 
-EPA_UV_INDEX = r'''The EPA UV Index predicts daily solar UV radiation intensity on a 1–11+ scale,
-		helping to gauge sun-safe precautions. Developed with the National Weather Service, it factors
-		in ozone, clouds, and elevation to forecast noon intensity. A UV Alert is issued if the
-		index is 6+ and unusually high. https://www.epa.gov/enviro/web-services#uvindex
+EPA_UV_INDEX = r'''The EPA UV Index web services provide daily and hourly UV Index forecast data.
+		The UV Index estimates solar ultraviolet radiation intensity on a 1-11+ scale and supports
+		location-based forecast queries for sun-exposure planning.
+		https://www.epa.gov/enviro/web-services#uvindex
 '''
 
-NASA_EONET = r'''NASA Earth Observatory's Natural Event Tracker (EONET) allows users to access imagery,
-		often in near real-time (NRT), of natural events such as dust storms, forest fires, and tropical
-		cyclones—empowering people all across the planet to locate, track, and potentially prepare for
-		and manage events that affect communities in their paths. The EONET application programming
-		interface (API) provides customization of features including curation and direct links to
-		image sources. https://eonet.gsfc.nasa.gov/docs/v2.1
+NASA_EONET = r'''NASA Earth Observatory's Natural Event Tracker (EONET) is a metadata service
+		for natural events such as wildfires, severe storms, volcanoes, sea and lake ice, dust and haze,
+		and other hazards. Version 3.0 is the current stable API. It supports events, categories,
+		sources, and layers. Event requests support filters such as source, category, status, limit,
+		days, start, end, magnitude, and bounding box. https://eonet.gsfc.nasa.gov/docs/v3
 '''
 
-NASA_FIRMS = r'''NASA’s Fire Information for Resource Management System (FIRMS) provides near
-		real-time, satellite-derived active fire and hotspot data (within 3 hours of observation)
-		to monitor wildfires. Using sensors from MODIS and VIIRS, it offers global coverage through
-		an interactive map, email alerts, and GIS data. It is designed for firefighters, scientists,
-		and natural resource managers. https://firms.modaps.eosdis.nasa.gov/api/
+NASA_FIRMS = r'''NASA's Fire Information for Resource Management System (FIRMS) provides near
+		real-time and standard active fire / thermal anomaly detections from sensors such as MODIS
+		and VIIRS. The area API returns fire detections by source, bounding area, date, and day range
+		and requires a FIRMS MAP_KEY for most data requests. https://firms.modaps.eosdis.nasa.gov/api/
 '''
 
-OPEN_WEATHER = r''' Open-Meteo leverages a powerful combination of global (11 km) and mesoscale (1 km) weather
-		models from esteemed national weather services, providing comprehensive forecasts with
-		remarkable precision. https://open-meteo.com/en/docs
+OPEN_WEATHER = r'''Open-Meteo provides weather forecasts using global and mesoscale weather models.
+		The API supports latitude/longitude forecast requests, hourly and daily variables, forecast
+		ranges, units, and related weather-model options. This Mappy wrapper is named OpenWeather
+		but currently targets Open-Meteo, not the OpenWeatherMap API. https://open-meteo.com/en/docs
 '''
 
-HISTORICAL_WEATHER = r'''Provides historical weather retrieval by location name and date using the
-		Open-Meteo Geocoding API and Open-Meteo Historical Weather API. This class is intentionally
-		designed around the actual user-facing need in the Foo fetcher expander: enter a location
-		and a date, resolve that location to coordinates, then retrieve historical weather for that date.
-		https://open-meteo.com/en/docs/historical-weather-api
+HISTORICAL_WEATHER = r'''Provides historical weather retrieval by resolving a user-facing location name
+		through the Open-Meteo Geocoding API and then querying the Open-Meteo Historical Weather
+		API for the selected date or date range. https://open-meteo.com/en/docs/historical-weather-api
 '''
 
 ASTRONOMY_CATALOG = r'''The Open Astronomy Catalog (OAC) API is a RESTful interface designed for
@@ -226,19 +227,16 @@ GOOGLE_CSE = r'''The Cse Service is the endpoint that returns the requested sear
 		In addition, you should provide a developer key (using the key query parameter).
 '''
 
-GOOGLE_WEATHER = r'''The Google Weather API lets you request real-time, hyperlocal weather data for
-		locations around the world. Weather information includes temperature, precipitation,
-		humidity, and more. Include the latitude and longitude coordinates of the location in your
-		request URL parameters. https://developers.google.com/maps/documentation/weather/overview
+GOOGLE_WEATHER = r'''The Google Weather API provides hyperlocal weather data by latitude and longitude.
+		Supported products include current conditions, hourly forecasts, daily forecasts, hourly
+		history, and weather alerts. Requests require a Google Maps Platform API key with Weather API
+		access enabled. https://developers.google.com/maps/documentation/weather/overview
 '''
 
-NASA_GLOBAL_IMAGERY = r'''NASA's Global Imagery Browse Services (GIBS) system provides visualizations
-		of NASA Earth Science observations through standardized web services. These services deliver
-		global, full-resolution visualizations of satellite data to users in a highly responsive manner,
-		enabling visual discovery of scientific phenomena, supporting timely decision-making for
-		natural hazards, educating the next generation of scientists, and making imagery of the planet
-		more accessible to the media and public. Browse all of these visualizations through our
-		Worldview application. https://nasa-gibs.github.io/gibs-api-docs/
+NASA_GLOBAL_IMAGERY = r'''NASA Global Imagery Browse Services (GIBS) provides full-resolution Earth
+		science imagery through standard web services including WMS, WMTS, TWMS, and related
+		capabilities documents. GIBS imagery is layer, projection, time, format, and bounding-box
+		or tile oriented. https://nasa-gibs.github.io/gibs-api-docs/
 '''
 
 CDC_WONDER = r'''Wide-ranging ONline Data for Epidemiologic Research -- an easy-to-use, menu-driven

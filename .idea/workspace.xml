@@ -7,6 +7,10 @@
     <list default="true" id="6e8897af-3ee3-4d4e-83df-27a4ae217e01" name="Changes" comment="updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/starmap/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/assets/starmap/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/starmap/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/assets/starmap/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fetchers.py" beforeDir="false" afterPath="$PROJECT_DIR$/fetchers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,7 +77,7 @@
     "node.js.selected.package.stylelint": "",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "Errors",
+    "settings.editor.selected.configurable": "inlay.hints",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -111,7 +115,7 @@
       <workItem from="1777635753327" duration="31000" />
       <workItem from="1777772862093" duration="2103000" />
       <workItem from="1778274008043" duration="7985000" />
-      <workItem from="1778328316680" duration="5575000" />
+      <workItem from="1778328316680" duration="18333000" />
     </task>
     <task id="LOCAL-00001" summary="updates">
       <option name="closed" value="true" />
@@ -449,7 +453,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778334142393</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="updates">
+      <option name="closed" value="true" />
+      <created>1778334401956</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1778334401956</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

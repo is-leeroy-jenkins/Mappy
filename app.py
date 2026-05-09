@@ -3650,6 +3650,7 @@ elif mode == 'Distances':
 # ==============================================================================
 # MAPS MODE
 # ==============================================================================
+
 elif mode == 'Static Maps':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
@@ -3757,6 +3758,7 @@ elif mode == 'Static Maps':
 # ==============================================================================
 # TIME ZONE MODE
 # ==============================================================================
+
 elif mode == 'Time Zones':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
@@ -3875,7 +3877,8 @@ elif mode == 'Time Zones':
 # =============================================================================
 # SCRAPING MODE
 # ==============================================================================
-elif mode == 'Web Crawler':
+
+elif mode == 'Web Scraper':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
 		st.subheader( f'🕷️ Web Scraping' )
@@ -4340,7 +4343,13 @@ elif mode == 'Weather':
 					key='weather_google_address' )
 				
 				google_product = st.selectbox( 'Product',
-					options=[ 'Current Conditions', 'Hourly Forecast', 'Daily Forecast', 'Alerts' ],
+					options=[
+							'Current Conditions',
+							'Hourly Forecast',
+							'Daily Forecast',
+							'Hourly History',
+							'Alerts'
+					],
 					key='weather_google_product' )
 				
 				google_units = st.selectbox( 'Units System', options=[ 'METRIC', 'IMPERIAL' ],
@@ -4354,6 +4363,12 @@ elif mode == 'Weather':
 						value=24, step=1, key='weather_google_hours' )
 				else:
 					google_hours = 24
+				
+				if google_product == 'Hourly History':
+					google_history_hours = st.number_input( 'History Hours', min_value=1,
+						max_value=24, value=24, step=1, key='weather_google_history_hours' )
+				else:
+					google_history_hours = 24
 				
 				if google_product == 'Daily Forecast':
 					google_days = st.number_input( 'Days', min_value=1, max_value=10, value=5,
@@ -4398,6 +4413,14 @@ elif mode == 'Weather':
 										language_code=google_language,
 										time=int( google_timeout ) )
 								
+								elif google_product == 'Hourly History':
+									result = weather.fetch_hourly_history(
+										address=google_address,
+										hours=int( google_history_hours ),
+										units_system=google_units,
+										language_code=google_language,
+										time=int( google_timeout ) )
+								
 								else:
 									result = weather.fetch_alerts(
 										address=google_address,
@@ -4407,10 +4430,10 @@ elif mode == 'Weather':
 								weather_latitude = getattr( weather, 'latitude', None )
 								weather_longitude = getattr( weather, 'longitude', None )
 								
-								st.session_state[ 'weather_last_source' ]='Google Weather'
-								st.session_state[ 'weather_last_result' ]=result or { }
-								st.session_state[ 'weather_last_latitude' ]=weather_latitude
-								st.session_state[ 'weather_last_longitude' ]=weather_longitude
+								st.session_state[ 'weather_last_source' ] = 'Google Weather'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = weather_latitude
+								st.session_state[ 'weather_last_longitude' ] = weather_longitude
 								
 								set_global_coordinates_from_result(
 									weather_latitude,
@@ -4426,10 +4449,10 @@ elif mode == 'Weather':
 				with google_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_google_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ]=''
-						st.session_state[ 'weather_last_result' ]={ }
-						st.session_state[ 'weather_last_latitude' ]=None
-						st.session_state[ 'weather_last_longitude' ]=None
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# OPENWEATHER / OPEN-METEO
@@ -4476,10 +4499,10 @@ elif mode == 'Weather':
 								weather_longitude = getattr( weather, 'longitude', None )
 								
 								st.session_state[
-									'weather_last_source' ]='OpenWeather / Open-Meteo'
-								st.session_state[ 'weather_last_result' ]=result or { }
-								st.session_state[ 'weather_last_latitude' ]=weather_latitude
-								st.session_state[ 'weather_last_longitude' ]=weather_longitude
+									'weather_last_source' ] = 'OpenWeather / Open-Meteo'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = weather_latitude
+								st.session_state[ 'weather_last_longitude' ] = weather_longitude
 								
 								set_global_coordinates_from_result( weather_latitude,
 									weather_longitude, location=open_location,
@@ -4493,10 +4516,10 @@ elif mode == 'Weather':
 				with open_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_open_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ]=''
-						st.session_state[ 'weather_last_result' ]={ }
-						st.session_state[ 'weather_last_latitude' ]=None
-						st.session_state[ 'weather_last_longitude' ]=None
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# HISTORICAL WEATHER
@@ -4544,10 +4567,10 @@ elif mode == 'Weather':
 								weather_latitude = getattr( weather, 'latitude', None )
 								weather_longitude = getattr( weather, 'longitude', None )
 								
-								st.session_state[ 'weather_last_source' ]='Historical Weather'
-								st.session_state[ 'weather_last_result' ]=result or { }
-								st.session_state[ 'weather_last_latitude' ]=weather_latitude
-								st.session_state[ 'weather_last_longitude' ]=weather_longitude
+								st.session_state[ 'weather_last_source' ] = 'Historical Weather'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = weather_latitude
+								st.session_state[ 'weather_last_longitude' ] = weather_longitude
 								
 								set_global_coordinates_from_result(
 									weather_latitude,
@@ -4563,10 +4586,10 @@ elif mode == 'Weather':
 				with historical_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_historical_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ]=''
-						st.session_state[ 'weather_last_result' ]={ }
-						st.session_state[ 'weather_last_latitude' ]=None
-						st.session_state[ 'weather_last_longitude' ]=None
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# CLIMATE DATA
@@ -4696,10 +4719,10 @@ elif mode == 'Weather':
 										time=int( climate_timeout ) )
 							
 							if result is not None:
-								st.session_state[ 'weather_last_source' ]='Climate Data'
-								st.session_state[ 'weather_last_result' ]=result or { }
-								st.session_state[ 'weather_last_latitude' ]=None
-								st.session_state[ 'weather_last_longitude' ]=None
+								st.session_state[ 'weather_last_source' ] = 'Climate Data'
+								st.session_state[ 'weather_last_result' ] = result or { }
+								st.session_state[ 'weather_last_latitude' ] = None
+								st.session_state[ 'weather_last_longitude' ] = None
 								st.success( 'Climate Data request completed.' )
 						
 						except Exception as ex:
@@ -4708,10 +4731,10 @@ elif mode == 'Weather':
 				with climate_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_climate_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ]=''
-						st.session_state[ 'weather_last_result' ]={ }
-						st.session_state[ 'weather_last_latitude' ]=None
-						st.session_state[ 'weather_last_longitude' ]=None
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# TIDES AND CURRENTS
@@ -4804,10 +4827,10 @@ elif mode == 'Weather':
 								interval=tides_interval,
 								time=int( tides_timeout ) )
 							
-							st.session_state[ 'weather_last_source' ]='Tides & Currents'
-							st.session_state[ 'weather_last_result' ]=result or { }
-							st.session_state[ 'weather_last_latitude' ]=None
-							st.session_state[ 'weather_last_longitude' ]=None
+							st.session_state[ 'weather_last_source' ] = 'Tides & Currents'
+							st.session_state[ 'weather_last_result' ] = result or { }
+							st.session_state[ 'weather_last_latitude' ] = None
+							st.session_state[ 'weather_last_longitude' ] = None
 							st.success( 'Tides & Currents request completed.' )
 						
 						except Exception as ex:
@@ -4816,10 +4839,10 @@ elif mode == 'Weather':
 				with tides_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='weather_tides_clear',
 							use_container_width=True ):
-						st.session_state[ 'weather_last_source' ]=''
-						st.session_state[ 'weather_last_result' ]={ }
-						st.session_state[ 'weather_last_latitude' ]=None
-						st.session_state[ 'weather_last_longitude' ]=None
+						st.session_state[ 'weather_last_source' ] = ''
+						st.session_state[ 'weather_last_result' ] = { }
+						st.session_state[ 'weather_last_latitude' ] = None
+						st.session_state[ 'weather_last_longitude' ] = None
 		
 		with weather_c2:
 			# ------------------------------------------------------------------
@@ -5019,12 +5042,12 @@ elif mode == 'Environmental':
 						st.session_state[ 'env_last_result' ]={ }
 						st.session_state[ 'env_last_latitude' ]=None
 						st.session_state[ 'env_last_longitude' ]=None
-			
+						
 			# ------------------------------------------------------------------
 			# UV INDEX
 			# ------------------------------------------------------------------
 			with st.expander( '☀️ UV Index', expanded=False ):
-				st.badge( label='About API', color='blue', help=cfg.AIR_NOW )
+				st.badge( label='About API', color='blue', help=cfg.EPA_UV_INDEX )
 				uv_mode = st.selectbox(
 					'Mode',
 					options=[
@@ -5111,10 +5134,10 @@ elif mode == 'Environmental':
 										time=int( uv_timeout ) )
 							
 							if result is not None:
-								st.session_state[ 'env_last_source' ]='UV Index'
-								st.session_state[ 'env_last_result' ]=result or { }
-								st.session_state[ 'env_last_latitude' ]=None
-								st.session_state[ 'env_last_longitude' ]=None
+								st.session_state[ 'env_last_source' ] = 'UV Index'
+								st.session_state[ 'env_last_result' ] = result or { }
+								st.session_state[ 'env_last_latitude' ] = None
+								st.session_state[ 'env_last_longitude' ] = None
 								st.success( 'UV Index request completed.' )
 						
 						except Exception as ex:
@@ -5123,11 +5146,11 @@ elif mode == 'Environmental':
 				with uv_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_uv_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
-			
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+				
 			# ------------------------------------------------------------------
 			# OPENAQ
 			# ------------------------------------------------------------------
@@ -5273,18 +5296,29 @@ elif mode == 'Environmental':
 			# ------------------------------------------------------------------
 			with st.expander( '🟣 PurpleAir Sensors', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.PURPLE_AIR )
-				purple_mode = st.selectbox(
-					'Mode',
+				purple_mode = st.selectbox( 'Mode',
 					options=[ 'Sensors by Bounding Box', 'Single Sensor' ],
 					key='env_purple_mode' )
 				
-				purple_timeout = st.number_input(
-					'Timeout',
-					min_value=1,
-					max_value=60,
-					value=20,
-					step=1,
-					key='env_purple_timeout' )
+				purple_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
+					value=20, step=1, key='env_purple_timeout' )
+				
+				if purple_mode == 'Sensors by Bounding Box':
+					purple_default_fields = (
+							'name,pm2.5,temperature,humidity,latitude,longitude,last_seen,location_type'
+					)
+				else:
+					purple_default_fields = (
+							'name,model,hardware,pm2.5_cf_1_a,pm2.5_cf_1_b,temperature,'
+							'humidity,pressure,latitude,longitude,last_seen,firmware_version,rssi'
+					)
+				
+				purple_fields = st.text_area(
+					'Fields',
+					value=purple_default_fields,
+					height=90,
+					help='Comma-separated PurpleAir fields. Leave the default unless you need a custom API response.',
+					key='env_purple_fields' )
 				
 				if purple_mode == 'Sensors by Bounding Box':
 					st.caption(
@@ -5370,8 +5404,7 @@ elif mode == 'Environmental':
 				purple_btn_c1, purple_btn_c2 = st.columns( 2 )
 				
 				with purple_btn_c1:
-					if st.button( label='Run', icon='🏃', key='env_purple_run',
-							use_container_width=True ):
+					if st.button( label='Run', icon='🏃', key='env_purple_run', use_container_width=True ):
 						try:
 							service = PurpleAir( )
 							
@@ -5384,17 +5417,19 @@ elif mode == 'Environmental':
 									location_type=int( purple_location_type ),
 									max_age=int( purple_max_age ),
 									modified_since=int( purple_modified_since ),
+									fields=purple_fields,
 									time=int( purple_timeout ) )
 							
 							else:
 								result = service.fetch_sensor(
 									sensor_index=int( purple_sensor_index ),
+									fields=purple_fields,
 									time=int( purple_timeout ) )
 							
-							st.session_state[ 'env_last_source' ]='PurpleAir'
-							st.session_state[ 'env_last_result' ]=result or { }
-							st.session_state[ 'env_last_latitude' ]=purple_center_latitude
-							st.session_state[ 'env_last_longitude' ]=purple_center_longitude
+							st.session_state[ 'env_last_source' ] = 'PurpleAir'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = purple_center_latitude
+							st.session_state[ 'env_last_longitude' ] = purple_center_longitude
 							
 							set_global_coordinates_from_result(
 								purple_center_latitude,
@@ -5410,10 +5445,10 @@ elif mode == 'Environmental':
 				with purple_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_purple_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# ENVIROFACTS
@@ -5489,9 +5524,7 @@ elif mode == 'Environmental':
 			# ------------------------------------------------------------------
 			with st.expander( '🔥 NASA FIRMS', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.NASA_FIRMS )
-				firms_source = st.selectbox(
-					'Source',
-					options=[
+				firms_source = st.selectbox( 'Source', options=[
 							'MODIS_NRT',
 							'MODIS_SP',
 							'VIIRS_SNPP_NRT',
@@ -5500,12 +5533,9 @@ elif mode == 'Environmental':
 							'VIIRS_NOAA20_SP',
 							'VIIRS_NOAA21_NRT',
 							'LANDSAT_NRT'
-					],
-					key='env_firms_source' )
+					], key='env_firms_source' )
 				
-				firms_area_mode = st.selectbox(
-					'Area Mode',
-					options=[ 'World', 'Bounding Box' ],
+				firms_area_mode = st.selectbox( 'Area Mode', options=[ 'World', 'Bounding Box' ],
 					key='env_firms_area_mode' )
 				
 				firms_day_range = st.number_input(
@@ -7581,9 +7611,7 @@ elif mode == 'Data Management':
 		if not tables:
 			st.info( 'No tables available.' )
 		
-		# ------------------------------------------------------------------------------
-		# UPLOAD TAB
-		# ------------------------------------------------------------------------------
+		# -------------- UPLOAD TAB
 		with tabs[ 0 ]:
 			upl_c1, upl_c2 = st.columns( [ 0.70, 0.30 ] )
 			with upl_c1:
@@ -7633,9 +7661,7 @@ elif mode == 'Data Management':
 						pass
 					st.error( f'Import failed — transaction rolled back.\n\n{e}' )
 		
-		# ------------------------------------------------------------------------------
-		# BROWSE TAB
-		# ------------------------------------------------------------------------------
+		# -------------- BROWSE TAB
 		with tabs[ 1 ]:
 			tables = list_tables( )
 			if tables:
@@ -7648,9 +7674,7 @@ elif mode == 'Data Management':
 			else:
 				st.info( 'No tables available.' )
 		
-		# ------------------------------------------------------------------------------
-		# CRUD
-		# ------------------------------------------------------------------------------
+		# -------------- CRUD
 		with tabs[ 2 ]:
 			tables = list_tables( )
 			if not tables:
@@ -7782,9 +7806,7 @@ elif mode == 'Data Management':
 					st.data_editor( df.head( 25 ), key=f'dm_crud_preview_{table}',
 						use_container_width=True, disabled=True )
 		
-		# ------------------------------------------------------------------------------
-		# EXPLORE
-		# ------------------------------------------------------------------------------
+		# -------------- EXPLORE
 		with tabs[ 3 ]:
 			tables = list_tables( )
 			if tables:
@@ -7802,9 +7824,7 @@ elif mode == 'Data Management':
 				
 				st.data_editor( data=df_page, num_rows='dynamic', hide_index=False )
 		
-		# ------------------------------------------------------------------------------
-		# FILTER
-		# ------------------------------------------------------------------------------
+		# -------------- FILTER
 		with tabs[ 4 ]:
 			tables = list_tables( )
 			if tables:
@@ -7825,9 +7845,7 @@ elif mode == 'Data Management':
 				
 				st.data_editor( df, key='dm_filter_key' )
 		
-		# ------------------------------------------------------------------------------
-		# AGGREGATE
-		# ------------------------------------------------------------------------------
+		# -------------- AGGREGATE
 		with tabs[ 5 ]:
 			tables = list_tables( )
 			if tables:
@@ -7852,9 +7870,7 @@ elif mode == 'Data Management':
 							st.metric( 'Result', df[ col ].count( ), width='stretch',
 								format='accounting' )
 		
-		# ------------------------------------------------------------------------------
-		# VISUALIZE
-		# ------------------------------------------------------------------------------
+		# -------------- VISUALIZE
 		with tabs[ 6 ]:
 			tables = list_tables( )
 			if tables:
@@ -7862,9 +7878,7 @@ elif mode == 'Data Management':
 				df = read_table( table )
 				create_visualization( df )
 		
-		# ------------------------------------------------------------------------------
-		# GEOCODE
-		# ------------------------------------------------------------------------------
+		# -------------- GEOCODE
 		with tabs[ 7 ]:
 			st.subheader( 'Geocode Missing Report Coordinates' )
 			
@@ -7997,9 +8011,7 @@ elif mode == 'Data Management':
 								else:
 									st.info( 'No rows were updated.' )
 		
-		# ------------------------------------------------------------------------------
-		# ADMIN
-		# ------------------------------------------------------------------------------
+		# -------------- ADMIN
 		with tabs[ 8 ]:
 			tables = list_tables( )
 			if tables:
@@ -8174,9 +8186,7 @@ elif mode == 'Data Management':
 						st.success( 'Column dropped.' )
 						st.rerun( )
 		
-		# ------------------------------------------------------------------------------
-		# SQL
-		# ------------------------------------------------------------------------------
+		# -------------- SQL
 		with tabs[ 9 ]:
 			st.markdown( '##### SQL Console' )
 			query = st.text_area( 'Enter SQL Query' )
