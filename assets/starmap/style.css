@@ -2,15 +2,15 @@
 
 :root
 {
-	--primary: rgba(56, 55, 55, 0.99);
-	--primary-light: #0078FC;
+	--primary: rgb(0, 120, 252);
+	--primary-light: #0576EF;
 	--primary-dark: #141414;
 	--background: #141414;
-	--surface: #151629;
-	--surface-light: #1E1F3A;
+	--surface: #282828;
+	--surface-light: rgba(56, 55, 55, 0.99);
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
-	--accent: #0078FC;
+	--accent: #3F3E3E;
 }
 
 body
@@ -231,7 +231,7 @@ input[ type='datetime-local' ]:focus,
 .secondary-btn:hover
 {
 	background: rgba(131, 103, 223, 0.1);
-	color: white;
+	color: #01346C;
 }
 
 .animation-controls
@@ -250,7 +250,7 @@ input[ type='datetime-local' ]:focus,
 {
 	padding: 0.8rem 1.2rem;
 	background: var(--surface-light);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 	color: var(--text);
 	border-radius: 8px;
 	cursor: pointer;
@@ -360,7 +360,7 @@ input[ type='datetime-local' ]:focus,
 {
 	width: 100%;
 	height: 100%;
-	background: radial-gradient(circle at center, #1B1C38 0%, #0A0B17 80%);
+	background: radial-gradient(circle at center, #000000 0%, #020202 80%);
 }
 
 #map svg
@@ -480,7 +480,7 @@ input[ type='datetime-local' ]:focus,
 
 .download-btn
 {
-	background: linear-gradient(135deg, var(--accent), #004356);
+	background: linear-gradient(135deg, var(--accent), #3F3E3E);
 	color: white;
 	padding: 1rem 2.5rem;
 	border: none;
@@ -497,7 +497,7 @@ input[ type='datetime-local' ]:focus,
 
 .download-btn:hover
 {
-	background: linear-gradient(135deg, #01475D, #FFFFFF);
+	background: linear-gradient(135deg, #0078FC, #0078FC);
 	transform: translateY(-2px);
 	box-shadow: 0 6px 16px rgba(255, 107, 142, 0.4);
 }
@@ -604,7 +604,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 .tooltip
 {
 	position: absolute;
-	background: rgba(10, 11, 23, 0.85);
+	background: rgba(0, 0, 0, 0.85);
 	color: white;
 	padding: 0.8rem;
 	border-radius: 8px;
