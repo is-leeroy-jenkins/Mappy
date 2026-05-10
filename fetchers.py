@@ -73,6 +73,7 @@ from playwright.sync_api import sync_playwright
 from owslib.wms import WebMapService
 from requests import Response
 from sscws.sscws import SscWs
+import time
 import config as cfg
 from boogr import Error
 from core import Result
@@ -229,8 +230,19 @@ class WebFetcher( Fetcher ):
 		--------
 		__init__(...): Performs the __init__ operation for this fetcher.
 		__dir__(...): Performs the __dir__ operation for this fetcher.
+		validate_required_string(...): Performs required string validation.
+		validate_positive_integer(...): Performs positive integer validation.
+		validate_non_negative_integer(...): Performs non-negative integer validation.
+		validate_non_negative_float(...): Performs non-negative float validation.
 		fetch(...): Performs the fetch operation for this fetcher.
 		html_to_text(...): Performs the html_to_text operation for this fetcher.
+		coerce_items(...): Performs the coerce_items operation for this fetcher.
+		extract_title(...): Performs the extract_title operation for this fetcher.
+		truncate_text(...): Performs the truncate_text operation for this fetcher.
+		normalize_url(...): Performs the normalize_url operation for this fetcher.
+		same_domain(...): Performs the same_domain operation for this fetcher.
+		extract_links(...): Performs the extract_links operation for this fetcher.
+		extract_structured_data(...): Performs structured extraction for this fetcher.
 		scrape_paragraphs(...): Performs the scrape_paragraphs operation for this fetcher.
 		scrape_lists(...): Performs the scrape_lists operation for this fetcher.
 		scrape_tables(...): Performs the scrape_tables operation for this fetcher.
@@ -254,19 +266,18 @@ class WebFetcher( Fetcher ):
 	
 	def __init__( self ) -> None:
 		'''
-			
 			Purpose:
 			--------
-			Initialize WebFetcher with request defaults and a configured user agent.
-			
+			Initialize WebFetcher with request defaults, regular expressions, headers,
+			and response state.
+
 			Parameters:
 			-----------
 			None
-			
+
 			Returns:
 			--------
 			None
-			
 		'''
 		super( ).__init__( )
 		self.timeout = 10
@@ -275,27 +286,31 @@ class WebFetcher( Fetcher ):
 		self.url = None
 		self.html = None
 		self.response = None
+		self.result = None
 		self.soup = None
 		self.headers = { }
 		self.agents = cfg.AGENTS
+		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
+		
+		if 'Accept' not in self.headers:
+			self.headers[
+				'Accept' ] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
 	
 	def __dir__( self ) -> List[ str ]:
 		'''
-			
 			Purpose:
 			--------
 			Return stable introspection names for the fetcher.
-			
+
 			Parameters:
 			-----------
 			None
-			
+
 			Returns:
 			--------
 			List[str]: Ordered attribute and method names.
-			
 		'''
 		return [
 				'agents',
@@ -304,11 +319,23 @@ class WebFetcher( Fetcher ):
 				'timeout',
 				'headers',
 				'response',
+				'result',
 				'soup',
 				're_tag',
 				're_ws',
+				'validate_required_string',
+				'validate_positive_integer',
+				'validate_non_negative_integer',
+				'validate_non_negative_float',
 				'fetch',
 				'html_to_text',
+				'coerce_items',
+				'extract_title',
+				'truncate_text',
+				'normalize_url',
+				'same_domain',
+				'extract_links',
+				'extract_structured_data',
 				'scrape_headings',
 				'scrape_paragraphs',
 				'scrape_lists',
@@ -322,33 +349,175 @@ class WebFetcher( Fetcher ):
 				'create_schema'
 		]
 	
-	def fetch( self, url: str, time: int=10 ) -> Result | None:
+	def validate_required_string( self, name: str, value: Any ) -> str:
 		'''
-			
 			Purpose:
 			--------
-			Perform an HTTP GET request and return the canonical Result object.
-			
+			Validate that a mandatory string argument is present and non-empty.
+
 			Parameters:
 			-----------
-			url (str): Absolute URL to fetch.
-			time (int): Timeout value in seconds.
+			name (str): Argument name used in the raised exception.
+			value (Any): Argument value to validate.
+
+			Returns:
+			--------
+			str: Stripped string value.
+		'''
+		try:
+			throw_if( 'name', name )
+			throw_if( name, value )
 			
+			if not isinstance( value, str ):
+				raise TypeError( f'{name} must be a string.' )
+			
+			text = value.strip( )
+			if not text:
+				raise ValueError( f'{name} cannot be empty.' )
+			
+			return text
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = 'validate_required_string( self, name: str, value: Any ) -> str'
+			raise exception
+	
+	def validate_positive_integer( self, name: str, value: Any ) -> int:
+		'''
+			Purpose:
+			--------
+			Validate and return an integer greater than or equal to one.
+
+			Parameters:
+			-----------
+			name (str): Argument name used in the raised exception.
+			value (Any): Argument value to validate.
+
+			Returns:
+			--------
+			int: Validated integer value.
+		'''
+		try:
+			throw_if( 'name', name )
+			throw_if( name, value )
+			number = int( value )
+			
+			if number < 1:
+				raise ValueError( f'{name} must be greater than or equal to 1.' )
+			
+			return number
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = (
+					'validate_positive_integer( self, name: str, value: Any ) -> int')
+			raise exception
+	
+	def validate_non_negative_integer( self, name: str, value: Any ) -> int:
+		'''
+			Purpose:
+			--------
+			Validate and return an integer greater than or equal to zero.
+
+			Parameters:
+			-----------
+			name (str): Argument name used in the raised exception.
+			value (Any): Argument value to validate.
+
+			Returns:
+			--------
+			int: Validated integer value.
+		'''
+		try:
+			throw_if( 'name', name )
+			
+			if value is None:
+				raise ValueError( f'{name} cannot be None.' )
+			
+			number = int( value )
+			if number < 0:
+				raise ValueError( f'{name} must be greater than or equal to 0.' )
+			
+			return number
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = (
+					'validate_non_negative_integer( self, name: str, value: Any ) -> int')
+			raise exception
+	
+	def validate_non_negative_float( self, name: str, value: Any ) -> float:
+		'''
+			Purpose:
+			--------
+			Validate and return a float greater than or equal to zero.
+
+			Parameters:
+			-----------
+			name (str): Argument name used in the raised exception.
+			value (Any): Argument value to validate.
+
+			Returns:
+			--------
+			float: Validated float value.
+		'''
+		try:
+			throw_if( 'name', name )
+			
+			if value is None:
+				raise ValueError( f'{name} cannot be None.' )
+			
+			number = float( value )
+			if number < 0:
+				raise ValueError( f'{name} must be greater than or equal to 0.' )
+			
+			return number
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = (
+					'validate_non_negative_float( self, name: str, value: Any ) -> float')
+			raise exception
+	
+	def fetch( self, url: str, time: int = 10 ) -> Result | None:
+		'''
+			Purpose:
+			--------
+			Perform an HTTP GET request and store the response, HTML, URL, timeout,
+			and canonical Result object.
+
+			Parameters:
+			-----------
+			url (str): Absolute HTTP or HTTPS URL to fetch.
+			time (int): Request timeout in seconds.
+
 			Returns:
 			--------
 			Result | None: Result wrapping the HTTP response when successful.
-			
 		'''
 		try:
-			throw_if( 'url', url )
-			self.url = url
-			self.timeout = time
-			self.response = requests.get( url=self.url, headers=self.headers,
-				timeout=self.timeout )
+			self.url = self.validate_required_string( 'url', url )
+			self.timeout = self.validate_positive_integer( 'time', time )
+			
+			self.response = requests.get(
+				url=self.url,
+				headers=self.headers,
+				timeout=self.timeout
+			)
 			self.response.raise_for_status( )
-			self.html = self.response.text
+			self.html = self.response.text or ''
+			self.soup = BeautifulSoup( self.html, 'html.parser' )
 			self.result = Result( self.response )
 			return self.result
+		
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -358,29 +527,32 @@ class WebFetcher( Fetcher ):
 	
 	def html_to_text( self, html: str ) -> str:
 		'''
-			
 			Purpose:
 			--------
 			Convert raw HTML to compact plain text.
-			
+
 			Parameters:
 			-----------
 			html (str): Raw HTML string.
-			
+
 			Returns:
 			--------
 			str: Plain-text content extracted from the HTML.
-			
 		'''
 		try:
-			throw_if( 'html', html )
-			html = re.sub( r'<script[\s\S]*?</script>', ' ', html, flags=re.IGNORECASE )
-			html = re.sub( r'<style[\s\S]*?</style>', ' ', html, flags=re.IGNORECASE )
-			html = re.sub( r'</?(p|div|br|li|h[1-6])[^>]*>', '\n', html,
-				flags=re.IGNORECASE )
-			text = re.sub( self.re_tag, ' ', html )
+			source = self.validate_required_string( 'html', html )
+			clean_html = re.sub( r'<script[\s\S]*?</script>', ' ', source, flags=re.IGNORECASE )
+			clean_html = re.sub( r'<style[\s\S]*?</style>', ' ', clean_html, flags=re.IGNORECASE )
+			clean_html = re.sub(
+				r'</?(p|div|br|li|h[1-6]|section|article|blockquote)[^>]*>',
+				'\n',
+				clean_html,
+				flags=re.IGNORECASE
+			)
+			text = re.sub( self.re_tag, ' ', clean_html )
 			text = re.sub( self.re_ws, ' ', text ).strip( )
 			return text
+		
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -388,29 +560,373 @@ class WebFetcher( Fetcher ):
 			exception.method = 'html_to_text( self, html: str ) -> str'
 			raise exception
 	
+	def coerce_items( self, value: Any ) -> List[ str ]:
+		'''
+			Purpose:
+			--------
+			Normalize extracted values into a list of strings.
+
+			Parameters:
+			-----------
+			value (Any): Value returned by a scraping or extraction operation.
+
+			Returns:
+			--------
+			List[str]: Clean list of string values.
+		'''
+		if value is None:
+			return [ ]
+		
+		if isinstance( value, list ):
+			return [ str( item ) for item in value if item is not None ]
+		
+		return [ str( value ) ]
+	
+	def extract_title( self, html: str ) -> str:
+		'''
+			Purpose:
+			--------
+			Extract the title element from an HTML document.
+
+			Parameters:
+			-----------
+			html (str): Raw HTML content.
+
+			Returns:
+			--------
+			str: Decoded page title or an empty string.
+		'''
+		try:
+			source = self.validate_required_string( 'html', html )
+			soup = BeautifulSoup( source, 'html.parser' )
+			
+			if soup.title and soup.title.string:
+				return re.sub( r'\s+', ' ', soup.title.string ).strip( )
+			
+			match = re.search(
+				r'<title[^>]*>(.*?)</title>',
+				source,
+				flags=re.IGNORECASE | re.DOTALL
+			)
+			
+			if not match:
+				return ''
+			
+			return re.sub( r'\s+', ' ', match.group( 1 ) ).strip( )
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = 'extract_title( self, html: str ) -> str'
+			raise exception
+	
+	def truncate_text( self, text: str, limit: int = 12000 ) -> str:
+		'''
+			Purpose:
+			--------
+			Limit long text blocks for display or logging.
+
+			Parameters:
+			-----------
+			text (str): Text to truncate.
+			limit (int): Maximum visible character count.
+
+			Returns:
+			--------
+			str: Truncated or original text.
+		'''
+		try:
+			source = self.validate_required_string( 'text', text )
+			maximum = self.validate_positive_integer( 'limit', limit )
+			
+			if len( source ) <= maximum:
+				return source
+			
+			return source[ : maximum ] + '\n\n... [truncated]'
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = 'truncate_text( self, text: str, limit: int=12000 ) -> str'
+			raise exception
+	
+	def normalize_url( self, base_url: str, href: str ) -> str:
+		'''
+			Purpose:
+			--------
+			Convert a possibly relative URL into a normalized HTTP or HTTPS URL.
+
+			Parameters:
+			-----------
+			base_url (str): Base URL used for relative links.
+			href (str): Raw href value or absolute URL.
+
+			Returns:
+			--------
+			str: Normalized URL or an empty string.
+		'''
+		try:
+			base = self.validate_required_string( 'base_url', base_url )
+			raw_href = self.validate_required_string( 'href', href )
+			
+			if raw_href.startswith( ('mailto:', 'tel:', 'javascript:', '#') ):
+				return ''
+			
+			absolute = urllib.parse.urljoin( base, raw_href )
+			parsed = urllib.parse.urlparse( absolute )
+			
+			if parsed.scheme not in ('http', 'https'):
+				return ''
+			
+			if not parsed.netloc:
+				return ''
+			
+			path = parsed.path or '/'
+			normalized = parsed._replace( path=path, fragment='' )
+			return normalized.geturl( )
+		
+		except Exception:
+			return ''
+	
+	def same_domain( self, left_url: str, right_url: str ) -> bool:
+		'''
+			Purpose:
+			--------
+			Determine whether two URLs share the same network location.
+
+			Parameters:
+			-----------
+			left_url (str): First URL.
+			right_url (str): Second URL.
+
+			Returns:
+			--------
+			bool: True when the network locations match.
+		'''
+		try:
+			left = self.validate_required_string( 'left_url', left_url )
+			right = self.validate_required_string( 'right_url', right_url )
+			left_host = (urllib.parse.urlparse( left ).netloc or '').lower( )
+			right_host = (urllib.parse.urlparse( right ).netloc or '').lower( )
+			return bool( left_host ) and left_host == right_host
+		
+		except Exception:
+			return False
+	
+	def extract_links( self, base_url: str, html: str ) -> List[ str ]:
+		'''
+			Purpose:
+			--------
+			Extract normalized hyperlinks from an HTML document.
+
+			Parameters:
+			-----------
+			base_url (str): Base page URL used to resolve relative links.
+			html (str): Raw HTML content.
+
+			Returns:
+			--------
+			List[str]: Unique normalized hyperlinks in document order.
+		'''
+		try:
+			base = self.validate_required_string( 'base_url', base_url )
+			source = self.validate_required_string( 'html', html )
+			soup = BeautifulSoup( source, 'html.parser' )
+			results: List[ str ] = [ ]
+			seen: set[ str ] = set( )
+			
+			for tag in soup.find_all( 'a', href=True ):
+				candidate = self.normalize_url( base, tag.get( 'href', '' ) )
+				if candidate and candidate not in seen:
+					seen.add( candidate )
+					results.append( candidate )
+			
+			return results
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = 'extract_links( self, base_url: str, html: str ) -> List[ str ]'
+			raise exception
+	
+	def extract_structured_data( self, url: str, html: str,
+			selected_methods: Optional[ List[ str ] ]=None ) -> Dict[ str, List[ str ] ]:
+		'''
+			Purpose:
+			--------
+			Extract selected structured HTML elements from a fetched HTML document.
+
+			Parameters:
+			-----------
+			url (str): Page URL used to resolve relative hyperlinks and image links.
+			html (str): Raw HTML content.
+			selected_methods (Optional[List[str]]): Selected extraction method names.
+
+			Returns:
+			--------
+			Dict[str, List[str]]: Structured extraction results by display label.
+		'''
+		try:
+			source_url = self.validate_required_string( 'url', url )
+			source_html = self.validate_required_string( 'html', html )
+			methods = selected_methods or [ ]
+			
+			if not isinstance( methods, list ):
+				raise TypeError( 'selected_methods must be a list of strings or None.' )
+			
+			results: Dict[ str, List[ str ] ] = { }
+			soup = BeautifulSoup( source_html, 'html.parser' )
+			
+			registry: Dict[ str, Tuple[ str, Any ] ] = \
+				{
+						'scrape_headings':
+							(
+									'Headings',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in
+											soup.find_all( [ 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ] )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_paragraphs':
+							(
+									'Paragraphs',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in soup.find_all( 'p' )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_lists':
+							(
+									'Lists',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in soup.find_all( 'li' )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_tables':
+							(
+									'Tables',
+									lambda: [
+											cell.get_text( ' ', strip=True )
+											for table in soup.find_all( 'table' )
+											for row in table.find_all( 'tr' )
+											for cell in row.find_all( [ 'td', 'th' ] )
+											if cell.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_articles':
+							(
+									'Articles',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in soup.find_all( 'article' )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_sections':
+							(
+									'Sections',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in soup.find_all( 'section' )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_divisions':
+							(
+									'Divisions',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in soup.find_all( 'div' )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_blockquotes':
+							(
+									'Blockquotes',
+									lambda: [
+											tag.get_text( ' ', strip=True )
+											for tag in soup.find_all( 'blockquote' )
+											if tag.get_text( ' ', strip=True )
+									]
+							),
+						'scrape_hyperlinks':
+							(
+									'Hyperlinks',
+									lambda: [
+											self.normalize_url( source_url, tag.get( 'href', '' ) )
+											for tag in soup.find_all( 'a', href=True )
+											if
+											self.normalize_url( source_url, tag.get( 'href', '' ) )
+									]
+							),
+						'scrape_images':
+							(
+									'Images',
+									lambda: [
+											self.normalize_url( source_url, tag.get( 'src', '' ) )
+											for tag in soup.find_all( 'img', src=True )
+											if
+											self.normalize_url( source_url, tag.get( 'src', '' ) )
+									]
+							),
+				}
+			
+			for method_name in methods:
+				if method_name not in registry:
+					continue
+				
+				label, extractor = registry[ method_name ]
+				values = self.coerce_items( extractor( ) )
+				deduped: List[ str ] = [ ]
+				seen: set[ str ] = set( )
+				
+				for value in values:
+					if value not in seen:
+						seen.add( value )
+						deduped.append( value )
+				
+				results[ label ] = deduped
+			
+			return results
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebFetcher'
+			exception.method = (
+					'extract_structured_data( self, url: str, html: str, '
+					'selected_methods: Optional[ List[ str ] ]=None ) '
+					'-> Dict[ str, List[ str ] ]'
+			)
+			raise exception
+	
 	def scrape_paragraphs( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract readable text from all paragraph elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Cleaned paragraph text entries.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			blocks = [ p.get_text( ' ', strip=True ) for p in self.soup.find_all( 'p' ) ]
-			return [ block for block in blocks if block ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_paragraphs' ] ).get( 'Paragraphs', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -420,27 +936,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_lists( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract readable text from all list item elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Cleaned list item text entries.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			items = [ li.get_text( ' ', strip=True ) for li in self.soup.find_all( 'li' ) ]
-			return [ item for item in items if item ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_lists' ] ).get( 'Lists', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -450,34 +962,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_tables( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract flattened table cell text from all table elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Table cell values from td and th elements.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			results: List[ str ]=[ ]
-			for table in self.soup.find_all( 'table' ):
-				for row in table.find_all( 'tr' ):
-					for cell in row.find_all( [ 'td', 'th' ] ):
-						text = cell.get_text( ' ', strip=True )
-						if text:
-							results.append( text )
-			
-			return results
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_tables' ] ).get( 'Tables', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -487,28 +988,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_articles( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract consolidated readable text from all article elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Article-level text blocks.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			blocks = [ article.get_text( ' ', strip=True ) for
-			           article in self.soup.find_all( 'article' ) ]
-			return [ block for block in blocks if block ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_articles' ] ).get( 'Articles', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -518,28 +1014,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_headings( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract readable text from h1 through h6 heading elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Cleaned heading strings.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			heading_tags = [ 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ]
-			blocks = [ h.get_text( ' ', strip=True ) for h in self.soup.find_all( heading_tags ) ]
-			return [ block for block in blocks if block ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_headings' ] ).get( 'Headings', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -549,27 +1040,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_divisions( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract readable text from all div elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Cleaned division text blocks.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			blocks = [ div.get_text( ' ', strip=True ) for div in self.soup.find_all( 'div' ) ]
-			return [ block for block in blocks if block ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_divisions' ] ).get( 'Divisions', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -579,28 +1066,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_sections( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract readable text from all section elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Cleaned section text blocks.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			blocks = [ section.get_text( ' ', strip=True ) for
-			           section in self.soup.find_all( 'section' ) ]
-			return [ block for block in blocks if block ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_sections' ] ).get( 'Sections', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -610,28 +1092,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_blockquotes( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract readable text from all blockquote elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Cleaned blockquote text entries.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			blocks = [ quote.get_text( ' ', strip=True ) for
-			           quote in self.soup.find_all( 'blockquote' ) ]
-			return [ block for block in blocks if block ]
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_blockquotes' ] ).get( 'Blockquotes', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -641,27 +1118,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_hyperlinks( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract hyperlink href values from all anchor elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Hyperlink href values.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			links = [ a.get( 'href' ) for a in self.soup.find_all( 'a' ) if a.get( 'href' ) ]
-			return links
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_hyperlinks' ] ).get( 'Hyperlinks', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -671,28 +1144,23 @@ class WebFetcher( Fetcher ):
 	
 	def scrape_images( self, uri: str ) -> List[ str ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Extract image source values from all image elements.
-			
+
 			Parameters:
 			-----------
 			uri (str): Fully-qualified URI of the HTML document.
-			
+
 			Returns:
 			--------
 			List[str] | None: Image source values.
-			
 		'''
 		try:
-			throw_if( 'uri', uri )
-			self.response = requests.get( uri, headers=self.headers, timeout=self.timeout )
-			self.response.raise_for_status( )
-			self.soup = BeautifulSoup( self.response.text, 'html.parser' )
-			images = [ img.get( 'src' ) for img in self.soup.find_all( 'img' )
-			           if img.get( 'src' ) ]
-			return images
+			url = self.validate_required_string( 'uri', uri )
+			self.fetch( url, time=int( self.timeout or 10 ) )
+			return self.extract_structured_data( url, self.html or '',
+				[ 'scrape_images' ] ).get( 'Images', [ ] )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -700,14 +1168,13 @@ class WebFetcher( Fetcher ):
 			exception.method = 'scrape_images( self, uri: str ) -> List[ str ] | None'
 			raise exception
 	
-	def create_schema( self, function: str, tool: str, description: str, parameters: dict,
-			required: list[ str ] ) -> Dict[ str, str ] | None:
+	def create_schema( self, function: str, tool: str, description: str,
+			parameters: dict, required: list[ str ] ) -> Dict[ str, Any ] | None:
 		'''
-			
 			Purpose:
 			--------
 			Construct and return a dynamic tool schema definition.
-			
+
 			Parameters:
 			-----------
 			function (str): Function name exposed to the model.
@@ -715,183 +1182,442 @@ class WebFetcher( Fetcher ):
 			description (str): Description of the exposed function.
 			parameters (dict): JSON-schema-style parameter definitions.
 			required (list[str]): Required parameter names.
-			
+
 			Returns:
 			--------
-			Dict[str, str] | None: JSON-compatible tool schema dictionary.
-			
+			Dict[str, Any] | None: JSON-compatible tool schema dictionary.
 		'''
 		try:
-			throw_if( 'function', function )
-			throw_if( 'tool', tool )
-			throw_if( 'description', description )
+			function_name = self.validate_required_string( 'function', function )
+			tool_name = self.validate_required_string( 'tool', tool )
+			schema_description = self.validate_required_string( 'description', description )
 			throw_if( 'parameters', parameters )
-			if not isinstance( parameters, dict ):
-				message = 'parameters must be a dict of parameter names to schema definitions.'
-				raise ValueError( message )
 			
-			function_name = function.strip( )
-			tool_name = tool.strip( )
-			schema_description = description.strip( )
+			if not isinstance( parameters, dict ):
+				raise ValueError( 'parameters must be a dict of parameter schema definitions.' )
+			
 			if required is None:
 				required = list( parameters.keys( ) )
 			
-			schema = \
-				{
-						'name': function_name,
-						'description': f'{schema_description} This function uses the {tool_name} service.',
-						'parameters':
-							{
-									'type': 'object',
-									'properties': parameters,
-									'required': required
-							}
-				}
+			if not isinstance( required, list ):
+				raise TypeError( 'required must be a list of strings or None.' )
 			
-			return schema
+			return {
+					'name': function_name,
+					'description': (
+							f'{schema_description} This function uses the {tool_name} service.'
+					),
+					'parameters':
+						{
+								'type': 'object',
+								'properties': parameters,
+								'required': required
+						}
+			}
+		
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = (
 					'create_schema( self, function: str, tool: str, description: str, '
-					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None')
+					'parameters: dict, required: list[ str ] ) -> Dict[ str, Any ] | None'
+			)
 			raise exception
-			
+
 class WebCrawler( WebFetcher ):
 	'''
 
 		Purpose:
 		--------
-		Extends web fetching with optional Playwright-backed page rendering.
+		Extends WebFetcher with single-page scraping, optional Playwright rendering,
+		and bounded recursive crawl orchestration.
 
 		Attributes:
 		-----------
 		use_playwright,
 		browser_context,
+		raw_url,
+		raw_html,
+		pages,
+		summary,
 
 		Methods:
 		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		render_with_playwright(...): Performs the render_with_playwright operation for this fetcher.
+		__init__(...): Performs the __init__ operation for this crawler.
+		__dir__(...): Performs the __dir__ operation for this crawler.
+		fetch(...): Performs the fetch operation for this crawler.
+		render_with_playwright(...): Performs the render_with_playwright operation.
+		scrape_page(...): Performs the scrape_page operation for this crawler.
+		crawl(...): Performs the crawl operation for this crawler.
 
 	'''
 	use_playwright: Optional[ bool ]
 	browser_context: Optional[ Any ]
-
-	def __init__( self, headers: Optional[ Dict[ str, str ] ]=None ) -> None:
+	raw_url: Optional[ str ]
+	raw_html: Optional[ str ]
+	pages: Optional[ List[ Dict[ str, Any ] ] ]
+	summary: Optional[ Dict[ str, Any ] ]
+	
+	def __init__( self, headers: Optional[ Dict[ str, str ] ] = None,
+			use_playwright: bool = False ) -> None:
 		'''
-		
 			Purpose:
-			-------
-			Initialize crawler. By default prefer `crawl4ai` when available and
-			only enable Playwright when `use_playwright=True`.
-				
+			--------
+			Initialize WebCrawler with optional headers and optional Playwright rendering.
+
 			Parameters:
 			-----------
-			headers (Optional[Dict[str, str]]): Optional headers.
-				
+			headers (Optional[Dict[str, str]]): Optional request headers.
+			use_playwright (bool): Whether to render pages through Playwright.
+
 			Returns:
 			--------
 			None
-			
 		'''
 		super( ).__init__( )
 		self.browser_context = None
 		self.raw_url = None
 		self.raw_html = None
 		self.response = None
-		self.headers = headers if headers is not None else {}
-
-	def __dir__( self ) -> list[ str ]:
-		'''
+		self.pages = [ ]
+		self.summary = { }
+		self.use_playwright = bool( use_playwright )
 		
+		if headers is not None:
+			self.headers = headers
+		
+		if 'User-Agent' not in self.headers:
+			self.headers[ 'User-Agent' ] = cfg.AGENTS
+	
+	def __dir__( self ) -> List[ str ]:
+		'''
 			Purpose:
-			-----------
-			Ordering for WebCrawler introspection.
-			
+			--------
+			Return stable introspection names for the crawler.
+
 			Parameters:
 			-----------
 			None
-			
-			Returns:
-			-----------
-			list[str]: Ordered attribute/method names.
-			
-		'''
-		return [ 'use_playwright', 'browser_context', 'fetch',
-		         'html_to_text', 'render_with_playwright' ]
 
-	def fetch( self, url: str, time: int=10 ) -> Result | None:
-		'''
-			
-			Purpose:
-			-------
-			Try `crawl4ai` (if installed) to fetch JS-rendered content. If not
-			available or it returns empty, fall back to the synchronous fetch or
-			(optionally) to Playwright rendering.
-				
-			Parameters:
-			-------
-			url (str): Absolute URL to fetch.
-			time (int): Timeout seconds.
-				
 			Returns:
-			-------
-			Optional[Result]: Result with url, status, text, html, headers on success.
-				
+			--------
+			List[str]: Ordered attribute and method names.
+		'''
+		return [
+				'use_playwright',
+				'browser_context',
+				'raw_url',
+				'raw_html',
+				'pages',
+				'summary',
+				'fetch',
+				'html_to_text',
+				'coerce_items',
+				'extract_title',
+				'truncate_text',
+				'normalize_url',
+				'same_domain',
+				'extract_links',
+				'extract_structured_data',
+				'render_with_playwright',
+				'scrape_page',
+				'crawl'
+		]
+	
+	def fetch( self, url: str, time: int = 10 ) -> Result | None:
+		'''
+			Purpose:
+			--------
+			Fetch a page using either Playwright rendering or the base WebFetcher
+			requests-based fetch path.
+
+			Parameters:
+			-----------
+			url (str): Absolute URL to fetch.
+			time (int): Request timeout in seconds.
+
+			Returns:
+			--------
+			Result | None: Result returned by the base fetch path, or None when
+			Playwright rendering is used.
 		'''
 		try:
 			throw_if( 'url', url )
-			configuration = { 'url': url }
-			payload = crawl4ai.fetch_and_render( configuration )
-			if payload and isinstance( payload, dict ) and 'content' in payload:
-				self.raw_html = payload.get( 'content', '' )
-				text = self.html_to_text( self.raw_html )
-				self.result = Result( url = url, status=200, text=text,
-					html=self.raw_html, headers=self.headers )
-				return self.result
+			
+			if self.use_playwright:
+				self.url = str( url ).strip( )
+				self.timeout = int( time )
+				self.raw_url = self.url
+				self.raw_html = self.render_with_playwright( self.url, timeout=self.timeout )
+				self.html = self.raw_html or ''
+				self.soup = BeautifulSoup( self.html, 'html.parser' )
+				return None
+			
+			return super( ).fetch( url=url, time=time )
+		
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'WebCrawler'
-			exception.method = 'fetch( self, url: str, time: int=15 ) -> Result'
+			exception.method = 'fetch( self, url: str, time: int=10 ) -> Result | None'
 			raise exception
-			
-	def render_with_playwright( self, url: str, timeout: int=15 ) -> str:
+	
+	def render_with_playwright( self, url: str, timeout: int = 15 ) -> str:
 		'''
-		
 			Purpose:
-			-----------
-			Render the page with Playwright (synchronous API) and return the page HTML.
-			This method imports Playwright lazily so the package is optional.
-			
+			--------
+			Render a page with Playwright and return the rendered HTML.
+
 			Parameters:
 			-----------
 			url (str): URL to render.
-			timeout (int): Timeout seconds for render.
-			
+			timeout (int): Timeout seconds for page navigation and network idle.
+
 			Returns:
-			-----------
-			str: Rendered HTML of the page.
-			
+			--------
+			str: Rendered HTML for the page.
 		'''
 		try:
+			throw_if( 'url', url )
+			
 			with sync_playwright( ) as p:
 				browser = p.chromium.launch( )
 				page = browser.new_page( )
-				page.goto( url, timeout = timeout * 1000 )
-				page.wait_for_load_state( 'networkidle', timeout = timeout * 1000 )
+				page.goto( url, timeout=int( timeout ) * 1000 )
+				page.wait_for_load_state( 'networkidle', timeout=int( timeout ) * 1000 )
 				html = page.content( )
 				browser.close( )
 				return html
-		except Exception as exc: 
+		
+		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'WebCrawler'
-			exception.method = 'render_with_playwright'
+			exception.method = 'render_with_playwright( self, url: str, timeout: int=15 ) -> str'
+			raise exception
+	
+	def scrape_page( self, url: str, include_title: bool = True,
+			include_basic_text: bool = True, include_raw_html: bool = False,
+			selected_methods: Optional[ List[ str ] ] = None, request_timeout: int = 10,
+			max_bytes: int = 1000000 ) -> Dict[ str, Any ]:
+		'''
+			Purpose:
+			--------
+			Fetch and extract one web page using the currently configured fetch path.
+
+			Parameters:
+			-----------
+			url (str): Page URL to fetch.
+			include_title (bool): Include the page title.
+			include_basic_text (bool): Include normalized page text.
+			include_raw_html (bool): Include raw HTML.
+			selected_methods (Optional[List[str]]): Structured extraction methods.
+			request_timeout (int): Request timeout in seconds.
+			max_bytes (int): Maximum accepted response size in bytes.
+
+			Returns:
+			--------
+			Dict[str, Any]: Page scrape result.
+		'''
+		page_result: Dict[ str, Any ] = \
+			{
+					'url': url,
+					'status_code': None,
+					'encoding': None,
+					'title': '',
+					'plain_text': '',
+					'raw_html': '',
+					'links_discovered': [ ],
+					'data': { },
+					'errors': [ ],
+					'content_bytes': 0,
+					'truncated_by_max_bytes': False,
+			}
+		
+		try:
+			methods = selected_methods or [ ]
+			self.fetch( url=url, time=int( request_timeout ) )
+			
+			raw_html = self.html or ''
+			if self.response is not None:
+				page_result[ 'status_code' ] = getattr( self.response, 'status_code', None )
+				page_result[ 'encoding' ] = getattr( self.response, 'encoding', None )
+			else:
+				page_result[ 'status_code' ] = 200
+				page_result[ 'encoding' ] = 'rendered'
+			
+			raw_bytes = raw_html.encode( 'utf-8', errors='ignore' )
+			page_result[ 'content_bytes' ] = len( raw_bytes )
+			
+			if int( max_bytes ) > 0 and len( raw_bytes ) > int( max_bytes ):
+				raw_html = raw_bytes[ : int( max_bytes ) ].decode( 'utf-8', errors='ignore' )
+				page_result[ 'truncated_by_max_bytes' ] = True
+				page_result[ 'errors' ].append(
+					f'Response exceeded max bytes and was truncated to {int( max_bytes )} bytes.' )
+			
+			page_result[ 'links_discovered' ] = self.extract_links( url, raw_html )
+			
+			if include_title:
+				page_result[ 'title' ] = self.extract_title( raw_html )
+			
+			if include_basic_text:
+				try:
+					page_result[ 'plain_text' ] = self.html_to_text( raw_html ) or ''
+				except Exception as exc:
+					page_result[ 'errors' ].append( f'Basic Text: {str( exc )}' )
+			
+			if include_raw_html:
+				page_result[ 'raw_html' ] = raw_html
+			
+			page_result[ 'data' ] = self.extract_structured_data(
+				url=url,
+				html=raw_html,
+				selected_methods=methods )
+			
+			return page_result
+		
+		except Exception as exc:
+			page_result[ 'errors' ].append( f'Fetch: {str( exc )}' )
+			return page_result
+	
+	def crawl( self, seed_url: str, include_title: bool = True,
+			include_basic_text: bool = True, include_raw_html: bool = False,
+			selected_methods: Optional[ List[ str ] ] = None, recursive: bool = False,
+			max_depth: int = 1, max_pages: int = 10, same_domain_only: bool = True,
+			request_timeout: int = 10, delay_seconds: float = 0.25,
+			max_bytes: int = 1000000 ) -> Dict[ str, Any ]:
+		'''
+			Purpose:
+			--------
+			Crawl one page or a bounded set of pages from a seed URL.
+
+			Parameters:
+			-----------
+			seed_url (str): Initial URL.
+			include_title (bool): Include page titles.
+			include_basic_text (bool): Include normalized page text.
+			include_raw_html (bool): Include raw HTML.
+			selected_methods (Optional[List[str]]): Structured extraction method names.
+			recursive (bool): Enable recursive crawling.
+			max_depth (int): Maximum crawl depth.
+			max_pages (int): Maximum number of pages to process.
+			same_domain_only (bool): Restrict discovered URLs to the seed domain.
+			request_timeout (int): Request timeout in seconds.
+			delay_seconds (float): Delay between page requests.
+			max_bytes (int): Maximum accepted response size in bytes.
+
+			Returns:
+			--------
+			Dict[str, Any]: Crawl result containing pages and summary.
+		'''
+		try:
+			throw_if( 'seed_url', seed_url )
+			
+			started_at = dt.datetime.now( )
+			normalized_seed = self.normalize_url( seed_url, seed_url )
+			if not normalized_seed:
+				raise ValueError( 'A valid absolute URL is required.' )
+			
+			methods = selected_methods or [ ]
+			queue: List[ Tuple[ str, int ] ] = [ (normalized_seed, 0) ]
+			visited: set[ str ] = set( )
+			enqueued: set[ str ] = { normalized_seed }
+			skipped_urls: List[ str ] = [ ]
+			pages: List[ Dict[ str, Any ] ] = [ ]
+			
+			index = 0
+			while index < len( queue ) and len( pages ) < int( max_pages ):
+				current_url, depth = queue[ index ]
+				index += 1
+				
+				if current_url in visited:
+					continue
+				
+				visited.add( current_url )
+				
+				page_result = self.scrape_page(
+					url=current_url,
+					include_title=include_title,
+					include_basic_text=include_basic_text,
+					include_raw_html=include_raw_html,
+					selected_methods=methods,
+					request_timeout=int( request_timeout ),
+					max_bytes=int( max_bytes ) )
+				
+				page_result[ 'depth' ] = depth
+				pages.append( page_result )
+				
+				if float( delay_seconds ) > 0 and index < len( queue ):
+					time.sleep( float( delay_seconds ) )
+				
+				if not recursive:
+					continue
+				
+				if depth >= int( max_depth ):
+					continue
+				
+				discovered_links = page_result.get( 'links_discovered', [ ] ) or [ ]
+				for next_url in discovered_links:
+					if len( pages ) + (len( queue ) - index) >= int( max_pages ):
+						break
+					
+					if not next_url or next_url in visited or next_url in enqueued:
+						continue
+					
+					if same_domain_only and not self.same_domain( normalized_seed, next_url ):
+						skipped_urls.append( next_url )
+						continue
+					
+					queue.append( (next_url, depth + 1) )
+					enqueued.add( next_url )
+			
+			finished_at = dt.datetime.now( )
+			error_count = sum( len( page.get( 'errors', [ ] ) or [ ] ) for page in pages )
+			total_bytes = sum( int( page.get( 'content_bytes', 0 ) or 0 ) for page in pages )
+			
+			self.pages = pages
+			self.summary = {
+					'mode': 'recursive' if recursive else 'single-page',
+					'seed_url': normalized_seed,
+					'pages_processed': len( pages ),
+					'pages_visited': len( visited ),
+					'pages_skipped': len( skipped_urls ),
+					'pages_enqueued_remaining': max( 0, len( queue ) - index ),
+					'errors': error_count,
+					'total_content_bytes': total_bytes,
+					'recursive_requested': bool( recursive ),
+					'max_depth': int( max_depth ),
+					'max_pages': int( max_pages ),
+					'same_domain_only': bool( same_domain_only ),
+					'request_timeout': int( request_timeout ),
+					'delay_seconds': float( delay_seconds ),
+					'max_bytes_per_page': int( max_bytes ),
+					'use_playwright': bool( self.use_playwright ),
+					'started_at': started_at.isoformat( ),
+					'finished_at': finished_at.isoformat( ),
+					'elapsed_seconds': round( (finished_at - started_at).total_seconds( ), 3 ),
+					'visited_urls': list( visited ),
+					'skipped_urls': skipped_urls,
+			}
+			
+			return {
+					'pages': self.pages,
+					'summary': self.summary
+			}
+		
+		except Exception as exc:
+			exception = Error( exc )
+			exception.module = 'fetchers'
+			exception.cause = 'WebCrawler'
+			exception.method = (
+					'crawl( self, seed_url: str, include_title: bool=True, '
+					'include_basic_text: bool=True, include_raw_html: bool=False, '
+					'selected_methods: Optional[ List[ str ] ]=None, recursive: bool=False, '
+					'max_depth: int=1, max_pages: int=10, same_domain_only: bool=True, '
+					'request_timeout: int=10, delay_seconds: float=0.25, '
+					'max_bytes: int=1000000 ) -> Dict[ str, Any ]'
+			)
 			raise exception
 
 class ArXiv( Fetcher ):
@@ -3437,10 +4163,14 @@ class EarthObservatory( Fetcher ):
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
 			raise exception
-			
+
 class GlobalImagery( Fetcher ):
-	'''Fetches and renders global imagery and WMS map service data.
-	
+	'''
+		Purpose:
+		--------
+		Fetches NASA Global Imagery Browse Services (GIBS) WMS imagery and service
+		metadata.
+
 		Attributes:
 		-----------
 		file_path,
@@ -3459,14 +4189,18 @@ class GlobalImagery( Fetcher ):
 		year,
 		month,
 		day,
-	
+
 		Methods:
 		--------
 		__init__(...): Performs the __init__ operation for this fetcher.
-		fetch_map_services(...): Performs the fetch_map_services operation for this fetcher.
-		fetch_mercator_map(...): Performs the fetch_mercator_map operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-	
+		__dir__(...): Performs the __dir__ operation for this fetcher.
+		get_capabilities_url(...): Performs the get_capabilities_url operation.
+		build_wms_url(...): Performs the build_wms_url operation.
+		fetch_wms_map(...): Performs the fetch_wms_map operation.
+		fetch_map_services(...): Performs the fetch_map_services operation.
+		fetch_mercator_map(...): Performs the fetch_mercator_map operation.
+		create_schema(...): Performs the create_schema operation.
+
 	'''
 	file_path: Optional[ str ]
 	api_key: Optional[ str ]
@@ -3486,10 +4220,23 @@ class GlobalImagery( Fetcher ):
 	day: Optional[ str ]
 	
 	def __init__( self ) -> None:
+		'''
+			Purpose:
+			--------
+			Initialize the NASA GIBS imagery wrapper with request defaults.
+
+			Parameters:
+			-----------
+			None
+
+			Returns:
+			--------
+			None
+		'''
 		super( ).__init__( )
 		self.api_key = cfg.NASA_API_KEY
 		self.mode = None
-		self.url = None
+		self.url = 'https://gibs.earthdata.nasa.gov/wms'
 		self.file_path = None
 		self.longitude = None
 		self.latitude = None
@@ -3500,88 +4247,461 @@ class GlobalImagery( Fetcher ):
 		self.sidereal_time = None
 		self.local_time = None
 		self.utc_time = None
+		self.params = { }
+		self.response = None
+		self.result = None
+		self.timeout = 20
 		self.agents = cfg.AGENTS
 		self.headers = { }
-		self.headers[ 'User-Agent' ]=self.agents
+		self.headers[ 'User-Agent' ] = self.agents
 		self.era = None
+		self.year = None
+		self.month = None
+		self.day = None
 	
-	def fetch_map_services( self ):
-		'''Fetch a representative NASA GIBS Web Map Service image using the configured
-			global imagery endpoint and default corrected reflectance layer.
-		
+	def __dir__( self ) -> List[ str ]:
+		'''
+			Purpose:
+			--------
+			Return stable introspection names for the NASA GIBS wrapper.
+
 			Parameters:
 			-----------
 			None
-		
+
 			Returns:
 			--------
-			Any | None: The fetched map image object or None when the request fails.
-		
+			List[str]: Ordered attribute and method names.
 		'''
-		try:
-			wms = WebMapService( 'https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?',
-				version='1.1.1' )
-			img = wms.getmap( layers=[ 'MODIS_Terra_CorrectedReflectance_TrueColor' ],  # Layers
-				srs='epsg:4326',  # Map projection
-				bbox=(-180, -90, 180, 90),  # Bounds
-				size=( 1200, 600 ),  # Image size
-				time='2021-09-21',  # Time of data
-				format='image/png',  # Image format
-				transparent=True )  # Nodata transparency
-			out = open( 'python-examples/MODIS_Terra_CorrectedReflectance_TrueColor.png', 'wb' )
-			out.write( img.read( ) )
-			out.close( )
-			Image( 'python-examples/MODIS_Terra_CorrectedReflectance_TrueColor.png' )
-		except Exception as e:
-			exception = Error( e )
-			exception.module = 'fetchers'
-			exception.cause = 'GlobalImagery'
-			exception.method = 'fetch_sidereal( self, date: str ) -> float'
-			raise exception
-			
+		return [
+				'file_path',
+				'api_key',
+				'url',
+				'latitude',
+				'longitude',
+				'coordinates',
+				'calendar_date',
+				'julian_date',
+				'sidereal_time',
+				'utc_time',
+				'local_time',
+				'params',
+				'response',
+				'result',
+				'mode',
+				'timeout',
+				'headers',
+				'get_capabilities_url',
+				'build_wms_url',
+				'fetch_wms_map',
+				'fetch_map_services',
+				'fetch_mercator_map',
+				'create_schema'
+		]
 	
-	def fetch_mercator_map( self , ccrs=None ):
-		'''Fetch a NASA GIBS Mercator map image and render it through the provided
-			Cartopy coordinate reference system module.
-		
+	def get_capabilities_url( self, projection: str = 'epsg4326',
+			quality: str = 'best', version: str = '1.1.1' ) -> str:
+		'''
+			Purpose:
+			--------
+			Build a NASA GIBS WMS GetCapabilities URL.
+
 			Parameters:
 			-----------
-			ccrs (Any | None): Optional Cartopy coordinate reference system module used
-			to project and render the returned map image.
-		
+			projection (str):
+				GIBS projection path segment such as epsg4326 or epsg3857.
+
+			quality (str):
+				GIBS quality path segment such as best or std.
+
+			version (str):
+				WMS version.
+
 			Returns:
 			--------
-			Any | None: The rendered map result or None when the request fails.
-		
+			str: GetCapabilities URL.
 		'''
 		try:
-			proj3857 = 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi?\
-			version=1.3.0&service=WMS&\
-			request=GetMap&format=image/png&STYLE=default&bbox=-8000000,-8000000,8000000,8000000&\
-			CRS=EPSG:3857&HEIGHT=600&WIDTH=600&TIME=2000-12-01&layers=Landsat_WELD_CorrectedReflectance_Bands157_Global_Annual'
-			img = io.imread( proj3857 )
-			fig = plt.figure( )
-			ax = fig.add_subplot( 1, 1, 1, projection=ccrs.Mercator.GOOGLE )
-			extent = (-8000000, 8000000, -8000000, 8000000)
-			plt.imshow( img, transform=ccrs.Mercator.GOOGLE, extent=extent, origin='upper' )
-			gl = ax.gridlines( ccrs.PlateCarree( ), linewidth=1, color='blue', alpha=0.3, draw_labels=True )
-			gl.top_labels = False
-			gl.right_labels = False
-			gl.xlines = True
-			gl.ylines = True
-			gl.xlocator = mticker.FixedLocator( [ 0, 30, -30,  0 ] )
-			gl.ylocator = mticker.FixedLocator( [ -30, 0, 30 ] )
-			gl.xformatter = LONGITUDE_FORMATTER
-			gl.yformatter = LATITUDE_FORMATTER
-			gl.xlabel_style = { 'color': 'blue' }
-			gl.ylabel_style = { 'color': 'blue' }
-			plt.title( 'Mercator Projection', fontname='Roboto', fontsize=20, color='green' )
-			plt.show( )
+			projection_value = str( projection or 'epsg4326' ).strip( ).lower( )
+			quality_value = str( quality or 'best' ).strip( ).lower( )
+			version_value = str( version or '1.1.1' ).strip( )
+			
+			base_url = (
+					f'https://gibs.earthdata.nasa.gov/wms/'
+					f'{projection_value}/{quality_value}/wms.cgi'
+			)
+			
+			params = {
+					'SERVICE': 'WMS',
+					'REQUEST': 'GetCapabilities',
+					'VERSION': version_value
+			}
+			
+			return f'{base_url}?{urllib.parse.urlencode( params )}'
+		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'GlobalImagery'
-			exception.method = 'fetch_sidereal( self, date: str ) -> float'
+			exception.method = (
+					'get_capabilities_url( self, projection: str="epsg4326", '
+					'quality: str="best", version: str="1.1.1" ) -> str'
+			)
+			raise exception
+	
+	def build_wms_url( self, layer: str, image_date: str, bbox: Tuple[ float, float, float, float ],
+			width: int = 1200, height: int = 600, projection: str = 'epsg4326',
+			quality: str = 'best', image_format: str = 'image/png',
+			transparent: bool = True, version: str = '1.1.1' ) -> str:
+		'''
+			Purpose:
+			--------
+			Build a NASA GIBS WMS GetMap URL.
+
+			Parameters:
+			-----------
+			layer (str):
+				GIBS layer identifier.
+
+			image_date (str):
+				Layer date in YYYY-MM-DD format.
+
+			bbox (Tuple[float, float, float, float]):
+				Bounding box as west, south, east, north.
+
+			width (int):
+				Output image width in pixels.
+
+			height (int):
+				Output image height in pixels.
+
+			projection (str):
+				GIBS projection path segment such as epsg4326 or epsg3857.
+
+			quality (str):
+				GIBS quality path segment such as best or std.
+
+			image_format (str):
+				Output MIME type.
+
+			transparent (bool):
+				Whether to request transparent no-data pixels.
+
+			version (str):
+				WMS version.
+
+			Returns:
+			--------
+			str: Fully-qualified WMS GetMap URL.
+		'''
+		try:
+			throw_if( 'layer', layer )
+			throw_if( 'image_date', image_date )
+			throw_if( 'bbox', bbox )
+			
+			if len( bbox ) != 4:
+				raise ValueError( 'bbox must contain west, south, east, north.' )
+			
+			projection_value = str( projection or 'epsg4326' ).strip( ).lower( )
+			quality_value = str( quality or 'best' ).strip( ).lower( )
+			version_value = str( version or '1.1.1' ).strip( )
+			
+			west, south, east, north = [ float( value ) for value in bbox ]
+			width_value = max( 1, int( width ) )
+			height_value = max( 1, int( height ) )
+			
+			base_url = (
+					f'https://gibs.earthdata.nasa.gov/wms/'
+					f'{projection_value}/{quality_value}/wms.cgi'
+			)
+			
+			params = {
+					'SERVICE': 'WMS',
+					'VERSION': version_value,
+					'REQUEST': 'GetMap',
+					'LAYERS': str( layer ).strip( ),
+					'STYLES': '',
+					'FORMAT': str( image_format or 'image/png' ).strip( ),
+					'TRANSPARENT': str( bool( transparent ) ).lower( ),
+					'SRS': 'EPSG:4326' if projection_value == 'epsg4326' else 'EPSG:3857',
+					'BBOX': f'{west},{south},{east},{north}',
+					'WIDTH': width_value,
+					'HEIGHT': height_value,
+					'TIME': str( image_date ).strip( )
+			}
+			
+			self.params = params
+			return f'{base_url}?{urllib.parse.urlencode( params )}'
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'GlobalImagery'
+			exception.method = (
+					'build_wms_url( self, layer: str, image_date: str, '
+					'bbox: Tuple[ float, float, float, float ], width: int=1200, '
+					'height: int=600, projection: str="epsg4326", quality: str="best", '
+					'image_format: str="image/png", transparent: bool=True, '
+					'version: str="1.1.1" ) -> str'
+			)
+			raise exception
+	
+	def fetch_wms_map( self, layer: str, image_date: str,
+			bbox: Tuple[ float, float, float, float ], width: int = 1200, height: int = 600,
+			projection: str = 'epsg4326', quality: str = 'best',
+			image_format: str = 'image/png', transparent: bool = True,
+			output_dir: str = 'python-examples', output_name: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch a NASA GIBS WMS map image and save it to disk.
+
+			Parameters:
+			-----------
+			layer (str):
+				GIBS layer identifier.
+
+			image_date (str):
+				Layer date in YYYY-MM-DD format.
+
+			bbox (Tuple[float, float, float, float]):
+				Bounding box as west, south, east, north.
+
+			width (int):
+				Output image width in pixels.
+
+			height (int):
+				Output image height in pixels.
+
+			projection (str):
+				GIBS projection path segment.
+
+			quality (str):
+				GIBS quality path segment.
+
+			image_format (str):
+				Output MIME type.
+
+			transparent (bool):
+				Whether to request transparent no-data pixels.
+
+			output_dir (str):
+				Directory where the image will be written.
+
+			output_name (str):
+				Optional output filename. If empty, a deterministic filename is generated.
+
+			time (int):
+				Request timeout in seconds.
+
+			Returns:
+			--------
+			Dict[str, Any] | None: Normalized request and image metadata.
+		'''
+		try:
+			self.mode = 'wms_map'
+			self.timeout = int( time )
+			
+			request_url = self.build_wms_url(
+				layer=layer,
+				image_date=image_date,
+				bbox=bbox,
+				width=width,
+				height=height,
+				projection=projection,
+				quality=quality,
+				image_format=image_format,
+				transparent=transparent )
+			
+			directory = Path( output_dir or 'python-examples' )
+			directory.mkdir( parents=True, exist_ok=True )
+			
+			if output_name:
+				filename = output_name
+			else:
+				safe_layer = re.sub( r'[^A-Za-z0-9_\-]+', '_', str( layer ).strip( ) )
+				safe_date = re.sub( r'[^0-9\-]+', '_', str( image_date ).strip( ) )
+				extension = '.jpg' if image_format == 'image/jpeg' else '.png'
+				filename = f'{safe_layer}_{safe_date}{extension}'
+			
+			self.file_path = str( directory / filename )
+			self.url = request_url
+			self.response = requests.get( request_url, headers=self.headers,
+				timeout=self.timeout )
+			self.response.raise_for_status( )
+			
+			content_type = self.response.headers.get( 'Content-Type', '' )
+			if 'image' not in content_type.lower( ):
+				message = (
+						'NASA GIBS did not return an image. '
+						f'Content-Type: {content_type}. '
+						f'Response preview: {self.response.text[ :500 ]}'
+				)
+				raise ValueError( message )
+			
+			Path( self.file_path ).write_bytes( self.response.content )
+			
+			self.result = {
+					'mode': self.mode,
+					'url': self.url,
+					'params': self.params,
+					'image_path': self.file_path,
+					'content_type': content_type,
+					'status_code': self.response.status_code,
+					'bytes': len( self.response.content ),
+					'layer': layer,
+					'image_date': image_date,
+					'bbox': {
+							'west': float( bbox[ 0 ] ),
+							'south': float( bbox[ 1 ] ),
+							'east': float( bbox[ 2 ] ),
+							'north': float( bbox[ 3 ] )
+					},
+					'summary': {
+							'rows': 1,
+							'columns': 8,
+							'description': 'NASA GIBS WMS image written to disk.'
+					}
+			}
+			
+			return self.result
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'GlobalImagery'
+			exception.method = (
+					'fetch_wms_map( self, layer: str, image_date: str, '
+					'bbox: Tuple[ float, float, float, float ], width: int=1200, '
+					'height: int=600, projection: str="epsg4326", quality: str="best", '
+					'image_format: str="image/png", transparent: bool=True, '
+					'output_dir: str="python-examples", output_name: str="", '
+					'time: int=20 ) -> Dict[ str, Any ] | None'
+			)
+			raise exception
+	
+	def fetch_map_services( self ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch the legacy default NASA GIBS EPSG:4326 corrected-reflectance image.
+
+			Parameters:
+			-----------
+			None
+
+			Returns:
+			--------
+			Dict[str, Any] | None: Normalized request and image metadata.
+		'''
+		try:
+			self.mode = 'fetch_map_services'
+			return self.fetch_wms_map( layer='MODIS_Terra_CorrectedReflectance_TrueColor',
+				image_date='2021-09-21', bbox=(-180.0, -90.0, 180.0, 90.0),
+				width=1200, height=600, projection='epsg4326', quality='best',
+				image_format='image/png', transparent=True, output_dir='python-examples',
+				output_name='MODIS_Terra_CorrectedReflectance_TrueColor.png',
+				time=20 )
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'GlobalImagery'
+			exception.method = 'fetch_map_services( self ) -> Dict[ str, Any ] | None'
+			raise exception
+	
+	def fetch_mercator_map( self, ccrs=None ) -> Dict[ str, Any ] | None:
+		'''
+			Purpose:
+			--------
+			Fetch the legacy default NASA GIBS EPSG:3857 Web Mercator image.
+
+			Parameters:
+			-----------
+			ccrs (Any | None):
+				Preserved for backward compatibility. The replacement fetches and writes the
+				image without attempting Cartopy rendering.
+
+			Returns:
+			--------
+			Dict[str, Any] | None: Normalized request and image metadata.
+		'''
+		try:
+			self.mode = 'mercator_map'
+			return self.fetch_wms_map(
+				layer='Landsat_WELD_CorrectedReflectance_Bands157_Global_Annual',
+				image_date='2000-12-01', bbox=(-8000000.0, -8000000.0, 8000000.0, 8000000.0),
+				width=600, height=600, projection='epsg3857', quality='best',
+				image_format='image/png', transparent=True, output_dir='python-examples',
+				output_name='Landsat_WELD_CorrectedReflectance_Bands157_Global_Annual.png',
+				time=20 )
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'GlobalImagery'
+			exception.method = 'fetch_mercator_map( self, ccrs=None ) -> Dict[ str, Any ] | None'
+			raise exception
+	
+	def create_schema( self, function: str, tool: str, description: str,
+			parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None:
+		'''
+			Purpose:
+			--------
+			Construct and return a dynamic tool schema definition.
+
+			Parameters:
+			-----------
+			function (str):
+				Function name exposed to the model.
+
+			tool (str):
+				Underlying service or system name.
+
+			description (str):
+				Description of the exposed function.
+
+			parameters (dict):
+				JSON-schema-style parameter definitions.
+
+			required (list[str]):
+				Required parameter names.
+
+			Returns:
+			--------
+			Dict[str, str] | None: JSON-compatible tool schema dictionary.
+		'''
+		try:
+			throw_if( 'function', function )
+			throw_if( 'tool', tool )
+			throw_if( 'description', description )
+			throw_if( 'parameters', parameters )
+			
+			if not isinstance( parameters, dict ):
+				raise ValueError( 'parameters must be a dict of parameter schema definitions.' )
+			
+			if required is None:
+				required = list( parameters.keys( ) )
+			
+			return {
+					'name': function.strip( ),
+					'description': f'{description.strip( )} This function uses the {tool.strip( )} service.',
+					'parameters': {
+							'type': 'object',
+							'properties': parameters,
+							'required': required
+					}
+			}
+		
+		except Exception as e:
+			exception = Error( e )
+			exception.module = 'fetchers'
+			exception.cause = 'GlobalImagery'
+			exception.method = (
+					'create_schema( self, function: str, tool: str, description: str, '
+					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None'
+			)
 			raise exception
 		
 class NearbyObjects( Fetcher ):

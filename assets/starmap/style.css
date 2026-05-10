@@ -2,14 +2,14 @@
 
 :root
 {
-	--primary: rgba(101, 100, 100, 0.99);
-	--primary-light: #FFFFFF;
+	--primary: rgb(0, 120, 252);
+	--primary-light: #0078FC;
 	--primary-dark: rgb(40, 40, 40);
 	--background: rgb(20, 20, 20);
-	--surface: rgba(56, 55, 55, 0.99);
+	--surface: rgb(63, 62, 62);
 	--surface-light: rgb(63, 62, 62);
 	--text: #E9EAFF;
-	--text-secondary: #B4B8FF;
+	--text-secondary: #E7E8F8;
 	--accent: #0078FC;
 }
 
@@ -82,7 +82,7 @@ h1
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
-	text-shadow: 0 0 12px rgba(132, 59, 255, 0.2);
+	text-shadow: 0 0 12px rgba(132, 59, 255, 0);
 }
 
 .subtitle
@@ -100,7 +100,7 @@ h1
 	border-radius: 16px;=
 	margin-bottom: 2.5rem;
 	backdrop-filter: blur(10px);
-	border: 1px solid rgba(101, 100, 100, 0.99);
+	border: 1px solid rgba(182, 176, 176, 0.99);
 	position: relative;
 	overflow: hidden;
 }
@@ -209,7 +209,7 @@ input[ type='datetime-local' ]:focus,
 
 .button-group
 {
-	margin-bottom: 2rem;
+	margin-bottom: 1rem;
 }
 
 .secondary-btn
@@ -218,16 +218,15 @@ input[ type='datetime-local' ]:focus,
 	padding: 1rem;
 	font-size: 1.1rem;
 	font-weight: 600;
-	border-radius: 8px;
 	color: var(--primary-light);
-	background: rgb(60, 60, 60);
+	background: rgba(56, 55, 55, 0.99);
 	cursor: pointer;
 	transition: all 0.2s;
 }
 
 .secondary-btn:hover
 {
-	background: rgb(1, 39, 84);
+	background: rgba(101, 100, 100, 0.99);
 	color: #F8F9FA;
 }
 
@@ -267,20 +266,18 @@ input[ type='datetime-local' ]:focus,
 
 .generate-btn
 {
-	background: rgba(56, 55, 55, 0.99);
+	background: linear-gradient(135deg, #022E5E, #022E5E);
 	color: white;
 	padding: 1rem 2.5rem;
-	border: none;
+	border: rgb(100,100,100);
 	border-radius: 8px;
 	font-weight: 600;
 	font-size: 1.1rem;
 	cursor: pointer;
-	transition: transform 0.2s, box-shadow 0.2s;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 0.8rem;
-	box-shadow: 0 4px 12px rgba(56, 55, 55, 0);
 	position: relative;
 	overflow: hidden;
 }
@@ -293,19 +290,20 @@ input[ type='datetime-local' ]:focus,
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: rgb(63, 62, 62);
+	background: linear-gradient(135deg, #022E5E, #022E5E);
 	transform: translateX(-100%);
 }
 
 .generate-btn:hover
 {
+	background: linear-gradient(135deg, #0078FC, #0078FC);
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(2, 46, 94, 0);
+	box-shadow: 0 6px 16px rgba(101, 100, 100, 0.99);
 }
 
 .generate-btn:hover::before
 {
-	animation: shine 1.5s infinite;
+	animation: none;
 }
 
 @keyframes shine
@@ -337,7 +335,7 @@ input[ type='datetime-local' ]:focus,
 #mapContainer
 {
 	position: relative;
-	background: var(--surface);
+	background: rgb(40,40,40);
 	border-radius: 16px;
 	overflow: hidden;
 	aspect-ratio: 1/1;
@@ -357,17 +355,17 @@ input[ type='datetime-local' ]:focus,
 {
 	width: 100%;
 	height: 100%;
-	background: radial-gradient(circle at center, #000000 0%, #020202 80%);
+	background: radial-gradient(circle at center, rgba(56, 55, 55, 0.99) 0%, rgba(56, 55, 55, 0.99) 80%);
 }
 
 #map svg
 {
-	filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
+	filter: drop-shadow(0 0 6px rgba(101, 100, 100, 0.99));
 }
 
 .milky-way
 {
-	fill: rgba(255, 255, 255, 0.1);
+	fill: rgb(63, 62, 62);
 	stroke: none;
 }
 
@@ -386,7 +384,7 @@ input[ type='datetime-local' ]:focus,
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(10, 11, 23, 0.85);
+	background: rgb(20, 20, 20);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -477,10 +475,10 @@ input[ type='datetime-local' ]:focus,
 
 .download-btn
 {
-	background: rgb(63, 62, 62);
+	background: linear-gradient(135deg, #022E5E, #022E5E);
 	color: white;
 	padding: 1rem 2.5rem;
-	border: none;
+	border: rgb(100,100,100);
 	border-radius: 8px;
 	font-weight: 600;
 	font-size: 1.1rem;
@@ -494,9 +492,8 @@ input[ type='datetime-local' ]:focus,
 
 .download-btn:hover
 {
-	background: linear-gradient(135deg, #022E5E, #022E5E);
+	background: linear-gradient(135deg, #0078FC, #0078FC);
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(255, 254, 254, 0.02);
 }
 
 #locationPicker
@@ -516,7 +513,7 @@ input[ type='datetime-local' ]:focus,
 	margin-top: 0.8rem;
 	font-size: 0.95rem;
 	color: var(--text-secondary);
-	background: var(--surface-light);
+	background: rgb(0,0,0);
 	padding: 0.6rem 1rem;
 	border-radius: 6px;
 	display: inline-block;
@@ -770,7 +767,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 {
 	overflow-y: auto;
 	padding-right: 1rem;
-	border-right: 1px solid rgba(255, 255, 255, 0.05);
+	border-right: 1px solid rgba(101, 100, 100, 0.99);
 }
 
 .preview-area
@@ -826,7 +823,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 .template-option.active
 {
 	border-color: var(--primary);
-	background: rgba(132, 59, 255, 0.1);
+	background: rgba(56, 55, 55, 0.99);
 }
 
 .preview-thumb
@@ -865,7 +862,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	right: 2rem;
 	width: 380px;
 	height: calc(100vh - 4rem);
-	background: rgba(21, 22, 41, 0.85);
+	background: rgba(56, 55, 55, 0.99);
 	backdrop-filter: blur(20px);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 20px;
@@ -891,7 +888,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	border-bottom: 1px solid rgba(101, 100, 100, 0.99);
 }
 
 .side-panel-header h2
@@ -941,7 +938,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	align-items: center;
 	justify-content: center;
 	position: relative;
-	border: 1px solid rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 }
 
 .star-image-container img

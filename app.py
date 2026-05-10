@@ -80,6 +80,7 @@ from fetchers import (
 	AstroQuery,
 	StarMap,
 	StarChart,
+	WebCrawler,
 	WebFetcher )
 
 # ---------------------------------------------------------------------
@@ -482,11 +483,11 @@ def log_step( msg: str ) -> None:
 
 # ------------- CELESTIAL MAP UTILITY
 
-def render_celestial_map( asset_root: str='assets/starmap', height: int=1400,
-		latitude: Optional[ float ]=None, longitude: Optional[ float ]=None,
-		tile_url: Optional[ str ]=None, tile_attribution: Optional[ str ]=None,
-		tile_subdomains: Optional[ str ]=None, location: Optional[ str ]=None,
-		zoom: Optional[ int ]=None ) -> None:
+def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400,
+		latitude: Optional[ float ] = None, longitude: Optional[ float ] = None,
+		tile_url: Optional[ str ] = None, tile_attribution: Optional[ str ] = None,
+		tile_subdomains: Optional[ str ] = None, location: Optional[ str ] = None,
+		zoom: Optional[ int ] = None ) -> None:
 	"""
 	
 		Purpose:
@@ -550,9 +551,9 @@ def render_celestial_map( asset_root: str='assets/starmap', height: int=1400,
 		
 		html = index_path.read_text( encoding='utf-8' )
 		css = style_path.read_text( encoding='utf-8' )
-		local_data: Dict[ str, object ]={ }
+		local_data: Dict[ str, object ] = { }
 		for key, path in data_paths.items( ):
-			local_data[ key ]=json.loads( path.read_text( encoding='utf-8' ) )
+			local_data[ key ] = json.loads( path.read_text( encoding='utf-8' ) )
 		
 		if has_valid_coordinates( latitude, longitude ):
 			default_latitude = float( latitude )
@@ -598,11 +599,11 @@ def render_celestial_map( asset_root: str='assets/starmap', height: int=1400,
 			html = re.sub( rf'\s*<script\s+src="{re.escape( relative_path )}"></script>',
 				'', html, flags=re.IGNORECASE )
 		
-		data_script = ( '<script>\n'
-				'window.StarMapApp = window.StarMapApp || {};\n'
-				f'window.StarMapApp.LOCAL_DATA = {json.dumps( local_data )};\n'
-				f'window.StarMapApp.DEFAULT_LOCATION = {json.dumps( default_payload )};\n'
-				'</script>' )
+		data_script = ('<script>\n'
+		               'window.StarMapApp = window.StarMapApp || {};\n'
+		               f'window.StarMapApp.LOCAL_DATA = {json.dumps( local_data )};\n'
+		               f'window.StarMapApp.DEFAULT_LOCATION = {json.dumps( default_payload )};\n'
+		               '</script>')
 		
 		inline_scripts = [ data_script ]
 		for path in module_paths:
@@ -662,7 +663,7 @@ def render_celestial_map( asset_root: str='assets/starmap', height: int=1400,
 		components.html( html, height=int( height ), scrolling=True )
 	except Exception as ex:
 		st.error( f'Celestial Map failed to render: {ex}' )
-
+		
 # ------------- LOCATION STATE UTILITIES
 
 def has_valid_coordinates( latitude: object, longitude: object ) -> bool:
@@ -3172,9 +3173,7 @@ style_subheaders( )
 # ==============================================================================
 # SIDEBAR
 # ==============================================================================
-
 st.logo( cfg.LOGO, size='Large' )
-
 with st.sidebar:
 	# ------- Map Mode
 	set_blue_divider( )
@@ -3564,7 +3563,6 @@ elif mode == 'Interactive Map':
 # ==============================================================================
 # DISTANCES MODE
 # ==============================================================================
-
 elif mode == 'Distances':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
@@ -3650,7 +3648,6 @@ elif mode == 'Distances':
 # ==============================================================================
 # MAPS MODE
 # ==============================================================================
-
 elif mode == 'Static Maps':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
@@ -3758,7 +3755,6 @@ elif mode == 'Static Maps':
 # ==============================================================================
 # TIME ZONE MODE
 # ==============================================================================
-
 elif mode == 'Time Zones':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
@@ -3877,7 +3873,6 @@ elif mode == 'Time Zones':
 # =============================================================================
 # SCRAPING MODE
 # ==============================================================================
-
 elif mode == 'Web Scraper':
 	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
 	with center:
@@ -3885,249 +3880,38 @@ elif mode == 'Web Scraper':
 		st.divider( )
 		
 		if 'webscrape_clear_request' not in st.session_state:
-			st.session_state[ 'webscrape_clear_request' ]=False
+			st.session_state[ 'webscrape_clear_request' ] = False
+		
+		if 'webscrape_results' not in st.session_state:
+			st.session_state[ 'webscrape_results' ] = [ ]
+		
+		if 'webscrape_summary' not in st.session_state:
+			st.session_state[ 'webscrape_summary' ] = { }
 		
 		if st.session_state.get( 'webscrape_clear_request', False ):
-			st.session_state[ 'webfetcher_url' ]=''
-			st.session_state[ 'webscrape_results' ]=[ ]
-			st.session_state[ 'webscrape_summary' ]={ }
-			st.session_state[ 'webscrape_clear_request' ]=False
+			st.session_state[ 'webfetcher_url' ] = ''
+			st.session_state[ 'webscrape_results' ] = [ ]
+			st.session_state[ 'webscrape_summary' ] = { }
+			st.session_state[ 'webscrape_clear_request' ] = False
 		
-		def _clear_webscrape_state( ) -> None:
-			st.session_state[ 'webscrape_clear_request' ]=True
-		
-		def _coerce_items( value: Any ) -> list[ str ]:
-			if value is None:
-				return [ ]
-			if isinstance( value, list ):
-				return [ str( item ) for item in value if item is not None ]
-			return [ str( value ) ]
-		
-		def _extract_title_from_html( html: str ) -> str:
-			try:
-				if not isinstance( html, str ) or not html.strip( ):
-					return ''
-				
-				match = re.search(
-					r'<title[^>]*>(.*?)</title>',
-					html,
-					flags=re.IGNORECASE | re.DOTALL )
-				
-				if not match:
-					return ''
-				
-				title = re.sub( r'\s+', ' ', match.group( 1 ) ).strip( )
-				return html_lib.unescape( title )
-			except Exception:
-				return ''
-		
-		def _truncate_text( text: str, limit: int=12000 ) -> str:
-			if not isinstance( text, str ):
-				return ''
-			if len( text ) <= limit:
-				return text
-			return text[ : limit ] + '\n\n... [truncated]'
-		
-		def _normalize_url( base_url: str, href: str ) -> str:
-			try:
-				if not href or not isinstance( href, str ):
-					return ''
-				
-				href = href.strip( )
-				if not href:
-					return ''
-				
-				absolute = urljoin( base_url, href )
-				parsed = urlparse( absolute )
-				if parsed.scheme not in ('http', 'https'):
-					return ''
-				
-				normalized = parsed._replace( fragment='' )
-				return normalized.geturl( )
-			except Exception:
-				return ''
-		
-		def _same_domain( left: str, right: str ) -> bool:
-			try:
-				left_host = (urlparse( left ).netloc or '').lower( )
-				right_host = (urlparse( right ).netloc or '').lower( )
-				return bool( left_host ) and left_host == right_host
-			except Exception:
-				return False
-		
-		def _extract_links_from_html( base_url: str, html: str ) -> list[ str ]:
-			try:
-				if not isinstance( html, str ) or not html.strip( ):
-					return [ ]
-				
-				soup = BeautifulSoup( html, 'html.parser' )
-				results: list[ str ]=[ ]
-				seen: set[ str ]=set( )
-				for tag in soup.find_all( 'a', href=True ):
-					candidate = _normalize_url( base_url, tag.get( 'href', '' ) )
-					if candidate and candidate not in seen:
-						seen.add( candidate )
-						results.append( candidate )
-				
-				return results
-			except Exception:
-				return [ ]
-		
-		def _scrape_single_page(
-				url: str,
-				include_title: bool,
-				include_basic_text: bool,
-				include_raw_html: bool,
-				selected_methods: list[ str ] ) -> dict[ str, Any ]:
-			page_result: dict[ str, Any ]=\
-				{
-						'url': url,
-						'status_code': None,
-						'encoding': None,
-						'title': '',
-						'plain_text': '',
-						'raw_html': '',
-						'links_discovered': [ ],
-						'data': { },
-						'errors': [ ],
-				}
-			
-			fetcher = WebFetcher( )
-			
-			try:
-				response = fetcher.fetch( url )
-				if response is None:
-					page_result[ 'errors' ].append( 'No response returned.' )
-					return page_result
-				
-				page_result[ 'status_code' ]=getattr( response, 'status_code', None )
-				page_result[ 'encoding' ]=getattr( response, 'encoding', None )
-				raw_html = getattr( response, 'text', '' ) or ''
-				page_result[ 'links_discovered' ]=_extract_links_from_html( url, raw_html )
-				if include_title:
-					page_result[ 'title' ]=_extract_title_from_html( raw_html )
-				
-				if include_basic_text:
-					try:
-						page_result[ 'plain_text' ]=fetcher.html_to_text( raw_html ) or ''
-					except Exception as exc:
-						page_result[ 'errors' ].append( f'Basic Text: {str( exc )}' )
-				
-				if include_raw_html:
-					page_result[ 'raw_html' ]=raw_html
-			
-			except Exception as exc:
-				page_result[ 'errors' ].append( f'Fetch: {str( exc )}' )
-				return page_result
-			
-			REGISTRY: dict[ str, tuple[ str, callable ] ]=\
-				{
-						'scrape_headings': ('Headings', fetcher.scrape_headings),
-						'scrape_paragraphs': ('Paragraphs', fetcher.scrape_paragraphs),
-						'scrape_lists': ('Lists', fetcher.scrape_lists),
-						'scrape_tables': ('Tables', fetcher.scrape_tables),
-						'scrape_articles': ('Articles', fetcher.scrape_articles),
-						'scrape_sections': ('Sections', fetcher.scrape_sections),
-						'scrape_divisions': ('Divisions', fetcher.scrape_divisions),
-						'scrape_blockquotes': ('Blockquotes', fetcher.scrape_blockquotes),
-						'scrape_hyperlinks': ('Hyperlinks', fetcher.scrape_hyperlinks),
-						'scrape_images': ('Images', fetcher.scrape_images),
-				}
-			
-			for method_name in selected_methods:
-				if method_name not in REGISTRY:
-					continue
-				
-				label, method = REGISTRY[ method_name ]
-				try:
-					data = method( url )
-					page_result[ 'data' ][ label ]=_coerce_items( data )
-				except Exception as exc:
-					page_result[ 'data' ][ label ]=[ ]
-					page_result[ 'errors' ].append( f'{label}: {str( exc )}' )
-			
-			return page_result
-		
-		def _crawl_pages(
-				seed_url: str,
-				include_title: bool,
-				include_basic_text: bool,
-				include_raw_html: bool,
-				selected_methods: list[ str ],
-				recursive: bool,
-				max_depth: int,
-				max_pages: int,
-				same_domain_only: bool ) -> tuple[ list[ dict[ str, Any ] ], dict[ str, Any ] ]:
-			results: list[ dict[ str, Any ] ]=[ ]
-			visited: set[ str ]=set( )
-			enqueued: set[ str ]=set( )
-			queue: deque[ tuple[ str, int ] ]=deque( )
-			skipped_urls: list[ str ]=[ ]
-			
-			normalized_seed = _normalize_url( seed_url, seed_url )
-			if not normalized_seed:
-				raise ValueError( 'A valid absolute URL is required.' )
-			
-			queue.append( (normalized_seed, 0) )
-			enqueued.add( normalized_seed )
-			
-			while queue and len( results ) < max_pages:
-				current_url, depth = queue.popleft( )
-				
-				if current_url in visited:
-					continue
-				
-				visited.add( current_url )
-				
-				page_result = _scrape_single_page(
-					url=current_url,
-					include_title=include_title,
-					include_basic_text=include_basic_text,
-					include_raw_html=include_raw_html,
-					selected_methods=selected_methods )
-				
-				page_result[ 'depth' ]=depth
-				results.append( page_result )
-				
-				if not recursive:
-					continue
-				
-				if depth >= max_depth:
-					continue
-				
-				discovered_links = page_result.get( 'links_discovered', [ ] ) or [ ]
-				for next_url in discovered_links:
-					if len( results ) + len( queue ) >= max_pages:
-						break
-					
-					if not next_url or next_url in visited or next_url in enqueued:
-						continue
-					
-					if same_domain_only and not _same_domain( normalized_seed, next_url ):
-						skipped_urls.append( next_url )
-						continue
-					
-					queue.append( (next_url, depth + 1) )
-					enqueued.add( next_url )
-			
-			summary: dict[ str, Any ]=\
-				{
-						'mode': 'recursive' if recursive else 'single-page',
-						'seed_url': normalized_seed,
-						'pages_processed': len( results ),
-						'pages_visited': len( visited ),
-						'pages_skipped': len( skipped_urls ),
-						'recursive_requested': bool( recursive ),
-						'max_depth': int( max_depth ),
-						'max_pages': int( max_pages ),
-						'same_domain_only': bool( same_domain_only ),
-						'visited_urls': list( visited ),
-						'skipped_urls': skipped_urls,
-				}
-			
-			return results, summary
+		def clear_webscrape_state( ) -> None:
+			'''
+				Purpose:
+				--------
+				Set the deferred clear flag for Web Scraper controls and results.
+
+				Parameters:
+				-----------
+				None
+
+				Returns:
+				--------
+				None
+			'''
+			st.session_state[ 'webscrape_clear_request' ] = True
 		
 		col_left, col_right = st.columns( [ 1, 2 ], border=True )
+		
 		with col_left:
 			target_url = st.text_input(
 				'Enter Target URL',
@@ -4136,45 +3920,50 @@ elif mode == 'Web Scraper':
 			
 			st.markdown( '##### Core Output' )
 			
-			include_title = st.checkbox( 'Page Title', value=True, key='wf_page_title' )
+			include_title = st.checkbox(
+				'Page Title',
+				value=True,
+				key='wf_page_title' )
 			
-			include_basic_text = st.checkbox( 'Basic Text', value=True, key='wf_basic_text' )
+			include_basic_text = st.checkbox(
+				'Basic Text',
+				value=True,
+				key='wf_basic_text' )
 			
-			include_raw_html = st.checkbox( 'Raw HTML', value=False, key='wf_raw_html' )
+			include_raw_html = st.checkbox(
+				'Raw HTML',
+				value=False,
+				key='wf_raw_html' )
 			
 			st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
 			
 			st.markdown( '##### Structured Extraction' )
 			
-			col1, col2 = st.columns( [ 0.5, 0.5 ] )
+			method_c1, method_c2 = st.columns( [ 0.5, 0.5 ] )
 			
-			REGISTRY_LABELS: dict[ str, str ]=\
-				{
-						'scrape_headings': 'Headings',
-						'scrape_paragraphs': 'Paragraphs',
-						'scrape_lists': 'Lists',
-						'scrape_tables': 'Tables',
-						'scrape_articles': 'Articles',
-						'scrape_sections': 'Sections',
-						'scrape_divisions': 'Divisions',
-						'scrape_blockquotes': 'Blockquotes',
-						'scrape_hyperlinks': 'Hyperlinks',
-						'scrape_images': 'Images',
-				}
+			registry_labels = {
+					'scrape_headings': 'Headings',
+					'scrape_paragraphs': 'Paragraphs',
+					'scrape_lists': 'Lists',
+					'scrape_tables': 'Tables',
+					'scrape_articles': 'Articles',
+					'scrape_sections': 'Sections',
+					'scrape_divisions': 'Divisions',
+					'scrape_blockquotes': 'Blockquotes',
+					'scrape_hyperlinks': 'Hyperlinks',
+					'scrape_images': 'Images',
+			}
 			
-			selected_methods: list[ str ]=[ ]
+			selected_methods = [ ]
+			registry_items = list( registry_labels.items( ) )
 			
-			_registry_items: list[ tuple[ str, str ] ]=list( REGISTRY_LABELS.items( ) )
-			_col1_items: list[ tuple[ str, str ] ]=_registry_items[ :5 ]
-			_col2_items: list[ tuple[ str, str ] ]=_registry_items[ 5: ]
-			
-			with col1:
-				for method_name, label in _col1_items:
+			with method_c1:
+				for method_name, label in registry_items[ :5 ]:
 					if st.checkbox( label, key=f'wf_{method_name}' ):
 						selected_methods.append( method_name )
 			
-			with col2:
-				for method_name, label in _col2_items:
+			with method_c2:
+				for method_name, label in registry_items[ 5: ]:
 					if st.checkbox( label, key=f'wf_{method_name}' ):
 						selected_methods.append( method_name )
 			
@@ -4210,13 +3999,53 @@ elif mode == 'Web Scraper':
 				key='wf_same_domain_only',
 				disabled=(not enable_recursive) )
 			
-			b1, b2 = st.columns( 2 )
+			request_timeout = st.number_input(
+				'Request Timeout',
+				min_value=1,
+				max_value=120,
+				value=10,
+				step=1,
+				key='wf_request_timeout' )
 			
-			with b1:
-				run_scraper = st.button( 'Run Scraper', key='webfetcher_run' )
+			delay_seconds = st.number_input(
+				'Delay Between Pages',
+				min_value=0.0,
+				max_value=10.0,
+				value=0.25,
+				step=0.25,
+				format='%.2f',
+				key='wf_delay_seconds',
+				disabled=(not enable_recursive) )
 			
-			with b2:
-				st.button( 'Clear', key='webfetcher_clear', on_click=_clear_webscrape_state )
+			max_bytes = st.number_input(
+				'Max Bytes Per Page',
+				min_value=1000,
+				max_value=10000000,
+				value=1000000,
+				step=1000,
+				key='wf_max_bytes' )
+			
+			use_playwright = st.checkbox(
+				'Use Playwright Renderer',
+				value=False,
+				help=(
+						'Use only when the page requires JavaScript rendering. '
+						'This requires Playwright and installed browser binaries.'
+				),
+				key='wf_use_playwright' )
+			
+			button_c1, button_c2 = st.columns( 2 )
+			
+			with button_c1:
+				run_scraper = st.button(
+					'Run Scraper',
+					key='webfetcher_run' )
+			
+			with button_c2:
+				st.button(
+					'Clear',
+					key='webfetcher_clear',
+					on_click=clear_webscrape_state )
 		
 		with col_right:
 			if run_scraper:
@@ -4224,19 +4053,22 @@ elif mode == 'Web Scraper':
 					if not target_url or not target_url.strip( ):
 						raise ValueError( 'A target URL is required.' )
 					
-					results, summary = _crawl_pages(
-						seed_url=target_url.strip( ),
-						include_title=include_title,
-						include_basic_text=include_basic_text,
-						include_raw_html=include_raw_html,
+					crawler = WebCrawler( use_playwright=bool( use_playwright ) )
+					result = crawler.crawl( seed_url=target_url.strip( ),
+						include_title=bool( include_title ),
+						include_basic_text=bool( include_basic_text ),
+						include_raw_html=bool( include_raw_html ),
 						selected_methods=selected_methods,
 						recursive=bool( enable_recursive ),
 						max_depth=int( max_depth ),
 						max_pages=int( max_pages ),
-						same_domain_only=bool( same_domain_only ) )
+						same_domain_only=bool( same_domain_only ),
+						request_timeout=int( request_timeout ),
+						delay_seconds=float( delay_seconds ),
+						max_bytes=int( max_bytes ) )
 					
-					st.session_state[ 'webscrape_results' ]=results
-					st.session_state[ 'webscrape_summary' ]=summary
+					st.session_state[ 'webscrape_results' ] = result.get( 'pages', [ ] )
+					st.session_state[ 'webscrape_summary' ] = result.get( 'summary', { } )
 					st.rerun( )
 				
 				except Exception as exc:
@@ -4244,13 +4076,31 @@ elif mode == 'Web Scraper':
 			
 			summary = st.session_state.get( 'webscrape_summary', { } )
 			results = st.session_state.get( 'webscrape_results', [ ] )
+			renderer = WebFetcher( )
 			
 			if summary:
 				st.subheader( 'Summary' )
-				st.json( summary )
+				
+				metric_c1, metric_c2, metric_c3, metric_c4 = st.columns( 4 )
+				
+				with metric_c1:
+					st.metric( 'Pages', summary.get( 'pages_processed', 0 ) )
+				
+				with metric_c2:
+					st.metric( 'Errors', summary.get( 'errors', 0 ) )
+				
+				with metric_c3:
+					st.metric( 'Bytes', summary.get( 'total_content_bytes', 0 ) )
+				
+				with metric_c4:
+					st.metric( 'Seconds', summary.get( 'elapsed_seconds', 0 ) )
+				
+				with st.expander( 'Crawl Summary JSON', expanded=False ):
+					st.json( summary )
 			
 			if not results:
 				st.info( 'No results.' )
+			
 			else:
 				st.subheader( 'Results' )
 				
@@ -4258,24 +4108,37 @@ elif mode == 'Web Scraper':
 					title = page.get( 'title', '' ) or page.get( 'url', f'Page {idx}' )
 					depth = page.get( 'depth', 0 )
 					
-					with st.expander( f'Page {idx} [Depth {depth}]: {title}', expanded=(idx == 1) ):
+					with st.expander( f'Page {idx} [Depth {depth}]: {title}',
+							expanded=(idx == 1) ):
 						meta_col1, meta_col2 = st.columns( 2 )
 						
 						with meta_col1:
 							st.markdown( f"**URL:** {page.get( 'url', '' )}" )
 							st.markdown( f"**Status Code:** {page.get( 'status_code', '' )}" )
 							st.markdown( f"**Depth:** {page.get( 'depth', 0 )}" )
+							st.markdown( f"**Bytes:** {page.get( 'content_bytes', 0 )}" )
 						
 						with meta_col2:
 							st.markdown( f"**Encoding:** {page.get( 'encoding', '' )}" )
 							st.markdown( f"**Title:** {page.get( 'title', '' )}" )
+							st.markdown(
+								f"**Links Discovered:** "
+								f"{len( page.get( 'links_discovered', [ ] ) or [ ] )}" )
+							st.markdown(
+								f"**Truncated:** "
+								f"{bool( page.get( 'truncated_by_max_bytes', False ) )}" )
+						
+						page_errors = page.get( 'errors', [ ] ) or [ ]
+						if page_errors:
+							st.warning( 'This page completed with one or more warnings/errors.' )
+							st.json( page_errors )
 						
 						plain_text = page.get( 'plain_text', '' )
 						if isinstance( plain_text, str ) and plain_text.strip( ):
 							st.subheader( 'Basic Text' )
 							st.text_area(
 								label='',
-								value=_truncate_text( plain_text, limit=12000 ),
+								value=renderer.truncate_text( plain_text, limit=12000 ),
 								height=280,
 								key=f'webscrape_plain_text_{idx}' )
 						
@@ -4284,32 +4147,42 @@ elif mode == 'Web Scraper':
 							st.subheader( 'Raw HTML' )
 							st.text_area(
 								label='',
-								value=_truncate_text( raw_html, limit=12000 ),
+								value=renderer.truncate_text( raw_html, limit=12000 ),
 								height=240,
 								key=f'webscrape_raw_html_{idx}' )
 						
 						discovered_links = page.get( 'links_discovered', [ ] ) or [ ]
 						if discovered_links:
-							st.subheader( 'Links Discovered' )
-							for link_idx, link in enumerate( discovered_links, start=1 ):
-								st.write( f'{link_idx}. {link}' )
+							with st.expander(
+									f'Links Discovered ({len( discovered_links )})',
+									expanded=False ):
+								st.text_area(
+									label='',
+									value=renderer.truncate_text(
+										'\n'.join( discovered_links ),
+										limit=12000 ),
+									height=240,
+									key=f'webscrape_links_{idx}' )
 						
 						data = page.get( 'data', { } ) or { }
-						for label, items in data.items( ):
-							st.subheader( f'{label}' )
-							
-							if not items:
-								st.info( 'No results returned.' )
-								continue
-							
-							for item_idx, item in enumerate( items, start=1 ):
-								st.write( f'{item_idx}. {item}' )
+						if data:
+							st.subheader( 'Structured Data' )
 						
-						errors = page.get( 'errors', [ ] ) or [ ]
-						if errors:
-							st.subheader( 'Errors' )
-							for err in errors:
-								st.error( err )
+						for label, items in data.items( ):
+							values = renderer.coerce_items( items )
+							
+							with st.expander( f'{label} ({len( values )})', expanded=False ):
+								if not values:
+									st.info( 'No results returned.' )
+									continue
+								
+								st.text_area(
+									label='',
+									value=renderer.truncate_text(
+										'\n'.join( values ),
+										limit=12000 ),
+									height=240,
+									key=f'webscrape_{idx}_{label}' )
 
 # ==============================================================================
 # WEATHER MODE
@@ -6003,31 +5876,100 @@ elif mode == 'Astronomical':
 			# ------------------------------------------------------------------
 			with st.expander( '🧭 Naval Observatory', expanded=True ):
 				st.badge( label='About API', color='blue', help=cfg.US_NAVAL_OBSERVATORY )
-				naval_date = st.date_input( 'Date', value=dt.date.today( ),
+				st.caption(
+					'Uses the U.S. Naval Observatory Celestial Navigation Data API. The endpoint '
+					'accepts date, time, and assumed observer coordinates as latitude,longitude.' )
+				
+				naval_date = st.date_input(
+					'Date',
+					value=dt.date.today( ),
 					key='astro_naval_date' )
 				
-				naval_time_value = st.text_input( 'Time', value='12:00:00',
-					help='Use HH:MM, HH:MM:SS, or HH:MM:SS.S format.',
-					key='astro_naval_time_value' )
+				naval_time_choice = st.selectbox(
+					'Time Preset',
+					options=[
+							'Current UTC Time',
+							'00:00:00',
+							'06:00:00',
+							'12:00:00',
+							'18:00:00',
+							'Custom'
+					],
+					key='astro_naval_time_choice' )
+				
+				if naval_time_choice == 'Current UTC Time':
+					naval_time_value = dt.datetime.utcnow( ).strftime( '%H:%M:%S' )
+					st.caption( f'Using current UTC time: {naval_time_value}' )
+				
+				elif naval_time_choice == 'Custom':
+					naval_time_value = st.text_input(
+						'Custom Time',
+						value='12:00:00',
+						help='Use HH:MM, HH:MM:SS, or HH:MM:SS.S format.',
+						key='astro_naval_time_value' )
+				
+				else:
+					naval_time_value = naval_time_choice
+				
+				naval_location_preset = st.selectbox(
+					'Observer Location Preset',
+					options=[
+							'Global Location',
+							'Washington, DC',
+							'New York Harbor',
+							'Norfolk, VA',
+							'Custom'
+					],
+					key='astro_naval_location_preset' )
+				
+				if naval_location_preset == 'Washington, DC':
+					naval_default_latitude = 38.9072
+					naval_default_longitude = -77.0369
+					naval_default_label = 'Washington, DC'
+				
+				elif naval_location_preset == 'New York Harbor':
+					naval_default_latitude = 40.7003
+					naval_default_longitude = -74.0129
+					naval_default_label = 'New York Harbor'
+				
+				elif naval_location_preset == 'Norfolk, VA':
+					naval_default_latitude = 36.8508
+					naval_default_longitude = -75.2859
+					naval_default_label = 'Norfolk, VA'
+				
+				elif naval_location_preset == 'Custom':
+					naval_default_latitude = float( global_latitude )
+					naval_default_longitude = float( global_longitude )
+					naval_default_label = global_location
+				
+				else:
+					naval_default_latitude = float( global_latitude )
+					naval_default_longitude = float( global_longitude )
+					naval_default_label = global_location
 				
 				naval_c1, naval_c2 = st.columns( 2 )
+				
 				with naval_c1:
 					naval_latitude = st.number_input(
 						'Observer Latitude',
-						value=float( global_latitude ),
+						min_value=-90.0,
+						max_value=90.0,
+						value=float( naval_default_latitude ),
 						format='%.6f',
 						key='astro_naval_latitude' )
 				
 				with naval_c2:
 					naval_longitude = st.number_input(
 						'Observer Longitude',
-						value=float( global_longitude ),
+						min_value=-180.0,
+						max_value=180.0,
+						value=float( naval_default_longitude ),
 						format='%.6f',
 						key='astro_naval_longitude' )
 				
 				naval_location_label = st.text_input(
 					'Location Label',
-					value=global_location,
+					value=naval_default_label,
 					key='astro_naval_location_label' )
 				
 				naval_timeout = st.number_input(
@@ -6039,6 +5981,7 @@ elif mode == 'Astronomical':
 					key='astro_naval_timeout' )
 				
 				naval_btn_c1, naval_btn_c2 = st.columns( 2 )
+				
 				with naval_btn_c1:
 					if st.button( label='Run', icon='🏃', key='astro_naval_run',
 							use_container_width=True ):
@@ -6047,7 +5990,6 @@ elif mode == 'Astronomical':
 						else:
 							try:
 								service = NavalObservatory( )
-								
 								result = service.fetch(
 									mode='celnav',
 									date_value=naval_date.isoformat( ),
@@ -6057,12 +5999,11 @@ elif mode == 'Astronomical':
 									location_label=naval_location_label,
 									time=int( naval_timeout ) )
 								
-								st.session_state[ 'astro_last_source' ]='Naval Observatory'
-								st.session_state[ 'astro_last_result' ]=result or { }
-								st.session_state[ 'astro_last_latitude' ]=float( naval_latitude )
-								st.session_state[ 'astro_last_longitude' ]=float(
-									naval_longitude )
-								st.session_state[ 'astro_last_url' ]=''
+								st.session_state[ 'astro_last_source' ] = 'Naval Observatory'
+								st.session_state[ 'astro_last_result' ] = result or { }
+								st.session_state[ 'astro_last_latitude' ] = float( naval_latitude )
+								st.session_state[ 'astro_last_longitude' ] = float( naval_longitude )
+								st.session_state[ 'astro_last_url' ] = ''
 								
 								set_global_coordinates_from_result(
 									naval_latitude,
@@ -6078,33 +6019,44 @@ elif mode == 'Astronomical':
 				with naval_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_naval_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 			
 			# ------------------------------------------------------------------
 			# SPACE WEATHER
 			# ------------------------------------------------------------------
 			with st.expander( '☀️ Space Weather', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.SPACE_WEATHER )
-				space_mode = st.selectbox( 'Mode',
-					options=[
-							'cme',
-							'cme_analysis',
-							'gst',
-							'ips',
-							'flr',
-							'sep',
-							'mpc',
-							'rbe',
-							'hss',
-							'wsa_enlil',
-							'notifications'
-					], key='astro_space_mode' )
+				st.caption(
+					'Uses NASA DONKI. Controls are shown only when they apply to the selected '
+					'DONKI endpoint.' )
+				
+				space_mode_labels = {
+						'Coronal Mass Ejection': 'cme',
+						'CME Analysis': 'cme_analysis',
+						'Geomagnetic Storm': 'gst',
+						'Interplanetary Shock': 'ips',
+						'Solar Flare': 'flr',
+						'Solar Energetic Particle': 'sep',
+						'Magnetopause Crossing': 'mpc',
+						'Radiation Belt Enhancement': 'rbe',
+						'High Speed Stream': 'hss',
+						'WSA-ENLIL Model': 'wsa_enlil',
+						'Notifications': 'notifications'
+				}
+				
+				space_mode_label = st.selectbox(
+					'Mode',
+					options=list( space_mode_labels.keys( ) ),
+					key='astro_space_mode_label' )
+				
+				space_mode = space_mode_labels[ space_mode_label ]
 				
 				space_date_c1, space_date_c2 = st.columns( 2 )
+				
 				with space_date_c1:
 					space_start = st.date_input(
 						'Start Date',
@@ -6117,54 +6069,106 @@ elif mode == 'Astronomical':
 						value=dt.date.today( ),
 						key='astro_space_end_date' )
 				
-				space_location = st.text_input(
-					'Location',
-					value='ALL',
-					key='astro_space_location' )
+				if space_start > space_end:
+					st.warning( 'Start Date is after End Date. The request will fail unless corrected.' )
 				
-				space_catalog = st.text_input(
-					'Catalog',
-					value='ALL',
-					key='astro_space_catalog' )
+				space_location = 'ALL'
+				space_catalog = 'ALL'
+				space_notification_type = 'all'
+				space_most_accurate_only = True
+				space_complete_entry_only = True
+				space_speed = 0
+				space_half_angle = 0
+				space_keyword = ''
 				
-				space_notification_type = st.text_input(
-					'Notification Type',
-					value='all',
-					key='astro_space_notification_type' )
-				
-				space_c1, space_c2 = st.columns( 2 )
-				with space_c1:
-					space_most_accurate_only = st.checkbox(
-						'Most Accurate Only',
-						value=True,
-						key='astro_space_most_accurate_only' )
+				if space_mode == 'cme_analysis':
+					st.caption(
+						'CME Analysis supports catalog, most-accurate-only, complete-entry-only, '
+						'speed, half-angle, and keyword filters.' )
 					
-					space_complete_entry_only = st.checkbox(
-						'Complete Entry Only',
-						value=True,
-						key='astro_space_complete_entry_only' )
-				
-				with space_c2:
-					space_speed = st.number_input(
-						'Speed',
-						min_value=0,
-						max_value=5000,
-						value=0,
-						step=10,
-						key='astro_space_speed' )
+					space_catalog = st.selectbox(
+						'Catalog',
+						options=[ 'ALL', 'SWRC_CATALOG', 'JANG_ET_AL_CATALOG', 'M2M_CATALOG' ],
+						key='astro_space_cme_analysis_catalog' )
 					
-					space_half_angle = st.number_input(
-						'Half Angle',
-						min_value=0,
-						max_value=360,
-						value=0,
-						step=1,
-						key='astro_space_half_angle' )
+					space_c1, space_c2 = st.columns( 2 )
+					
+					with space_c1:
+						space_most_accurate_only = st.checkbox(
+							'Most Accurate Only',
+							value=True,
+							key='astro_space_most_accurate_only' )
+						
+						space_complete_entry_only = st.checkbox(
+							'Complete Entry Only',
+							value=True,
+							key='astro_space_complete_entry_only' )
+					
+					with space_c2:
+						space_speed = st.number_input(
+							'Minimum Speed',
+							min_value=0,
+							max_value=5000,
+							value=0,
+							step=10,
+							help='Lower-bound CME speed filter.',
+							key='astro_space_speed' )
+						
+						space_half_angle = st.number_input(
+							'Minimum Half Angle',
+							min_value=0,
+							max_value=360,
+							value=0,
+							step=1,
+							help='Lower-bound CME half-angle filter.',
+							key='astro_space_half_angle' )
+					
+					space_keyword = st.text_input(
+						'Keyword',
+						value='',
+						key='astro_space_keyword' )
 				
-				space_keyword = st.text_input(
-					'Keyword',
-					value='',
-					key='astro_space_keyword' )
+				elif space_mode == 'ips':
+					st.caption( 'Interplanetary Shock supports location and catalog filters.' )
+					
+					space_location = st.text_input(
+						'Location',
+						value='ALL',
+						help='DONKI IPS location filter. Use ALL to avoid filtering.',
+						key='astro_space_location' )
+					
+					space_catalog = st.text_input(
+						'Catalog',
+						value='ALL',
+						help='DONKI IPS catalog filter. Use ALL to avoid filtering.',
+						key='astro_space_catalog' )
+				
+				elif space_mode == 'notifications':
+					st.caption(
+						'Notifications supports the notification type filter. The wrapper preserves '
+						'the selected date range.' )
+					
+					space_notification_type = st.selectbox(
+						'Notification Type',
+						options=[
+								'all',
+								'FLR',
+								'SEP',
+								'CME',
+								'IPS',
+								'MPC',
+								'GST',
+								'RBE',
+								'HSS',
+								'WSAEnlil',
+								'Report'
+						],
+						key='astro_space_notification_type' )
+				
+				else:
+					st.caption(
+						'This DONKI endpoint uses the common startDate, endDate, and api_key '
+						'parameters.' )
 				
 				space_timeout = st.number_input(
 					'Timeout',
@@ -6196,11 +6200,11 @@ elif mode == 'Astronomical':
 								keyword=space_keyword,
 								api_key=getattr( cfg, 'NASA_API_KEY', None ) )
 							
-							st.session_state[ 'astro_last_source' ]='Space Weather'
-							st.session_state[ 'astro_last_result' ]=result or { }
-							st.session_state[ 'astro_last_latitude' ]=None
-							st.session_state[ 'astro_last_longitude' ]=None
-							st.session_state[ 'astro_last_url' ]=''
+							st.session_state[ 'astro_last_source' ] = 'Space Weather'
+							st.session_state[ 'astro_last_result' ] = result or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
 							st.success( 'Space Weather request completed.' )
 						
 						except Exception as ex:
@@ -6209,113 +6213,196 @@ elif mode == 'Astronomical':
 				with space_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_space_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 			
 			# ------------------------------------------------------------------
 			# STAR CHART
 			# ------------------------------------------------------------------
 			with st.expander( '✨ Star Chart', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.STAR_CHART )
-				chart_mode = st.selectbox( 'Mode',
-					options=[ 'Object Chart', 'Coordinate Chart', 'Static Chart' ],
-					key='astro_chart_mode' )
+				st.caption(
+					'Uses SKY-MAP. Object Chart builds an object-centered link, Coordinate Chart '
+					'builds a coordinate-centered link, and Static Chart Image builds a direct '
+					'image-generator URL.' )
 				
-				chart_zoom = st.number_input( 'Zoom', min_value=1, max_value=20,
-					value=5, step=1, key='astro_chart_zoom' )
+				chart_mode_labels = {
+						'Object Chart': 'object_chart',
+						'Coordinate Chart': 'coordinate_chart',
+						'Static Chart Image': 'static_chart'
+				}
 				
-				chart_image_source = st.text_input( 'Image Source', value='DSS2',
-					key='astro_chart_image_source' )
+				chart_mode_label = st.selectbox(
+					'Mode',
+					options=list( chart_mode_labels.keys( ) ),
+					key='astro_chart_mode_label' )
 				
-				if chart_mode == 'Object Chart':
+				chart_mode = chart_mode_labels[ chart_mode_label ]
+				
+				chart_example = st.selectbox(
+					'Coordinate Example',
+					options=[
+							'Andromeda Galaxy / M31',
+							'Orion Nebula / M42',
+							'Galactic Center',
+							'Custom'
+					],
+					key='astro_chart_coordinate_example' )
+				
+				if chart_example == 'Andromeda Galaxy / M31':
+					chart_default_object = 'M31'
+					chart_default_ra = 0.7117
+					chart_default_dec = 41.2670
+				
+				elif chart_example == 'Orion Nebula / M42':
+					chart_default_object = 'M42'
+					chart_default_ra = 5.5881
+					chart_default_dec = -5.3911
+				
+				elif chart_example == 'Galactic Center':
+					chart_default_object = 'Sgr A*'
+					chart_default_ra = 17.7611
+					chart_default_dec = -29.0078
+				
+				else:
+					chart_default_object = 'M31'
+					chart_default_ra = 0.7117
+					chart_default_dec = 41.2670
+				
+				chart_zoom = st.number_input(
+					'Zoom',
+					min_value=1,
+					max_value=20,
+					value=5,
+					step=1,
+					key='astro_chart_zoom' )
+				
+				chart_image_source = st.selectbox(
+					'Image Source',
+					options=[ 'DSS2', 'SDSS', 'GALEX', 'IRAS', 'RASS', 'Custom' ],
+					key='astro_chart_image_source_choice' )
+				
+				if chart_image_source == 'Custom':
+					chart_image_source_value = st.text_input(
+						'Custom Image Source',
+						value='DSS2',
+						help='Enter the SKY-MAP image source value accepted by the API.',
+						key='astro_chart_image_source_custom' )
+				else:
+					chart_image_source_value = chart_image_source
+				
+				if chart_mode == 'object_chart':
 					chart_object_name = st.text_input(
 						'Object Name',
-						value='M31',
+						value=chart_default_object,
+						help='Object name or catalog identifier. Examples: M31, M42, Sirius.',
 						key='astro_chart_object_name' )
 					
 					chart_ra = 0.0
 					chart_dec = 0.0
+					chart_width = 900
+					chart_height = 450
+					chart_magnitude = 7.5
+					
+					st.caption(
+						'Object Chart uses SKY-MAP object lookup and ignores coordinate, width, '
+						'height, and limiting magnitude controls.' )
 				
 				else:
 					chart_object_name = ''
-					coord_c1, coord_c2 = st.columns( 2 )
-					with coord_c1:
+					chart_coord_c1, chart_coord_c2 = st.columns( 2 )
+					
+					with chart_coord_c1:
 						chart_ra = st.number_input(
 							'Right Ascension',
-							value=10.6847083,
+							value=float( chart_default_ra ),
 							format='%.7f',
+							help='Right ascension in decimal hours for SKY-MAP chart endpoints.',
 							key='astro_chart_ra' )
 					
-					with coord_c2:
+					with chart_coord_c2:
 						chart_dec = st.number_input(
 							'Declination',
-							value=41.2687500,
+							value=float( chart_default_dec ),
 							format='%.7f',
+							help='Declination in decimal degrees.',
 							key='astro_chart_dec' )
+					
+					if chart_mode == 'static_chart':
+						chart_size_c1, chart_size_c2 = st.columns( 2 )
+						
+						with chart_size_c1:
+							chart_width = st.number_input(
+								'Width',
+								min_value=128,
+								max_value=4096,
+								value=900,
+								step=64,
+								key='astro_chart_width' )
+						
+						with chart_size_c2:
+							chart_height = st.number_input(
+								'Height',
+								min_value=128,
+								max_value=4096,
+								value=450,
+								step=64,
+								key='astro_chart_height' )
+						
+						chart_magnitude = st.number_input(
+							'Limiting Magnitude',
+							min_value=0.0,
+							max_value=30.0,
+							value=7.5,
+							step=0.5,
+							format='%.1f',
+							key='astro_chart_magnitude' )
+					
+					else:
+						chart_width = 900
+						chart_height = 450
+						chart_magnitude = 7.5
+					
+					st.caption(
+						'Coordinate and Static Chart modes use right ascension and declination. '
+						'Static Chart additionally uses width, height, and limiting magnitude.' )
 				
-				chart_box_color = st.selectbox( 'Box Color',
+				chart_box_color = st.selectbox(
+					'Box Color',
 					options=[ 'yellow', 'red', 'green', 'blue', 'white' ],
 					key='astro_chart_box_color' )
 				
 				chart_options_c1, chart_options_c2 = st.columns( 2 )
+				
 				with chart_options_c1:
-					chart_show_box = st.checkbox( 'Show Box', value=True,
+					chart_show_box = st.checkbox(
+						'Show Box',
+						value=True,
 						key='astro_chart_show_box' )
 					
-					chart_show_grid = st.checkbox( 'Show Grid', value=True,
+					chart_show_grid = st.checkbox(
+						'Show Grid',
+						value=True,
 						key='astro_chart_show_grid' )
 				
 				with chart_options_c2:
-					chart_show_lines = st.checkbox( 'Show Lines', value=True,
+					chart_show_lines = st.checkbox(
+						'Show Constellation Lines',
+						value=True,
 						key='astro_chart_show_lines' )
 					
 					chart_show_boundaries = st.checkbox(
-						'Show Boundaries',
+						'Show Constellation Boundaries',
 						value=True,
 						key='astro_chart_show_boundaries' )
 				
-				if chart_mode == 'Static Chart':
-					static_c1, static_c2 = st.columns( 2 )
-					with static_c1:
-						chart_width = st.number_input(
-							'Width',
-							min_value=250,
-							max_value=2500,
-							value=900,
-							step=50,
-							key='astro_chart_width' )
-						
-						chart_magnitude = st.number_input(
-							'Magnitude',
-							min_value=0.0,
-							max_value=20.0,
-							value=7.5,
-							step=0.1,
-							format='%.1f',
-							key='astro_chart_magnitude' )
-					
-					with static_c2:
-						chart_height = st.number_input(
-							'Height',
-							min_value=250,
-							max_value=2500,
-							value=450,
-							step=50,
-							key='astro_chart_height' )
-						
-						chart_show_const_names = st.checkbox(
-							'Show Constellation Names',
-							value=False,
-							key='astro_chart_show_const_names' )
-				
-				else:
-					chart_width = 900
-					chart_height = 450
-					chart_magnitude = 7.5
-					chart_show_const_names = False
+				chart_show_const_names = st.checkbox(
+					'Show Constellation Names',
+					value=False,
+					key='astro_chart_show_const_names' )
 				
 				chart_timeout = st.number_input(
 					'Timeout',
@@ -6333,20 +6420,16 @@ elif mode == 'Astronomical':
 						try:
 							service = StarChart( )
 							
-							if chart_mode == 'Object Chart':
-								if not chart_object_name:
-									st.warning( 'Enter an object name.' )
-									result = None
-								else:
-									result = service.fetch_object_chart(
-										name=chart_object_name,
-										zoom=int( chart_zoom ),
-										box_color=chart_box_color,
-										show_box=bool( chart_show_box ),
-										image_source=chart_image_source,
-										time=int( chart_timeout ) )
+							if chart_mode == 'object_chart':
+								result = service.fetch_object_chart(
+									name=chart_object_name,
+									zoom=int( chart_zoom ),
+									box_color=chart_box_color,
+									show_box=bool( chart_show_box ),
+									image_source=chart_image_source_value,
+									time=int( chart_timeout ) )
 							
-							elif chart_mode == 'Coordinate Chart':
+							elif chart_mode == 'coordinate_chart':
 								result = service.fetch_coordinate_chart(
 									ra=float( chart_ra ),
 									dec=float( chart_dec ),
@@ -6356,14 +6439,14 @@ elif mode == 'Astronomical':
 									show_grid=bool( chart_show_grid ),
 									show_lines=bool( chart_show_lines ),
 									show_boundaries=bool( chart_show_boundaries ),
-									image_source=chart_image_source )
+									image_source=chart_image_source_value )
 							
 							else:
 								result = service.fetch_static_chart(
 									ra=float( chart_ra ),
 									dec=float( chart_dec ),
 									zoom=int( chart_zoom ),
-									image_source=chart_image_source,
+									image_source=chart_image_source_value,
 									show_grid=bool( chart_show_grid ),
 									show_lines=bool( chart_show_lines ),
 									show_boundaries=bool( chart_show_boundaries ),
@@ -6372,23 +6455,23 @@ elif mode == 'Astronomical':
 									height=int( chart_height ),
 									magnitude=float( chart_magnitude ) )
 							
-							if result is not None:
-								result_url = ''
-								if isinstance( result, dict ):
-									result_url = (
-											result.get( 'chart_url', '' )
-											or result.get( 'image_url', '' )
-											or result.get( 'static_chart_url', '' )
-											or result.get( 'preferred_image_url', '' )
-											or result.get( 'snapshot_page_url', '' )
-									)
-								
-								st.session_state[ 'astro_last_source' ]='Star Chart'
-								st.session_state[ 'astro_last_result' ]=result or { }
-								st.session_state[ 'astro_last_latitude' ]=None
-								st.session_state[ 'astro_last_longitude' ]=None
-								st.session_state[ 'astro_last_url' ]=result_url
-								st.success( 'Star Chart request completed.' )
+							result_url = ''
+							if isinstance( result, dict ):
+								result_url = (
+										result.get( 'chart_url', '' )
+										or result.get( 'image_url', '' )
+										or result.get( 'static_chart_url', '' )
+										or result.get( 'preferred_image_url', '' )
+										or result.get( 'snapshot_page_url', '' )
+										or result.get( 'url', '' )
+								)
+							
+							st.session_state[ 'astro_last_source' ] = 'Star Chart'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = result_url
+							st.success( 'Star Chart request completed.' )
 						
 						except Exception as ex:
 							st.error( f'Star Chart request failed: {ex}' )
@@ -6396,56 +6479,120 @@ elif mode == 'Astronomical':
 				with chart_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_chart_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 			
 			# ------------------------------------------------------------------
 			# SATELLITE CENTER
 			# ------------------------------------------------------------------
 			with st.expander( '🛰️ Satellite Center', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.SATELLITE_CENTER )
-				satellite_mode = st.selectbox( 'Mode',
-					options=[ 'observatories', 'ground_stations', 'locations' ],
-					key='astro_satellite_mode' )
+				st.caption(
+					'Uses NASA SSCWeb. Run Observatories first to discover valid observatory IDs, '
+					'then use Locations to retrieve basic position data for selected spacecraft.' )
 				
-				satellite_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
-					value=20, step=1, key='astro_satellite_timeout' )
+				satellite_mode_labels = {
+						'Observatories': 'observatories',
+						'Ground Stations': 'ground_stations',
+						'Locations': 'locations'
+				}
+				
+				satellite_mode_label = st.selectbox(
+					'Mode',
+					options=list( satellite_mode_labels.keys( ) ),
+					key='astro_satellite_mode_label' )
+				
+				satellite_mode = satellite_mode_labels[ satellite_mode_label ]
+				
+				satellite_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_satellite_timeout' )
+				
+				satellite_query = ''
+				satellite_start_date = dt.date.today( )
+				satellite_start_time = ''
+				satellite_end_date = dt.date.today( )
+				satellite_end_time = ''
+				satellite_coordinate_systems = 'gse'
+				satellite_resolution_factor = 1
 				
 				if satellite_mode == 'locations':
-					satellite_query = st.text_input( 'Observatories', value='iss',
-						help='Comma-separated observatory identifiers such as iss or mms1,mms2.',
+					satellite_query = st.text_input(
+						'Observatories',
+						value='iss',
+						help='Comma-separated SSC observatory IDs. Examples: iss, mms1,mms2.',
 						key='astro_satellite_query' )
 					
-					satellite_start_date = st.date_input(
-						'Start Date',
-						value=dt.date.today( ) - dt.timedelta( days=1 ),
-						key='astro_satellite_start_date' )
+					satellite_date_c1, satellite_date_c2 = st.columns( 2 )
 					
-					satellite_start_time = st.text_input(
-						'Start Time',
-						value='00:00:00Z',
-						help='Use UTC time ending in Z.',
-						key='astro_satellite_start_time' )
+					with satellite_date_c1:
+						satellite_start_date = st.date_input(
+							'Start Date',
+							value=dt.date.today( ) - dt.timedelta( days=1 ),
+							key='astro_satellite_start_date' )
+						
+						satellite_start_time = st.text_input(
+							'Start Time',
+							value='00:00:00Z',
+							help='UTC time ending in Z. Example: 00:00:00Z.',
+							key='astro_satellite_start_time' )
 					
-					satellite_end_date = st.date_input(
-						'End Date',
-						value=dt.date.today( ),
-						key='astro_satellite_end_date' )
+					with satellite_date_c2:
+						satellite_end_date = st.date_input(
+							'End Date',
+							value=dt.date.today( ),
+							key='astro_satellite_end_date' )
+						
+						satellite_end_time = st.text_input(
+							'End Time',
+							value='00:00:00Z',
+							help='UTC time ending in Z. Example: 00:00:00Z.',
+							key='astro_satellite_end_time' )
 					
-					satellite_end_time = st.text_input(
-						'End Time',
-						value='00:00:00Z',
-						help='Use UTC time ending in Z.',
-						key='astro_satellite_end_time' )
+					satellite_coordinate_choice = st.selectbox(
+						'Coordinate System Preset',
+						options=[
+								'GSE — Geocentric Solar Ecliptic',
+								'GEO — Geographic',
+								'GSM — Geocentric Solar Magnetospheric',
+								'SM — Solar Magnetic',
+								'GEI_TOD — Geocentric Equatorial Inertial True of Date',
+								'GEI_J2000 — Geocentric Equatorial Inertial J2000',
+								'Custom'
+						],
+						key='astro_satellite_coordinate_choice' )
 					
-					satellite_coordinate_systems = st.text_input(
-						'Coordinate Systems',
-						value='gse',
-						help='Comma-separated coordinate systems such as gse, geo, or gsm.',
-						key='astro_satellite_coordinate_systems' )
+					if satellite_coordinate_choice == 'GSE — Geocentric Solar Ecliptic':
+						satellite_coordinate_systems = 'gse'
+					
+					elif satellite_coordinate_choice == 'GEO — Geographic':
+						satellite_coordinate_systems = 'geo'
+					
+					elif satellite_coordinate_choice == 'GSM — Geocentric Solar Magnetospheric':
+						satellite_coordinate_systems = 'gsm'
+					
+					elif satellite_coordinate_choice == 'SM — Solar Magnetic':
+						satellite_coordinate_systems = 'sm'
+					
+					elif satellite_coordinate_choice == 'GEI_TOD — Geocentric Equatorial Inertial True of Date':
+						satellite_coordinate_systems = 'gei_tod'
+					
+					elif satellite_coordinate_choice == 'GEI_J2000 — Geocentric Equatorial Inertial J2000':
+						satellite_coordinate_systems = 'gei_j2000'
+					
+					else:
+						satellite_coordinate_systems = st.text_input(
+							'Custom Coordinate Systems',
+							value='gse',
+							help='Comma-separated coordinate systems accepted by SSCWeb.',
+							key='astro_satellite_coordinate_systems_custom' )
 					
 					satellite_resolution_factor = st.number_input(
 						'Resolution Factor',
@@ -6453,16 +6600,20 @@ elif mode == 'Astronomical':
 						max_value=10000,
 						value=1,
 						step=1,
+						help='Return one out of every N location values.',
 						key='astro_satellite_resolution_factor' )
+					
+					if satellite_start_date > satellite_end_date:
+						st.warning( 'Start Date is after End Date. Correct the date range before running.' )
+				
+				elif satellite_mode == 'observatories':
+					st.caption(
+						'Returns SSC observatory IDs, names, and availability metadata. Use the Id '
+						'values from this result in Locations mode.' )
 				
 				else:
-					satellite_query = ''
-					satellite_start_date = dt.date.today( )
-					satellite_start_time = ''
-					satellite_end_date = dt.date.today( )
-					satellite_end_time = ''
-					satellite_coordinate_systems = 'gse'
-					satellite_resolution_factor = 1
+					st.caption(
+						'Returns SSC ground-station IDs, names, and geographic locations.' )
 				
 				satellite_btn_c1, satellite_btn_c2 = st.columns( 2 )
 				
@@ -6488,11 +6639,12 @@ elif mode == 'Astronomical':
 								resolution_factor=int( satellite_resolution_factor ),
 								time=int( satellite_timeout ) )
 							
-							st.session_state[ 'astro_last_source' ]='Satellite Center'
-							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ]=None
-							st.session_state[ 'astro_last_longitude' ]=None
-							st.session_state[ 'astro_last_url' ]=''
+							st.session_state[ 'astro_last_source' ] = 'Satellite Center'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
+							
 							st.success( 'Satellite Center request completed.' )
 						
 						except Exception as ex:
@@ -6501,27 +6653,60 @@ elif mode == 'Astronomical':
 				with satellite_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_satellite_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 			
 			# ------------------------------------------------------------------
 			# ASTRO CATALOG
 			# ------------------------------------------------------------------
 			with st.expander( '🔭 Astro Catalog', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.ASTRONOMY_CATALOG )
-				catalog_mode = st.selectbox(
-					'Mode',
-					options=[ 'object_query', 'cone_search' ],
-					key='astro_catalog_mode' )
+				st.caption(
+					'Uses the Open Astronomy Catalog API. Object Query retrieves a named object; '
+					'Cone Search retrieves objects around right ascension and declination.' )
 				
-				catalog_quantity = st.text_input(
-					'Quantity',
-					value='',
-					help='Optional Open Astronomy Catalog quantity path segment.',
-					key='astro_catalog_quantity' )
+				catalog_mode_labels = {
+						'Object Query': 'object_query',
+						'Cone Search': 'cone_search'
+				}
+				
+				catalog_mode_label = st.selectbox(
+					'Mode',
+					options=list( catalog_mode_labels.keys( ) ),
+					key='astro_catalog_mode_label' )
+				
+				catalog_mode = catalog_mode_labels[ catalog_mode_label ]
+				
+				catalog_quantity_presets = {
+						'Default Object Record': '',
+						'Photometry': 'photometry',
+						'Spectra': 'spectra',
+						'Radio': 'radio',
+						'X-Ray': 'xray',
+						'Host': 'host',
+						'Redshift': 'redshift',
+						'Luminosity Distance': 'lumdist',
+						'Claimed Type': 'claimedtype',
+						'Sources': 'sources',
+						'Custom': 'custom'
+				}
+				
+				catalog_quantity_choice = st.selectbox(
+					'Quantity Preset',
+					options=list( catalog_quantity_presets.keys( ) ),
+					key='astro_catalog_quantity_preset' )
+				
+				if catalog_quantity_choice == 'Custom':
+					catalog_quantity = st.text_input(
+						'Custom Quantity',
+						value='',
+						help='Optional Open Astronomy Catalog quantity path segment.',
+						key='astro_catalog_quantity_custom' )
+				else:
+					catalog_quantity = catalog_quantity_presets[ catalog_quantity_choice ]
 				
 				catalog_attributes = st.text_input(
 					'Attributes',
@@ -6552,23 +6737,34 @@ elif mode == 'Astronomical':
 					catalog_query = st.text_input(
 						'Object Name',
 						value='SN2011fe',
+						help='Example transient object name in the Open Astronomy Catalogs.',
 						key='astro_catalog_query' )
 					
 					catalog_ra = ''
 					catalog_dec = ''
 					catalog_radius = 2
+					
+					st.caption(
+						'Object Query ignores right ascension, declination, and radius.' )
 				
 				else:
 					catalog_query = ''
-					catalog_ra = st.text_input(
-						'Right Ascension',
-						value='10:00:00',
-						key='astro_catalog_ra' )
 					
-					catalog_dec = st.text_input(
-						'Declination',
-						value='+10:00:00',
-						key='astro_catalog_dec' )
+					catalog_coord_c1, catalog_coord_c2 = st.columns( 2 )
+					
+					with catalog_coord_c1:
+						catalog_ra = st.text_input(
+							'Right Ascension',
+							value='10:00:00',
+							help='Right ascension accepted by the OAC wrapper.',
+							key='astro_catalog_ra' )
+					
+					with catalog_coord_c2:
+						catalog_dec = st.text_input(
+							'Declination',
+							value='+10:00:00',
+							help='Declination accepted by the OAC wrapper.',
+							key='astro_catalog_dec' )
 					
 					catalog_radius = st.number_input(
 						'Radius',
@@ -6576,7 +6772,12 @@ elif mode == 'Astronomical':
 						max_value=360,
 						value=2,
 						step=1,
+						help='Cone-search radius passed directly to the AstroCatalog wrapper.',
 						key='astro_catalog_radius' )
+					
+					st.caption(
+						'Cone Search ignores Object Name and uses right ascension, declination, '
+						'and radius.' )
 				
 				catalog_btn_c1, catalog_btn_c2 = st.columns( 2 )
 				
@@ -6597,11 +6798,11 @@ elif mode == 'Astronomical':
 								data_format=catalog_data_format,
 								time=int( catalog_timeout ) )
 							
-							st.session_state[ 'astro_last_source' ]='Astro Catalog'
-							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ]=None
-							st.session_state[ 'astro_last_longitude' ]=None
-							st.session_state[ 'astro_last_url' ]=''
+							st.session_state[ 'astro_last_source' ] = 'Astro Catalog'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
 							st.success( 'Astro Catalog request completed.' )
 						
 						except Exception as ex:
@@ -6610,11 +6811,11 @@ elif mode == 'Astronomical':
 				with catalog_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_catalog_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 			
 			# ------------------------------------------------------------------
 			# ASTROQUERY / SIMBAD
@@ -6711,59 +6912,160 @@ elif mode == 'Astronomical':
 			# ------------------------------------------------------------------
 			with st.expander( '🗺️ Star Map', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.STAR_MAP )
-				starmap_mode = st.selectbox(
+				st.caption(
+					'Uses SKY-MAP link and snapshot workflows. Object Link builds an '
+					'object-centered page, Coordinate Link builds a coordinate-centered page, '
+					'and Snapshot attempts to retrieve a SKY-MAP snapshot page plus available '
+					'image links.' )
+				
+				starmap_mode_labels = {
+						'Object Link': 'object_link',
+						'Coordinate Link': 'coordinate_link',
+						'Snapshot': 'snapshot'
+				}
+				
+				starmap_mode_label = st.selectbox(
 					'Mode',
-					options=[ 'object_link', 'coordinate_link', 'snapshot' ],
-					key='astro_starmap_mode' )
+					options=list( starmap_mode_labels.keys( ) ),
+					key='astro_starmap_mode_label' )
 				
-				starmap_zoom = st.number_input( 'Zoom', min_value=1, max_value=20,
-					value=5, step=1, key='astro_starmap_zoom' )
+				starmap_mode = starmap_mode_labels[ starmap_mode_label ]
 				
-				starmap_image_source = st.text_input( 'Image Source', value='DSS2',
-					key='astro_starmap_image_source' )
+				starmap_example = st.selectbox(
+					'Coordinate Example',
+					options=[
+							'Andromeda Galaxy / M31',
+							'Orion Nebula / M42',
+							'Galactic Center',
+							'Custom'
+					],
+					key='astro_starmap_coordinate_example' )
 				
-				starmap_box_color = st.selectbox( 'Box Color',
+				if starmap_example == 'Andromeda Galaxy / M31':
+					starmap_default_object = 'M31'
+					starmap_default_ra = 0.7117
+					starmap_default_dec = 41.2670
+				
+				elif starmap_example == 'Orion Nebula / M42':
+					starmap_default_object = 'M42'
+					starmap_default_ra = 5.5881
+					starmap_default_dec = -5.3911
+				
+				elif starmap_example == 'Galactic Center':
+					starmap_default_object = 'Sgr A*'
+					starmap_default_ra = 17.7611
+					starmap_default_dec = -29.0078
+				
+				else:
+					starmap_default_object = 'M31'
+					starmap_default_ra = 0.7117
+					starmap_default_dec = 41.2670
+				
+				starmap_zoom = st.number_input(
+					'Zoom',
+					min_value=1,
+					max_value=20,
+					value=5,
+					step=1,
+					key='astro_starmap_zoom' )
+				
+				starmap_image_source_choice = st.selectbox(
+					'Image Source',
+					options=[ 'DSS2', 'SDSS', 'GALEX', 'IRAS', 'RASS', 'Custom' ],
+					key='astro_starmap_image_source_choice' )
+				
+				if starmap_image_source_choice == 'Custom':
+					starmap_image_source = st.text_input(
+						'Custom Image Source',
+						value='DSS2',
+						help='Enter the SKY-MAP image source value accepted by the API.',
+						key='astro_starmap_image_source_custom' )
+				else:
+					starmap_image_source = starmap_image_source_choice
+				
+				starmap_box_color = st.selectbox(
+					'Box Color',
 					options=[ 'yellow', 'red', 'green', 'blue', 'white' ],
 					key='astro_starmap_box_color' )
 				
 				if starmap_mode == 'object_link':
-					starmap_query = st.text_input( 'Object Name', value='M31',
+					starmap_query = st.text_input(
+						'Object Name',
+						value=starmap_default_object,
+						help='Object name or catalog identifier. Examples: M31, M42, Sirius.',
 						key='astro_starmap_query' )
 					
 					starmap_ra = 0.0
 					starmap_dec = 0.0
+					
+					st.caption(
+						'Object Link uses the object name and ignores right ascension and declination.' )
 				
 				else:
 					starmap_query = ''
 					starmap_coord_c1, starmap_coord_c2 = st.columns( 2 )
+					
 					with starmap_coord_c1:
-						starmap_ra = st.number_input( 'Right Ascension', value=10.6847083,
-							format='%.7f', key='astro_starmap_ra' )
+						starmap_ra = st.number_input(
+							'Right Ascension',
+							value=float( starmap_default_ra ),
+							format='%.7f',
+							help='Right ascension in decimal hours for SKY-MAP link/snapshot endpoints.',
+							key='astro_starmap_ra' )
 					
 					with starmap_coord_c2:
-						starmap_dec = st.number_input( 'Declination', value=41.2687500,
-							format='%.7f', key='astro_starmap_dec' )
+						starmap_dec = st.number_input(
+							'Declination',
+							value=float( starmap_default_dec ),
+							format='%.7f',
+							help='Declination in decimal degrees.',
+							key='astro_starmap_dec' )
+					
+					if starmap_mode == 'coordinate_link':
+						st.caption(
+							'Coordinate Link builds a SKY-MAP page centered on right ascension '
+							'and declination.' )
+					else:
+						st.caption(
+							'Snapshot requests the SKY-MAP snapshot endpoint and attempts to extract '
+							'available save-as image links.' )
 				
 				starmap_options_c1, starmap_options_c2 = st.columns( 2 )
+				
 				with starmap_options_c1:
-					starmap_show_box = st.checkbox( 'Show Box', value=True,
+					starmap_show_box = st.checkbox(
+						'Show Box',
+						value=True,
 						key='astro_starmap_show_box' )
 					
-					starmap_show_grid = st.checkbox( 'Show Grid', value=True,
+					starmap_show_grid = st.checkbox(
+						'Show Grid',
+						value=True,
 						key='astro_starmap_show_grid' )
 				
 				with starmap_options_c2:
-					starmap_show_lines = st.checkbox( 'Show Lines', value=True,
+					starmap_show_lines = st.checkbox(
+						'Show Lines',
+						value=True,
 						key='astro_starmap_show_lines' )
 					
-					starmap_show_boundaries = st.checkbox( 'Show Boundaries', value=True,
+					starmap_show_boundaries = st.checkbox(
+						'Show Boundaries',
+						value=True,
 						key='astro_starmap_show_boundaries' )
 				
-				starmap_show_const_names = st.checkbox( 'Show Constellation Names', value=False,
+				starmap_show_const_names = st.checkbox(
+					'Show Constellation Names',
+					value=False,
 					key='astro_starmap_show_const_names' )
 				
-				starmap_timeout = st.number_input( 'Timeout', min_value=1, max_value=60,
-					value=20, step=1, key='astro_starmap_timeout' )
+				starmap_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='astro_starmap_timeout' )
 				
 				starmap_btn_c1, starmap_btn_c2 = st.columns( 2 )
 				
@@ -6797,11 +7099,11 @@ elif mode == 'Astronomical':
 										or result.get( 'url', '' )
 								)
 							
-							st.session_state[ 'astro_last_source' ]='Star Map'
-							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ]=None
-							st.session_state[ 'astro_last_longitude' ]=None
-							st.session_state[ 'astro_last_url' ]=result_url
+							st.session_state[ 'astro_last_source' ] = 'Star Map'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = result_url
 							st.success( 'Star Map request completed.' )
 						
 						except Exception as ex:
@@ -6810,11 +7112,11 @@ elif mode == 'Astronomical':
 				with starmap_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_starmap_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 		
 		with astro_c2:
 			# ------------------------------------------------------------------
@@ -6829,8 +7131,7 @@ elif mode == 'Astronomical':
 			astro_url = st.session_state.get( 'astro_last_url', '' )
 			
 			if not astro_result:
-				st.info(
-					'No astronomical results available. Run one of the Astronomical expanders.' )
+				st.info(  'No astronomical results available.' )
 			
 			else:
 				if astro_source:
@@ -7002,7 +7303,7 @@ elif mode == 'Celestial Map':
 				description='Celestial Map observer location',
 				latitude=float( celestial_latitude ),
 				longitude=float( celestial_longitude ) )
-			st.session_state[ 'zoom' ]=int( celestial_zoom )
+			st.session_state[ 'zoom' ] = int( celestial_zoom )
 		
 		set_blue_divider( )
 		
@@ -7013,7 +7314,7 @@ elif mode == 'Celestial Map':
 			longitude=float( celestial_longitude ),
 			location=celestial_location,
 			zoom=int( celestial_zoom ) )
-
+		
 # ==============================================================================
 # GEOLOGICAL MODE
 # ==============================================================================
@@ -7200,13 +7501,188 @@ elif mode == 'Geological':
 			with st.expander( '🛰️ Global Imagery', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.NASA_GLOBAL_IMAGERY )
 				st.caption(
-					'Uses the original GlobalImagery fetcher. The current fetch_map_services() '
-					'writes the default NASA GIBS image to python-examples.'
-				)
+					'Uses NASA GIBS WMS imagery. The default product preserves the original '
+					'MODIS Terra corrected-reflectance request and output path.' )
 				
-				imagery_product = st.selectbox( 'Product',
-					options=[ 'NASA GIBS EPSG:4326 Default Map Service' ],
+				imagery_product = st.selectbox(
+					'Product',
+					options=[
+							'NASA GIBS EPSG:4326 Default Map Service',
+							'NASA GIBS Custom WMS Map',
+							'NASA GIBS EPSG:3857 Legacy Mercator Map',
+							'NASA GIBS GetCapabilities URL'
+					],
 					key='geo_imagery_product' )
+				
+				imagery_timeout = st.number_input(
+					'Timeout',
+					min_value=1,
+					max_value=60,
+					value=20,
+					step=1,
+					key='geo_imagery_timeout' )
+				
+				imagery_layer = 'MODIS_Terra_CorrectedReflectance_TrueColor'
+				imagery_projection = 'epsg4326'
+				imagery_quality = 'best'
+				imagery_date_value = dt.date( 2021, 9, 21 )
+				imagery_format = 'image/png'
+				imagery_transparent = True
+				imagery_width = 1200
+				imagery_height = 600
+				imagery_output_dir = 'python-examples'
+				imagery_output_name = 'MODIS_Terra_CorrectedReflectance_TrueColor.png'
+				imagery_west = -180.0
+				imagery_south = -90.0
+				imagery_east = 180.0
+				imagery_north = 90.0
+				imagery_center_latitude = None
+				imagery_center_longitude = None
+				
+				if imagery_product == 'NASA GIBS Custom WMS Map':
+					imagery_layer = st.text_input(
+						'Layer',
+						value='MODIS_Terra_CorrectedReflectance_TrueColor',
+						help='NASA GIBS WMS layer identifier.',
+						key='geo_imagery_layer' )
+					
+					imagery_date_value = st.date_input(
+						'Image Date',
+						value=dt.date.today( ) - dt.timedelta( days=1 ),
+						key='geo_imagery_date' )
+					
+					imagery_projection = st.selectbox(
+						'Projection',
+						options=[ 'epsg4326', 'epsg3857' ],
+						key='geo_imagery_projection' )
+					
+					imagery_quality = st.selectbox(
+						'Quality',
+						options=[ 'best', 'std' ],
+						key='geo_imagery_quality' )
+					
+					imagery_format = st.selectbox(
+						'Image Format',
+						options=[ 'image/png', 'image/jpeg' ],
+						key='geo_imagery_format' )
+					
+					imagery_transparent = st.checkbox(
+						'Transparent No-Data Pixels',
+						value=True,
+						key='geo_imagery_transparent' )
+					
+					imagery_size_c1, imagery_size_c2 = st.columns( 2 )
+					
+					with imagery_size_c1:
+						imagery_width = st.number_input(
+							'Width',
+							min_value=128,
+							max_value=4096,
+							value=1200,
+							step=64,
+							key='geo_imagery_width' )
+					
+					with imagery_size_c2:
+						imagery_height = st.number_input(
+							'Height',
+							min_value=128,
+							max_value=4096,
+							value=600,
+							step=64,
+							key='geo_imagery_height' )
+					
+					st.caption(
+						'Bounding box defaults are centered on the global latitude and longitude.' )
+					
+					imagery_box_c1, imagery_box_c2 = st.columns( 2 )
+					
+					with imagery_box_c1:
+						imagery_west = st.number_input(
+							'West Longitude',
+							value=float( global_box[ 'west' ] ),
+							format='%.6f',
+							key='geo_imagery_west' )
+						
+						imagery_south = st.number_input(
+							'South Latitude',
+							value=float( global_box[ 'south' ] ),
+							format='%.6f',
+							key='geo_imagery_south' )
+					
+					with imagery_box_c2:
+						imagery_east = st.number_input(
+							'East Longitude',
+							value=float( global_box[ 'east' ] ),
+							format='%.6f',
+							key='geo_imagery_east' )
+						
+						imagery_north = st.number_input(
+							'North Latitude',
+							value=float( global_box[ 'north' ] ),
+							format='%.6f',
+							key='geo_imagery_north' )
+					
+					imagery_output_dir = st.text_input(
+						'Output Directory',
+						value='python-examples',
+						key='geo_imagery_output_dir' )
+					
+					imagery_output_name = st.text_input(
+						'Output Filename',
+						value='',
+						help='Optional. Leave blank to let the wrapper generate a filename.',
+						key='geo_imagery_output_name' )
+					
+					imagery_center_latitude = (
+							                          float( imagery_south ) + float( imagery_north )
+					                          ) / 2.0
+					
+					imagery_center_longitude = (
+							                           float( imagery_west ) + float( imagery_east )
+					                           ) / 2.0
+				
+				elif imagery_product == 'NASA GIBS EPSG:3857 Legacy Mercator Map':
+					imagery_layer = 'Landsat_WELD_CorrectedReflectance_Bands157_Global_Annual'
+					imagery_projection = 'epsg3857'
+					imagery_quality = 'best'
+					imagery_date_value = dt.date( 2000, 12, 1 )
+					imagery_format = 'image/png'
+					imagery_transparent = True
+					imagery_width = 600
+					imagery_height = 600
+					imagery_output_dir = 'python-examples'
+					imagery_output_name = (
+							'Landsat_WELD_CorrectedReflectance_Bands157_Global_Annual.png'
+					)
+					imagery_west = -8000000.0
+					imagery_south = -8000000.0
+					imagery_east = 8000000.0
+					imagery_north = 8000000.0
+					imagery_center_latitude = None
+					imagery_center_longitude = None
+					
+					st.caption(
+						'Uses the preserved legacy EPSG:3857 WMS product through '
+						'GlobalImagery.fetch_mercator_map().' )
+				
+				elif imagery_product == 'NASA GIBS GetCapabilities URL':
+					imagery_projection = st.selectbox(
+						'Projection',
+						options=[ 'epsg4326', 'epsg3857' ],
+						key='geo_imagery_capabilities_projection' )
+					
+					imagery_quality = st.selectbox(
+						'Quality',
+						options=[ 'best', 'std' ],
+						key='geo_imagery_capabilities_quality' )
+					
+					st.caption(
+						'Builds a NASA GIBS WMS GetCapabilities URL. It does not download an image.' )
+				
+				else:
+					st.caption(
+						'Runs the preserved default EPSG:4326 MODIS Terra corrected-reflectance '
+						'image request.' )
 				
 				imagery_btn_c1, imagery_btn_c2 = st.columns( 2 )
 				
@@ -7214,26 +7690,81 @@ elif mode == 'Geological':
 					if st.button( label='Run', icon='🏃', key='geo_imagery_run',
 							use_container_width=True ):
 						try:
-							Path( 'python-examples' ).mkdir( parents=True, exist_ok=True )
-							
+							Path( imagery_output_dir ).mkdir( parents=True, exist_ok=True )
 							service = GlobalImagery( )
-							result = service.fetch_map_services( )
 							
-							image_path = (
-									'python-examples/'
-									'MODIS_Terra_CorrectedReflectance_TrueColor.png'
-							)
+							if imagery_product == 'NASA GIBS EPSG:4326 Default Map Service':
+								result = service.fetch_map_services( )
+								image_path = (
+										'python-examples/'
+										'MODIS_Terra_CorrectedReflectance_TrueColor.png'
+								)
+								result_payload = result or {
+										'mode': 'fetch_map_services',
+										'product': imagery_product,
+										'image_path': image_path
+								}
 							
-							st.session_state[ 'geo_last_source' ]='Global Imagery'
-							st.session_state[ 'geo_last_result' ]={
-									'mode': 'fetch_map_services',
-									'product': imagery_product,
-									'image_path': image_path,
-									'result': str( result )
-							}
-							st.session_state[ 'geo_last_latitude' ]=None
-							st.session_state[ 'geo_last_longitude' ]=None
-							st.session_state[ 'geo_last_image_path' ]=image_path
+							elif imagery_product == 'NASA GIBS Custom WMS Map':
+								result = service.fetch_wms_map(
+									layer=imagery_layer,
+									image_date=imagery_date_value.isoformat( ),
+									bbox=(
+											float( imagery_west ),
+											float( imagery_south ),
+											float( imagery_east ),
+											float( imagery_north )
+									),
+									width=int( imagery_width ),
+									height=int( imagery_height ),
+									projection=imagery_projection,
+									quality=imagery_quality,
+									image_format=imagery_format,
+									transparent=bool( imagery_transparent ),
+									output_dir=imagery_output_dir,
+									output_name=imagery_output_name,
+									time=int( imagery_timeout ) )
+								
+								result_payload = result or { }
+								image_path = str( result_payload.get( 'image_path', '' ) )
+							
+							elif imagery_product == 'NASA GIBS EPSG:3857 Legacy Mercator Map':
+								result = service.fetch_mercator_map( )
+								image_path = (
+										'python-examples/'
+										'Landsat_WELD_CorrectedReflectance_Bands157_Global_Annual.png'
+								)
+								result_payload = result or {
+										'mode': 'fetch_mercator_map',
+										'product': imagery_product,
+										'image_path': image_path
+								}
+							
+							else:
+								capabilities_url = service.get_capabilities_url(
+									projection=imagery_projection,
+									quality=imagery_quality )
+								
+								image_path = ''
+								result_payload = {
+										'mode': 'get_capabilities_url',
+										'product': imagery_product,
+										'url': capabilities_url,
+										'projection': imagery_projection,
+										'quality': imagery_quality,
+										'summary': {
+												'rows': 1,
+												'columns': 4,
+												'description': 'NASA GIBS WMS GetCapabilities URL generated.'
+										}
+								}
+							
+							st.session_state[ 'geo_last_source' ] = 'Global Imagery'
+							st.session_state[ 'geo_last_result' ] = result_payload
+							st.session_state[ 'geo_last_latitude' ] = imagery_center_latitude
+							st.session_state[ 'geo_last_longitude' ] = imagery_center_longitude
+							st.session_state[ 'geo_last_image_path' ] = image_path
+							
 							st.success( 'Global Imagery request completed.' )
 						
 						except Exception as ex:
@@ -7242,23 +7773,30 @@ elif mode == 'Geological':
 				with imagery_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_imagery_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ]=''
-						st.session_state[ 'geo_last_result' ]={ }
-						st.session_state[ 'geo_last_latitude' ]=None
-						st.session_state[ 'geo_last_longitude' ]=None
-						st.session_state[ 'geo_last_image_path' ]=''
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
 			
 			# ------------------------------------------------------------------
 			# USGS WATER DATA
 			# ------------------------------------------------------------------
 			with st.expander( '💧 USGS Water Data', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.USGS_WATER )
-				water_mode = st.selectbox( 'Mode', options=[
-						'monitoring-locations',
-						'time-series-metadata',
-						'latest-continuous',
-						'latest-daily'
-				], key='geo_water_mode' )
+				st.caption(
+					'Uses the USGS Water Data API. Parameter presets are provided for common '
+					'USGS five-character time-series parameter codes.' )
+				
+				water_mode = st.selectbox(
+					'Mode',
+					options=[
+							'monitoring-locations',
+							'time-series-metadata',
+							'latest-continuous',
+							'latest-daily'
+					],
+					key='geo_water_mode' )
 				
 				water_timeout = st.number_input(
 					'Timeout',
@@ -7276,6 +7814,34 @@ elif mode == 'Geological':
 					step=1,
 					key='geo_water_limit' )
 				
+				water_parameter_presets = {
+						'No Parameter Filter': '',
+						'Discharge, cubic feet per second — 00060': '00060',
+						'Gage Height / Stage, feet — 00065': '00065',
+						'Water Temperature, Celsius — 00010': '00010',
+						'Specific Conductance — 00095': '00095',
+						'Dissolved Oxygen — 00300': '00300',
+						'pH — 00400': '00400',
+						'Turbidity — 63680': '63680',
+						'Custom': 'custom'
+				}
+				
+				water_site_type_presets = {
+						'No Site-Type Filter': '',
+						'Stream': 'ST',
+						'Lake / Reservoir': 'LK',
+						'Well': 'GW',
+						'Spring': 'SP',
+						'Atmosphere': 'AT',
+						'Custom': 'custom'
+				}
+				
+				water_monitoring_location_id = ''
+				water_state_code = ''
+				water_county_code = ''
+				water_site_type = ''
+				water_parameter_code = ''
+				
 				if water_mode == 'monitoring-locations':
 					water_monitoring_location_id = st.text_input(
 						'Monitoring Location ID',
@@ -7286,7 +7852,7 @@ elif mode == 'Geological':
 					water_state_code = st.text_input(
 						'State Code',
 						value='',
-						help='Optional state filter.',
+						help='Optional state filter. Example: US:24 for Maryland in OGC APIs, or use the API-supported state code format required by your endpoint.',
 						key='geo_water_state_code' )
 					
 					water_county_code = st.text_input(
@@ -7295,13 +7861,19 @@ elif mode == 'Geological':
 						help='Optional county filter.',
 						key='geo_water_county_code' )
 					
-					water_site_type = st.text_input(
-						'Site Type',
-						value='',
-						help='Optional site type filter.',
-						key='geo_water_site_type' )
+					water_site_type_choice = st.selectbox(
+						'Site Type Preset',
+						options=list( water_site_type_presets.keys( ) ),
+						key='geo_water_site_type_preset' )
 					
-					water_parameter_code = ''
+					if water_site_type_choice == 'Custom':
+						water_site_type = st.text_input(
+							'Custom Site Type',
+							value='',
+							help='Enter an API-supported site type code.',
+							key='geo_water_site_type_custom' )
+					else:
+						water_site_type = water_site_type_presets[ water_site_type_choice ]
 				
 				else:
 					water_monitoring_location_id = st.text_input(
@@ -7310,17 +7882,26 @@ elif mode == 'Geological':
 						help='Example: USGS-01491000',
 						key='geo_water_monitoring_location_id_value' )
 					
-					water_parameter_code = st.text_input(
-						'Parameter Code',
-						value='',
-						help='Optional USGS parameter code.',
-						key='geo_water_parameter_code' )
+					water_parameter_choice = st.selectbox(
+						'Parameter Preset',
+						options=list( water_parameter_presets.keys( ) ),
+						key='geo_water_parameter_preset' )
 					
-					water_state_code = ''
-					water_county_code = ''
-					water_site_type = ''
+					if water_parameter_choice == 'Custom':
+						water_parameter_code = st.text_input(
+							'Custom Parameter Code',
+							value='',
+							help='Enter a USGS five-character parameter code.',
+							key='geo_water_parameter_code_custom' )
+					else:
+						water_parameter_code = water_parameter_presets[ water_parameter_choice ]
+					
+					st.caption(
+						'Common time-series parameters include 00060 for discharge, 00065 for '
+						'gage height, and 00010 for water temperature.' )
 				
 				water_btn_c1, water_btn_c2 = st.columns( 2 )
+				
 				with water_btn_c1:
 					if st.button( label='Run', icon='🏃', key='geo_water_run',
 							use_container_width=True ):
@@ -7336,11 +7917,11 @@ elif mode == 'Geological':
 								limit=int( water_limit ),
 								time=int( water_timeout ) )
 							
-							st.session_state[ 'geo_last_source' ]='USGS Water Data'
-							st.session_state[ 'geo_last_result' ]=result or { }
-							st.session_state[ 'geo_last_latitude' ]=None
-							st.session_state[ 'geo_last_longitude' ]=None
-							st.session_state[ 'geo_last_image_path' ]=''
+							st.session_state[ 'geo_last_source' ] = 'USGS Water Data'
+							st.session_state[ 'geo_last_result' ] = result or { }
+							st.session_state[ 'geo_last_latitude' ] = None
+							st.session_state[ 'geo_last_longitude' ] = None
+							st.session_state[ 'geo_last_image_path' ] = ''
 							st.success( 'USGS Water Data request completed.' )
 						
 						except Exception as ex:
@@ -7349,17 +7930,22 @@ elif mode == 'Geological':
 				with water_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_water_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ]=''
-						st.session_state[ 'geo_last_result' ]={ }
-						st.session_state[ 'geo_last_latitude' ]=None
-						st.session_state[ 'geo_last_longitude' ]=None
-						st.session_state[ 'geo_last_image_path' ]=''
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
 			
 			# ------------------------------------------------------------------
 			# USGS THE NATIONAL MAP
 			# ------------------------------------------------------------------
 			with st.expander( '🗺️ USGS The National Map', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.USGS_NATIONAL_MAP )
+				st.caption(
+					'Uses TNMAccess for dataset discovery and downloadable National Map product '
+					'search. Presets are provided for common datasets and product formats, but '
+					'manual entry is preserved.' )
+				
 				tnm_mode = st.selectbox(
 					'Mode',
 					options=[ 'datasets', 'products' ],
@@ -7372,6 +7958,31 @@ elif mode == 'Geological':
 					value=20,
 					step=1,
 					key='geo_tnm_timeout' )
+				
+				tnm_dataset_presets = {
+						'No Dataset Filter': '',
+						'3D Elevation Program': '3D Elevation Program',
+						'National Elevation Dataset': 'National Elevation Dataset',
+						'National Hydrography Dataset': 'National Hydrography Dataset',
+						'Watershed Boundary Dataset': 'Watershed Boundary Dataset',
+						'National Transportation Dataset': 'National Transportation Dataset',
+						'National Structures Dataset': 'National Structures Dataset',
+						'US Topo': 'US Topo',
+						'Historical Topographic Map Collection': 'Historical Topographic Map Collection',
+						'Custom': 'custom'
+				}
+				
+				tnm_format_presets = {
+						'No Format Filter': '',
+						'GeoTIFF': 'GeoTIFF',
+						'IMG': 'IMG',
+						'LAS': 'LAS',
+						'LAZ': 'LAZ',
+						'GeoPackage': 'GeoPackage',
+						'Shapefile': 'Shapefile',
+						'PDF': 'PDF',
+						'Custom': 'custom'
+				}
 				
 				if tnm_mode == 'datasets':
 					tnm_dataset = ''
@@ -7388,11 +7999,19 @@ elif mode == 'Geological':
 						'global coordinates.' )
 				
 				else:
-					tnm_dataset = st.text_input(
-						'Dataset',
-						value='',
-						help='Optional TNM dataset filter.',
-						key='geo_tnm_dataset' )
+					tnm_dataset_choice = st.selectbox(
+						'Dataset Preset',
+						options=list( tnm_dataset_presets.keys( ) ),
+						key='geo_tnm_dataset_preset' )
+					
+					if tnm_dataset_choice == 'Custom':
+						tnm_dataset = st.text_input(
+							'Custom Dataset',
+							value='',
+							help='Optional TNM dataset filter.',
+							key='geo_tnm_dataset_custom' )
+					else:
+						tnm_dataset = tnm_dataset_presets[ tnm_dataset_choice ]
 					
 					tnm_query = st.text_input(
 						'Search Query',
@@ -7400,11 +8019,19 @@ elif mode == 'Geological':
 						help='Optional free-text product search.',
 						key='geo_tnm_query' )
 					
-					tnm_prod_formats = st.text_input(
-						'Product Formats',
-						value='',
-						help='Optional format filter such as GeoTIFF, IMG, LAS, or LAZ.',
-						key='geo_tnm_prod_formats' )
+					tnm_format_choice = st.selectbox(
+						'Product Format Preset',
+						options=list( tnm_format_presets.keys( ) ),
+						key='geo_tnm_format_preset' )
+					
+					if tnm_format_choice == 'Custom':
+						tnm_prod_formats = st.text_input(
+							'Custom Product Formats',
+							value='',
+							help='Optional format filter such as GeoTIFF, IMG, LAS, LAZ, or PDF.',
+							key='geo_tnm_prod_formats_custom' )
+					else:
+						tnm_prod_formats = tnm_format_presets[ tnm_format_choice ]
 					
 					tnm_use_bbox = st.checkbox(
 						'Use Bounding Box',
@@ -7480,16 +8107,21 @@ elif mode == 'Geological':
 						try:
 							service = USGSTheNationalMap( )
 							
-							result = service.fetch( mode=tnm_mode, dataset=tnm_dataset, q=tnm_query,
-								bbox=tnm_bbox, prod_formats=tnm_prod_formats,
-								max_items=int( tnm_max_items ), offset=int( tnm_offset ),
+							result = service.fetch(
+								mode=tnm_mode,
+								dataset=tnm_dataset,
+								q=tnm_query,
+								bbox=tnm_bbox,
+								prod_formats=tnm_prod_formats,
+								max_items=int( tnm_max_items ),
+								offset=int( tnm_offset ),
 								time=int( tnm_timeout ) )
 							
-							st.session_state[ 'geo_last_source' ]='USGS The National Map'
-							st.session_state[ 'geo_last_result' ]=result or { }
-							st.session_state[ 'geo_last_latitude' ]=tnm_center_latitude
-							st.session_state[ 'geo_last_longitude' ]=tnm_center_longitude
-							st.session_state[ 'geo_last_image_path' ]=''
+							st.session_state[ 'geo_last_source' ] = 'USGS The National Map'
+							st.session_state[ 'geo_last_result' ] = result or { }
+							st.session_state[ 'geo_last_latitude' ] = tnm_center_latitude
+							st.session_state[ 'geo_last_longitude' ] = tnm_center_longitude
+							st.session_state[ 'geo_last_image_path' ] = ''
 							
 							set_global_coordinates_from_result(
 								tnm_center_latitude,
@@ -7505,11 +8137,11 @@ elif mode == 'Geological':
 				with tnm_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_tnm_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ]=''
-						st.session_state[ 'geo_last_result' ]={ }
-						st.session_state[ 'geo_last_latitude' ]=None
-						st.session_state[ 'geo_last_longitude' ]=None
-						st.session_state[ 'geo_last_image_path' ]=''
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
 		
 		with geo_c2:
 			# ------------------------------------------------------------------
@@ -8007,7 +8639,7 @@ elif mode == 'Data Management':
 								disabled=True )
 					
 					action_c1, action_c2, action_c3 = st.columns( [ 0.25, 0.25, 0.50 ] )
-					
+
 					with action_c1:
 						if st.button( 'Preview Geocoding', key='reports_geocode_preview_button',
 								width='stretch' ):
@@ -8018,15 +8650,114 @@ elif mode == 'Data Management':
 								use_places=use_places,
 								limit=location_limit )
 							
-							st.session_state[ 'df_reports_geocode_preview' ]=df_preview
+							st.session_state[ 'df_reports_geocode_preview' ] = df_preview
 					
 					with action_c2:
 						if st.button( 'Clear', icon='🧹', key='reports_geocode_clear_button',
 								width='stretch' ):
-							st.session_state[ 'df_reports_geocode_preview' ]=pd.DataFrame( )
+							st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+							st.session_state[ 'reports_geocode_last_update' ] = { }
 					
-					df_preview = st.session_state.get( 'df_reports_geocode_preview',
-						pd.DataFrame( ) )
+					with action_c3:
+						confirm_update_coordinates = st.checkbox(
+							'Confirm Update Coordinates',
+							value=False,
+							help=(
+									'When checked, the Update Coordinates button will geocode missing '
+									'Reports locations and immediately write matched coordinates back '
+									'to SQLite.'
+							),
+							key='reports_geocode_confirm_update_coordinates' )
+						
+						if st.button( 'Update Coordinates', icon='📍',
+								key='reports_geocode_update_coordinates_button',
+								width='stretch',
+								disabled=not confirm_update_coordinates ):
+							try:
+								df_update_preview = preview_report_coordinate_updates(
+									table_name=table,
+									geocoder=geocoder,
+									places=places,
+									use_places=use_places,
+									limit=location_limit )
+								
+								st.session_state[ 'df_reports_geocode_preview' ] = df_update_preview
+								
+								if df_update_preview is None or df_update_preview.empty:
+									st.session_state[ 'reports_geocode_last_update' ] = {
+											'Table': table,
+											'Status': 'No Updates',
+											'Message': 'No missing coordinate locations were found.',
+											'MatchedLocations': 0,
+											'FailedLocations': 0,
+											'SkippedLocations': 0,
+											'RowsUpdated': 0
+									}
+									st.rerun( )
+								
+								status_series = df_update_preview[ 'Status' ].astype( str ).str.lower( )
+								matched_count = int( (status_series == 'matched').sum( ) )
+								failed_count = int( (status_series == 'failed').sum( ) )
+								skipped_count = int( (status_series == 'skipped').sum( ) )
+								
+								if matched_count == 0:
+									st.session_state[ 'reports_geocode_last_update' ] = {
+											'Table': table,
+											'Status': 'No Matched Locations',
+											'Message': 'Geocoding completed, but no matched coordinates were returned.',
+											'MatchedLocations': matched_count,
+											'FailedLocations': failed_count,
+											'SkippedLocations': skipped_count,
+											'RowsUpdated': 0
+									}
+									st.rerun( )
+								
+								updated_count = apply_report_coordinate_updates(
+									table_name=table,
+									df_updates=df_update_preview )
+								
+								st.session_state[ 'reports_geocode_last_update' ] = {
+										'Table': table,
+										'Status': 'Updated' if updated_count else 'No Rows Updated',
+										'Message': (
+												f'Updated {updated_count:,} row(s).' if updated_count
+												else 'Matched coordinates were found, but no rows were updated.'
+										),
+										'MatchedLocations': matched_count,
+										'FailedLocations': failed_count,
+										'SkippedLocations': skipped_count,
+										'RowsUpdated': int( updated_count )
+								}
+								
+								if updated_count:
+									st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+								
+								st.rerun( )
+							
+							except Exception as ex:
+								st.error( f'Update Coordinates failed: {ex}' )
+					
+					last_update = st.session_state.get( 'reports_geocode_last_update', { } )
+					
+					if isinstance( last_update, dict ) and last_update:
+						st.markdown( '##### Last Coordinate Update' )
+						
+						update_c1, update_c2, update_c3, update_c4 = st.columns( 4 )
+						update_c1.metric( 'Matched Locations',
+							f"{int( last_update.get( 'MatchedLocations', 0 ) ):,}" )
+						update_c2.metric( 'Failed Locations',
+							f"{int( last_update.get( 'FailedLocations', 0 ) ):,}" )
+						update_c3.metric( 'Skipped Locations',
+							f"{int( last_update.get( 'SkippedLocations', 0 ) ):,}" )
+						update_c4.metric( 'Rows Updated',
+							f"{int( last_update.get( 'RowsUpdated', 0 ) ):,}" )
+						
+						if last_update.get( 'Status', '' ) == 'Updated':
+							st.success( last_update.get( 'Message', '' ) )
+						else:
+							st.info( last_update.get( 'Message', '' ) )
+					
+					df_preview = st.session_state.get( 'df_reports_geocode_preview', pd.DataFrame( ) )
 					
 					if df_preview is not None and not df_preview.empty:
 						status_series = df_preview[ 'Status' ].astype( str ).str.lower( )
@@ -8065,14 +8796,24 @@ elif mode == 'Data Management':
 									width='stretch', disabled=not apply_updates ):
 								updated_count = apply_report_coordinate_updates( table, df_preview )
 								
+								st.session_state[ 'reports_geocode_last_update' ] = {
+										'Table': table,
+										'Status': 'Updated' if updated_count else 'No Rows Updated',
+										'Message': (
+												f'Updated {updated_count:,} report coordinate row(s).'
+												if updated_count
+												else 'No rows were updated.'
+										),
+										'MatchedLocations': matched_count,
+										'FailedLocations': failed_count,
+										'SkippedLocations': skipped_count,
+										'RowsUpdated': int( updated_count )
+								}
+								
 								if updated_count:
-									st.success(
-										f'Updated {updated_count:,} report coordinate row(s).' )
-									st.session_state[
-										'df_reports_geocode_preview' ]=pd.DataFrame( )
-									st.rerun( )
-								else:
-									st.info( 'No rows were updated.' )
+									st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+								
+								st.rerun( )
 		
 		# -------------- ADMIN
 		with tabs[ 8 ]:

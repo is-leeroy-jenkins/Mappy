@@ -56,7 +56,7 @@
 			{
 				constellations: 'rgba(255, 255, 255, 0.6)',
 				dsos: '#F8A205',
-				background: '#0A0B17',
+				background: '#141414',
 				planets: '#2FF249',
 				graticule: 'rgba(255, 255, 255, 0.2)'
 			};
