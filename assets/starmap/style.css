@@ -2,11 +2,11 @@
 
 :root
 {
-	--primary: rgb(0, 120, 252);
-	--primary-light: #0078FC;
+	--primary: rgba(252, 252, 3, 0.99);
+	--primary-light: rgba(56, 55, 55, 0.99);
 	--primary-dark: rgba(56, 55, 55, 0.99);
 	--background: #141414;
-	--surface: #3F3D3D;
+	--surface: #000000;
 	--surface-light: rgba(56, 55, 55, 0.99);
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
@@ -202,7 +202,7 @@ input[ type='datetime-local' ]:focus,
 {
 	content: '✓';
 	position: absolute;
-	color: white;
+	color: #73FF00;
 	font-size: 0.8rem;
 	top: 50%;
 	left: 50%;
@@ -283,7 +283,7 @@ input[ type='datetime-local' ]:focus,
 	align-items: center;
 	justify-content: center;
 	gap: 0.8rem;
-	box-shadow: 0 4px 12px rgba(56, 55, 55, 0.99);
+	box-shadow: 0 4px 12px rgba(56, 55, 55, 0);
 	position: relative;
 	overflow: hidden;
 }
@@ -303,7 +303,7 @@ input[ type='datetime-local' ]:focus,
 .generate-btn:hover
 {
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgb(2, 46, 94);
+	box-shadow: 0 6px 16px rgba(2, 46, 94, 0);
 }
 
 .generate-btn:hover::before
@@ -492,7 +492,7 @@ input[ type='datetime-local' ]:focus,
 	display: block;
 	margin: 1.5rem auto;
 	text-align: center;
-	box-shadow: 0 4px 12px rgba(101, 100, 100, 0.99);
+	box-shadow: 0 4px 12px rgba(101, 100, 100, 0);
 }
 
 .download-btn:hover
