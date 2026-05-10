@@ -2,22 +2,22 @@
 
 :root
 {
-	--primary: rgb(0, 120, 252);
-	--primary-light: rgb(115, 255, 0);
-	--primary-dark: rgba(56, 55, 55, 0.99);
-	--background: #141414;
-	--surface: #000000;
-	--surface-light: rgba(56, 55, 55, 0.99);
+	--primary: rgba(101, 100, 100, 0.99);
+	--primary-light: #FFFFFF;
+	--primary-dark: rgb(40, 40, 40);
+	--background: rgb(20, 20, 20);
+	--surface: rgba(56, 55, 55, 0.99);
+	--surface-light: rgb(63, 62, 62);
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
-	--accent: rgba(56, 55, 55, 0.99);
+	--accent: #0078FC;
 }
 
 body
 {
 	font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
 	margin: 0;
-	background: var(--background);
+	background: rgb(20, 20, 20);
 	color: var(--text);
 	line-height: 1.6;
 	position: relative;
@@ -95,11 +95,9 @@ h1
 
 .controls
 {
-	background: #232222;
+	background: rgb(40, 40, 40);
 	padding: 2.5rem;
-	border-radius: 16px;
-	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35),
-	0 0 1px rgb(63, 62, 62) inset;
+	border-radius: 16px;=
 	margin-bottom: 2.5rem;
 	backdrop-filter: blur(10px);
 	border: 1px solid rgba(101, 100, 100, 0.99);
@@ -135,7 +133,7 @@ input[ type='datetime-local' ],
 	width: 100%;
 	padding: 1rem;
 	background: var(--surface-light);
-	border: 1px solid rgba(101, 100, 100, 0.99);
+	border: 1px solid rgba(147, 145, 145, 0.99);
 	border-radius: 8px;
 	color: var(--text);
 	font-size: 1rem;
@@ -195,7 +193,7 @@ input[ type='datetime-local' ]:focus,
 
 .toggle-group input[ type='checkbox' ]:checked
 {
-	background: var(--primary);
+	background: rgb(0,0,0);
 }
 
 .toggle-group input[ type='checkbox' ]:checked::after
@@ -221,9 +219,8 @@ input[ type='datetime-local' ]:focus,
 	font-size: 1.1rem;
 	font-weight: 600;
 	border-radius: 8px;
-	border: 1px solid var(--primary);
 	color: var(--primary-light);
-	background: transparent;
+	background: rgb(60, 60, 60);
 	cursor: pointer;
 	transition: all 0.2s;
 }
@@ -250,7 +247,7 @@ input[ type='datetime-local' ]:focus,
 {
 	padding: 0.8rem 1.2rem;
 	background: var(--surface-light);
-	border: 1px solid rgba(101, 100, 100, 0.99);
+	border: 1px solid rgba(134, 132, 132, 0.99);
 	color: var(--text);
 	border-radius: 8px;
 	cursor: pointer;
@@ -270,7 +267,7 @@ input[ type='datetime-local' ]:focus,
 
 .generate-btn
 {
-	background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+	background: rgba(56, 55, 55, 0.99);
 	color: white;
 	padding: 1rem 2.5rem;
 	border: none;
@@ -296,7 +293,7 @@ input[ type='datetime-local' ]:focus,
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(90deg, transparent, rgba(56, 55, 55, 0.99), transparent);
+	background: rgb(63, 62, 62);
 	transform: translateX(-100%);
 }
 
@@ -346,7 +343,7 @@ input[ type='datetime-local' ]:focus,
 	aspect-ratio: 1/1;
 	box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3),
 	0 0 1px rgba(255, 255, 255, 0.1) inset;
-	border: 1px solid rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 	transition: transform 0.3s;
 	transform-style: preserve-3d;
 }
@@ -459,7 +456,7 @@ input[ type='datetime-local' ]:focus,
 {
 	width: 12px;
 	height: 12px;
-	background: var(--primary);
+	background: rgb(253, 145, 3);
 	border-radius: 50%;
 	box-shadow: 0 0 8px rgba(253, 145, 3, 0.99);
 }
@@ -480,7 +477,7 @@ input[ type='datetime-local' ]:focus,
 
 .download-btn
 {
-	background: linear-gradient(135deg, var(--accent), #3F3E3E);
+	background: rgb(63, 62, 62);
 	color: white;
 	padding: 1rem 2.5rem;
 	border: none;
@@ -510,7 +507,7 @@ input[ type='datetime-local' ]:focus,
 	margin: 1rem 0;
 	z-index: 1;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-	border: 1px solid rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 	overflow: hidden;
 }
 
@@ -541,7 +538,7 @@ input[ type='datetime-local' ]:focus,
 {
 	background-color: var(--surface) !important;
 	color: var(--text) !important;
-	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border: 1px solid rgba(101, 100, 100, 0.99) !important;
 }
 
 .leaflet-popup-content-wrapper
@@ -622,7 +619,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	padding: 1.2rem;
 	border-radius: 8px;
 	margin-top: 1.5rem;
-	border: 1px solid rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 }
 
 .location-info h3
@@ -697,7 +694,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	top: 0;
 	width: 100%;
 	height: 100%;
-	background-color: rgba(0, 0, 0, 0.85);
+	background-color: rgb(40, 40, 40);
 	backdrop-filter: blur(5px);
 	display: flex;
 	justify-content: center;
@@ -707,7 +704,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 .modal-content
 {
 	background: var(--surface);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 	border-radius: 16px;
 	width: 90%;
 	max-width: 1000px;
@@ -753,7 +750,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	width: 100%;
 	height: 40px;
 	padding: 0;
-	border: 1px solid rgba(255, 255, 255, 0.2);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 	border-radius: 8px;
 	background: transparent;
 	cursor: pointer;
@@ -984,7 +981,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 {
 	display: grid;
 	gap: 0.8rem;
-	background: rgba(255, 255, 255, 0.03);
+	background: rgba(101, 100, 100, 0.99);
 	padding: 1.2rem;
 	border-radius: 12px;
 }
