@@ -2,15 +2,15 @@
 
 :root
 {
-	--primary: rgba(252, 252, 3, 0.99);
-	--primary-light: rgba(56, 55, 55, 0.99);
+	--primary: rgb(0, 120, 252);
+	--primary-light: rgb(115, 255, 0);
 	--primary-dark: rgba(56, 55, 55, 0.99);
 	--background: #141414;
 	--surface: #000000;
 	--surface-light: rgba(56, 55, 55, 0.99);
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
-	--accent: #0078FC;
+	--accent: rgba(56, 55, 55, 0.99);
 }
 
 body
