@@ -2,7 +2,7 @@
 
 :root
 {
-	--primary: rgba(252, 250, 249, 0.02);
+	--primary: rgb(0, 120, 252);
 	--primary-light: #0078FC;
 	--primary-dark: rgba(56, 55, 55, 0.99);
 	--background: #141414;
@@ -10,7 +10,7 @@
 	--surface-light: rgba(56, 55, 55, 0.99);
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
-	--accent: #3F3E3E;
+	--accent: #0078FC;
 }
 
 body
@@ -303,7 +303,7 @@ input[ type='datetime-local' ]:focus,
 .generate-btn:hover
 {
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(56, 55, 55, 0.99);
+	box-shadow: 0 6px 16px rgb(2, 46, 94);
 }
 
 .generate-btn:hover::before
@@ -497,7 +497,7 @@ input[ type='datetime-local' ]:focus,
 
 .download-btn:hover
 {
-	background: linear-gradient(135deg, #0078FC, #0078FC);
+	background: linear-gradient(135deg, #022E5E, #022E5E);
 	transform: translateY(-2px);
 	box-shadow: 0 6px 16px rgba(255, 254, 254, 0.02);
 }
@@ -836,7 +836,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 {
 	height: 60px;
 	margin-bottom: 0.5rem;
-	background: #333333;
+	background: #0078FC;
 	border-radius: 4px;
 }
 
