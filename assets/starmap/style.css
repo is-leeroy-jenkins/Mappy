@@ -2,11 +2,11 @@
 
 :root
 {
-	--primary: rgb(0, 120, 252);
+	--primary: rgba(101, 100, 100, 0.99);
 	--primary-light: #0576EF;
 	--primary-dark: #141414;
 	--background: #141414;
-	--surface: #282828;
+	--surface: #3F3D3D;
 	--surface-light: rgba(56, 55, 55, 0.99);
 	--text: #E9EAFF;
 	--text-secondary: #B4B8FF;
@@ -99,7 +99,7 @@ h1
 	padding: 2.5rem;
 	border-radius: 16px;
 	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35),
-	0 0 1px rgba(255, 255, 255, 0.08) inset;
+	0 0 1px rgb(63, 62, 62) inset;
 	margin-bottom: 2.5rem;
 	backdrop-filter: blur(10px);
 	border: 1px solid rgba(101, 100, 100, 0.99);
@@ -135,7 +135,7 @@ input[ type='datetime-local' ],
 	width: 100%;
 	padding: 1rem;
 	background: var(--surface-light);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(101, 100, 100, 0.99);
 	border-radius: 8px;
 	color: var(--text);
 	font-size: 1rem;
@@ -152,7 +152,7 @@ input[ type='datetime-local' ]:focus,
 {
 	outline: none;
 	border-color: var(--primary);
-	box-shadow: 0 0 0 2px rgba(132, 59, 255, 0.2);
+	box-shadow: 0 0 0 2px rgb(63, 62, 62);
 }
 
 .custom-select
