@@ -2,7 +2,7 @@
 
 :root
 {
-	--primary: rgba(56, 55, 55, 0.99);
+	--primary: rgba(252, 250, 249, 0.02);
 	--primary-light: #0078FC;
 	--primary-dark: rgba(56, 55, 55, 0.99);
 	--background: #141414;
@@ -296,14 +296,14 @@ input[ type='datetime-local' ]:focus,
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+	background: linear-gradient(90deg, transparent, rgba(56, 55, 55, 0.99), transparent);
 	transform: translateX(-100%);
 }
 
 .generate-btn:hover
 {
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgb(2, 46, 94);
+	box-shadow: 0 6px 16px rgba(56, 55, 55, 0.99);
 }
 
 .generate-btn:hover::before
@@ -402,7 +402,7 @@ input[ type='datetime-local' ]:focus,
 {
 	width: 50px;
 	height: 50px;
-	border: 4px solid rgba(132, 59, 255, 0.2);
+	border: 4px solid rgb(0, 120, 252);
 	border-radius: 50%;
 	border-top-color: var(--primary);
 	animation: spin 1s linear infinite;
@@ -461,7 +461,7 @@ input[ type='datetime-local' ]:focus,
 	height: 12px;
 	background: var(--primary);
 	border-radius: 50%;
-	box-shadow: 0 0 8px rgba(101, 100, 100, 0.99);
+	box-shadow: 0 0 8px rgba(253, 145, 3, 0.99);
 }
 
 .milkyway-example
@@ -499,7 +499,7 @@ input[ type='datetime-local' ]:focus,
 {
 	background: linear-gradient(135deg, #0078FC, #0078FC);
 	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(101, 100, 100, 0.99);
+	box-shadow: 0 6px 16px rgba(255, 254, 254, 0.02);
 }
 
 #locationPicker
@@ -1027,7 +1027,7 @@ input[ type='range' ]::-webkit-slider-thumb:hover
 	text-align: center;
 	font-weight: 600;
 	transition: all 0.2s;
-	border: 1px solid rgba(132, 59, 255, 0.2);
+	border: 1px solid rgba(56, 55, 55, 0.99);
 	margin-top: auto;
 }
 
