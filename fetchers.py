@@ -62,7 +62,6 @@ from astropy import units as u
 from astroquery.simbad import Simbad
 from bs4 import BeautifulSoup
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-import crawl4ai
 from google import genai
 from grokipedia_api import GrokipediaClient
 from langchain_community.retrievers import ArxivRetriever, WikipediaRetriever
