@@ -36,32 +36,6 @@ Clone the repository and install dependencies:
 
 
 
-## 🔑 AI API Key
-
-- [OpenAI API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/openai.md)
-- [Grok API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/xai.md)
-- [Gemini API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/gemini.md)
-
-
-#### Data Services 
-
-- [Claude](https://platform.claude.com/docs/en/api/admin/api_keys/retrieve) 
-- [Mistral](https://chat.mistral.ai/1) 
-- [NASA](https://api.nasa.gov/) 
-- [Geolocation](https://developers.google.com/maps/documentation/geolocation/get-api-key) 
-- [Google Maps](https://developers.google.com/maps/documentation/embed/get-api-key) 
-- [Gov Data](https://api.govinfo.gov/docs/) 
-- [The News API](https://www.thenewsapi.com/register) 
-- [Google Weather](https://developers.google.com/maps/documentation/weather/get-api-key) 
-- [Grokipedia](https://pypi.org/project/grokipedia-api/) 
-- [CDC](https://data.cdc.gov/login) 
-- [Purple Air](https://develop.purpleair.com/) 
-- [FIRMS](https://firms.modaps.eosdis.nasa.gov/usfs/api/map_key/) 
-- [CENSUS](https://api.census.gov/data/key_signup.html) 
-- [Wikipedia](https://www.mediawiki.org/wiki/Wikimedia_APIs/Get_started)
-
-
-
 ## 🚀 Quick Start
 
 ### 1. Initialize Maps
@@ -161,6 +135,32 @@ Clone the repository and install dependencies:
 - Creating static map thumbnails for property listings.  
 - Validating and normalizing international addresses.  
 - Auditing time zone coverage for scheduling software.  
+
+
+
+## 🔑 AI API Key
+
+- [OpenAI API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/openai.md)
+- [Grok API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/xai.md)
+- [Gemini API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/gemini.md)
+
+
+#### Data Services 
+
+- [Claude](https://platform.claude.com/docs/en/api/admin/api_keys/retrieve) 
+- [Mistral](https://chat.mistral.ai/1) 
+- [NASA](https://api.nasa.gov/) 
+- [Geolocation](https://developers.google.com/maps/documentation/geolocation/get-api-key) 
+- [Google Maps](https://developers.google.com/maps/documentation/embed/get-api-key) 
+- [Gov Data](https://api.govinfo.gov/docs/) 
+- [The News API](https://www.thenewsapi.com/register) 
+- [Google Weather](https://developers.google.com/maps/documentation/weather/get-api-key) 
+- [Grokipedia](https://pypi.org/project/grokipedia-api/) 
+- [CDC](https://data.cdc.gov/login) 
+- [Purple Air](https://develop.purpleair.com/) 
+- [FIRMS](https://firms.modaps.eosdis.nasa.gov/usfs/api/map_key/) 
+- [CENSUS](https://api.census.gov/data/key_signup.html) 
+- [Wikipedia](https://www.mediawiki.org/wiki/Wikimedia_APIs/Get_started)
 
 
 #### **Dependencies**:
