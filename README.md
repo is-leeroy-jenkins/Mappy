@@ -34,13 +34,16 @@ Clone the repository and install dependencies:
   
 ```
 
-#### **Dependencies**:
-- `requests` – robust HTTP client  
-- `pandas` – spreadsheet data processing  
-- `openpyxl` – Excel I/O (.xlsx files)  
 
 
-#### 🔑 API Keys - Data Services 
+## 🔑 AI API Key
+
+- [OpenAI API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/openai.md)
+- [Grok API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/xai.md)
+- [Gemini API Key](https://github.com/is-leeroy-jenkins/Buddy/blob/main/resources/setup/gemini.md)
+
+
+#### Data Services 
 
 - [Claude](https://platform.claude.com/docs/en/api/admin/api_keys/retrieve) 
 - [Mistral](https://chat.mistral.ai/1) 
@@ -158,6 +161,12 @@ Clone the repository and install dependencies:
 - Creating static map thumbnails for property listings.  
 - Validating and normalizing international addresses.  
 - Auditing time zone coverage for scheduling software.  
+
+
+#### **Dependencies**:
+- `requests` – robust HTTP client  
+- `pandas` – spreadsheet data processing  
+- `openpyxl` – Excel I/O (.xlsx files)  
 
 
 
