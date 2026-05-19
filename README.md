@@ -43,7 +43,7 @@ Clone the repository and install dependencies:
 #### 🔑 API Keys - Data Services 
 
 - [Claude](https://platform.claude.com/docs/en/api/admin/api_keys/retrieve) 
-- [Mistral](tps://v2.auth.mistral.ai/login?flow=5bd973ae-06e6-4eac-be6d-801fa7922311) 
+- [Mistral](https://chat.mistral.ai/1) 
 - [NASA](https://api.nasa.gov/) 
 - [Geolocation](https://developers.google.com/maps/documentation/geolocation/get-api-key) 
 - [Google Maps](https://developers.google.com/maps/documentation/embed/get-api-key) 
