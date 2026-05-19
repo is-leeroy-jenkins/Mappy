@@ -40,7 +40,7 @@ Clone the repository and install dependencies:
 - `openpyxl` – Excel I/O (.xlsx files)  
 
 
-## 🔑 API Keys - Data Services 
+### 🔑 API Keys - Data Services 
 
 | Service      | Link                                                                              | Service        | Link                                                                                    |
 | ------------ | --------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------- |
