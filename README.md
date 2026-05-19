@@ -9,6 +9,9 @@ capabilities into ML/AI workflows and applications.
 generate static map previews, and use caching/rate limiting to control API usage — all from Python.
 
 - `mappy` plays well with `cosmo`, mappy's galactic cousin.
+## 🎥 Demo 
+
+![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/mappy-demo.gif)
 
 ## ✨ Features
 
