@@ -39,20 +39,23 @@ Clone the repository and install dependencies:
 - `pandas` – spreadsheet data processing  
 - `openpyxl` – Excel I/O (.xlsx files)  
 
-___
-#### 🔑 API Keys - Data Services 
 
-| Service      | Link                                                                              | Service        | Link                                                                                    |
-| ------------ | --------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------- |
-| Claude       | [Claude](https://platform.claude.com/docs/en/api/admin/api_keys/retrieve)         | Mistral        | [Mistral](tps://v2.auth.mistral.ai/login?flow=5bd973ae-06e6-4eac-be6d-801fa7922311)     |
-| NASA         | [NASA](https://api.nasa.gov/)                                                     | Geolocation    | [Geolocation](https://developers.google.com/maps/documentation/geolocation/get-api-key) |
-| Google Maps  | [Google Maps](https://developers.google.com/maps/documentation/embed/get-api-key) | Gov Data       | [Gov Data](https://api.govinfo.gov/docs/)                                               |
-| The News API | [The News API](https://www.thenewsapi.com/register)                               | Google Weather | [Google Weather](https://developers.google.com/maps/documentation/weather/get-api-key)  |
-| Grokipedia   | [Grokipedia](https://pypi.org/project/grokipedia-api/)                            | CDC            | [CDC](https://data.cdc.gov/login)                                                       |
-| Purple Air   | [Purple Air](https://develop.purpleair.com/)                                      | FIRMS          | [FIRMS](https://firms.modaps.eosdis.nasa.gov/usfs/api/map_key/)                         |
-| CENSUS       | [CENSUS](https://api.census.gov/data/key_signup.html)                             | Wikipedia      | [Wikipedia](https://www.mediawiki.org/wiki/Wikimedia_APIs/Get_started)                  |
-| Congress     | [Congressional Research Service](https://api.congress.gov/sign-up/)		   |		    |											      |
+## 🔑 API Keys - Data Services 
 
+- [Claude](https://platform.claude.com/docs/en/api/admin/api_keys/retrieve) 
+- [Mistral](tps://v2.auth.mistral.ai/login?flow=5bd973ae-06e6-4eac-be6d-801fa7922311) 
+- [NASA](https://api.nasa.gov/) 
+- [Geolocation](https://developers.google.com/maps/documentation/geolocation/get-api-key) 
+- [Google Maps](https://developers.google.com/maps/documentation/embed/get-api-key) 
+- [Gov Data](https://api.govinfo.gov/docs/) 
+- [The News API](https://www.thenewsapi.com/register) 
+- [Google Weather](https://developers.google.com/maps/documentation/weather/get-api-key) 
+- [Grokipedia](https://pypi.org/project/grokipedia-api/) 
+- [CDC](https://data.cdc.gov/login) 
+- [Purple Air](https://develop.purpleair.com/) 
+- [FIRMS](https://firms.modaps.eosdis.nasa.gov/usfs/api/map_key/) 
+- [CENSUS](https://api.census.gov/data/key_signup.html) 
+- [Wikipedia](https://www.mediawiki.org/wiki/Wikimedia_APIs/Get_started)
 
 
 
