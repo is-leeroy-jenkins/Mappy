@@ -18,6 +18,16 @@ application can support location intelligence, situational awareness, and data p
 
 ![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/mappy-demo.gif)
 
+
+## 🧱 Databricks
+[![Mappy](https://img.shields.io/badge/Databricks-Mappy-FF3621?logo=databricks&logoColor=white)](https://dbc-a0c21f80-7bb3.cloud.databricks.com/browse/folders/3169291152437594?o=7474645703081351)
+- A data engineering, analytics, and artificial intelligence collaborative workspace- Notebook
+- Codebase
+
+## 🕸️ Streamlit (Web)
+[![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)](https://mappy-py.streamlit.app/)
+- A Python framework to build dynamic, interactive web applications.
+  
 ## ✨ Features
 
 * 🔎 **Geocoding** – Convert free-form addresses or city, state, and country triples into coordinates.
