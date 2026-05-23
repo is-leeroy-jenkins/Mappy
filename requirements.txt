@@ -32,4 +32,4 @@ langchain-googledrive
 arxiv
 wikipedia
 playwright
-xain-sdk
+xai-sdk

@@ -329,6 +329,21 @@ if 'opensky_api_credentials' not in st.session_state:
 if 'purpleair_api_key' not in st.session_state:
 	st.session_state[ 'purpleair_api_key' ]=''
 
+if 'openai_api_key' not in st.session_state:
+	st.session_state[ 'openai_api_key' ] = ''
+
+if 'gemini_api_key' not in st.session_state:
+	st.session_state[ 'gemini_api_key' ] = ''
+
+if 'claude_api_key' not in st.session_state:
+	st.session_state[ 'claude_api_key' ] = ''
+
+if 'mistral_api_key' not in st.session_state:
+	st.session_state[ 'mistral_api_key' ] = ''
+
+if 'xai_api_key' not in st.session_state:
+	st.session_state[ 'xai_api_key' ] = ''
+	
 if st.session_state.google_api_key == '':
 	default = cfg.GOOGLE_API_KEY
 	if default:
@@ -425,6 +440,36 @@ if st.session_state.purpleair_api_key == '':
 		st.session_state.purpleair_api_key = default
 		os.environ[ 'PURPLEAIR_API_KEY' ]=default
 
+if st.session_state.openai_api_key == '':
+	default = getattr( cfg, 'OPENAI_API_KEY', '' )
+	if default:
+		st.session_state.openai_api_key = default
+		os.environ[ 'OPENAI_API_KEY' ] = default
+
+if st.session_state.claude_api_key == '':
+	default = getattr( cfg, 'CLAUDE_API_KEY', '' )
+	if default:
+		st.session_state.claude_api_key = default
+		os.environ[ 'CLAUDE_API_KEY' ] = default
+
+if st.session_state.gemini_api_key == '':
+	default = getattr( cfg, 'GEMINI_API_KEY', '' )
+	if default:
+		st.session_state.gemini_api_key = default
+		os.environ[ 'GEMINI_API_KEY' ] = default
+
+if st.session_state.mistral_api_key == '':
+	default = getattr( cfg, 'MISTRAL_API_KEY', '' )
+	if default:
+		st.session_state.mistral_api_key = default
+		os.environ[ 'MISTRAL_API_KEY' ] = default
+
+if st.session_state.xai_api_key == '':
+	default = getattr( cfg, 'XAI_API_KEY', '' )
+	if default:
+		st.session_state.xai_api_key = default
+		os.environ[ 'XAI_API_KEY' ] = default
+		
 # ---------------------------------------------------------------------
 # UTILITIES
 # ---------------------------------------------------------------------
@@ -434,23 +479,26 @@ def throw_if( name: str, value: object ) -> None:
 	
 		Purpose:
 		--------
-		Validate that a required value is not empty.
+		Raises a ValueError when a required argument is None or empty.
 		
 		Parameters:
 		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
+		name: str - Argument name used in the error message.
+		value: object - Argument value to validate.
 		
 		Returns:
 		--------
 		None
-		
+	
 	"""
 	if value is None:
-		raise ValueError( f'Argument "{name}" cannot be None.' )
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
 	
 	if isinstance( value, str ) and not value.strip( ):
-		raise ValueError( f'Argument "{name}" cannot be empty.' )
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+	
+	if isinstance( value, (list, tuple, dict, set) ) and len( value ) == 0:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
 def style_subheaders( ) -> None:
 	"""
@@ -745,6 +793,8 @@ def has_valid_coordinates( latitude: object, longitude: object ) -> bool:
 		
 	"""
 	try:
+		throw_if( 'latitude', latitude )
+		throw_if( 'longitude', longitude )
 		lat_value = float( latitude )
 		lon_value = float( longitude )
 	except Exception:
@@ -3221,6 +3271,171 @@ def store_loaded_dataset( df_dataset: pd.DataFrame,
 	st.session_state[ 'df_original' ]=df_base.copy( )
 	st.session_state[ 'df_dataset' ]=df_source.copy( )
 
+# ------------ GENERATIVE AI UTILITIES
+
+def _model_selector( key_prefix: str, label: str, options: list[ str ], default_model: str ) -> str:
+	'''
+		Purpose:
+		--------
+		Render a model selector that supports configured model choices and a custom
+		model override.
+
+		Parameters:
+		-----------
+		key_prefix (str):
+			Unique provider-specific key prefix used for Streamlit widget keys.
+
+		label (str):
+			Display label for the model selector.
+
+		options (list[str]):
+			Configured model names for the provider.
+
+		default_model (str):
+			Default model selected when available.
+
+		Returns:
+		--------
+		str:
+			Selected model name or custom model value.
+	'''
+	base_options = list( options or [ ] )
+	default_value = str( default_model or '' ).strip( )
+	
+	if default_value and default_value not in base_options:
+		base_options.insert( 0, default_value )
+	
+	if 'Custom...' not in base_options:
+		base_options.append( 'Custom...' )
+	
+	idx_default = base_options.index( default_value ) if default_value in base_options else 0
+	
+	selected = st.selectbox(
+		label=label,
+		options=base_options,
+		index=idx_default,
+		key=f'{key_prefix}_model_select'
+	)
+	
+	if selected == 'Custom...':
+		return st.text_input(
+			'Custom Model',
+			value=default_value,
+			key=f'{key_prefix}_model_custom'
+		)
+	
+	return str( selected or '' ).strip( )
+
+def _invoke_provider( fetcher: object, prompt: str, params: Dict[ str, Any ] ) -> Any:
+	'''
+		Purpose:
+		--------
+		Invoke a Generative provider wrapper using the prompt keyword expected by the
+		provider implementation.
+
+		Parameters:
+		-----------
+		fetcher (object):
+			Provider wrapper instance. Expected values are Chat, Grok, Claude, Gemini,
+			or Mistral.
+
+		prompt (str):
+			User prompt submitted from the provider expander.
+
+		params (Dict[str, Any]):
+			Provider-specific keyword arguments collected from the UI.
+
+		Returns:
+		--------
+		Any:
+			Provider response returned by the wrapper.
+	'''
+	try:
+		if fetcher is None:
+			raise ValueError( 'Provider wrapper cannot be None.' )
+		
+		if not hasattr( fetcher, 'fetch' ):
+			raise TypeError( 'Provider wrapper must expose a fetch method.' )
+		
+		text = str( prompt or '' ).strip( )
+		if not text:
+			raise ValueError( 'Prompt cannot be empty.' )
+		
+		arguments = dict( params or { } )
+		provider_name = type( fetcher ).__name__
+		
+		if provider_name in ('Chat', 'Gemini'):
+			return fetcher.fetch( prompt=text, **arguments )
+		
+		if provider_name in ('Grok', 'Claude', 'Mistral'):
+			return fetcher.fetch( query=text, **arguments )
+		
+		try:
+			return fetcher.fetch( prompt=text, **arguments )
+		except TypeError:
+			return fetcher.fetch( query=text, **arguments )
+	
+	except Exception as ex:
+		raise ex
+
+def _render_output( placeholder: object, result: Any ) -> None:
+	'''
+		Purpose:
+		--------
+		Render a Generative provider response into the provider output placeholder.
+
+		Parameters:
+		-----------
+		placeholder (object):
+			Streamlit placeholder returned by st.empty().
+
+		result (Any):
+			Provider result. Supports strings, dictionaries, lists, tuples, objects with
+			model_dump(), and fallback string conversion.
+
+		Returns:
+		--------
+		None
+	'''
+	try:
+		if placeholder is None:
+			raise ValueError( 'Output placeholder cannot be None.' )
+		
+		if result is None:
+			placeholder.info( 'No response was returned.' )
+			return
+		
+		if isinstance( result, str ):
+			text = result.strip( )
+			if not text:
+				placeholder.info( 'No response text was returned.' )
+				return
+			
+			try:
+				parsed = json.loads( text )
+				placeholder.json( parsed )
+				return
+			except Exception:
+				placeholder.markdown( text )
+				return
+		
+		if isinstance( result, (dict, list, tuple) ):
+			placeholder.json( result )
+			return
+		
+		if hasattr( result, 'model_dump' ):
+			placeholder.json( result.model_dump( ) )
+			return
+		
+		if hasattr( result, 'to_dict' ):
+			placeholder.json( result.to_dict( ) )
+			return
+		
+		placeholder.markdown( str( result ) )
+	
+	except Exception as ex:
+		st.error( f'Unable to render provider output: {ex}' )
+
 # ---------------------------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------------------------
@@ -3309,23 +3524,44 @@ with st.sidebar:
 		uploaded = st.file_uploader( label='Upload Spreadsheet', type=[ 'xlsx', 'xls', 'csv' ],
 			key='source_uploader' )
 		
+		df_default = pd.DataFrame( )
+		df_original = pd.DataFrame( )
+		df_tables = pd.DataFrame( columns=[ 'name' ] )
+		database_path = Path( cfg.DB_PATH )
+		database_folder = database_path.parent
+		
+		if database_folder and str( database_folder ) not in ('.', ''):
+			database_folder.mkdir( parents=True, exist_ok=True )
+		
 		if source == 'Default Data':
-			with sqlite3.connect( cfg.DB_PATH ) as connection:
-				df_tables = pd.read_sql_query(
-					"""
-                    SELECT name
-                    FROM sqlite_master
-                    WHERE type = 'table'
-                      AND name NOT LIKE 'sqlite_%'
-                    ORDER BY name;
-					""",
-					connection )
-				
-				df_default = pd.read_sql_query( f'SELECT * FROM "{cfg.DEFAULT_DATA}"',
-					connection )
-				
-				df_original = df_default.copy( )
-				log_step( f'Loaded Database Table: {cfg.DEFAULT_DATA}' )
+			try:
+				with sqlite3.connect( cfg.DB_PATH ) as connection:
+					df_tables = pd.read_sql_query(
+						"""
+                        SELECT name
+                        FROM sqlite_master
+                        WHERE type = 'table'
+                          AND name NOT LIKE 'sqlite_%'
+                        ORDER BY name;
+						""",
+						connection )
+					
+					table_options = df_tables[ 'name' ].tolist( ) \
+						if 'name' in df_tables.columns else [ ]
+					
+					if cfg.DEFAULT_DATA in table_options:
+						table_name = str( cfg.DEFAULT_DATA ).replace( '"', '""' )
+						df_default = pd.read_sql_query( f'SELECT * FROM "{table_name}"',
+							connection )
+						
+						df_original = df_default.copy( )
+						log_step( f'Loaded Database Table: {cfg.DEFAULT_DATA}' )
+					else:
+						st.warning(
+							f'Default table "{cfg.DEFAULT_DATA}" was not found in the database.' )
+			
+			except Exception as ex:
+				st.error( f'Error loading default data: {ex}' )
 		
 		elif source == 'Database Data':
 			try:
@@ -3340,33 +3576,41 @@ with st.sidebar:
 						""",
 						connection )
 					
-					table_options = df_tables[ 'name' ].tolist( )[ :3 ]
+					table_options = df_tables[ 'name' ].tolist( )[ :3 ] \
+						if 'name' in df_tables.columns else [ ]
+					
 					if table_options:
 						selected_table = st.selectbox( label='Select Database Table',
 							options=table_options, key='database_table_selectbox' )
 						
 						if selected_table:
-							df_default = pd.read_sql_query( f'SELECT * FROM "{selected_table}"',
+							table_name = str( selected_table ).replace( '"', '""' )
+							df_default = pd.read_sql_query( f'SELECT * FROM "{table_name}"',
 								connection )
 							
-							loaded_original = df_default.copy( )
+							df_original = df_default.copy( )
 							log_step( f'Loaded Database Table: {selected_table}' )
 					else:
 						st.warning( 'No tables were found in the database.' )
+			
 			except Exception as ex:
 				st.error( f'Error loading database data: {ex}' )
 		
 		elif source == 'Custom Data':
-			if uploaded is not None:
-				if uploaded.name.lower( ).endswith( ('.xlsx', '.xls') ):
-					df_default = pd.read_excel( uploaded )
+			try:
+				if uploaded is not None:
+					if uploaded.name.lower( ).endswith( ('.xlsx', '.xls') ):
+						df_default = pd.read_excel( uploaded )
+					else:
+						df_default = pd.read_csv( uploaded )
+					
+					df_original = df_default.copy( )
+					log_step( f'Loaded uploaded file: {uploaded.name}' )
 				else:
-					df_default = pd.read_csv( uploaded )
-				
-				loaded_original = df_default.copy( )
-				log_step( f'Loaded uploaded file: {uploaded.name}' )
-			else:
-				st.info( 'Upload a spreadsheet to load data.' )
+					st.info( 'Upload a spreadsheet to load data.' )
+			
+			except Exception as ex:
+				st.error( f'Error loading uploaded data: {ex}' )
 		
 		if has_loaded_dataset( df_default ):
 			store_loaded_dataset( df_default, df_original )
@@ -3486,6 +3730,46 @@ with st.sidebar:
 		if purpleair_key:
 			st.session_state.purpleair_key = purpleair_key
 			os.environ[ 'PURPLEAIR_API_KEY' ]=purpleair_key
+		
+		openai_key = st.text_input( 'OpenAI API', type='password',
+			value=st.session_state.openai_api_key or '',
+			help='Overrides OpenAI API from config.py for this session only.' )
+		
+		if openai_key:
+			st.session_state.openai_api_key = openai_key
+			os.environ[ 'OPENAI_API_KEY' ] = openai_key
+		
+		gemini_key = st.text_input( 'Gemini API', type='password',
+			value=st.session_state.gemini_api_key or '',
+			help='Overrides Gemini API from config.py for this session only.' )
+		
+		if gemini_key:
+			st.session_state.gemini_api_key = gemini_key
+			os.environ[ 'GEMINI_API_KEY' ] = gemini_key
+		
+		claude_key = st.text_input( 'Claude API', type='password',
+			value=st.session_state.claude_api_key or '',
+			help='Overrides Claude API from config.py for this session only.' )
+		
+		if claude_key:
+			st.session_state.claude_api_key = claude_key
+			os.environ[ 'CLAUDE_API_KEY' ] = claude_key
+		
+		mistral_key = st.text_input( 'Mistral API', type='password',
+			value=st.session_state.mistral_api_key or '',
+			help='Overrides Mistral API from config.py for this session only.' )
+		
+		if mistral_key:
+			st.session_state.mistral_api_key = mistral_key
+			os.environ[ 'MISTRAL_API_KEY' ] = mistral_key
+		
+		xai_key = st.text_input( 'xAI API', type='password',
+			value=st.session_state.xai_api_key or '',
+			help='Overrides xAI API from config.py for this session only.' )
+		
+		if xai_key:
+			st.session_state.xai_api_key = xai_key
+			os.environ[ 'XAI_API_KEY' ] = xai_key
 	
 	maps = Maps( qps=qps, )
 	distances = DistanceMatrix( maps )
@@ -3503,7 +3787,7 @@ bootstrap_browser_geolocation( geocoder )
 # GEOCODING MODE
 # ==============================================================================
 if mode == 'Geocoding':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Geocoding' )
 		st.divider( )
@@ -3577,7 +3861,7 @@ if mode == 'Geocoding':
 # MAP MODE
 # ==============================================================================
 elif mode == 'Interactive Map':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Interactive Map' )
 		st.divider( )
@@ -3624,7 +3908,7 @@ elif mode == 'Interactive Map':
 # DISTANCES MODE
 # ==============================================================================
 elif mode == 'Distances':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Distance Matrix' )
 		st.divider( )
@@ -3709,7 +3993,7 @@ elif mode == 'Distances':
 # MAPS MODE
 # ==============================================================================
 elif mode == 'Static Maps':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Static Map' )
 		st.divider( )
@@ -3816,7 +4100,7 @@ elif mode == 'Static Maps':
 # TIME ZONE MODE
 # ==============================================================================
 elif mode == 'Time Zones':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Time Zone Lookup' )
 		st.divider( )
@@ -3934,7 +4218,7 @@ elif mode == 'Time Zones':
 # SCRAPING MODE
 # ==============================================================================
 elif mode == 'Web Scraper':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( f'🕷️ Web Scraping' )
 		st.divider( )
@@ -4248,7 +4532,7 @@ elif mode == 'Web Scraper':
 # WEATHER MODE
 # ==============================================================================
 elif mode == 'Weather':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Weather Data' )
 		st.divider( )
@@ -4823,7 +5107,7 @@ elif mode == 'Weather':
 # ENVIRONMENTAL MODE
 # ==============================================================================
 elif mode == 'Environmental':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Environmental Data' )
 		st.divider( )
@@ -5912,7 +6196,7 @@ elif mode == 'Environmental':
 # ASTRONOMICAL MODE
 # ==============================================================================
 elif mode == 'Astronomical':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Astronomical Data' )
 		st.divider( )
@@ -7379,7 +7663,7 @@ elif mode == 'Celestial Map':
 # GEOLOGICAL MODE
 # ==============================================================================
 elif mode == 'Geological':
-	left, center, right = st.columns( [ 0.10, 0.8, 0.10 ] )
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( 'Geological Data' )
 		st.divider( )
@@ -8266,20 +8550,15 @@ elif mode == 'Geological':
 # ==============================================================================
 # TEXT GENERATION MODE
 # ==============================================================================
-elif mode == 'Generation':
-	left, center, right = st.columns( [ 0.1, 0.8, 0.1 ] )
+elif mode == 'Generative':
+	left, center, right = st.columns( [ 0.05, 0.9, 0.05 ] )
 	with center:
 		st.subheader( f'🧠  Generative AI' )
 		st.divider( )
 		
 		# -------- ChatGPT
 		with st.expander( label='ChatGPT', expanded=True ):
-			CHAT_REASONING_EFFORTS = [
-					'minimal',
-					'low',
-					'medium',
-					'high'
-			]
+			CHAT_REASONING_EFFORTS = [ 'minimal', 'low', 'medium', 'high' ]
 			
 			def _clear_chat_state( ) -> None:
 				'''
@@ -8400,12 +8679,8 @@ elif mode == 'Generation':
 			col_left, col_right = st.columns( [ 1, 2 ], border=True )
 			
 			with col_left:
-				chat_prompt = st.text_area(
-					'Prompt',
-					value=st.session_state.get( 'chat_prompt', '' ),
-					height=120,
-					key='chat_prompt'
-				)
+				chat_prompt = st.text_area( 'Prompt',
+					value=st.session_state.get( 'chat_prompt', '' ), height=120, key='chat_prompt' )
 				
 				p_row1 = st.columns( 2 )
 				p_row2 = st.columns( 2 )
@@ -8414,159 +8689,91 @@ elif mode == 'Generation':
 				p_row5 = st.columns( 2 )
 				
 				with p_row1[ 0 ]:
-					_chat_models = (
-							cfg.GPT_MODELS
-							if hasattr( cfg, 'GPT_MODELS' ) and cfg.GPT_MODELS
-							else [
-									'gpt-5.4',
-									'gpt-5',
-									'gpt-5-mini',
-									'gpt-5-nano',
-									'gpt-4.1'
-							]
-					)
+					_chat_models = ( cfg.GPT_MODELS
+					                 if hasattr( cfg, 'GPT_MODELS' ) and cfg.GPT_MODELS
+					                 else [ 'gpt-5.4', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1' ] )
 					
-					chat_model = _model_selector(
-						key_prefix='chat',
-						label='Model',
+					chat_model = _model_selector( key_prefix='chat', label='Model',
 						options=_chat_models,
-						default_model=(
-								'gpt-5-mini'
-								if 'gpt-5-mini' in _chat_models
-								else _chat_models[ 0 ]
-						),
-					)
+						default_model=( 'gpt-5-mini' if 'gpt-5-mini' in _chat_models else _chat_models[ 0 ] ), )
 				
 				with p_row1[ 1 ]:
-					chat_temperature = st.slider(
-						'Temperature',
-						min_value=0.0,
-						max_value=2.0,
-						value=0.7,
-						step=0.05,
-						key='chat_temperature'
-					)
+					chat_temperature = st.slider( 'Temperature', min_value=0.0, max_value=2.0,
+						value=0.7, step=0.05, key='chat_temperature' )
 				
 				with p_row2[ 0 ]:
-					chat_max_tokens = st.number_input(
-						'Max Tokens',
-						min_value=1,
-						max_value=32768,
-						value=2048,
-						step=1,
-						key='chat_max_tokens'
-					)
+					chat_max_tokens = st.number_input( 'Max Tokens', min_value=1, max_value=32768,
+						value=2048, step=1, key='chat_max_tokens' )
 				
 				with p_row2[ 1 ]:
-					chat_top_p = st.slider(
-						'Top-P',
-						min_value=0.0,
-						max_value=1.0,
-						value=1.0,
-						step=0.01,
-						key='chat_top_p'
-					)
+					chat_top_p = st.slider( 'Top-P', min_value=0.0, max_value=1.0, value=1.0,
+						step=0.01, key='chat_top_p' )
 				
 				with p_row3[ 0 ]:
-					chat_seed = st.number_input(
-						'Seed',
-						min_value=0,
-						max_value=2_147_483_647,
-						value=int( st.session_state.get( 'chat_seed', 0 ) ),
-						step=1,
-						key='chat_seed',
-						help='Use 0 to omit the seed parameter.'
-					)
+					chat_seed = st.number_input( 'Seed', min_value=0, max_value=2_147_483_647,
+						value=int( st.session_state.get( 'chat_seed', 0 ) ), step=1,
+						key='chat_seed', help='Use 0 to omit the seed parameter.' )
 				
 				with p_row3[ 1 ]:
-					chat_json_mode = st.checkbox(
-						'JSON Mode',
+					chat_json_mode = st.checkbox( 'JSON Mode',
 						value=bool( st.session_state.get( 'chat_json_mode', False ) ),
 						key='chat_json_mode',
-						help=(
-								'Current wrapper behavior adds JSON-only instructions. '
+						help=( 'Current wrapper behavior adds JSON-only instructions. '
 								'A later Chat class drop-in should wire this to Responses '
-								'API text.format.'
-						)
-					)
+								'API text.format.' ) )
 				
 				with p_row4[ 0 ]:
-					chat_reasoning = st.checkbox(
-						'Reasoning',
+					chat_reasoning = st.checkbox( 'Reasoning',
 						value=bool( st.session_state.get( 'chat_reasoning', False ) ),
-						key='chat_reasoning'
-					)
+						key='chat_reasoning' )
 				
 				with p_row4[ 1 ]:
-					chat_web_search = st.checkbox(
-						'Web Search',
+					chat_web_search = st.checkbox( 'Web Search',
 						value=bool( st.session_state.get( 'chat_web_search', False ) ),
-						key='chat_web_search'
-					)
+						key='chat_web_search' )
 				
 				with p_row5[ 0 ]:
-					chat_store = st.checkbox(
-						'Store',
+					chat_store = st.checkbox( 'Store',
 						value=bool( st.session_state.get( 'chat_store', True ) ),
-						key='chat_store'
-					)
+						key='chat_store' )
 				
 				with p_row5[ 1 ]:
-					chat_stream = st.checkbox(
-						'Stream',
+					chat_stream = st.checkbox( 'Stream',
 						value=bool( st.session_state.get( 'chat_stream', False ) ),
-						key='chat_stream'
-					)
+						key='chat_stream' )
 				
 				_chat_supports_reasoning = (
 						str( chat_model ).strip( ).lower( ).startswith( 'gpt-5' )
-						or str( chat_model ).strip( ).lower( ).startswith( 'o' )
-				)
+						or str( chat_model ).strip( ).lower( ).startswith( 'o' ) )
 				
 				if _chat_supports_reasoning and chat_reasoning:
-					chat_reasoning_effort = st.selectbox(
-						'Reasoning Effort',
+					chat_reasoning_effort = st.selectbox( 'Reasoning Effort',
 						options=CHAT_REASONING_EFFORTS,
 						index=CHAT_REASONING_EFFORTS.index(
-							st.session_state.get( 'chat_reasoning_effort', 'low' )
-						),
-						key='chat_reasoning_effort'
-					)
+							st.session_state.get( 'chat_reasoning_effort', 'low' ) ),
+						key='chat_reasoning_effort' )
 				else:
 					chat_reasoning_effort = None
 				
-				chat_system = st.text_area(
-					'System',
+				chat_system = st.text_area( 'System',
 					value=st.session_state.get( 'chat_system', '' ),
-					height=120,
-					key='chat_system'
-				)
+					height=120, key='chat_system' )
 				
 				if chat_web_search:
 					chat_domains = st.text_area(
 						'Preferred Search Domains (one per line or comma-separated)',
 						value=st.session_state.get( 'chat_domains', '' ),
-						height=90,
-						key='chat_domains',
-						help='Examples: openai.com, platform.openai.com, arxiv.org'
-					)
+						height=90, key='chat_domains',
+						help='Examples: openai.com, platform.openai.com, arxiv.org' )
 				else:
 					chat_domains = ''
 				
 				btn_row = st.columns( 2 )
-				
 				with btn_row[ 0 ]:
-					chat_submit = st.button(
-						'Submit',
-						key='chat_submit'
-					)
+					chat_submit = st.button( 'Submit', key='chat_submit' )
 				
 				with btn_row[ 1 ]:
-					st.button(
-						'Clear',
-						key='chat_clear',
-						on_click=_clear_chat_state
-					)
+					st.button( 'Clear', key='chat_clear', on_click=_clear_chat_state )
 			
 			with col_right:
 				chat_output = st.empty( )

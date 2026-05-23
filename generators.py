@@ -43,7 +43,7 @@
 '''
 from __future__ import annotations
 
-from anthropic import Anthropic as Claude
+from anthropic import Anthropic as AnthropicClient
 import base64
 from boogr import Error
 from core import Result
@@ -56,7 +56,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Pattern, List, Tuple
 from requests import Response
 from xai_sdk import Client as Xai
-from mistralai import Mistral as MistralAI
+from mistralai.client import Mistral as MistralAI
 import re
 import urllib
 
@@ -2281,7 +2281,7 @@ class Claude( Generator ):
 		search_web( ) -> str | None
 		
 	'''
-	client: Optional[ Claude ]
+	client: Optional[ AnthropicClient ]
 	model: Optional[ str ]
 	response: Optional[ Any ]
 	api_key: Optional[ str ]
@@ -2540,13 +2540,12 @@ class Claude( Generator ):
 			self.top_k = int( top_k ) if top_k is not None else None
 			self.system_instructions = system if system and str( system ).strip( ) else None
 			self.web_search = bool( web_search )
-			self.client = Claude( api_key=self.api_key )
+			self.client = AnthropicClient( api_key=self.api_key )
 			self.search_domains = self._normalize_domains( search_domains )
 			self.blocked_domains = self._normalize_domains( blocked_domains )
 			self.thinking_budget = int( thinking_budget ) if thinking_budget is not None else None
 			self.messages = [ { 'role': 'user', 'content': self.query } ]
-			self.params = \
-				{
+			self.params = {
 						'model': self.model,
 						'max_tokens': self.max_tokens,
 						'messages': self.messages,
@@ -2563,8 +2562,7 @@ class Claude( Generator ):
 				if _budget < 1024:
 					_budget = 1024
 				
-				self.params[ 'thinking' ] = \
-					{
+				self.params[ 'thinking' ] = {
 							'type': 'enabled',
 							'budget_tokens': _budget,
 					}
@@ -2580,8 +2578,7 @@ class Claude( Generator ):
 			
 			if self.web_search:
 				self.tools = [ ]
-				self.web_tool = \
-					{
+				self.web_tool = {
 							'type': 'web_search_20250305',
 							'name': 'web_search',
 					}
@@ -2601,14 +2598,7 @@ class Claude( Generator ):
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
-			exception.method = (
-					'fetch( self, query: str, model: str="claude-sonnet-4-6", '
-					'temperature: float=0.7, max_tokens: int=2048, top_p: float=1.0, '
-					'top_k: int | None=None, system: str | None=None, '
-					'stop_sequences: List[ str ] | None=None, thinking: bool=False, '
-					'thinking_budget: int | None=None, web_search: bool=False, '
-					'search_domains: Any=None, blocked_domains: Any=None ) -> str | None'
-			)
+			exception.method =  'fetch( self, *args ) -> str | None'
 			raise exception
 	
 	def generate_text( self, query: str, model: str = 'claude-sonnet-4-6', temperature: float = 0.7,
@@ -2632,21 +2622,11 @@ class Claude( Generator ):
 			
 		'''
 		try:
-			return self.fetch(
-				query=query,
-				model=model,
-				temperature=temperature,
-				max_tokens=max_tokens,
-				top_p=top_p,
-				top_k=top_k,
-				system=system,
-				stop_sequences=stop_sequences,
-				thinking=thinking,
-				thinking_budget=thinking_budget,
-				web_search=web_search,
-				search_domains=search_domains,
-				blocked_domains=blocked_domains,
-			)
+			return self.fetch( query=query, model=model, temperature=temperature,
+				max_tokens=max_tokens, top_p=top_p, top_k=top_k, system=system,
+				stop_sequences=stop_sequences, thinking=thinking, thinking_budget=thinking_budget,
+				web_search=web_search, search_domains=search_domains,
+				blocked_domains=blocked_domains, )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
@@ -2675,21 +2655,10 @@ class Claude( Generator ):
 			
 		'''
 		try:
-			return self.fetch(
-				query=query,
-				model=model,
-				temperature=temperature,
-				max_tokens=max_tokens,
-				top_p=top_p,
-				top_k=top_k,
-				system=system,
-				stop_sequences=stop_sequences,
-				thinking=thinking,
-				thinking_budget=thinking_budget,
-				web_search=True,
-				search_domains=search_domains,
-				blocked_domains=blocked_domains,
-			)
+			return self.fetch( query=query, model=model, temperature=temperature, max_tokens=max_tokens,
+				top_p=top_p, top_k=top_k, system=system, stop_sequences=stop_sequences,
+				thinking=thinking, thinking_budget=thinking_budget, web_search=True,
+				search_domains=search_domains, blocked_domains=blocked_domains, )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
