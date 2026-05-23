@@ -63,7 +63,7 @@ STYLE_ID = r'86d00019936c16f936cc936c'
 STYLE_NAME = r'uap-dark'
 
 # ----------- API KEYS
-
+CLAUDE_API_KEY = os.getenv( 'CLAUDE_API_KEY' )
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
 GOOGLE_API_KEY = os.getenv( 'GOOGLE_API_KEY' )
 GOOGLE_CSE_ID = os.getenv( 'GOOGLE_CSE_ID' )
@@ -71,8 +71,10 @@ GOOGLE_CLOUD_LOCATION = os.getenv( 'GOOGLE_CLOUD_LOCATION' )
 GOOGLE_CLOUD_PROJECT_ID = os.getenv( 'GOOGLE_CLOUD_PROJECT_ID' )
 GOOGLEMAPS_API_KEY = os.getenv( 'GOOGLEMAPS_API_KEY' )
 GOOGLE_WEATHER_API_KEY = os.getenv( 'GOOGLE_WEATHER_API_KEY' )
+MISTRAL_API_KEY = os.getenv( 'MISTRAL_API_KEY' )
 NASA_API_KEY = os.getenv( 'NASA_API_KEY' )
 NASA_EARTHDATA_TOKEN = os.getenv( 'NASA_EARTHDATA_TOKEN' )
+OPENAI_API_KEY = os.getenv( 'OPENAI_API_KEY' )
 AIRNOW_API_KEY = os.getenv( 'AIRNOW_API_KEY' )
 OPENAQ_API_KEY = os.getenv( 'OPENAQ_API_KEY' )
 WEATHERAPI_API_KEY = os.getenv( 'WEATHERAPI_API_KEY' )
@@ -81,11 +83,12 @@ OPENSKY_API_CREDENTIALS = os.getenv( 'OPENSKY_API_CREDENTIALS' )
 GOVINFO_API_KEY = os.getenv( 'GOVINFO_API_KEY' )
 FIRMS_MAP_KEY = os.getenv( 'FIRMS_MAP_KEY' )
 PURPLEAIR_API_KEY = os.getenv( 'PURPLEAIR_API_KEY' )
+XAI_API_KEY = os.getenv( 'XAI_API_KEY' )
 
 # -------------- SETTINGS
 
 MODES = [ 'Geocoding', 'Interactive Map', 'Distances', 'Static Maps', 'Time Zones', 'Web Scraper',
-          'Weather', 'Environmental', 'Geological', 'Astronomical', 'Celestial Map',
+          'Weather', 'Environmental', 'Geological', 'Astronomical', 'Celestial Map', 'Generative',
           'Data Upload', 'Data Management' ]
 
 AGENTS = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '

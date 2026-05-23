@@ -3154,7 +3154,11 @@ class GoogleWeather( Fetcher ):
 			raise exception
 
 class NavalObservatory( Fetcher ):
-	'''Fetches celestial-navigation data from the U.S. Naval Observatory API.
+	'''
+		
+		Purpose:
+		--------
+		Fetches celestial-navigation data from the U.S. Naval Observatory API.
 
 		Attributes:
 		-----------

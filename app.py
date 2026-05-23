@@ -56,6 +56,7 @@ from timezones import Timezone
 from staticmaps import StaticMap
 from excel import Excel
 from caches import InMemoryCache, SQLiteCache
+from generators import Chat, Claude, Grok, Mistral, Gemini
 from fetchers import (
 	GoogleWeather,
 	OpenWeather,
@@ -119,6 +120,65 @@ if 'df_geocoding_map_results' not in st.session_state:
 if 'pipeline_log' not in st.session_state:
 	st.session_state[ 'pipeline_log' ]=[ ]
 
+# -------- GENERATIVE AI VARIABLES --------------------
+
+if 'model' not in st.session_state:
+	st.session_state[ 'model' ] = ''
+
+if 'max_tools' not in st.session_state:
+	st.session_state[ 'max_tools' ] = 0
+
+if 'max_tokens' not in st.session_state:
+	st.session_state[ 'max_tokens' ] = 0
+
+if 'temperature' not in st.session_state:
+	st.session_state[ 'temperature' ] = 0.0
+
+if 'top_percent' not in st.session_state:
+	st.session_state[ 'top_percent' ] = 0.0
+
+if 'frequency_penalty' not in st.session_state:
+	st.session_state[ 'frequency_penalty' ] = 0.0
+
+if 'presense_penalty' not in st.session_state:
+	st.session_state[ 'presense_penalty' ] = 0.0
+
+if 'background' not in st.session_state:
+	st.session_state[ 'background' ] = False
+
+if 'parallel_tools' not in st.session_state:
+	st.session_state[ 'parallel_tools' ] = False
+
+if 'store' not in st.session_state:
+	st.session_state[ 'store' ] = False
+
+if 'stream' not in st.session_state:
+	st.session_state[ 'stream' ] = False
+
+if 'response_format' not in st.session_state:
+	st.session_state[ 'response_format' ] = ''
+
+if 'tool_choice' not in st.session_state:
+	st.session_state[ 'tool_choice' ] = ''
+
+if 'reasoning' not in st.session_state:
+	st.session_state[ 'reasoning' ] = ''
+
+if 'stops' not in st.session_state:
+	st.session_state[ 'stops' ] = [ ]
+
+if 'include' not in st.session_state:
+	st.session_state[ 'include' ] = [ ]
+
+if 'input' not in st.session_state:
+	st.session_state[ 'input' ] = [ ]
+
+if 'tools' not in st.session_state:
+	st.session_state[ 'tools' ] = [ ]
+
+if 'messages' not in st.session_state:
+	st.session_state[ 'messages' ] = [ ]
+	
 # ------- Mappy State
 
 if 'mode' not in st.session_state:
@@ -8202,6 +8262,1757 @@ elif mode == 'Geological':
 				
 				st.markdown( '##### Raw Result' )
 				st.json( geo_result )
+
+# ==============================================================================
+# TEXT GENERATION MODE
+# ==============================================================================
+elif mode == 'Generation':
+	left, center, right = st.columns( [ 0.1, 0.8, 0.1 ] )
+	with center:
+		st.subheader( f'🧠  Generative AI' )
+		st.divider( )
+		
+		# -------- ChatGPT
+		with st.expander( label='ChatGPT', expanded=True ):
+			CHAT_REASONING_EFFORTS = [
+					'minimal',
+					'low',
+					'medium',
+					'high'
+			]
+			
+			def _clear_chat_state( ) -> None:
+				'''
+					Purpose:
+					--------
+					Flag the ChatGPT generation state for reset on the next rerun.
+
+					Parameters:
+					-----------
+					None
+
+					Returns:
+					--------
+					None
+				'''
+				st.session_state[ 'chat_clear_request' ] = True
+			
+			def _normalize_chat_domains( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize newline-, comma-, or semicolon-delimited domain entries into
+					clean domains for the OpenAI web-search wrapper argument.
+
+					Parameters:
+					-----------
+					value (object):
+						Domain text supplied by the user.
+
+					Returns:
+					--------
+					list[str]:
+						Canonical, de-duplicated domain names.
+				'''
+				text = str( value or '' ).strip( )
+				
+				if not text:
+					return [ ]
+				
+				values: list[ str ] = [ ]
+				entries = re.split( r'[\n,;]+', text )
+				
+				for entry in entries:
+					raw_value = str( entry or '' ).strip( ).lower( )
+					
+					if not raw_value:
+						continue
+					
+					if not raw_value.startswith( 'http://' ) and not raw_value.startswith(
+							'https://' ):
+						raw_value = f'https://{raw_value}'
+					
+					parsed = urlparse( raw_value )
+					domain = (parsed.netloc or parsed.path or '').strip( ).lower( )
+					domain = re.sub( r':\d+$', '', domain )
+					domain = domain.lstrip( '.' )
+					
+					if domain.startswith( 'www.' ):
+						domain = domain[ 4: ]
+					
+					if not domain:
+						continue
+					
+					if not re.fullmatch( r'[a-z0-9][a-z0-9.-]*\.[a-z]{2,}', domain ):
+						raise ValueError( f'Invalid search domain: {domain}' )
+					
+					if domain not in values:
+						values.append( domain )
+				
+				return values
+			
+			if 'chat_clear_request' not in st.session_state:
+				st.session_state[ 'chat_clear_request' ] = False
+			
+			if 'chat_prompt' not in st.session_state:
+				st.session_state[ 'chat_prompt' ] = ''
+			
+			if 'chat_system' not in st.session_state:
+				st.session_state[ 'chat_system' ] = ''
+			
+			if 'chat_domains' not in st.session_state:
+				st.session_state[ 'chat_domains' ] = ''
+			
+			if 'chat_json_mode' not in st.session_state:
+				st.session_state[ 'chat_json_mode' ] = False
+			
+			if 'chat_reasoning' not in st.session_state:
+				st.session_state[ 'chat_reasoning' ] = False
+			
+			if 'chat_web_search' not in st.session_state:
+				st.session_state[ 'chat_web_search' ] = False
+			
+			if 'chat_store' not in st.session_state:
+				st.session_state[ 'chat_store' ] = True
+			
+			if 'chat_stream' not in st.session_state:
+				st.session_state[ 'chat_stream' ] = False
+			
+			if 'chat_seed' not in st.session_state:
+				st.session_state[ 'chat_seed' ] = 0
+			
+			if st.session_state.get( 'chat_reasoning_effort', 'low' ) not in CHAT_REASONING_EFFORTS:
+				st.session_state[ 'chat_reasoning_effort' ] = 'low'
+			
+			if st.session_state.get( 'chat_clear_request', False ):
+				st.session_state[ 'chat_prompt' ] = ''
+				st.session_state[ 'chat_system' ] = ''
+				st.session_state[ 'chat_domains' ] = ''
+				st.session_state[ 'chat_json_mode' ] = False
+				st.session_state[ 'chat_reasoning' ] = False
+				st.session_state[ 'chat_web_search' ] = False
+				st.session_state[ 'chat_store' ] = True
+				st.session_state[ 'chat_stream' ] = False
+				st.session_state[ 'chat_seed' ] = 0
+				st.session_state[ 'chat_reasoning_effort' ] = 'low'
+				st.session_state[ 'chat_clear_request' ] = False
+			
+			col_left, col_right = st.columns( [ 1, 2 ], border=True )
+			
+			with col_left:
+				chat_prompt = st.text_area(
+					'Prompt',
+					value=st.session_state.get( 'chat_prompt', '' ),
+					height=120,
+					key='chat_prompt'
+				)
+				
+				p_row1 = st.columns( 2 )
+				p_row2 = st.columns( 2 )
+				p_row3 = st.columns( 2 )
+				p_row4 = st.columns( 2 )
+				p_row5 = st.columns( 2 )
+				
+				with p_row1[ 0 ]:
+					_chat_models = (
+							cfg.GPT_MODELS
+							if hasattr( cfg, 'GPT_MODELS' ) and cfg.GPT_MODELS
+							else [
+									'gpt-5.4',
+									'gpt-5',
+									'gpt-5-mini',
+									'gpt-5-nano',
+									'gpt-4.1'
+							]
+					)
+					
+					chat_model = _model_selector(
+						key_prefix='chat',
+						label='Model',
+						options=_chat_models,
+						default_model=(
+								'gpt-5-mini'
+								if 'gpt-5-mini' in _chat_models
+								else _chat_models[ 0 ]
+						),
+					)
+				
+				with p_row1[ 1 ]:
+					chat_temperature = st.slider(
+						'Temperature',
+						min_value=0.0,
+						max_value=2.0,
+						value=0.7,
+						step=0.05,
+						key='chat_temperature'
+					)
+				
+				with p_row2[ 0 ]:
+					chat_max_tokens = st.number_input(
+						'Max Tokens',
+						min_value=1,
+						max_value=32768,
+						value=2048,
+						step=1,
+						key='chat_max_tokens'
+					)
+				
+				with p_row2[ 1 ]:
+					chat_top_p = st.slider(
+						'Top-P',
+						min_value=0.0,
+						max_value=1.0,
+						value=1.0,
+						step=0.01,
+						key='chat_top_p'
+					)
+				
+				with p_row3[ 0 ]:
+					chat_seed = st.number_input(
+						'Seed',
+						min_value=0,
+						max_value=2_147_483_647,
+						value=int( st.session_state.get( 'chat_seed', 0 ) ),
+						step=1,
+						key='chat_seed',
+						help='Use 0 to omit the seed parameter.'
+					)
+				
+				with p_row3[ 1 ]:
+					chat_json_mode = st.checkbox(
+						'JSON Mode',
+						value=bool( st.session_state.get( 'chat_json_mode', False ) ),
+						key='chat_json_mode',
+						help=(
+								'Current wrapper behavior adds JSON-only instructions. '
+								'A later Chat class drop-in should wire this to Responses '
+								'API text.format.'
+						)
+					)
+				
+				with p_row4[ 0 ]:
+					chat_reasoning = st.checkbox(
+						'Reasoning',
+						value=bool( st.session_state.get( 'chat_reasoning', False ) ),
+						key='chat_reasoning'
+					)
+				
+				with p_row4[ 1 ]:
+					chat_web_search = st.checkbox(
+						'Web Search',
+						value=bool( st.session_state.get( 'chat_web_search', False ) ),
+						key='chat_web_search'
+					)
+				
+				with p_row5[ 0 ]:
+					chat_store = st.checkbox(
+						'Store',
+						value=bool( st.session_state.get( 'chat_store', True ) ),
+						key='chat_store'
+					)
+				
+				with p_row5[ 1 ]:
+					chat_stream = st.checkbox(
+						'Stream',
+						value=bool( st.session_state.get( 'chat_stream', False ) ),
+						key='chat_stream'
+					)
+				
+				_chat_supports_reasoning = (
+						str( chat_model ).strip( ).lower( ).startswith( 'gpt-5' )
+						or str( chat_model ).strip( ).lower( ).startswith( 'o' )
+				)
+				
+				if _chat_supports_reasoning and chat_reasoning:
+					chat_reasoning_effort = st.selectbox(
+						'Reasoning Effort',
+						options=CHAT_REASONING_EFFORTS,
+						index=CHAT_REASONING_EFFORTS.index(
+							st.session_state.get( 'chat_reasoning_effort', 'low' )
+						),
+						key='chat_reasoning_effort'
+					)
+				else:
+					chat_reasoning_effort = None
+				
+				chat_system = st.text_area(
+					'System',
+					value=st.session_state.get( 'chat_system', '' ),
+					height=120,
+					key='chat_system'
+				)
+				
+				if chat_web_search:
+					chat_domains = st.text_area(
+						'Preferred Search Domains (one per line or comma-separated)',
+						value=st.session_state.get( 'chat_domains', '' ),
+						height=90,
+						key='chat_domains',
+						help='Examples: openai.com, platform.openai.com, arxiv.org'
+					)
+				else:
+					chat_domains = ''
+				
+				btn_row = st.columns( 2 )
+				
+				with btn_row[ 0 ]:
+					chat_submit = st.button(
+						'Submit',
+						key='chat_submit'
+					)
+				
+				with btn_row[ 1 ]:
+					st.button(
+						'Clear',
+						key='chat_clear',
+						on_click=_clear_chat_state
+					)
+			
+			with col_right:
+				chat_output = st.empty( )
+			
+			# -----------------------------
+			# Submit Button
+			# -----------------------------
+			if chat_submit:
+				try:
+					if not str( chat_prompt or '' ).strip( ):
+						raise ValueError( 'Prompt cannot be empty.' )
+					
+					if chat_json_mode:
+						has_json_instruction = (
+								'json' in str( chat_prompt or '' ).lower( )
+								or 'json' in str( chat_system or '' ).lower( )
+						)
+						
+						if not has_json_instruction:
+							chat_system = (
+									str( chat_system or '' ).strip( )
+									+ '\n\nReturn valid JSON only.'
+							).strip( )
+					
+					chat_domains_list = (
+							_normalize_chat_domains( chat_domains )
+							if chat_web_search
+							else [ ]
+					)
+					
+					fetcher = Chat( )
+					params = {
+							'model': chat_model,
+							'temperature': float( chat_temperature ),
+							'max_tokens': int( chat_max_tokens ),
+							'top_p': float( chat_top_p ),
+							'seed': int( chat_seed ) if int( chat_seed ) > 0 else None,
+							'system': chat_system if str( chat_system ).strip( ) else None,
+							'response_format': 'json' if chat_json_mode else None,
+							'reasoning_effort': (
+									chat_reasoning_effort
+									if _chat_supports_reasoning
+									   and chat_reasoning
+									   and chat_reasoning_effort
+									else None
+							),
+							'web_search': bool( chat_web_search ),
+							'search_domains': chat_domains_list if chat_domains_list else None,
+							'store': bool( chat_store ),
+							'stream': bool( chat_stream ),
+							'parallel_tool_calls': True,
+							'tool_choice': 'auto',
+					}
+					
+					params = {
+							key: value
+							for key, value in params.items( )
+							if value is not None
+					}
+					
+					result = _invoke_provider( fetcher, chat_prompt, params )
+					_render_output( chat_output, result )
+				
+				except Exception as exc:
+					st.error( str( exc ) )
+		
+		# -------- Groq
+		with st.expander( label='Grok', expanded=False ):
+			GROK_REASONING_EFFORTS = [
+					'none',
+					'low',
+					'medium',
+					'high'
+			]
+			
+			def _clear_grok_state( ) -> None:
+				'''
+					Purpose:
+					--------
+					Flag the Grok generation state for reset on the next rerun.
+
+					Parameters:
+					-----------
+					None
+
+					Returns:
+					--------
+					None
+				'''
+				st.session_state[ 'grok_clear_request' ] = True
+			
+			def _normalize_grok_domains( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize newline-, comma-, or semicolon-delimited domain entries into
+					clean xAI web-search allowed domains.
+
+					Parameters:
+					-----------
+					value (object):
+						Domain text supplied by the user.
+
+					Returns:
+					--------
+					list[str]:
+						Canonical, de-duplicated domain names.
+				'''
+				text = str( value or '' ).strip( )
+				
+				if not text:
+					return [ ]
+				
+				values: list[ str ] = [ ]
+				entries = re.split( r'[\n,;]+', text )
+				
+				for entry in entries:
+					domain = str( entry or '' ).strip( ).lower( )
+					
+					if not domain:
+						continue
+					
+					domain = re.sub( r'^https?://', '', domain )
+					domain = domain.split( '/' )[ 0 ]
+					domain = re.sub( r':\d+$', '', domain )
+					domain = domain.lstrip( '.' )
+					
+					if domain.startswith( 'www.' ):
+						domain = domain[ 4: ]
+					
+					if not re.fullmatch( r'[a-z0-9][a-z0-9.-]*\.[a-z]{2,}', domain ):
+						raise ValueError( f'Invalid Grok web-search domain: {domain}' )
+					
+					if domain not in values:
+						values.append( domain )
+				
+				if len( values ) > 5:
+					raise ValueError(
+						'xAI web-search allowed domains are limited to five domains.'
+					)
+				
+				return values
+			
+			def _normalize_grok_stop_lines( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize stop sequences entered one per line.
+
+					Parameters:
+					-----------
+					value (object):
+						Text value supplied by the stop-sequence textarea.
+
+					Returns:
+					--------
+					list[str]:
+						Non-empty stop sequences.
+				'''
+				text = str( value or '' )
+				
+				if not text.strip( ):
+					return [ ]
+				
+				return [
+						line.strip( )
+						for line in text.splitlines( )
+						if line.strip( )
+				]
+			
+			if 'grok_clear_request' not in st.session_state:
+				st.session_state[ 'grok_clear_request' ] = False
+			
+			if 'groq_prompt_chat' not in st.session_state:
+				st.session_state[ 'groq_prompt_chat' ] = ''
+			
+			if 'groq_system_chat' not in st.session_state:
+				st.session_state[ 'groq_system_chat' ] = ''
+			
+			if 'groq_domains_chat' not in st.session_state:
+				st.session_state[ 'groq_domains_chat' ] = ''
+			
+			if 'groq_stop_chat' not in st.session_state:
+				st.session_state[ 'groq_stop_chat' ] = ''
+			
+			if 'groq_json_mode_chat' not in st.session_state:
+				st.session_state[ 'groq_json_mode_chat' ] = False
+			
+			if 'groq_reasoning_chat' not in st.session_state:
+				st.session_state[ 'groq_reasoning_chat' ] = False
+			
+			if 'groq_web_search_chat' not in st.session_state:
+				st.session_state[ 'groq_web_search_chat' ] = False
+			
+			if 'groq_store_chat' not in st.session_state:
+				st.session_state[ 'groq_store_chat' ] = True
+			
+			if 'groq_stream_chat' not in st.session_state:
+				st.session_state[ 'groq_stream_chat' ] = False
+			
+			if 'groq_seed_chat' not in st.session_state:
+				st.session_state[ 'groq_seed_chat' ] = 0
+			
+			if st.session_state.get( 'groq_reasoning_effort_chat',
+					'low' ) not in GROK_REASONING_EFFORTS:
+				st.session_state[ 'groq_reasoning_effort_chat' ] = 'low'
+			
+			if st.session_state.get( 'grok_clear_request', False ):
+				st.session_state[ 'groq_prompt_chat' ] = ''
+				st.session_state[ 'groq_system_chat' ] = ''
+				st.session_state[ 'groq_domains_chat' ] = ''
+				st.session_state[ 'groq_stop_chat' ] = ''
+				st.session_state[ 'groq_json_mode_chat' ] = False
+				st.session_state[ 'groq_reasoning_chat' ] = False
+				st.session_state[ 'groq_web_search_chat' ] = False
+				st.session_state[ 'groq_store_chat' ] = True
+				st.session_state[ 'groq_stream_chat' ] = False
+				st.session_state[ 'groq_seed_chat' ] = 0
+				st.session_state[ 'groq_reasoning_effort_chat' ] = 'low'
+				st.session_state[ 'grok_clear_request' ] = False
+			
+			col_left, col_right = st.columns( [ 1, 2 ], border=True )
+			
+			with col_left:
+				groq_prompt = st.text_area(
+					'Prompt',
+					value=st.session_state.get( 'groq_prompt_chat', '' ),
+					height=120,
+					key='groq_prompt_chat',
+				)
+				
+				p_row1 = st.columns( 2 )
+				p_row2 = st.columns( 2 )
+				p_row3 = st.columns( 2 )
+				p_row4 = st.columns( 2 )
+				p_row5 = st.columns( 2 )
+				
+				with p_row1[ 0 ]:
+					_grok_models = (
+							cfg.GROK_MODELS
+							if hasattr( cfg, 'GROK_MODELS' ) and cfg.GROK_MODELS
+							else [
+									'grok-4.3',
+									'grok-4.20',
+									'grok-4.20-reasoning',
+									'grok-4.20-multi-agent',
+									'grok-4-1-fast',
+									'grok-4-fast-reasoning',
+									'grok-4',
+									'grok-code-fast-1',
+									'grok-3-mini'
+							]
+					)
+					
+					groq_model = _model_selector(
+						key_prefix='groq',
+						label='Model',
+						options=_grok_models,
+						default_model=(
+								'grok-4.3'
+								if 'grok-4.3' in _grok_models
+								else _grok_models[ 0 ]
+						),
+					)
+				
+				with p_row1[ 1 ]:
+					groq_temperature = st.slider(
+						'Temperature',
+						min_value=0.0,
+						max_value=2.0,
+						value=0.7,
+						step=0.05,
+						key='groq_temperature_chat',
+					)
+				
+				with p_row2[ 0 ]:
+					groq_max_tokens = st.number_input(
+						'Max Tokens',
+						min_value=1,
+						max_value=32768,
+						value=2048,
+						step=1,
+						key='groq_max_tokens_chat',
+					)
+				
+				with p_row2[ 1 ]:
+					groq_top_p = st.slider(
+						'Top-P',
+						min_value=0.0,
+						max_value=1.0,
+						value=1.0,
+						step=0.01,
+						key='groq_top_p_chat',
+					)
+				
+				with p_row3[ 0 ]:
+					groq_seed = st.number_input(
+						'Seed',
+						min_value=0,
+						max_value=2_147_483_647,
+						value=int( st.session_state.get( 'groq_seed_chat', 0 ) ),
+						step=1,
+						key='groq_seed_chat',
+						help='Use 0 to omit the seed parameter.'
+					)
+				
+				with p_row3[ 1 ]:
+					groq_json_mode = st.checkbox(
+						'JSON Mode',
+						value=bool( st.session_state.get( 'groq_json_mode_chat', False ) ),
+						key='groq_json_mode_chat',
+						help='Adds JSON-only instructions through the current Grok wrapper.'
+					)
+				
+				with p_row4[ 0 ]:
+					groq_reasoning = st.checkbox(
+						'Reasoning',
+						value=bool( st.session_state.get( 'groq_reasoning_chat', False ) ),
+						key='groq_reasoning_chat'
+					)
+				
+				with p_row4[ 1 ]:
+					groq_web_search = st.checkbox(
+						'Web Search',
+						value=bool( st.session_state.get( 'groq_web_search_chat', False ) ),
+						key='groq_web_search_chat'
+					)
+				
+				with p_row5[ 0 ]:
+					groq_store = st.checkbox(
+						'Store',
+						value=bool( st.session_state.get( 'groq_store_chat', True ) ),
+						key='groq_store_chat'
+					)
+				
+				with p_row5[ 1 ]:
+					groq_stream = st.checkbox(
+						'Stream',
+						value=bool( st.session_state.get( 'groq_stream_chat', False ) ),
+						key='groq_stream_chat'
+					)
+				
+				_groq_model_name = str( groq_model or '' ).strip( ).lower( )
+				_groq_is_reasoning_model = (
+						'reasoning' in _groq_model_name
+						or _groq_model_name.startswith( 'grok-4' )
+						or _groq_model_name.startswith( 'grok-4.3' )
+						or _groq_model_name.startswith( 'grok-4.20' )
+				)
+				
+				_groq_supports_reasoning_effort = (
+						_groq_model_name == 'grok-4.3'
+						or _groq_model_name == 'grok-4.20-multi-agent'
+				)
+				
+				if _groq_supports_reasoning_effort and groq_reasoning:
+					groq_reasoning_effort = st.selectbox(
+						'Reasoning Effort',
+						options=GROK_REASONING_EFFORTS,
+						index=GROK_REASONING_EFFORTS.index(
+							st.session_state.get( 'groq_reasoning_effort_chat', 'low' )
+						),
+						key='groq_reasoning_effort_chat'
+					)
+				else:
+					groq_reasoning_effort = None
+				
+				groq_system = st.text_area(
+					'System',
+					value=st.session_state.get( 'groq_system_chat', '' ),
+					height=120,
+					key='groq_system_chat'
+				)
+				
+				if groq_web_search:
+					groq_domains = st.text_area(
+						'Allowed Search Domains',
+						value=st.session_state.get( 'groq_domains_chat', '' ),
+						height=90,
+						key='groq_domains_chat',
+						help='Optional. xAI allows up to five allowed domains.'
+					)
+				else:
+					groq_domains = ''
+				
+				groq_stop = st.text_area(
+					'Stop Sequences',
+					value=st.session_state.get( 'groq_stop_chat', '' ),
+					height=80,
+					key='groq_stop_chat',
+					disabled=_groq_is_reasoning_model,
+					help='One stop sequence per line. Disabled for reasoning models.'
+				)
+				
+				btn_row = st.columns( 2 )
+				
+				with btn_row[ 0 ]:
+					groq_submit = st.button(
+						'Submit',
+						key='groq_submit'
+					)
+				
+				with btn_row[ 1 ]:
+					st.button(
+						'Clear',
+						key='groq_clear',
+						on_click=_clear_grok_state
+					)
+			
+			with col_right:
+				groq_output = st.empty( )
+			
+			# -----------------------------
+			# Submit Button
+			# -----------------------------
+			if groq_submit:
+				try:
+					if not str( groq_prompt or '' ).strip( ):
+						raise ValueError( 'Prompt cannot be empty.' )
+					
+					if groq_json_mode:
+						has_json_instruction = (
+								'json' in str( groq_prompt or '' ).lower( )
+								or 'json' in str( groq_system or '' ).lower( )
+						)
+						
+						if not has_json_instruction:
+							groq_system = (
+									str( groq_system or '' ).strip( )
+									+ '\n\nReturn valid JSON only.'
+							).strip( )
+					
+					groq_domains_list = (
+							_normalize_grok_domains( groq_domains )
+							if groq_web_search
+							else [ ]
+					)
+					
+					stop_lines = _normalize_grok_stop_lines( groq_stop )
+					
+					if stop_lines and _groq_is_reasoning_model:
+						stop_lines = [ ]
+					
+					fetcher = Grok( )
+					params = {
+							'model': groq_model,
+							'temperature': float( groq_temperature ),
+							'max_tokens': int( groq_max_tokens ),
+							'top_p': float( groq_top_p ),
+							'seed': int( groq_seed ) if int( groq_seed ) > 0 else None,
+							'system': groq_system if str( groq_system ).strip( ) else None,
+							'response_format': 'json' if groq_json_mode else None,
+							'reasoning_effort': (
+									groq_reasoning_effort
+									if _groq_supports_reasoning_effort
+									   and groq_reasoning
+									   and groq_reasoning_effort
+									else None
+							),
+							'web_search': bool( groq_web_search ),
+							'search_domains': groq_domains_list if groq_domains_list else None,
+							'stop': stop_lines if stop_lines else None,
+							'stream': bool( groq_stream ),
+							'store': bool( groq_store ),
+							'parallel_tool_calls': True,
+							'tool_choice': 'auto',
+					}
+					
+					params = {
+							key: value
+							for key, value in params.items( )
+							if value is not None
+					}
+					result = _invoke_provider( fetcher, groq_prompt, params )
+					_render_output( groq_output, result )
+				
+				except Exception as exc:
+					st.error( str( exc ) )
+		
+		# -------- CLAUDE
+		with st.expander( label='Claude', expanded=False ):
+			def _clear_claude_state( ) -> None:
+				'''
+					Purpose:
+					--------
+					Flag the Claude generation state for reset on the next rerun.
+
+					Parameters:
+					-----------
+					None
+
+					Returns:
+					--------
+					None
+				'''
+				st.session_state[ 'claude_clear_request' ] = True
+			
+			def _normalize_claude_domains( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize newline-, comma-, or semicolon-delimited Claude web-search
+					domain entries.
+
+					Parameters:
+					-----------
+					value (object):
+						Domain text supplied by the user.
+
+					Returns:
+					--------
+					list[str]:
+						Canonical, de-duplicated domain names.
+				'''
+				text = str( value or '' ).strip( )
+				
+				if not text:
+					return [ ]
+				
+				values: list[ str ] = [ ]
+				entries = re.split( r'[\n,;]+', text )
+				
+				for entry in entries:
+					raw_value = str( entry or '' ).strip( ).lower( )
+					
+					if not raw_value:
+						continue
+					
+					if not raw_value.startswith( 'http://' ) and not raw_value.startswith(
+							'https://' ):
+						raw_value = f'https://{raw_value}'
+					
+					parsed = urlparse( raw_value )
+					domain = (parsed.netloc or parsed.path or '').strip( ).lower( )
+					domain = re.sub( r':\d+$', '', domain )
+					domain = domain.lstrip( '.' )
+					
+					if domain.startswith( 'www.' ):
+						domain = domain[ 4: ]
+					
+					if not re.fullmatch( r'[a-z0-9][a-z0-9.-]*\.[a-z]{2,}', domain ):
+						raise ValueError( f'Invalid Claude web-search domain: {domain}' )
+					
+					if domain not in values:
+						values.append( domain )
+				
+				return values
+			
+			def _normalize_claude_stop_lines( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize stop sequences entered one per line.
+
+					Parameters:
+					-----------
+					value (object):
+						Stop-sequence textarea value.
+
+					Returns:
+					--------
+					list[str]:
+						Non-empty stop sequences.
+				'''
+				text = str( value or '' )
+				
+				if not text.strip( ):
+					return [ ]
+				
+				return [
+						line.strip( )
+						for line in text.splitlines( )
+						if line.strip( )
+				]
+			
+			if 'claude_clear_request' not in st.session_state:
+				st.session_state[ 'claude_clear_request' ] = False
+			
+			if 'claude_prompt_chat' not in st.session_state:
+				st.session_state[ 'claude_prompt_chat' ] = ''
+			
+			if 'claude_system_chat' not in st.session_state:
+				st.session_state[ 'claude_system_chat' ] = ''
+			
+			if 'claude_stop_chat' not in st.session_state:
+				st.session_state[ 'claude_stop_chat' ] = ''
+			
+			if 'claude_domains_chat' not in st.session_state:
+				st.session_state[ 'claude_domains_chat' ] = ''
+			
+			if 'claude_blocked_domains_chat' not in st.session_state:
+				st.session_state[ 'claude_blocked_domains_chat' ] = ''
+			
+			if 'claude_thinking_chat' not in st.session_state:
+				st.session_state[ 'claude_thinking_chat' ] = False
+			
+			if 'claude_web_search_chat' not in st.session_state:
+				st.session_state[ 'claude_web_search_chat' ] = False
+			
+			if 'claude_thinking_budget_chat' not in st.session_state:
+				st.session_state[ 'claude_thinking_budget_chat' ] = 1024
+			
+			if st.session_state.get( 'claude_clear_request', False ):
+				st.session_state[ 'claude_prompt_chat' ] = ''
+				st.session_state[ 'claude_system_chat' ] = ''
+				st.session_state[ 'claude_stop_chat' ] = ''
+				st.session_state[ 'claude_domains_chat' ] = ''
+				st.session_state[ 'claude_blocked_domains_chat' ] = ''
+				st.session_state[ 'claude_thinking_chat' ] = False
+				st.session_state[ 'claude_web_search_chat' ] = False
+				st.session_state[ 'claude_thinking_budget_chat' ] = 1024
+				st.session_state[ 'claude_clear_request' ] = False
+			
+			col_left, col_right = st.columns( [ 1, 2 ], border=True )
+			
+			with col_left:
+				claude_prompt = st.text_area(
+					'Prompt',
+					value=st.session_state.get( 'claude_prompt_chat', '' ),
+					height=140,
+					key='claude_prompt_chat',
+				)
+				
+				# -----------------------------
+				# Model / Output Controls
+				# -----------------------------
+				model_row = st.columns( [ 0.55, 0.45 ] )
+				
+				with model_row[ 0 ]:
+					_claude_models = (
+							cfg.CLAUDE_MODELS
+							if hasattr( cfg, 'CLAUDE_MODELS' ) and cfg.CLAUDE_MODELS
+							else [
+									'claude-opus-4-6',
+									'claude-sonnet-4-6',
+									'claude-haiku-4-5',
+									'claude-3-5-haiku-latest',
+							]
+					)
+					
+					claude_model = _model_selector(
+						key_prefix='claude',
+						label='Model',
+						options=_claude_models,
+						default_model=(
+								'claude-sonnet-4-6'
+								if 'claude-sonnet-4-6' in _claude_models
+								else _claude_models[ 0 ]
+						),
+					)
+				
+				with model_row[ 1 ]:
+					claude_max_tokens = st.number_input(
+						'Max Tokens',
+						min_value=1,
+						max_value=65536,
+						value=2048,
+						step=1,
+						key='claude_max_tokens_chat',
+					)
+				
+				# -----------------------------
+				# Sampling Controls
+				# -----------------------------
+				sampling_row = st.columns( 3 )
+				
+				with sampling_row[ 0 ]:
+					claude_temperature = st.slider(
+						'Temperature',
+						min_value=0.0,
+						max_value=1.0,
+						value=0.7,
+						step=0.05,
+						key='claude_temperature_chat',
+					)
+				
+				with sampling_row[ 1 ]:
+					claude_top_p = st.slider(
+						'Top-P',
+						min_value=0.0,
+						max_value=1.0,
+						value=1.0,
+						step=0.01,
+						key='claude_top_p_chat',
+					)
+				
+				with sampling_row[ 2 ]:
+					claude_top_k = st.number_input(
+						'Top-k',
+						min_value=0,
+						max_value=500,
+						value=0,
+						step=1,
+						key='claude_top_k_chat',
+					)
+				
+				# -----------------------------
+				# Feature Toggles
+				# -----------------------------
+				option_row = st.columns( 2 )
+				
+				with option_row[ 0 ]:
+					claude_thinking = st.checkbox(
+						'Reasoning',
+						value=bool( st.session_state.get( 'claude_thinking_chat', False ) ),
+						key='claude_thinking_chat',
+						help='Anthropic exposes this as extended thinking with a token budget.',
+					)
+				
+				with option_row[ 1 ]:
+					claude_web_search = st.checkbox(
+						'Web Search',
+						value=bool( st.session_state.get( 'claude_web_search_chat', False ) ),
+						key='claude_web_search_chat',
+					)
+				
+				# -----------------------------
+				# Reasoning Budget
+				# -----------------------------
+				if claude_thinking:
+					claude_thinking_budget = st.number_input(
+						'Thinking Budget',
+						min_value=1024,
+						max_value=max( 1024, int( claude_max_tokens ) - 1 ),
+						value=min(
+							int(
+								st.session_state.get(
+									'claude_thinking_budget_chat',
+									1024
+								)
+							),
+							max( 1024, int( claude_max_tokens ) - 1 )
+						),
+						step=1024,
+						key='claude_thinking_budget_chat',
+						help='Must be less than Max Tokens.'
+					)
+				else:
+					claude_thinking_budget = None
+				
+				# -----------------------------
+				# Instruction Controls
+				# -----------------------------
+				claude_system = st.text_area(
+					'System',
+					value=st.session_state.get( 'claude_system_chat', '' ),
+					height=110,
+					key='claude_system_chat',
+				)
+				
+				claude_stop = st.text_area(
+					'Stop Sequences (one per line)',
+					value=st.session_state.get( 'claude_stop_chat', '' ),
+					height=80,
+					key='claude_stop_chat',
+				)
+				
+				# -----------------------------
+				# Web Search Controls
+				# -----------------------------
+				if claude_web_search:
+					search_row = st.columns( 2 )
+					
+					with search_row[ 0 ]:
+						claude_domains = st.text_area(
+							'Allowed Search Domains',
+							value=st.session_state.get( 'claude_domains_chat', '' ),
+							height=90,
+							key='claude_domains_chat',
+							help='Optional allowlist, one domain per line or comma-separated.'
+						)
+					
+					with search_row[ 1 ]:
+						claude_blocked_domains = st.text_area(
+							'Blocked Search Domains',
+							value=st.session_state.get( 'claude_blocked_domains_chat', '' ),
+							height=90,
+							key='claude_blocked_domains_chat',
+							help='Optional blocklist, one domain per line or comma-separated.'
+						)
+				else:
+					claude_domains = ''
+					claude_blocked_domains = ''
+				
+				# -----------------------------
+				# Action Controls
+				# -----------------------------
+				btn_row = st.columns( 2 )
+				
+				with btn_row[ 0 ]:
+					claude_submit = st.button(
+						'Submit',
+						key='claude_submit_chat',
+						use_container_width=True
+					)
+				
+				with btn_row[ 1 ]:
+					st.button(
+						'Clear',
+						key='claude_clear_chat',
+						on_click=_clear_claude_state,
+						use_container_width=True
+					)
+		
+		# -------- GEMINI
+		with st.expander( label='Gemini', expanded=False ):
+			GEMINI_THINKING_LEVELS = [
+					'minimal',
+					'low',
+					'medium',
+					'high'
+			]
+			
+			def _clear_gemini_state( ) -> None:
+				'''
+					Purpose:
+					--------
+					Flag the Gemini generation state for reset on the next rerun.
+
+					Parameters:
+					-----------
+					None
+
+					Returns:
+					--------
+					None
+				'''
+				st.session_state[ 'gemini_clear_request' ] = True
+			
+			def _normalize_gemini_domains( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize newline-, comma-, or semicolon-delimited Gemini grounding
+					domain entries.
+
+					Parameters:
+					-----------
+					value (object):
+						Domain text supplied by the user.
+
+					Returns:
+					--------
+					list[str]:
+						Canonical, de-duplicated domain names.
+				'''
+				text = str( value or '' ).strip( )
+				
+				if not text:
+					return [ ]
+				
+				values: list[ str ] = [ ]
+				entries = re.split( r'[\n,;]+', text )
+				
+				for entry in entries:
+					raw_value = str( entry or '' ).strip( ).lower( )
+					
+					if not raw_value:
+						continue
+					
+					if not raw_value.startswith( 'http://' ) and not raw_value.startswith(
+							'https://' ):
+						raw_value = f'https://{raw_value}'
+					
+					parsed = urlparse( raw_value )
+					domain = (parsed.netloc or parsed.path or '').strip( ).lower( )
+					domain = re.sub( r':\d+$', '', domain )
+					domain = domain.lstrip( '.' )
+					
+					if domain.startswith( 'www.' ):
+						domain = domain[ 4: ]
+					
+					if not re.fullmatch( r'[a-z0-9][a-z0-9.-]*\.[a-z]{2,}', domain ):
+						raise ValueError( f'Invalid Gemini grounding domain: {domain}' )
+					
+					if domain not in values:
+						values.append( domain )
+				
+				return values
+			
+			def _normalize_gemini_stop_lines( value: object ) -> list[ str ]:
+				'''
+					Purpose:
+					--------
+					Normalize Gemini stop sequences entered one per line.
+
+					Parameters:
+					-----------
+					value (object):
+						Stop-sequence textarea value.
+
+					Returns:
+					--------
+					list[str]:
+						Non-empty stop sequences.
+				'''
+				text = str( value or '' )
+				
+				if not text.strip( ):
+					return [ ]
+				
+				return [
+						line.strip( )
+						for line in text.splitlines( )
+						if line.strip( )
+				]
+			
+			if 'gemini_clear_request' not in st.session_state:
+				st.session_state[ 'gemini_clear_request' ] = False
+			
+			if 'gemini_prompt_chat' not in st.session_state:
+				st.session_state[ 'gemini_prompt_chat' ] = ''
+			
+			if 'gemini_system_chat' not in st.session_state:
+				st.session_state[ 'gemini_system_chat' ] = ''
+			
+			if 'gemini_domains_chat' not in st.session_state:
+				st.session_state[ 'gemini_domains_chat' ] = ''
+			
+			if 'gemini_stop_chat' not in st.session_state:
+				st.session_state[ 'gemini_stop_chat' ] = ''
+			
+			if 'gemini_json_mode_chat' not in st.session_state:
+				st.session_state[ 'gemini_json_mode_chat' ] = False
+			
+			if 'gemini_grounding_chat' not in st.session_state:
+				st.session_state[ 'gemini_grounding_chat' ] = False
+			
+			if 'gemini_reasoning_chat' not in st.session_state:
+				st.session_state[ 'gemini_reasoning_chat' ] = False
+			
+			if 'gemini_include_thoughts_chat' not in st.session_state:
+				st.session_state[ 'gemini_include_thoughts_chat' ] = False
+			
+			if 'gemini_seed_chat' not in st.session_state:
+				st.session_state[ 'gemini_seed_chat' ] = 0
+			
+			if st.session_state.get( 'gemini_thinking_level_chat',
+					'low' ) not in GEMINI_THINKING_LEVELS:
+				st.session_state[ 'gemini_thinking_level_chat' ] = 'low'
+			
+			if st.session_state.get( 'gemini_clear_request', False ):
+				st.session_state[ 'gemini_prompt_chat' ] = ''
+				st.session_state[ 'gemini_system_chat' ] = ''
+				st.session_state[ 'gemini_domains_chat' ] = ''
+				st.session_state[ 'gemini_stop_chat' ] = ''
+				st.session_state[ 'gemini_json_mode_chat' ] = False
+				st.session_state[ 'gemini_grounding_chat' ] = False
+				st.session_state[ 'gemini_reasoning_chat' ] = False
+				st.session_state[ 'gemini_include_thoughts_chat' ] = False
+				st.session_state[ 'gemini_seed_chat' ] = 0
+				st.session_state[ 'gemini_thinking_level_chat' ] = 'low'
+				st.session_state[ 'gemini_clear_request' ] = False
+			
+			col_left, col_right = st.columns( [ 1, 2 ], border=True )
+			
+			with col_left:
+				gemini_prompt = st.text_area(
+					'Prompt',
+					value=st.session_state.get( 'gemini_prompt_chat', '' ),
+					height=160,
+					key='gemini_prompt_chat',
+				)
+				
+				p_row1 = st.columns( 2 )
+				p_row2 = st.columns( 2 )
+				p_row3 = st.columns( 2 )
+				p_row4 = st.columns( 2 )
+				p_row5 = st.columns( 2 )
+				
+				with p_row1[ 0 ]:
+					_gemini_models = (
+							cfg.GEMINI_MODELS
+							if hasattr( cfg, 'GEMINI_MODELS' ) and cfg.GEMINI_MODELS
+							else [
+									'gemini-3-flash-preview',
+									'gemini-2.5-pro',
+									'gemini-2.5-flash',
+									'gemini-2.5-flash-lite'
+							]
+					)
+					
+					gemini_model = _model_selector(
+						key_prefix='gemini',
+						label='Model',
+						options=_gemini_models,
+						default_model=(
+								'gemini-2.5-flash'
+								if 'gemini-2.5-flash' in _gemini_models
+								else _gemini_models[ 0 ]
+						),
+					)
+				
+				with p_row1[ 1 ]:
+					gemini_temperature = st.slider(
+						'Temperature',
+						min_value=0.0,
+						max_value=2.0,
+						value=0.7,
+						step=0.05,
+						key='gemini_temperature_chat',
+					)
+				
+				with p_row2[ 0 ]:
+					gemini_max_tokens = st.number_input(
+						'Max Tokens',
+						min_value=1,
+						max_value=32768,
+						value=2048,
+						step=1,
+						key='gemini_max_tokens_chat',
+					)
+				
+				with p_row2[ 1 ]:
+					gemini_top_p = st.slider(
+						'Top-p',
+						min_value=0.0,
+						max_value=1.0,
+						value=1.0,
+						step=0.01,
+						key='gemini_top_p_chat',
+					)
+				
+				with p_row3[ 0 ]:
+					gemini_top_k = st.number_input(
+						'Top-k',
+						min_value=0,
+						max_value=500,
+						value=0,
+						step=1,
+						key='gemini_top_k_chat',
+					)
+				
+				with p_row3[ 1 ]:
+					gemini_candidate_count = st.number_input(
+						'Candidates',
+						min_value=1,
+						max_value=8,
+						value=1,
+						step=1,
+						key='gemini_candidate_count_chat',
+					)
+				
+				with p_row4[ 0 ]:
+					gemini_seed = st.number_input(
+						'Seed',
+						min_value=0,
+						max_value=2_147_483_647,
+						value=int( st.session_state.get( 'gemini_seed_chat', 0 ) ),
+						step=1,
+						key='gemini_seed_chat',
+						help='Use 0 to omit the seed parameter.'
+					)
+				
+				with p_row4[ 1 ]:
+					gemini_json_mode = st.checkbox(
+						'JSON Mode',
+						value=bool( st.session_state.get( 'gemini_json_mode_chat', False ) ),
+						key='gemini_json_mode_chat',
+						help='Requests JSON output through the current Gemini wrapper.'
+					)
+				
+				with p_row5[ 0 ]:
+					gemini_grounding = st.checkbox(
+						'Grounding',
+						value=bool( st.session_state.get( 'gemini_grounding_chat', False ) ),
+						key='gemini_grounding_chat',
+						help='Enable Google Search grounding for supported Gemini models.'
+					)
+				
+				with p_row5[ 1 ]:
+					gemini_reasoning = st.checkbox(
+						'Reasoning',
+						value=bool( st.session_state.get( 'gemini_reasoning_chat', False ) ),
+						key='gemini_reasoning_chat',
+						help='Uses Gemini thinking configuration where supported.'
+					)
+				
+				_gemini_model_name = str( gemini_model or '' ).strip( ).lower( )
+				_gemini_supports_thinking_level = _gemini_model_name.startswith( 'gemini-3' )
+				_gemini_supports_thinking_budget = _gemini_model_name.startswith( 'gemini-2.5' )
+				
+				if _gemini_supports_thinking_level and gemini_reasoning:
+					r_row = st.columns( 2 )
+					
+					with r_row[ 0 ]:
+						gemini_thinking_level = st.selectbox(
+							'Thinking Level',
+							options=GEMINI_THINKING_LEVELS,
+							index=GEMINI_THINKING_LEVELS.index(
+								st.session_state.get( 'gemini_thinking_level_chat', 'low' )
+							),
+							key='gemini_thinking_level_chat',
+						)
+					
+					with r_row[ 1 ]:
+						gemini_include_thoughts = st.checkbox(
+							'Include Thoughts',
+							value=bool(
+								st.session_state.get(
+									'gemini_include_thoughts_chat',
+									False
+								)
+							),
+							key='gemini_include_thoughts_chat',
+						)
+				else:
+					gemini_thinking_level = None
+					gemini_include_thoughts = False
+				
+				if gemini_reasoning and _gemini_supports_thinking_budget:
+					st.caption(
+						'Gemini 2.5 models use thinking_budget, but the current Gemini '
+						'generator only exposes thinking_level. This UI preserves the current '
+						'wrapper contract until the Gemini class is updated.'
+					)
+				
+				if gemini_reasoning and not (
+						_gemini_supports_thinking_level or _gemini_supports_thinking_budget
+				):
+					st.caption(
+						'Reasoning controls are only sent for Gemini 3 model names under '
+						'the current wrapper contract.'
+					)
+				
+				gemini_stop = st.text_area(
+					'Stop Sequences (one per line)',
+					value=st.session_state.get( 'gemini_stop_chat', '' ),
+					height=80,
+					key='gemini_stop_chat',
+				)
+				
+				gemini_system = st.text_area(
+					'System',
+					value=st.session_state.get( 'gemini_system_chat', '' ),
+					height=110,
+					key='gemini_system_chat',
+				)
+				
+				if gemini_grounding:
+					gemini_domains = st.text_area(
+						'Preferred Search Domains (one per line or comma-separated)',
+						value=st.session_state.get( 'gemini_domains_chat', '' ),
+						height=90,
+						key='gemini_domains_chat',
+						help='Used as preferred source guidance for grounded Gemini responses.'
+					)
+				else:
+					gemini_domains = ''
+				
+				btn_row = st.columns( 2 )
+				
+				with btn_row[ 0 ]:
+					gemini_submit = st.button(
+						'Submit',
+						key='gemini_submit_chat'
+					)
+				
+				with btn_row[ 1 ]:
+					st.button(
+						'Clear',
+						key='gemini_clear_chat',
+						on_click=_clear_gemini_state
+					)
+			
+			with col_right:
+				gemini_output = st.empty( )
+			
+			# -----------------------------
+			# Submit Button
+			# -----------------------------
+			if gemini_submit:
+				try:
+					if not str( gemini_prompt or '' ).strip( ):
+						raise ValueError( 'Prompt cannot be empty.' )
+					
+					if gemini_json_mode:
+						has_json_instruction = (
+								'json' in str( gemini_prompt or '' ).lower( )
+								or 'json' in str( gemini_system or '' ).lower( )
+						)
+						
+						if not has_json_instruction:
+							gemini_system = (
+									str( gemini_system or '' ).strip( )
+									+ '\n\nReturn valid JSON only.'
+							).strip( )
+					
+					gemini_domains_list = (
+							_normalize_gemini_domains( gemini_domains )
+							if gemini_grounding
+							else [ ]
+					)
+					
+					stop_lines = _normalize_gemini_stop_lines( gemini_stop )
+					
+					fetcher = Gemini( )
+					params = {
+							'model': gemini_model,
+							'temperature': float( gemini_temperature ),
+							'max_tokens': int( gemini_max_tokens ),
+							'top_p': float( gemini_top_p ),
+							'top_k': int( gemini_top_k ) if int( gemini_top_k ) > 0 else None,
+							'candidate_count': int( gemini_candidate_count ),
+							'seed': int( gemini_seed ) if int( gemini_seed ) > 0 else None,
+							'system': (
+									gemini_system
+									if str( gemini_system or '' ).strip( )
+									else None
+							),
+							'response_format': 'json' if gemini_json_mode else None,
+							'stop_sequences': stop_lines if stop_lines else None,
+							'grounding': bool( gemini_grounding ),
+							'search_domains': (
+									gemini_domains_list
+									if gemini_domains_list
+									else None
+							),
+							'reasoning': bool(
+								gemini_reasoning
+								and _gemini_supports_thinking_level
+							),
+							'thinking_level': (
+									gemini_thinking_level
+									if _gemini_supports_thinking_level
+									   and gemini_reasoning
+									else None
+							),
+							'include_thoughts': bool(
+								gemini_include_thoughts
+							) if _gemini_supports_thinking_level and gemini_reasoning else False,
+					}
+					
+					params = {
+							key: value
+							for key, value in params.items( )
+							if value is not None
+					}
+					
+					result = _invoke_provider( fetcher, gemini_prompt, params )
+					_render_output( gemini_output, result )
+				
+				except Exception as exc:
+					st.error( str( exc ) )
+		
+		# -------- Mistral
+		with st.expander( label='Mistral', expanded=False ):
+			def _clear_mistral_state( ) -> None:
+				'''
+					Purpose:
+					--------
+					Flag the Mistral generation state for reset on the next rerun.
+
+					Parameters:
+					-----------
+					None
+
+					Returns:
+					--------
+					None
+				'''
+				st.session_state[ 'mistral_clear_request' ] = True
+			
+			if 'mistral_clear_request' not in st.session_state:
+				st.session_state[ 'mistral_clear_request' ] = False
+			
+			if 'mistral_prompt_chat' not in st.session_state:
+				st.session_state[ 'mistral_prompt_chat' ] = ''
+			
+			if 'mistral_system_chat' not in st.session_state:
+				st.session_state[ 'mistral_system_chat' ] = ''
+			
+			if 'mistral_safe_mode_chat' not in st.session_state:
+				st.session_state[ 'mistral_safe_mode_chat' ] = False
+			
+			if 'mistral_seed_chat' not in st.session_state:
+				st.session_state[ 'mistral_seed_chat' ] = 0
+			
+			if st.session_state.get( 'mistral_clear_request', False ):
+				st.session_state[ 'mistral_prompt_chat' ] = ''
+				st.session_state[ 'mistral_system_chat' ] = ''
+				st.session_state[ 'mistral_safe_mode_chat' ] = False
+				st.session_state[ 'mistral_seed_chat' ] = 0
+				st.session_state[ 'mistral_clear_request' ] = False
+			
+			col_left, col_right = st.columns( [ 1, 2 ], border=True )
+			
+			with col_left:
+				mistral_prompt = st.text_area(
+					'Prompt',
+					value=st.session_state.get( 'mistral_prompt_chat', '' ),
+					height=120,
+					key='mistral_prompt_chat'
+				)
+				
+				p_row1 = st.columns( 2 )
+				p_row2 = st.columns( 2 )
+				p_row3 = st.columns( 2 )
+				
+				with p_row1[ 0 ]:
+					_mistral_models = (
+							cfg.MISTRAL_MODELS
+							if hasattr( cfg, 'MISTRAL_MODELS' ) and cfg.MISTRAL_MODELS
+							else [
+									'mistral-large-latest',
+									'mistral-medium-latest',
+									'mistral-small-latest',
+									'open-mistral-7b',
+									'Custom...',
+							]
+					)
+					
+					mistral_model = _model_selector(
+						key_prefix='mistral',
+						label='Model',
+						options=_mistral_models,
+						default_model=(
+								'mistral-large-latest'
+								if 'mistral-large-latest' in _mistral_models
+								else _mistral_models[ 0 ]
+						),
+					)
+				
+				with p_row1[ 1 ]:
+					mistral_temperature = st.slider(
+						'Temperature',
+						min_value=0.0,
+						max_value=2.0,
+						value=0.7,
+						step=0.05,
+						key='mistral_temperature_chat',
+						help='Mistral recommends tuning temperature or top-p, not both.'
+					)
+				
+				with p_row2[ 0 ]:
+					mistral_max_tokens = st.number_input(
+						'Max Tokens',
+						min_value=1,
+						max_value=32768,
+						value=1024,
+						step=1,
+						key='mistral_max_tokens_chat',
+					)
+				
+				with p_row2[ 1 ]:
+					mistral_top_p = st.slider(
+						'Top-p',
+						min_value=0.0,
+						max_value=1.0,
+						value=1.0,
+						step=0.01,
+						key='mistral_top_p_chat',
+						help='Mistral recommends tuning temperature or top-p, not both.'
+					)
+				
+				with p_row3[ 0 ]:
+					mistral_seed = st.number_input(
+						'Seed',
+						min_value=0,
+						max_value=2_147_483_647,
+						value=int( st.session_state.get( 'mistral_seed_chat', 0 ) ),
+						step=1,
+						key='mistral_seed_chat',
+						help='Use 0 to omit random_seed.'
+					)
+				
+				with p_row3[ 1 ]:
+					mistral_safe_mode = st.checkbox(
+						'Safe Mode',
+						value=bool(
+							st.session_state.get(
+								'mistral_safe_mode_chat',
+								False
+							)
+						),
+						key='mistral_safe_mode_chat',
+						help='Maps to Mistral safe_prompt in the current wrapper.'
+					)
+				
+				mistral_system = st.text_area(
+					'System',
+					value=st.session_state.get( 'mistral_system_chat', '' ),
+					height=100,
+					key='mistral_system_chat',
+				)
+				
+				st.caption(
+					'The current Mistral wrapper supports text output only. JSON mode and '
+					'stop sequences require a later complete Mistral class replacement.'
+				)
+				
+				btn_row = st.columns( 2 )
+				
+				with btn_row[ 0 ]:
+					mistral_submit = st.button(
+						'Submit',
+						key='mistral_submit_chat'
+					)
+				
+				with btn_row[ 1 ]:
+					st.button(
+						'Clear',
+						key='mistral_clear_chat',
+						on_click=_clear_mistral_state
+					)
+			
+			with col_right:
+				mistral_output = st.empty( )
+			
+			if mistral_submit:
+				try:
+					if not str( mistral_prompt or '' ).strip( ):
+						raise ValueError( 'Prompt cannot be empty.' )
+					
+					if float( mistral_temperature ) > 0.0 and float( mistral_top_p ) < 1.0:
+						st.warning(
+							'Mistral recommends adjusting either temperature or top-p, '
+							'but not both, for most use cases.'
+						)
+					
+					fetcher = Mistral( )
+					params = {
+							'model': mistral_model,
+							'temperature': float( mistral_temperature ),
+							'max_tokens': int( mistral_max_tokens ),
+							'top_p': float( mistral_top_p ),
+							'seed': int( mistral_seed ) if int( mistral_seed ) > 0 else None,
+							'safe_mode': bool( mistral_safe_mode ),
+							'system': (
+									mistral_system
+									if str( mistral_system or '' ).strip( )
+									else None
+							),
+					}
+					
+					params = {
+							key: value
+							for key, value in params.items( )
+							if value is not None
+					}
+					
+					result = _invoke_provider( fetcher, mistral_prompt, params )
+					_render_output( mistral_output, result )
+				
+				except Exception as exc:
+					st.error( str( exc ) )
 
 # ==============================================================================
 # DATA UPLOAD MODE
