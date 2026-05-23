@@ -2243,8 +2243,104 @@ def initialize_database( ) -> None:
 		
 		conn.commit( )
 
+class ManagedConnection( sqlite3.Connection ):
+	"""
+	
+		Purpose:
+		--------
+		Provide a SQLite connection context manager that commits or rolls back work and
+		closes the database connection when the context exits.
+
+		Attributes:
+		-----------
+		None
+
+		Methods:
+		--------
+		__enter__:
+			Return the active SQLite connection.
+
+		__exit__:
+			Commit successful work, roll back failed work, and close the connection.
+
+	"""
+	
+	def __enter__( self ) -> "ManagedConnection":
+		"""
+		
+			Purpose:
+			--------
+			Return the active SQLite connection for use in a with-block.
+
+			Parameters:
+			-----------
+			None
+
+			Returns:
+			--------
+			ManagedSQLiteConnection: Active SQLite connection.
+			
+		"""
+		return self
+	
+	def __exit__( self, exc_type: object, exc_value: object, traceback: object ) -> bool:
+		"""
+		
+			Purpose:
+			--------
+			Commit the transaction when no exception occurred; otherwise roll back the
+			transaction. Always close the SQLite connection before exiting the with-block.
+
+			Parameters:
+			-----------
+			exc_type (object): Exception type, if an exception occurred.
+			exc_value (object): Exception value, if an exception occurred.
+			traceback (object): Exception traceback, if an exception occurred.
+
+			Returns:
+			--------
+			bool: False so exceptions continue to propagate to the caller.
+			
+		"""
+		try:
+			if exc_type is None:
+				self.commit( )
+			else:
+				self.rollback( )
+		finally:
+			self.close( )
+		
+		return False
+
 def create_connection( ) -> sqlite3.Connection:
-	return sqlite3.connect( cfg.DB_PATH )
+	"""
+	
+		Purpose:
+		--------
+		Create a SQLite connection for the configured application database using a managed
+		context manager, a busy timeout, and pragmatic local-application settings.
+
+		Parameters:
+		-----------
+		None
+
+		Returns:
+		--------
+		sqlite3.Connection: Managed SQLite database connection.
+		
+	"""
+	conn = sqlite3.connect( cfg.DB_PATH, timeout=60.0, isolation_level=None,
+		check_same_thread=False, factory=ManagedConnection )
+	
+	conn.execute( 'PRAGMA busy_timeout = 30000;' )
+	conn.execute( 'PRAGMA foreign_keys = ON;' )
+	
+	try:
+		conn.execute( 'PRAGMA journal_mode = WAL;' )
+	except sqlite3.OperationalError:
+		pass
+	
+	return conn
 
 def list_tables( ) -> List[ str ]:
 	with create_connection( ) as conn:
@@ -10593,7 +10689,7 @@ elif mode == 'Data Management':
 		
 		# -------------- GEOCODE
 		with tabs[ 7 ]:
-			st.subheader( 'Geocode Missing Report Coordinates' )
+			st.markdown( '#### Geocode Missing Report Coordinates' )
 			
 			tables = list_tables( )
 			
@@ -10650,22 +10746,16 @@ elif mode == 'Data Management':
 						if df_locations.empty:
 							st.info( 'No missing coordinate locations found.' )
 						else:
-							st.data_editor(
-								df_locations,
-								key='reports_geocode_locations',
-								use_container_width=True,
-								disabled=True )
+							st.data_editor( df_locations, key='reports_geocode_locations',
+								use_container_width=True, disabled=True )
 					
-					action_c1, action_c2, action_c3 = st.columns( [ 0.25, 0.25, 0.50 ] )
+					action_c1, action_c2, action_c3, action_c4 = st.columns( [ 0.25, 0.25, 0.25, 0.25 ] )
 
 					with action_c1:
 						if st.button( 'Preview Geocoding', key='reports_geocode_preview_button',
 								width='stretch' ):
-							df_preview = preview_report_coordinate_updates(
-								table_name=table,
-								geocoder=geocoder,
-								places=places,
-								use_places=use_places,
+							df_preview = preview_report_coordinate_updates( table_name=table,
+								geocoder=geocoder, places=places, use_places=use_places,
 								limit=location_limit )
 							
 							st.session_state[ 'df_reports_geocode_preview' ] = df_preview
@@ -10686,21 +10776,18 @@ elif mode == 'Data Management':
 									'to SQLite.'
 							),
 							key='reports_geocode_confirm_update_coordinates' )
-						
+					
+					with action_c4:
 						if st.button( 'Update Coordinates', icon='📍',
 								key='reports_geocode_update_coordinates_button',
 								width='stretch',
 								disabled=not confirm_update_coordinates ):
 							try:
-								df_update_preview = preview_report_coordinate_updates(
-									table_name=table,
-									geocoder=geocoder,
-									places=places,
-									use_places=use_places,
+								df_update_preview = preview_report_coordinate_updates( table_name=table,
+									geocoder=geocoder, places=places, use_places=use_places,
 									limit=location_limit )
 								
 								st.session_state[ 'df_reports_geocode_preview' ] = df_update_preview
-								
 								if df_update_preview is None or df_update_preview.empty:
 									st.session_state[ 'reports_geocode_last_update' ] = {
 											'Table': table,
@@ -10730,8 +10817,7 @@ elif mode == 'Data Management':
 									}
 									st.rerun( )
 								
-								updated_count = apply_report_coordinate_updates(
-									table_name=table,
+								updated_count = apply_report_coordinate_updates( table_name=table,
 									df_updates=df_update_preview )
 								
 								st.session_state[ 'reports_geocode_last_update' ] = {
@@ -10792,11 +10878,8 @@ elif mode == 'Data Management':
 						result_c3.metric( 'Skipped Locations', f'{skipped_count:,}' )
 						result_c4.metric( 'Rows Eligible For Update', f'{matched_rows:,}' )
 						
-						st.data_editor(
-							df_preview,
-							key='reports_geocode_preview_table',
-							use_container_width=True,
-							disabled=True )
+						st.data_editor( df_preview, key='reports_geocode_preview_table',
+							use_container_width=True, disabled=True )
 						
 						st.warning(
 							'Apply Updates writes Latitude and Longitude values back to SQLite '
