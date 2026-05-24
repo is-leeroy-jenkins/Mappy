@@ -2000,7 +2000,7 @@ def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame )
 		Purpose:
 		--------
 		Apply matched latitude and longitude values to all missing-coordinate rows in a
-		Reports-like table that share the same City, State, and Country values.
+		Reports-like SQLite table that share the same City, State, and Country values.
 
 		Parameters:
 		-----------
@@ -2026,8 +2026,8 @@ def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame )
 		
 		df_apply = df_updates.copy( )
 		df_apply = df_apply[ df_apply[ 'Status' ].astype( str ).str.lower( ) == 'matched' ]
-		df_apply[ 'Latitude' ]=pd.to_numeric( df_apply[ 'Latitude' ], errors='coerce' )
-		df_apply[ 'Longitude' ]=pd.to_numeric( df_apply[ 'Longitude' ], errors='coerce' )
+		df_apply[ 'Latitude' ] = pd.to_numeric( df_apply[ 'Latitude' ], errors='coerce' )
+		df_apply[ 'Longitude' ] = pd.to_numeric( df_apply[ 'Longitude' ], errors='coerce' )
 		
 		valid_mask = (
 				df_apply[ 'Latitude' ].notna( )
@@ -2046,41 +2046,55 @@ def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame )
 			return 0
 		
 		updated_count = 0
-		with create_connection( ) as conn:
-			cursor = conn.cursor( )
-			cursor.execute( 'BEGIN' )
-			for row in df_apply.itertuples( index=False ):
-				cursor.execute(
-					f"""
-					UPDATE "{table_name}"
-					SET Latitude = ?,
-					    Longitude = ?
-					WHERE (
-					          Latitude IS NULL
-					          OR Longitude IS NULL
-					          OR Latitude < -90
-					          OR Latitude > 90
-					          OR Longitude < -180
-					          OR Longitude > 180
-					          OR (Latitude = 0 AND Longitude = 0)
-					      )
-					  AND TRIM(City) = ?
-					  AND TRIM(COALESCE(State, '')) = ?
-					  AND TRIM(Country) = ?;
-					""",
-					(
-							float( row.Latitude ),
-							float( row.Longitude ),
-							str( row.City ).strip( ),
-							str( row.State ).strip( ),
-							str( row.Country ).strip( ),
-					) )
-				
-				updated_count += int( cursor.rowcount or 0 )
-			
-			conn.commit( )
+		cursor = None
 		
-		return updated_count
+		with create_connection( ) as conn:
+			try:
+				conn.execute( 'PRAGMA busy_timeout = 30000;' )
+				cursor = conn.cursor( )
+				cursor.execute( 'BEGIN IMMEDIATE;' )
+				
+				for row in df_apply.itertuples( index=False ):
+					cursor.execute(
+						f"""
+						UPDATE "{table_name}"
+						SET Latitude = ?,
+						    Longitude = ?
+						WHERE
+							(Latitude IS NULL OR Longitude IS NULL
+							 OR Latitude = '' OR Longitude = ''
+							 OR Latitude = 0 OR Longitude = 0)
+							AND COALESCE(City, '') = COALESCE(?, '')
+							AND COALESCE(State, '') = COALESCE(?, '')
+							AND COALESCE(Country, '') = COALESCE(?, '');
+						""",
+						(
+								float( row.Latitude ),
+								float( row.Longitude ),
+								'' if pd.isna( row.City ) else str( row.City ),
+								'' if pd.isna( row.State ) else str( row.State ),
+								'' if pd.isna( row.Country ) else str( row.Country ),
+						) )
+					
+					updated_count += int( cursor.rowcount or 0 )
+				
+				conn.commit( )
+			
+			except Exception:
+				conn.rollback( )
+				raise
+			
+			finally:
+				if cursor is not None:
+					cursor.close( )
+		
+		with create_connection( ) as conn:
+			try:
+				conn.execute( 'PRAGMA wal_checkpoint(TRUNCATE);' )
+			except sqlite3.OperationalError:
+				pass
+		
+		return int( updated_count )
 	
 	except Exception as e:
 		st.error( f'Unable to apply coordinate updates: {e}' )
@@ -2169,7 +2183,7 @@ def initialize_database( ) -> None:
 		None
 	"""
 	Path( 'stores/sqlite' ).mkdir( parents=True, exist_ok=True )
-	with sqlite3.connect( cfg.DB_PATH ) as conn:
+	with create_connection( ) as connection:
 		conn.execute(
 			"""
             CREATE TABLE IF NOT EXISTS chat_history
