@@ -43,10 +43,30 @@
   '''
 
 class MappyError( Exception ):
-	"""Base error for the mappy framework."""
+	"""Provide the base exception type for the Mappy framework.
+
+	Purpose:
+		Defines the common parent for framework-specific exceptions raised by Mappy
+		service wrappers, gateway operations, lookup routines, and Streamlit workflows.
+		Callers can catch this type when they need to handle any known Mappy exception
+		without catching unrelated Python runtime errors.
+	"""
 
 class GatewayError( MappyError ):
-	"""Raised when an HTTP request to Google Maps APIs fails unexpectedly."""
+	"""Represent an unexpected Google Maps gateway failure.
+
+	Purpose:
+		Signals failures that occur while issuing requests to external Google Maps
+		services or while interpreting gateway responses. The exception separates
+		transport, status, retry, and response-normalization failures from ordinary
+		not-found lookup outcomes.
+	"""
 
 class NotFound( MappyError ):
-	"""Raised when no relevant result is found for a query."""
+	"""Represent an unresolved location, place, route, or lookup result.
+
+	Purpose:
+		Signals that a requested geospatial lookup completed without producing a usable
+		application result. Service wrappers use this exception to distinguish normal
+		misses from gateway failures, parsing errors, and validation errors.
+	"""

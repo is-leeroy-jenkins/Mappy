@@ -47,24 +47,23 @@ from typing import Any, Dict, Optional, List
 from caches import BaseCache
 from exceptions import NotFound
 from maps import Maps
-from boogr import Error
+from boogr import Error, Logger
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required Places value is present.
+
+	Purpose:
+		Provides a lightweight guard for required Places inputs before cache-key
+		construction, text-search requests, details requests, and output flattening.
+		The function rejects missing objects and blank strings so fallback location
+		workflows fail before issuing ambiguous external API calls.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -73,22 +72,29 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class Place( ):
-	"""
+	"""Resolve locations with Google Places Text Search and Place Details.
 
-		Purpose:
-		Use Places Text Search and Place Details to recover locations that
-		Geocoding may miss. Results are returned in the same canonical shape
-		used by Geocoder so both services can be used interchangeably.
+	Purpose:
+		Provides a fallback and enrichment layer for locations that are not resolved
+		adequately by Geocoding alone. The class uses the shared ``Maps`` gateway and
+		optional cache backend to perform Places Text Search, retrieve Place Details,
+		extract address components, and return a canonical row shape compatible with
+		``Geocoder`` output.
 
-		Parameters:
-		maps (Maps):
-			Maps gateway instance.
-		cache (Optional[BaseCache]):
-			Optional cache for query results.
-
-		Returns:
-		Places instance with text search and place-details helpers.
-
+	Attributes:
+		map: Optional Google Maps gateway reference retained for compatibility.
+		cache: Optional cache backend used for Text Search and Details results.
+		country: Region bias from the latest Places lookup.
+		query: Free-text query from the latest Text Search operation.
+		hit: Cached payload returned by the latest cache lookup.
+		params: Query parameters sent to the latest Places Text Search request.
+		request: Reserved request-state dictionary retained for compatibility.
+		search: Raw Places Text Search response payload.
+		results: Candidate list returned by Places Text Search.
+		details: Raw Place Details result payload.
+		geometry: Geometry dictionary from the latest details payload.
+		key: Cache key used by the latest lookup.
+		output: Last flattened Places output.
 	"""
 	map: Optional[ Maps ]
 	cache: Optional[ BaseCache ]
@@ -105,6 +111,18 @@ class Place( ):
 	output: Optional[ Dict ]
 	
 	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
+		"""Initialize the Places service wrapper.
+
+		Purpose:
+			Stores the shared Google Maps gateway, optional cache backend, and runtime
+			state used by text-search, place-details, candidate-search, and output
+			flattening methods. The constructor performs local assignment only and
+			prepares the instance for later API-backed lookup operations.
+
+		Args:
+			maps: Google Maps gateway used for Places API requests.
+			cache: Optional cache backend used to store and retrieve Places results.
+		"""
 		self.maps = maps
 		self.cache = cache
 		self.country = None
@@ -120,22 +138,23 @@ class Place( ):
 		self.output = None
 	
 	def key_for( self, prefix: str, *parts: str ) -> str | None:
-		"""
+		"""Build a stable cache key for a Places operation.
 
-			Purpose:
-				Create a stable cache key from a namespace prefix and one or more
-				string parts.
+		Purpose:
+			Combines a namespace prefix and one or more identifying values into the
+			cache-key format used by Text Search and Place Details workflows. The
+			method prevents collisions between different Places operations while
+			preserving a predictable key structure for cache backends.
 
-			Parameters:
-				prefix (str):
-					Cache namespace or operation prefix.
-				*parts (str):
-					Values that uniquely identify the request.
+		Args:
+			prefix: Cache namespace or operation prefix.
+			*parts: Values that uniquely identify the request.
 
-			Returns:
-				str | None:
-					Normalized cache key.
+		Returns:
+			str | None: Normalized cache key.
 
+		Raises:
+			Error: Raised after logging when validation or key construction fails.
 		"""
 		try:
 			throw_if( 'prefix', prefix )
@@ -144,31 +163,33 @@ class Place( ):
 			return f'{prefix}::{joined}'
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
-			exception.cause = 'Places'
-			exception.method = 'key_for( self, *args )'
+			exception.module = 'mappy'
+			exception.cause = 'Place'
+			exception.method = 'key_for( self, prefix: str, *parts: str ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def component_value( self, components: List[ Dict[ str, Any ] ], kind: str,
 			want_long: bool = False ) -> Optional[ str ]:
-		"""
+		"""Extract one address component from a Google component list.
 
-			Purpose:
-				Extract a single address component value from a Google Places or
-				Geocoding address_components collection.
+		Purpose:
+			Reads Google Places or Geocoding ``address_components`` dictionaries and
+			returns the requested short or long component value. The helper centralizes
+			component extraction for Places output flattening so country, administrative
+			area, locality, and postal-code fields remain consistent with Geocoder
+			output.
 
-			Parameters:
-				components (List[Dict[str, Any]]):
-					Google address component dictionaries.
-				kind (str):
-					Component type to extract, such as country or locality.
-				want_long (bool):
-					When True, return long_name instead of short_name.
+		Args:
+			components: Google address component dictionaries.
+			kind: Component type to extract, such as ``country`` or ``locality``.
+			want_long: When ``True``, return ``long_name`` instead of ``short_name``.
 
-			Returns:
-				Optional[str]:
-					Component value when present; otherwise None.
+		Returns:
+			Optional[str]: Component value when present; otherwise ``None``.
 
+		Raises:
+			Error: Raised after logging when component extraction fails.
 		"""
 		try:
 			for component in components or [ ]:
@@ -181,29 +202,32 @@ class Place( ):
 			return None
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
-			exception.cause = 'Places'
-			exception.method = 'component_value( self, *args )'
+			exception.module = 'mappy'
+			exception.cause = 'Place'
+			exception.method = 'component_value( self, *args ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def flatten_place_details( self, details: Dict[ str, Any ], query: str = '' ) -> Dict[
 		str, Any ]:
-		"""
+		"""Flatten a Google Place Details result into Mappy's canonical shape.
 
-			Purpose:
-				Convert a Place Details result into the same flattened output shape
-				used by Geocoder.flatten_geocode(...).
+		Purpose:
+			Converts a Place Details payload into the same row-oriented output used by
+			Geocoder, while adding Places-specific fields such as business status,
+			rating, ratings count, website, phone number, and name. The flattened
+			result supports Streamlit display, Excel/CSV enrichment, cache storage, and
+			interchangeable fallback behavior with geocoding results.
 
-			Parameters:
-				details (Dict[str, Any]):
-					Google Place Details result dictionary.
-				query (str):
-					Original query text, when available.
+		Args:
+			details: Google Place Details result dictionary.
+			query: Original user query or place identifier associated with the result.
 
-			Returns:
-				Dict[str, Any]:
-					Canonical location dictionary.
+		Returns:
+			Dict[str, Any]: Canonical location dictionary with Places metadata.
 
+		Raises:
+			Error: Raised after logging when validation or output flattening fails.
 		"""
 		try:
 			throw_if( 'details', details )
@@ -238,25 +262,30 @@ class Place( ):
 			}
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
-			exception.cause = 'Places'
-			exception.method = 'flatten_place_details( self, *args )'
+			exception.module = 'mappy'
+			exception.cause = 'Place'
+			exception.method = 'flatten_place_details( self, *args ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def place_details( self, place_id: str ) -> Dict[ str, Any ] | None:
-		"""
+		"""Fetch and flatten details for a known Google Place identifier.
 
-			Purpose:
-				Fetch and flatten details for a known Google place_id.
+		Purpose:
+			Retrieves a Place Details payload for a supplied ``place_id``, checks the
+			cache before calling the gateway, stores raw details and flattened output
+			on the instance, writes successful results to the cache, and returns the
+			canonical Places output shape used by downstream Mappy workflows.
 
-			Parameters:
-				place_id (str):
-					Google Places place identifier.
+		Args:
+			place_id: Google Places place identifier.
 
-			Returns:
-				Dict[str, Any] | None:
-					Canonical flattened place details.
+		Returns:
+			Dict[str, Any] | None: Canonical flattened place details.
 
+		Raises:
+			Error: Raised after logging when validation, lookup, gateway handling, or
+				result processing fails.
 		"""
 		try:
 			throw_if( 'place_id', place_id )
@@ -281,32 +310,34 @@ class Place( ):
 			return self.output
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
-			exception.cause = 'Places'
-			exception.method = 'place_details( self, *args )'
+			exception.module = 'mappy'
+			exception.cause = 'Place'
+			exception.method = 'place_details( self, place_id: str ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def text_to_location( self, query: str, country: str = 'US' ) -> Dict[ str, Any ] | None:
-		"""
+		"""Resolve free text into a canonical location record.
 
-			Purpose:
-				Resolve a free-text query into a canonical address and coordinate
-				record via Google Places Text Search and Place Details.
+		Purpose:
+			Uses Places Text Search to find the top candidate for a user-supplied
+			location query, retrieves the candidate's Place Details payload, flattens
+			the result into Mappy's canonical geospatial row shape, and caches the
+			output when a cache backend is configured. This is the primary Places
+			fallback path for locations that Geocoder does not resolve adequately.
 
-			Parameters:
-				query (str):
-					Arbitrary human-entered text such as "Newcastle, NSW, AU".
-				country (str):
-					ISO-2 region bias such as "AU" or "US".
+		Args:
+			query: Free-text location query, such as a city, landmark, business, or
+				ambiguous place name.
+			country: Optional ISO-2 region bias such as ``US`` or ``AU``.
 
-			Returns:
-				Dict[str, Any] | None:
-					Canonical location dictionary compatible with Geocoder output.
+		Returns:
+			Dict[str, Any] | None: Canonical location dictionary compatible with
+				Geocoder output.
 
-			Raises:
-				NotFound:
-					Raised when no candidate is returned.
-
+		Raises:
+			Error: Raised after logging when validation, search, details lookup, or
+				result processing fails.
 		"""
 		try:
 			throw_if( 'query', query )
@@ -343,31 +374,33 @@ class Place( ):
 			return self.output
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
-			exception.cause = 'Places'
-			exception.method = 'text_to_location( self, *args )'
+			exception.module = 'mappy'
+			exception.cause = 'Place'
+			exception.method = 'text_to_location( self, query: str, country: str=US ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def search_candidates( self, query: str, country: str = 'US', lmt: int = 5 ) -> List[
 		Dict[ str, Any ] ]:
-		"""
+		"""Return Places Text Search candidates for a query.
 
-			Purpose:
-				Return multiple Places Text Search candidates for a query. This is
-				intended for future UI candidate-selection workflows.
+		Purpose:
+			Performs a Places Text Search and returns the top raw candidate dictionaries
+			for future UI candidate-selection workflows, diagnostics, and manual
+			disambiguation. The method stores query, country, parameters, search
+			payload, and results on the instance for inspection.
 
-			Parameters:
-				query (str):
-					Free-text search query.
-				country (str):
-					ISO-2 region bias.
-				limit (int):
-					Maximum candidates to return.
+		Args:
+			query: Free-text search query.
+			country: Optional ISO-2 region bias.
+			lmt: Maximum number of candidates to return.
 
-			Returns:
-				List[Dict[str, Any]]:
-					Raw candidate dictionaries returned by Text Search.
+		Returns:
+			List[Dict[str, Any]]: Raw candidate dictionaries returned by Text Search.
 
+		Raises:
+			Error: Raised after logging when validation, gateway handling, or candidate
+				retrieval fails.
 		"""
 		try:
 			throw_if( 'query', query )
@@ -383,7 +416,8 @@ class Place( ):
 			return self.results[ :max( 1, int( lmt ) ) ]
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
-			exception.cause = 'Places'
-			exception.method = 'search_candidates( self, *args )'
+			exception.module = 'mappy'
+			exception.cause = 'Place'
+			exception.method = 'search_candidates( self, *args ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception

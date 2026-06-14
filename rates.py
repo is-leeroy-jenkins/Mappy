@@ -43,24 +43,23 @@
   '''
 import time
 from typing import Optional
-from boogr import Error
+from boogr import Error, Logger
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required value is present.
+
+	Purpose:
+		Provides a lightweight guard for required runtime values used by Mappy
+		utility classes. The function raises clear validation errors for missing
+		objects and empty strings before downstream timing, gateway, or service logic
+		uses those values.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -69,20 +68,23 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class RateLimiter:
-	"""
+	"""Enforce a process-local query-per-second ceiling.
 
-		Purpose:
-		Enforce a process-local maximum queries-per-second ceiling by sleeping
-		between outbound requests. The limiter is intentionally lightweight and
-		designed for single-process Streamlit/API usage.
+	Purpose:
+		Provides lightweight request throttling for Google Maps and related API
+		wrappers. The limiter tracks call count, last request time, elapsed time
+		between calls, and total sleep time so service gateways can pause between
+		outbound requests without depending on a heavier scheduler.
 
-		Parameters:
-		max (Optional[float]):
-		Maximum queries per second. If None or <= 0, throttling is disabled.
-
-		Returns:
-		Instance exposing wait() to call immediately before an outbound request.
-
+	Attributes:
+		query_per_second: Maximum allowed query rate for the current process.
+		interval: Minimum seconds required between successive requests.
+		last: Timestamp of the previous completed wait operation.
+		now: Timestamp captured during the current wait operation.
+		delta: Elapsed seconds since the prior wait operation.
+		calls: Number of times the limiter has been invoked.
+		total_sleep: Total seconds slept across all wait operations.
+		last_sleep: Seconds slept during the most recent wait operation.
 	"""
 	query_per_second: Optional[ float ]
 	interval: Optional[ float ]
@@ -94,6 +96,17 @@ class RateLimiter:
 	last_sleep: Optional[ float ]
 	
 	def __init__( self, max: Optional[ float ] ) -> None:
+		"""Initialize the rate limiter.
+
+		Purpose:
+			Stores the requested query-per-second limit and derives the minimum
+			interval between outbound calls. Runtime counters are initialized so later
+			``wait`` calls can track throttling behavior and accumulated sleep time.
+
+		Args:
+			max: Maximum queries per second. ``None`` or values less than or equal to
+				zero disable throttling.
+		"""
 		self.query_per_second = float( max ) if max is not None else None
 		self.interval = (1.0 / self.query_per_second
 		                 if self.query_per_second and self.query_per_second > 0 else 0.0)
@@ -105,18 +118,16 @@ class RateLimiter:
 		self.last_sleep = 0.0
 	
 	def wait( self ) -> None:
-		"""
+		"""Pause long enough to remain under the configured request rate.
 
-			Purpose:
-				Sleep just enough so successive calls remain under the configured
-				query-per-second ceiling.
+		Purpose:
+			Updates rate-limiter counters and sleeps only when the elapsed time since
+			the previous call is less than the configured interval. This method is
+			called immediately before outbound API requests to reduce avoidable quota,
+			throttling, and burst-rate errors.
 
-			Parameters:
-				None.
-
-			Returns:
-				None.
-
+		Raises:
+			Error: Raised after logging when timing or sleep handling fails.
 		"""
 		try:
 			self.calls += 1
@@ -132,7 +143,8 @@ class RateLimiter:
 			self.last = time.time( )
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'RateLimiter'
-			exception.method = 'wait( self )'
+			exception.method = 'wait( self ) -> None'
+			Logger( ).write( exception )
 			raise exception

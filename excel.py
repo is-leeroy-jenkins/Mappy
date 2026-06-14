@@ -47,24 +47,23 @@ from caches import BaseCache
 from geocode import Geocoder
 from maps import Maps
 from places import Place
-from boogr import Error
+from boogr import Error, Logger
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required Excel workflow value is present.
+
+	Purpose:
+		Provides a lightweight guard for required file paths, dataframes, output
+		containers, column names, and geocoding inputs before spreadsheet enrichment
+		operations continue. The function rejects missing objects and blank strings so
+		file and dataframe workflows fail with clear validation errors.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -73,21 +72,33 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class Excel:
+	"""Read, write, and enrich spreadsheet location records.
+
+	Purpose:
+		Provides file-based and dataframe-oriented helpers for reading CSV/XLSX data,
+		preserving string fields, resolving addresses through Geocoder and Places
+		fallback services, appending canonical geospatial output columns, writing
+		enriched files, and storing summary metrics for Streamlit display or
+		downstream reporting.
+
+	Attributes:
+		api_key: Google Maps Platform API key supplied to the helper.
+		maps: Maps gateway used by Geocoder and Places wrappers.
+		geocoder: Geocoder service used as the primary location resolver.
+		places: Places service used as the fallback location resolver.
+		input_path: Input CSV/XLSX path used by the latest enrichment operation.
+		output_path: Output CSV/XLSX path used by the latest enrichment operation.
+		dataframe: DataFrame read or enriched by the latest operation.
+		worksheet: Excel worksheet name or index context used by read/write operations.
+		output: Output-column container from the latest enrichment operation.
+		address: Address column name used by address-based enrichment.
+		cache: Optional cache backend shared by Geocoder and Places.
+		file_path: File path used by the latest read or write operation.
+		last_summary: Summary metrics from the latest enrichment result.
+		city: City column name or current city value used by enrichment.
+		state: State column name or current state value used by enrichment.
+		country: Country column name or current country value used by enrichment.
 	"""
-	
-        Purpose:
-        Read and write spreadsheets while enriching location rows using Google
-        Maps APIs. Keeps original columns; appends geocode outputs, row-level
-        status, row-level errors, and summary metrics.
-
-        Parameters:
-        api_key (str): Google Maps Platform API key.
-        cache (Optional[BaseCache]): Optional cache for memoization.
-
-        Returns:
-        Excel helper with file-based and DataFrame-first enrichment entry points.
-        
-    """
 	api_key: str
 	maps: Optional[ Maps ]
 	geocoder: Optional[ Geocoder ]
@@ -106,6 +117,17 @@ class Excel:
 	country: Optional[ str ]
 	
 	def __init__( self, api: str, cache: Optional[ BaseCache ] = None ) -> None:
+		"""Initialize the Excel enrichment helper.
+
+		Purpose:
+			Stores the supplied API key, optional cache backend, shared Maps gateway,
+			Geocoder wrapper, Places fallback wrapper, and runtime state used by later
+			read, write, resolution, enrichment, and summary methods.
+
+		Args:
+			api: Google Maps Platform API key.
+			cache: Optional cache backend shared by Geocoder and Places.
+		"""
 		throw_if( 'api', api )
 		self.api_key = api
 		self.cache = cache
@@ -125,19 +147,25 @@ class Excel:
 		self.country = None
 	
 	def read( self, path: str, sheet: Optional[ str ] ) -> pd.DataFrame:
+		"""Read a CSV or Excel file into a cleaned DataFrame.
+
+		Purpose:
+			Loads CSV or XLSX input while preserving string-like values, including
+			leading zeros. Object columns are filled, converted to strings, and stripped
+			so downstream geocoding and column-detection workflows operate on stable
+			text values.
+
+		Args:
+			path: Input file path ending in ``.csv`` or an Excel-compatible extension.
+			sheet: Optional worksheet name for Excel input.
+
+		Returns:
+			pd.DataFrame: Loaded and cleaned DataFrame.
+
+		Raises:
+			Error: Raised after logging when validation, file reading, or dataframe
+				normalization fails.
 		"""
-
-            Purpose:
-            Robustly read CSV/XLSX and preserve strings, including leading zeros.
-
-            Parameters:
-            path (str): Input file path, either .csv or .xlsx.
-            sheet (Optional[str]): Optional sheet name for Excel.
-
-            Returns:
-            pd.DataFrame: DataFrame with dtype=str for string-like columns.
-
-        """
 		try:
 			throw_if( 'path', path )
 			
@@ -168,29 +196,29 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'read( self, path: str, sheet: Optional[ str ] )'
+			exception.method = 'read( self, path: str, sheet: Optional[ str ] ) -> pd.DataFrame'
+			Logger( ).write( exception )
 			raise exception
 	
 	def write( self, df: pd.DataFrame, path: str, sheet: Optional[ str ] ) -> None:
+		"""Write a DataFrame to CSV or Excel.
+
+		Purpose:
+			Copies the supplied DataFrame, stores the output path and worksheet context
+			on the instance, and writes the data with the index suppressed. CSV output
+			uses ``to_csv`` and non-CSV output uses ``to_excel`` with a default sheet
+			name when one is not supplied.
+
+		Args:
+			df: DataFrame to persist.
+			path: Output file path ending in ``.csv`` or an Excel-compatible extension.
+			sheet: Optional Excel worksheet name.
+
+		Raises:
+			Error: Raised after logging when validation or file writing fails.
 		"""
-
-	        Purpose:
-	            Write CSV/XLSX with index suppressed.
-
-	        Parameters:
-	            df (pd.DataFrame):
-	                Data to persist.
-	            path (str):
-	                Output path, either .csv or .xlsx.
-	            sheet (Optional[str]):
-	                Optional Excel sheet name.
-
-	        Returns:
-	            None.
-
-        """
 		try:
 			throw_if( 'df', df )
 			throw_if( 'path', path )
@@ -213,24 +241,26 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'write( self, df: pd.DataFrame, path: str, sheet: Optional[ str ] )'
+			exception.method = 'write( self, df: pd.DataFrame, path: str, sheet: Optional[ str ] ) -> None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_outputs( self ) -> Dict[ str, List ]:
-		"""
+		"""Create the standard geospatial output-column container.
 
-			Purpose:
-				Create the standard geocode enrichment output-column container.
+		Purpose:
+			Builds the dictionary of empty lists used during file enrichment. Each list
+			represents one canonical output column appended to the source DataFrame,
+			including formatted address, coordinates, place metadata, administrative
+			components, row-level status, and row-level error fields.
 
-			Parameters:
-				None.
+		Returns:
+			Dict[str, List]: Output-column container with empty value lists.
 
-			Returns:
-				Dict[str, List]:
-					Dictionary of output column names and empty value lists.
-
+		Raises:
+			Error: Raised after logging when output-container construction fails.
 		"""
 		try:
 			return {
@@ -251,29 +281,28 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'create_outputs( self )'
+			exception.method = 'create_outputs( self ) -> Dict[ str, List ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def append_empty( self, outputs: Dict[ str, List ], status: str = 'skipped_empty',
 			error: Optional[ str ] = None ) -> None:
-		"""
+		"""Append an empty geocode result to the output container.
 
-			Purpose:
-				Append an empty geocode result to the output container.
+		Purpose:
+			Adds placeholder values to every canonical geospatial output column for a
+			source row that cannot or should not be geocoded. The method preserves row
+			alignment between the original DataFrame and appended enrichment columns.
 
-			Parameters:
-				outputs (Dict[str, List]):
-					Output column container.
-				status (str):
-					Row-level geocode status.
-				error (Optional[str]):
-					Optional row-level error message.
+		Args:
+			outputs: Output-column container created by ``create_outputs``.
+			status: Row-level geocode status to append.
+			error: Optional row-level error message.
 
-			Returns:
-				None.
-
+		Raises:
+			Error: Raised after logging when validation or output mutation fails.
 		"""
 		try:
 			throw_if( 'outputs', outputs )
@@ -294,31 +323,30 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'append_empty( self, outputs: Dict[ str, List ], status: str=skipped_empty )'
+			exception.method = 'append_empty( self, outputs: Dict[ str, List ], status: str=skipped_empty ) -> None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def append_result( self, outputs: Dict[ str, List ], result: Dict,
 			status: str, error: Optional[ str ] = None ) -> None:
-		"""
+		"""Append one resolved geospatial result to the output container.
 
-			Purpose:
-				Append a geocode result dictionary to the output container.
+		Purpose:
+			Extracts canonical geocode or Places result fields and appends them to the
+			enrichment output lists. The method keeps each output column aligned with
+			the source DataFrame row and appends row-level status and error metadata
+			alongside the resolved location values.
 
-			Parameters:
-				outputs (Dict[str, List]):
-					Output column container.
-				result (Dict):
-					Flattened geocode or Places result.
-				status (str):
-					Row-level status.
-				error (Optional[str]):
-					Optional row-level error message.
+		Args:
+			outputs: Output-column container created by ``create_outputs``.
+			result: Flattened Geocoder or Places result dictionary.
+			status: Row-level resolution status.
+			error: Optional row-level error message.
 
-			Returns:
-				None.
-
+		Raises:
+			Error: Raised after logging when validation or output mutation fails.
 		"""
 		try:
 			throw_if( 'outputs', outputs )
@@ -342,25 +370,29 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'append_result( self, outputs: Dict[ str, List ], result: Dict, status: str )'
+			exception.method = 'append_result( self, outputs: Dict[ str, List ], result: Dict, status: str ) -> None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def summarize( self, df: pd.DataFrame ) -> Dict:
-		"""
+		"""Build summary metrics for an enriched DataFrame.
 
-			Purpose:
-				Build summary metrics for the most recent enrichment result.
+		Purpose:
+			Counts total rows and row-level geocoding statuses from the latest
+			enrichment result. The summary is stored on the instance for Streamlit
+			display, reporting, audit checks, and downstream validation of enrichment
+			coverage.
 
-			Parameters:
-				df (pd.DataFrame):
-					Enriched DataFrame.
+		Args:
+			df: Enriched DataFrame containing optional ``geocode_status`` values.
 
-			Returns:
-				Dict:
-					Summary metrics.
+		Returns:
+			Dict: Summary metrics for the enrichment result.
 
+		Raises:
+			Error: Raised after logging when validation or summary generation fails.
 		"""
 		try:
 			throw_if( 'df', df )
@@ -386,26 +418,30 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'summarize( self, df: pd.DataFrame )'
+			exception.method = 'summarize( self, df: pd.DataFrame ) -> Dict'
+			Logger( ).write( exception )
 			raise exception
 	
 	def detect_columns( self, df: pd.DataFrame ) -> Dict:
-		"""
+		"""Suggest likely location columns from a DataFrame.
 
-			Purpose:
-				Suggest likely address, city, state, and country columns from a
-				DataFrame's column names.
+		Purpose:
+			Inspects DataFrame column names using normalized lowercase comparisons and
+			returns likely address, city, state, and country column names. The result
+			supports Streamlit defaults, manual enrichment setup, and file-ingestion
+			workflows where users upload heterogeneous location datasets.
 
-			Parameters:
-				df (pd.DataFrame):
-					DataFrame to inspect.
+		Args:
+			df: DataFrame to inspect.
 
-			Returns:
-				Dict:
-					Suggested column names.
+		Returns:
+			Dict: Suggested column names keyed by ``address``, ``city``, ``state``,
+				and ``country``.
 
+		Raises:
+			Error: Raised after logging when validation or column inspection fails.
 		"""
 		try:
 			throw_if( 'df', df )
@@ -454,27 +490,32 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'detect_columns( self, df: pd.DataFrame )'
+			exception.method = 'detect_columns( self, df: pd.DataFrame ) -> Dict'
+			Logger( ).write( exception )
 			raise exception
 	
 	def resolve_address( self, address: str, country: Optional[ str ] = None ) -> Dict:
-		"""
+		"""Resolve one free-form address with Geocoder and Places fallback.
 
-			Purpose:
-				Resolve one free-form address using Geocoder first and Places fallback.
+		Purpose:
+			Attempts to resolve a free-form address through Geocoder first, then falls
+			back to Places Text Search when geocoding fails. The method returns a
+			standard row-resolution dictionary containing a result payload, status, and
+			error text so file enrichment can continue without failing an entire batch.
 
-			Parameters:
-				address (str):
-					Free-form address text.
-				country (Optional[str]):
-					Optional ISO-2 country bias.
+		Args:
+			address: Free-form address text.
+			country: Optional ISO-2 country bias. Defaults to ``US`` when omitted.
 
-			Returns:
-				Dict:
-					Dictionary with result, status, and error fields.
+		Returns:
+			Dict: Row-level resolution result with ``result``, ``status``, and
+				``error`` fields.
 
+		Raises:
+			Error: Raised after logging when top-level validation or resolution setup
+				fails.
 		"""
 		try:
 			throw_if( 'address', address )
@@ -511,31 +552,33 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'resolve_address( self, address: str, country: Optional[ str ]=None )'
+			exception.method = 'resolve_address( self, address: str, country: Optional[ str ]=None ) -> Dict'
+			Logger( ).write( exception )
 			raise exception
 	
 	def resolve_city_state_country( self, city: str, state: Optional[ str ],
 			country: str ) -> Dict:
-		"""
+		"""Resolve one structured city/state/country location.
 
-			Purpose:
-				Resolve one city/state/country row using Geocoder first and Places
-				fallback.
+		Purpose:
+			Attempts to resolve a structured location through Geocoder first, then
+			falls back to Places Text Search using a composed query when geocoding
+			fails. The method returns a standard row-resolution dictionary so file
+			enrichment can preserve row-level status without stopping the batch.
 
-			Parameters:
-				city (str):
-					City or locality value.
-				state (Optional[str]):
-					State, province, region, or territory value.
-				country (str):
-					Country name or ISO-2 country code.
+		Args:
+			city: City or locality value.
+			state: Optional state, province, region, or territory value.
+			country: Country name or ISO-2 country code.
 
-			Returns:
-				Dict:
-					Dictionary with result, status, and error fields.
+		Returns:
+			Dict: Row-level resolution result with ``result``, ``status``, and
+				``error`` fields.
 
+		Raises:
+			Error: Raised after logging when top-level resolution setup fails.
 		"""
 		try:
 			city_value = str( city or '' ).strip( )
@@ -585,34 +628,36 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'resolve_city_state_country( self, city: str, state: Optional[ str ], country: str )'
+			exception.method = 'resolve_city_state_country( self, city: str, state: Optional[ str ], country: str ) -> Dict'
+			Logger( ).write( exception )
 			raise exception
 	
 	def enrich_from_address( self, inpath: str, outpath: str, address: str, sheet: Optional[ str ],
 			cntry: Optional[ str ] ) -> pd.DataFrame:
+		"""Enrich a file using one free-form address column.
+
+		Purpose:
+			Reads a CSV/XLSX file, validates the address column, resolves each
+			populated address through Geocoder and Places fallback, appends canonical
+			geospatial output columns, stores enrichment state and summary metrics, and
+			writes the enriched DataFrame to the requested output path.
+
+		Args:
+			inpath: Input CSV/XLSX path containing the address column.
+			outpath: Output CSV/XLSX path to write enriched results.
+			address: Column name containing free-form address text.
+			sheet: Optional Excel worksheet name.
+			cntry: Optional column name containing country-bias values.
+
+		Returns:
+			pd.DataFrame: Enriched DataFrame written to ``outpath``.
+
+		Raises:
+			Error: Raised after logging when validation, reading, enrichment, summary,
+				or writing fails.
 		"""
-            Purpose:
-                Enrich a file containing a single free-form address column, adding
-                lat/lng, place_id, canonical components, status, and error fields.
-
-            Parameters:
-                inpath (str):
-                    Path to input CSV/XLSX with an address column.
-                outpath (str):
-                    Output path to write enriched file.
-                address (str):
-                    Column name containing free-form addresses.
-                sheet (Optional[str]):
-                    Excel sheet name if .xlsx.
-                cntry (Optional[str]):
-                    Optional column containing ISO-2 country bias codes.
-
-            Returns:
-                pd.DataFrame:
-                    Enriched DataFrame. The output file is still written.
-        """
 		try:
 			throw_if( 'inpath', inpath )
 			throw_if( 'outpath', outpath )
@@ -668,30 +713,38 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'enrich_from_address( self, **kwargs )'
+			exception.method = 'enrich_from_address( self, *args ) -> pd.DataFrame'
+			Logger( ).write( exception )
 			raise exception
 	
 	def enrich( self, inpath: str, outpath: str, city: str, state: Optional[ str ], cntry: str,
 			sheet: Optional[ str ] = None, ) -> pd.DataFrame:
-		"""
+		"""Enrich a file using city, state, and country columns.
 
-			Purpose:
-			Enrich a file with City, State/Region, and Country columns by appending
-			lat/lng, place_id, canonical components, status, and error fields.
-	
-			Parameters:
-			inpath (str): Input CSV/XLSX path containing location columns.
-			outpath (str): Output CSV/XLSX path to write enriched results.
-			city (str): Column for city/locality.
-			state (Optional[str]): Column for state/region.
-			cntry (str): Column for country name or ISO-2 code.
-			sheet (Optional[str]): Excel sheet name if .xlsx.
-	
-			Returns:
-			pd.DataFrame: Enriched DataFrame. The output file is still written.
+		Purpose:
+			Reads a CSV/XLSX file, validates the configured city, optional state, and
+			country columns, resolves each populated location through Geocoder and
+			Places fallback, appends canonical geospatial output columns, stores
+			enrichment state and summary metrics, and writes the enriched DataFrame to
+			the requested output path.
 
+		Args:
+			inpath: Input CSV/XLSX path containing location columns.
+			outpath: Output CSV/XLSX path to write enriched results.
+			city: Column name containing city or locality values.
+			state: Optional column name containing state, province, region, or
+				territory values.
+			cntry: Column name containing country names or ISO-2 country codes.
+			sheet: Optional Excel worksheet name.
+
+		Returns:
+			pd.DataFrame: Enriched DataFrame written to ``outpath``.
+
+		Raises:
+			Error: Raised after logging when validation, reading, enrichment, summary,
+				or writing fails.
 		"""
 		try:
 			throw_if( 'inpath', inpath )
@@ -760,7 +813,8 @@ class Excel:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Excel'
-			exception.method = 'enrich( self, **kwargs)'
+			exception.method = 'enrich( self, *args ) -> pd.DataFrame'
+			Logger( ).write( exception )
 			raise exception

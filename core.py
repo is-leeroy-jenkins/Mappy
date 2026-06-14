@@ -45,47 +45,40 @@ from typing import Dict, Optional, Any
 from requests import Response
 
 def throw_if( name: str, value: object ) -> None:
-	"""
+	"""Validate that a required value is not ``None``.
 
-		Purpose:
-		--------
-		Lightweight guard used to validate required arguments. Treats None and
-		empty/whitespace-only strings as invalid values and raises ValueError.
-	
-		Parameters:
-		----------
-		name (str): Human-friendly argument name used in the raised message.
-		value (object): Value to validate.
-	
-		Returns:
-		-------
-		None
+	Purpose:
+		Provides a lightweight guard for required arguments used by Mappy core
+		objects and service wrappers. The function raises a clear validation error
+		before downstream response, gateway, or result-container logic attempts to
+		use a missing value.
 
+	Args:
+		name: Human-readable argument name used in the raised message.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None``.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None' )
 
 class Result( ):
-	"""
+	"""Represent an HTTP response as a lightweight Mappy result object.
 
-		Purpose:
-		--------
-		Immutable container that represents the outcome of fetching a single
-		page. It stores the canonical URL, http status code, extracted plain
-		text, optional raw HTML, and response headers.
-	
-		Parameters:
-		----------
-		url (str): Canonical URL that was fetched.
-		status_code (int): HTTP status code (use 0 when not applicable).
-		text (str): Extracted plain text content (may be empty).
-		html (Optional[str]): Raw HTML from the response, if available.
-		headers (Optional[Dict[str, str]]): Response headers, if available.
-	
-		Returns:
-		-------
-		None
+	Purpose:
+		Captures the canonical URL, HTTP status code, response text, response
+		encoding, headers, and original ``requests.Response`` object produced by
+		fetcher and generator workflows. The container provides a stable shape for
+		serialization, diagnostics, UI display, and downstream extraction routines.
 
+	Attributes:
+		url: Canonical response URL.
+		status_code: HTTP response status code.
+		text: Response body text.
+		encoding: Response encoding reported by the HTTP client.
+		headers: Response headers captured from the HTTP response.
+		response: Original ``requests.Response`` object.
 	"""
 	url: Optional[ str ]
 	status_code: Optional[ int ]
@@ -93,26 +86,35 @@ class Result( ):
 	encoding: Optional[ str ]
 	headers: Optional[ str ]
 	response: Optional[ Response ]
-
-	def __init__( self, response: Response ) -> None:
-			self.response = response
-			self.url = response.url
-			self.status_code = response.status_code
-			self.text = response.text
-			self.encoding = response.encoding
-			self.headers = response.headers
-
-	def __dir__( self ) -> list[ str ]:
-		"""
-
-			Purpose:
-			--------
-			Provide a stable ordering of attributes used by GUIs or inspector tooling.
 	
-			Returns:
-			-------
-			list[str]: attribute names in a stable order.
+	def __init__( self, response: Response ) -> None:
+		"""Initialize the response result container.
 
+		Purpose:
+			Copies response metadata and body content from a ``requests.Response``
+			instance into stable instance attributes used by fetchers, crawlers,
+			generators, Streamlit display logic, and serialization helpers.
+
+		Args:
+			response: HTTP response object returned by ``requests``.
+		"""
+		self.response = response
+		self.url = response.url
+		self.status_code = response.status_code
+		self.text = response.text
+		self.encoding = response.encoding
+		self.headers = response.headers
+	
+	def __dir__( self ) -> list[ str ]:
+		"""Return a stable public member ordering.
+
+		Purpose:
+			Provides predictable member ordering for interactive inspection,
+			Streamlit display helpers, debugger views, and documentation tools that
+			use ``dir`` to expose object capabilities.
+
+		Returns:
+			list[str]: Ordered public attribute and method names.
 		"""
 		return [ 'url',
 		         'status_code',
@@ -121,50 +123,39 @@ class Result( ):
 		         'headers',
 		         'has_html',
 		         'to_dict',
-		         'from_response']
-
+		         'from_response' ]
+	
 	def to_dict( self ) -> Dict[ str, Any ]:
-		"""
+		"""Serialize the result container to a dictionary.
 
-			Purpose:
-			--------
-			Produce a plain dictionary representation of the Result for serialization
-			or tests. This copies headers to avoid outside mutations.
-	
-			Parameters:
-			----------
-			None
-	
-			Returns:
-			-------
-			Dict[str, Any]: dictionary with keys url, status_code, text, html, headers
+		Purpose:
+			Produces a plain dictionary representation of the captured HTTP response
+			metadata and body text. The output supports Streamlit inspection, tests,
+			cache serialization, diagnostics, and downstream JSON-friendly processing.
 
+		Returns:
+			Dict[str, Any]: Dictionary containing URL, status code, text, encoding,
+				and copied headers.
 		"""
 		return \
-		{
-			'url': self.url,
-			'status_code': self.status_code,
-			'text': self.text,
-			'encoding': self.encoding,
-			'headers': dict( self.headers ),
-		}
-
+			{
+					'url': self.url,
+					'status_code': self.status_code,
+					'text': self.text,
+					'encoding': self.encoding,
+					'headers': dict( self.headers ),
+			}
+	
 	@property
 	def has_html( self ) -> bool:
-		"""
+		"""Indicate whether response text is available.
 
-			Purpose:
-			--------
-			Indicate whether the Result includes non-empty HTML content.
-	
-			Parameters:
-			----------
-			None
-	
-			Returns:
-			-------
-			bool: True when html is a non-empty string; otherwise False.
+		Purpose:
+			Provides a simple Boolean indicator used by fetchers, crawlers, display
+			logic, and diagnostics to determine whether the result carries text
+			content that can be parsed, rendered, or serialized.
 
+		Returns:
+			bool: ``True`` when ``text`` is a string; otherwise ``False``.
 		"""
 		return isinstance( self.text, str )
-

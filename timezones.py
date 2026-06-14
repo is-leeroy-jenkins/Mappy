@@ -45,24 +45,24 @@ import time
 import datetime as dt
 from typing import Optional, Dict
 from maps import Maps
-from boogr import Error
+from boogr import Error, Logger
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required time-zone value is present.
+
+	Purpose:
+		Provides a lightweight guard for required Time Zone API inputs before
+		coordinate validation, gateway request construction, UTC offset conversion,
+		local-time conversion, and batch enrichment. The function rejects missing
+		objects and blank strings so time-zone workflows fail before issuing
+		ambiguous external API calls.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -71,19 +71,28 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class Timezone:
-	"""
-	
-		Purpose:
-			Wrap Google Time Zone API for coordinate lookups, full payload retrieval,
-			UTC offset extraction, local-time conversion, and batch enrichment.
+	"""Resolve time-zone metadata from geographic coordinates.
 
-		Parameters:
-			maps (Maps):
-				Maps gateway instance.
+	Purpose:
+		Wraps the Google Time Zone API through the shared ``Maps`` gateway and
+		normalizes API results for Streamlit display, spreadsheet enrichment, and
+		row-level data workflows. The class validates coordinates, retrieves full
+		time-zone payloads, extracts IANA time-zone identifiers, computes total UTC
+		offsets, converts UTC datetimes into local time, and enriches batches of row
+		dictionaries with time-zone fields.
 
-		Returns:
-			Timezone with get_id, lookup, offset_hours, local_time, and batch_lookup.
-			
+	Attributes:
+		timestamp: Unix timestamp used for the latest Google Time Zone API request.
+		maps: Google Maps gateway used for Time Zone API requests.
+		latitude: Latitude from the latest validated coordinate.
+		longitude: Longitude from the latest validated coordinate.
+		data: Raw Google Time Zone API response payload from the latest lookup.
+		offset: Total UTC offset in hours from the latest lookup.
+		local: ISO-formatted local time from the latest local-time conversion.
+		rows: Batch rows from the latest enrichment request.
+		lat_field: Latitude field name used by the latest batch enrichment.
+		lng_field: Longitude field name used by the latest batch enrichment.
+		utc_datetime: UTC datetime used by the latest local-time conversion.
 	"""
 	timestamp: Optional[ int ]
 	maps: Optional[ Maps ]
@@ -98,6 +107,17 @@ class Timezone:
 	utc_datetime: Optional[ dt.datetime ]
 	
 	def __init__( self, maps: Maps ) -> None:
+		"""Initialize the Time Zone service wrapper.
+
+		Purpose:
+			Stores the shared Google Maps gateway and initializes runtime state used by
+			coordinate validation, lookup execution, offset extraction, local-time
+			conversion, and batch row enrichment. The constructor performs local
+			assignment only and prepares the instance for later API-backed operations.
+
+		Args:
+			maps: Google Maps gateway used for Time Zone API requests.
+		"""
 		self.maps = maps
 		self.timestamp = None
 		self.latitude = None
@@ -111,22 +131,23 @@ class Timezone:
 		self.utc_datetime = None
 	
 	def validate_coordinates( self, lat: float, lng: float ) -> tuple:
-		"""
-		
-			Purpose:
-				Validate and normalize a latitude and longitude pair.
+		"""Validate and normalize a latitude/longitude pair.
 
-			Parameters:
-				lat (float):
-					Latitude in decimal degrees.
+		Purpose:
+			Converts coordinate inputs to floats and enforces valid geographic ranges
+			before Google Time Zone API requests are built. The validated coordinate is
+			stored on the instance for later lookup, local-time conversion, and
+			enrichment output.
 
-				lng (float):
-					Longitude in decimal degrees.
+		Args:
+			lat: Latitude in decimal degrees.
+			lng: Longitude in decimal degrees.
 
-			Returns:
-				tuple:
-					Validated latitude and longitude.
-				
+		Returns:
+			tuple: Validated latitude and longitude.
+
+		Raises:
+			Error: Raised after logging when validation or conversion fails.
 		"""
 		try:
 			throw_if( 'lat', lat )
@@ -148,29 +169,32 @@ class Timezone:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Timezone'
-			exception.method = 'validate_coordinates( self, lat: float, lng: float )'
+			exception.method = 'validate_coordinates( self, lat: float, lng: float ) -> tuple'
+			Logger( ).write( exception )
 			raise exception
 	
 	def lookup( self, lat: float, lng: float ) -> Dict | None:
-		"""
+		"""Fetch the full Google Time Zone API payload for a coordinate.
 
-			Purpose:
-				Fetch the full Google Time Zone API response for a coordinate.
+		Purpose:
+			Validates latitude and longitude, captures the current Unix timestamp,
+			stores coordinate and timestamp state on the instance, and calls the shared
+			Google Maps gateway using the ``timezone/json`` endpoint. The raw response
+			payload is retained for ID extraction, offset calculation, local-time
+			conversion, and batch enrichment.
 
-			Parameters:
-				lat (float):
-					Latitude.
+		Args:
+			lat: Latitude in decimal degrees.
+			lng: Longitude in decimal degrees.
 
-				lng (float):
-					Longitude.
+		Returns:
+			Dict | None: Full Google Time Zone API response payload.
 
-			Returns:
-				Dict | None:
-					Full time zone response payload, including timeZoneId, timeZoneName,
-					rawOffset, dstOffset, and status when available.
-
+		Raises:
+			Error: Raised after logging when validation, request construction, gateway
+				execution, or response handling fails.
 		"""
 		try:
 			latitude, longitude = self.validate_coordinates( lat, lng )
@@ -191,28 +215,29 @@ class Timezone:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Timezone'
-			exception.method = 'lookup( self, lat: float, lng: float )'
+			exception.method = 'lookup( self, lat: float, lng: float ) -> Dict | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def get_id( self, lat: float, lng: float ) -> Optional[ str ]:
-		"""
-		
-			Purpose:
-				Fetch the IANA time zone id for a coordinate.
+		"""Fetch the IANA time-zone identifier for a coordinate.
 
-			Parameters:
-				lat (float):
-					Latitude.
+		Purpose:
+			Delegates to ``lookup`` and extracts the ``timeZoneId`` field from the
+			Google Time Zone API payload. The method preserves the latest raw payload
+			on the instance for diagnostics and downstream workflows.
 
-				lng (float):
-					Longitude.
+		Args:
+			lat: Latitude in decimal degrees.
+			lng: Longitude in decimal degrees.
 
-			Returns:
-				Optional[str]:
-					Time zone id string or None if unavailable.
-				
+		Returns:
+			Optional[str]: IANA time-zone identifier when available; otherwise ``None``.
+
+		Raises:
+			Error: Raised after logging when lookup or extraction fails.
 		"""
 		try:
 			self.data = self.lookup( lat, lng )
@@ -224,29 +249,31 @@ class Timezone:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Timezone'
-			exception.method = 'get_id( self, lat: float, lng: float )'
+			exception.method = 'get_id( self, lat: float, lng: float ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def offset_hours( self, lat: float, lng: float ) -> Optional[ float ]:
-		"""
-		
-			Purpose:
-				Fetch the total UTC offset in hours for a coordinate.
+		"""Fetch the total UTC offset in hours for a coordinate.
 
-			Parameters:
-				lat (float):
-					Latitude.
+		Purpose:
+			Delegates to ``lookup`` and combines the Google Time Zone API
+			``rawOffset`` and ``dstOffset`` values into a decimal-hour offset. The
+			computed value is stored on the instance for later display and enrichment
+			workflows.
 
-				lng (float):
-					Longitude.
+		Args:
+			lat: Latitude in decimal degrees.
+			lng: Longitude in decimal degrees.
 
-			Returns:
-				Optional[float]:
-					Total UTC offset in hours, including daylight-saving offset
-					when returned by the API.
-				
+		Returns:
+			Optional[float]: Total UTC offset in hours when available; otherwise
+				``None``.
+
+		Raises:
+			Error: Raised after logging when lookup or offset conversion fails.
 		"""
 		try:
 			self.data = self.lookup( lat, lng )
@@ -264,34 +291,36 @@ class Timezone:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Timezone'
-			exception.method = 'offset_hours( self, lat: float, lng: float )'
+			exception.method = 'offset_hours( self, lat: float, lng: float ) -> Optional[ float ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def local_time( self, lat: float, lng: float,
 			utc_datetime: Optional[ dt.datetime ] = None ) -> Dict | None:
-		"""
-		
-			Purpose:
-				Convert a UTC datetime into local time at a coordinate using the
-				Google Time Zone API rawOffset and dstOffset fields.
+		"""Convert UTC time into local time for a coordinate.
 
-			Parameters:
-				lat (float):
-					Latitude.
+		Purpose:
+			Uses the Google Time Zone API ``rawOffset`` and ``dstOffset`` fields to
+			translate a UTC datetime into local time at the supplied coordinate. Naive
+			datetimes are treated as UTC, timezone-aware datetimes are normalized to
+			UTC, and the resulting time-zone metadata, UTC time, local time, offset,
+			latitude, and longitude are returned as a dictionary.
 
-				lng (float):
-					Longitude.
+		Args:
+			lat: Latitude in decimal degrees.
+			lng: Longitude in decimal degrees.
+			utc_datetime: Optional UTC datetime. When omitted, the current UTC time is
+				used.
 
-				utc_datetime (Optional[dt.datetime]):
-					Optional UTC datetime. If None, the current UTC time is used.
+		Returns:
+			Dict | None: Time-zone metadata and converted local-time fields when a
+				payload is available; otherwise ``None``.
 
-			Returns:
-				Dict | None:
-					Dictionary containing timezone metadata, UTC time, local time,
-					and total offset hours.
-				
+		Raises:
+			Error: Raised after logging when lookup, datetime normalization, or
+				conversion fails.
 		"""
 		try:
 			self.data = self.lookup( lat, lng )
@@ -332,31 +361,32 @@ class Timezone:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Timezone'
-			exception.method = 'local_time( self, lat: float, lng: float, utc_datetime: Optional[ dt.datetime ]=None )'
+			exception.method = 'local_time( self, lat: float, lng: float, utc_datetime: Optional[ dt.datetime ]=None ) -> Dict | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def batch_lookup( self, rows: list, lat_field: str = 'lat', lng_field: str = 'lng' ) -> list:
-		"""
-		
-			Purpose:
-				Enrich a list of row dictionaries with Google Time Zone API fields.
+		"""Enrich row dictionaries with Google Time Zone API fields.
 
-			Parameters:
-				rows (list):
-					List of dictionaries containing latitude and longitude fields.
+		Purpose:
+			Iterates through copied row dictionaries, reads latitude and longitude
+			values from configurable field names, performs a time-zone lookup for each
+			row, and appends time-zone metadata, UTC offset, row-level status, and
+			row-level error fields. Per-row failures are captured on the row so a
+			batch can continue processing even when individual records are invalid.
 
-				lat_field (str):
-					Latitude field name.
+		Args:
+			rows: List of row dictionaries containing latitude and longitude values.
+			lat_field: Field name containing latitude values.
+			lng_field: Field name containing longitude values.
 
-				lng_field (str):
-					Longitude field name.
+		Returns:
+			list: Copied row dictionaries with appended time-zone fields.
 
-			Returns:
-				list:
-					List of copied row dictionaries with timezone fields appended.
-				
+		Raises:
+			Error: Raised after logging when batch-level validation or setup fails.
 		"""
 		try:
 			throw_if( 'rows', rows )
@@ -417,7 +447,8 @@ class Timezone:
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Timezone'
-			exception.method = 'batch_lookup( self, rows: list, lat_field: str=lat, lng_field: str=lng )'
+			exception.method = 'batch_lookup( self, *args ) -> list'
+			Logger( ).write( exception )
 			raise exception

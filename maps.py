@@ -46,25 +46,23 @@ from typing import Dict, Optional
 import requests
 from exceptions import GatewayError
 from rates import RateLimiter
-from boogr import Error
+from boogr import Error, Logger
 import config as cfg
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required gateway value is present.
+
+	Purpose:
+		Provides a lightweight guard for required Google Maps gateway inputs. The
+		function prevents missing endpoints, empty parameter dictionaries, and blank
+		string values from reaching outbound request construction.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -73,31 +71,38 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class Maps( ):
+	"""Provide the central Google Maps Web Services gateway.
+
+	Purpose:
+		Wraps Google Maps HTTP request execution behind a shared gateway used by
+		geocoding, Places, Distance Matrix, Static Maps, Time Zone, spreadsheet
+		enrichment, and Streamlit workflows. The class stores request configuration,
+		applies process-local rate limiting, injects the configured API key, retries
+		transient failures with exponential backoff, and records response diagnostics
+		for downstream inspection.
+
+	Attributes:
+		base_url: Base Google Maps API URL.
+		endpoint: Endpoint path used for the active request.
+		params: Query parameters supplied by the caller before API-key injection.
+		api_key: Google Maps Platform API key read from configuration.
+		query_per_second: Optional request-rate ceiling.
+		retries: Maximum retry attempts for transient failures.
+		min: Initial retry backoff in seconds.
+		max: Maximum retry backoff in seconds.
+		timeout: HTTP request timeout in seconds.
+		url: Fully qualified request URL for the active endpoint.
+		session: Requests session used for outbound HTTP calls.
+		limiter: Rate limiter invoked before outbound requests.
+		query: Final query parameters sent with the active request.
+		response: Most recent HTTP response object.
+		last_url: Most recent request URL.
+		last_query: Most recent query parameters after API-key injection.
+		last_status: Most recent HTTP status code.
+		last_elapsed_ms: Most recent request duration in milliseconds.
+		last_payload_status: Most recent Google payload status value.
+		last_payload_error: Most recent Google payload error message.
 	"""
-
-	    Purpose:
-	        Centralized HTTP gateway for Google Maps Web Services. Handles rate
-	        limiting, retry-with-backoff, API-key injection, response diagnostics,
-	        and Google payload-status normalization.
-
-	    Parameters:
-	        api_key (str):
-	            Google Maps Platform API key.
-	        qps (Optional[float]):
-	            Max queries per second. None or <= 0 disables throttling.
-	        retries (int):
-	            Maximum number of retry attempts for transient failures.
-	        min (float):
-	            Initial backoff seconds.
-	        max (float):
-	            Maximum backoff seconds.
-	        timeout (float):
-	            Request timeout in seconds.
-
-	    Returns:
-	        Ready-to-use gateway. Use .request("geocode/json", {...}) etc.
-
-    """
 	base_url: Optional[ str ]
 	endpoint: Optional[ str ]
 	params: Optional[ Dict[ str, str ] ]
@@ -123,6 +128,23 @@ class Maps( ):
 	
 	def __init__( self, qps: Optional[ float ] = 5.0, retries: int = 5,
 			min: float = 1.0, max: float = 30.0, timeout: float = 15.0 ) -> None:
+		"""Initialize the Google Maps gateway.
+
+		Purpose:
+			Creates the shared HTTP session, rate limiter, retry settings, timeout
+			settings, and diagnostic fields used by later gateway requests. The
+			constructor reads the Google Maps API key from configuration and prepares
+			the instance for reuse by Mappy service wrappers.
+
+		Args:
+			qps: Maximum queries per second. ``None`` or non-positive values disable
+				throttling.
+			retries: Maximum number of retry attempts for transient HTTP or Google
+				payload failures.
+			min: Initial exponential-backoff delay in seconds.
+			max: Maximum exponential-backoff delay in seconds.
+			timeout: HTTP request timeout in seconds.
+		"""
 		self.api_key = cfg.GOOGLEMAPS_API_KEY
 		self.limiter = RateLimiter( qps )
 		self.retries = retries
@@ -144,23 +166,28 @@ class Maps( ):
 		self.last_payload_error = None
 	
 	def request( self, endpoint: str, params: Dict[ str, str ] ) -> Dict | None:
+		"""Execute a Google Maps API GET request.
+
+		Purpose:
+			Builds and sends a request to the selected Google Maps Web Services
+			endpoint using caller-supplied query parameters plus the configured API
+			key. The method rate-limits outbound calls, records request and response
+			diagnostics, retries transient HTTP and Google payload failures with
+			exponential backoff, normalizes hard Google API status failures into
+			``GatewayError``, and returns the parsed JSON payload on success.
+
+		Args:
+			endpoint: Endpoint path such as ``geocode/json`` or
+				``distancematrix/json``.
+			params: Query parameters for the request before API-key injection.
+
+		Returns:
+			Dict | None: Parsed JSON response payload on success.
+
+		Raises:
+			Error: Raised after the exception is wrapped and written to the
+				application logger.
 		"""
-
-	        Purpose:
-	            Execute a GET request to the given Google Maps endpoint with query
-	            params and robust retry/backoff for transient errors. The Google
-	            Maps API key is injected as the "key" query parameter.
-
-	        Parameters:
-	            endpoint (str):
-	                Endpoint path, e.g., "geocode/json", "distancematrix/json".
-	            params (Dict[str, str]):
-	                Query parameters for the request. "key" is injected.
-
-	        Returns:
-	            Parsed JSON dictionary on success.
-
-        """
 		try:
 			throw_if( 'endpoint', endpoint )
 			throw_if( 'params', params )
@@ -225,7 +252,8 @@ class Maps( ):
 					backoff = min( backoff * 2, self.max )
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Maps'
-			exception.method = 'request( self, endpoint: str, params: Dict[ str, str ] )'
+			exception.method = 'request( self, endpoint: str, params: Dict[ str, str ] ) -> Dict | None'
+			Logger( ).write( exception )
 			raise exception

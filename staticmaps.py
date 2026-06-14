@@ -43,25 +43,24 @@
   '''
 from typing import Optional, Dict
 from urllib.parse import urlencode
-from boogr import Error
+from boogr import Error, Logger
 import config as cfg
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required static-map value is present.
+
+	Purpose:
+		Provides a lightweight guard for required Google Static Maps inputs before
+		coordinate validation, point normalization, URL construction, and bounding-box
+		generation. The function rejects missing objects and blank strings so map URL
+		workflows fail before producing incomplete or ambiguous query parameters.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -70,19 +69,32 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 class StaticMap( ):
-	"""
-		
-		Purpose:
-			Generate Google Static Maps URLs for single-point previews, multi-point
-			previews, paths, and bounding-box previews.
-	
-		Parameters:
-			api_key (str):
-				Google Maps Platform API key.
-	
-		Returns:
-			StaticMap instance with URL-building helpers.
-		
+	"""Generate Google Static Maps URLs.
+
+	Purpose:
+		Builds embeddable Google Static Maps URLs for single-point previews,
+		multi-marker previews, polyline paths, and rectangular bounding boxes. The
+		class stores map URL parameters, marker state, coordinate state, map type,
+		path styling, and bounding-box values so Streamlit workflows and reporting
+		pages can render or inspect the latest generated static map request.
+
+	Attributes:
+		api_key: Google Maps Platform API key read from configuration.
+		zoom: Zoom level used by the latest generated map URL.
+		size: Static map image dimensions in ``WIDTHxHEIGHT`` format.
+		latitude: Latitude from the latest validated coordinate.
+		longitude: Longitude from the latest validated coordinate.
+		params: Query parameters used to build the latest Static Maps URL.
+		markers: Marker parameter value used by the latest single-pin URL.
+		base_url: Google Static Maps endpoint URL.
+		points: Validated coordinate points used by multi-pin, path, or box maps.
+		maptype: Static map type such as ``roadmap`` or ``satellite``.
+		color: Marker or path color used by the latest generated URL.
+		weight: Path stroke weight used by the latest generated URL.
+		west: Western longitude of the latest bounding box.
+		south: Southern latitude of the latest bounding box.
+		east: Eastern longitude of the latest bounding box.
+		north: Northern latitude of the latest bounding box.
 	"""
 	api_key: Optional[ str ]
 	zoom: Optional[ int ]
@@ -102,6 +114,14 @@ class StaticMap( ):
 	north: Optional[ float ]
 	
 	def __init__( self ) -> None:
+		"""Initialize the Static Maps URL builder.
+
+		Purpose:
+			Reads the Google Maps API key from configuration and initializes runtime
+			state used by coordinate validation, marker generation, URL construction,
+			path rendering, and bounding-box previews. The constructor performs local
+			assignment only and prepares the object for later URL-building methods.
+		"""
 		self.api_key = cfg.GOOGLEMAPS_API_KEY
 		self.zoom = None
 		self.size = None
@@ -120,21 +140,23 @@ class StaticMap( ):
 		self.north = None
 	
 	def validate_coordinate( self, lat: float, lng: float ) -> tuple:
-		"""
+		"""Validate and normalize a coordinate pair.
 
-			Purpose:
-				Validate and normalize a latitude and longitude pair.
+		Purpose:
+			Converts latitude and longitude inputs to floats and enforces valid
+			geographic coordinate ranges before Static Maps URL parameters are built.
+			The validated coordinate is stored on the instance for later map generation
+			and inspection.
 
-			Parameters:
-				lat (float):
-					Latitude in decimal degrees.
+		Args:
+			lat: Latitude in decimal degrees.
+			lng: Longitude in decimal degrees.
 
-				lng (float):
-					Longitude in decimal degrees.
+		Returns:
+			tuple: Validated latitude and longitude.
 
-			Returns:
-				tuple:
-					Validated latitude and longitude.
+		Raises:
+			Error: Raised after logging when validation or conversion fails.
 		"""
 		try:
 			throw_if( 'lat', lat )
@@ -152,26 +174,27 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMap'
-			exception.method = 'validate_coordinate( self, *args )'
+			exception.method = 'validate_coordinate( self, lat: float, lng: float ) -> tuple'
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_points( self, points: list ) -> list:
-		"""
+		"""Normalize supported point shapes into coordinate tuples.
 
-			Purpose:
-				Normalize coordinate tuples, coordinate lists, or dictionaries with
-				lat/lng fields into validated coordinate tuples.
+		Purpose:
+			Accepts a list of coordinate tuples, coordinate lists, or dictionaries with
+			``lat``/``lng`` or ``latitude``/``longitude`` fields and converts each item
+			into a validated coordinate tuple. The normalized point list is stored on
+			the instance for multi-pin, path, and bounding-box URL generation.
 
-			Parameters:
-				points (list):
-					List of coordinates. Supported item shapes include:
-					(lat, lng), [lat, lng], {'lat': value, 'lng': value}, and
-					{'latitude': value, 'longitude': value}.
+		Args:
+			points: Coordinate items to normalize.
 
-			Returns:
-				list:
-					List of validated coordinate tuples.
+		Returns:
+			list: Validated coordinate tuples.
 
+		Raises:
+			Error: Raised after logging when validation or normalization fails.
 		"""
 		try:
 			throw_if( 'points', points )
@@ -197,23 +220,27 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMap'
-			exception.method = 'normalize_points( self, points: list )'
+			exception.method = 'normalize_points( self, points: list ) -> list'
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_url( self, params: Dict ) -> str | None:
-		"""
+		"""Build a Google Static Maps URL.
 
-			Purpose:
-				Build a Google Static Maps URL from a parameter dictionary.
+		Purpose:
+			Copies caller-supplied Static Maps query parameters, injects the configured
+			Google Maps API key, stores the final parameter dictionary on the instance,
+			and returns a fully qualified URL suitable for embedding in Streamlit,
+			Markdown, reports, or browser links.
 
-			Parameters:
-				params (Dict):
-					Google Static Maps query parameters.
+		Args:
+			params: Google Static Maps query parameters.
 
-			Returns:
-				str | None:
-					Fully-qualified Google Static Maps URL.
+		Returns:
+			str | None: Fully qualified Google Static Maps URL.
 
+		Raises:
+			Error: Raised after logging when validation or URL construction fails.
 		"""
 		try:
 			throw_if( 'params', params )
@@ -225,32 +252,29 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMap'
-			exception.method = 'build_url( self, params: Dict )'
+			exception.method = 'build_url( self, params: Dict ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def pin( self, lat: float, lng: float, zoom: int = 12, size: int = '400x300' ) -> str | None:
-		"""
+		"""Build a single-marker Static Maps URL.
 
-			Purpose:
-				Build a static map URL centered on a coordinate with a single marker.
+		Purpose:
+			Validates a center coordinate, clamps the zoom level to the supported
+			Static Maps range, stores marker and map state on the instance, and
+			returns a URL centered on the coordinate with one marker.
 
-			Parameters:
-				lat (float):
-					Latitude for the pin.
+		Args:
+			lat: Latitude for the marker and map center.
+			lng: Longitude for the marker and map center.
+			zoom: Zoom level from 1 through 20.
+			size: Static map image dimensions in ``WIDTHxHEIGHT`` format.
 
-				lng (float):
-					Longitude for the pin.
+		Returns:
+			str | None: Fully qualified Static Maps URL.
 
-				zoom (int):
-					Zoom level from 1 through 20.
-
-				size (str):
-					Image dimensions in WxH format.
-
-			Returns:
-				str | None:
-					Fully-qualified URL string suitable for embedding.
-
+		Raises:
+			Error: Raised after logging when validation or URL construction fails.
 		"""
 		try:
 			latitude, longitude = self.validate_coordinate( lat, lng )
@@ -273,38 +297,33 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMap'
-			exception.method = 'pin( self, *args )'
+			exception.method = 'pin( self, lat: float, lng: float, zoom: int=12, size: int=400x300 ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def pins( self, points: list, zoom: int = 0, size: int = '600x400',
 			maptype: int = 'roadmap', color: int = 'red' ) -> str | None:
-		"""
+		"""Build a multi-marker Static Maps URL.
 
-			Purpose:
-				Build a static map URL with multiple markers. If zoom is zero,
-				Google is allowed to fit the visible area to the supplied points.
+		Purpose:
+			Normalizes one or more coordinate points, validates the requested map type,
+			builds marker parameters for each point, and returns a Static Maps URL. When
+			``zoom`` is greater than zero, the map is centered on the average coordinate
+			and the zoom is clamped. When ``zoom`` is zero, Google is allowed to fit the
+			visible area to the supplied points.
 
-			Parameters:
-				points (list):
-					List of coordinate tuples, coordinate lists, or dictionaries
-					containing lat/lng fields.
+		Args:
+			points: Coordinate tuples, coordinate lists, or coordinate dictionaries.
+			zoom: Zoom level. Use zero to omit explicit zoom and let Google fit bounds.
+			size: Static map image dimensions in ``WIDTHxHEIGHT`` format.
+			maptype: Map type: ``roadmap``, ``satellite``, ``terrain``, or ``hybrid``.
+			color: Marker color.
 
-				zoom (int):
-					Zoom level. Use zero to omit explicit zoom.
+		Returns:
+			str | None: Fully qualified Static Maps URL.
 
-				size (str):
-					Image dimensions in WxH format.
-
-				maptype (str):
-					Map type: roadmap, satellite, terrain, or hybrid.
-
-				color (str):
-					Marker color.
-
-			Returns:
-				str | None:
-					Fully-qualified URL string suitable for embedding.
-
+		Raises:
+			Error: Raised after logging when validation or URL construction fails.
 		"""
 		try:
 			coordinates = self.normalize_points( points )
@@ -339,37 +358,32 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMapUrl'
-			exception.method = 'pins( self, *args )'
+			exception.method = 'pins( self, *args ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def path( self, points: list, size: int = '600x400', maptype: int = 'roadmap',
 			color: int = '0x0000ff', weight: int = 5 ) -> str | None:
-		"""
+		"""Build a Static Maps URL showing a path.
 
-			Purpose:
-				Build a static map URL showing a path through two or more points.
+		Purpose:
+			Normalizes two or more coordinate points, validates the requested map type,
+			builds a Static Maps path parameter with configured color and stroke
+			weight, adds start and end markers, and includes the path points as visible
+			bounds so the generated image frames the route.
 
-			Parameters:
-				points (list):
-					List of coordinate tuples, coordinate lists, or dictionaries
-					containing lat/lng fields.
+		Args:
+			points: Coordinate tuples, coordinate lists, or coordinate dictionaries.
+			size: Static map image dimensions in ``WIDTHxHEIGHT`` format.
+			maptype: Map type: ``roadmap``, ``satellite``, ``terrain``, or ``hybrid``.
+			color: Path color.
+			weight: Path stroke weight.
 
-				size (str):
-					Image dimensions in WxH format.
+		Returns:
+			str | None: Fully qualified Static Maps URL.
 
-				maptype (str):
-					Map type: roadmap, satellite, terrain, or hybrid.
-
-				color (str):
-					Path color.
-
-				weight (int):
-					Path stroke weight.
-
-			Returns:
-				str | None:
-					Fully-qualified URL string suitable for embedding.
-
+		Raises:
+			Error: Raised after logging when validation or URL construction fails.
 		"""
 		try:
 			coordinates = self.normalize_points( points )
@@ -411,39 +425,33 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMap'
-			exception.method = 'path( self, points: list, size: str=600x400 )'
+			exception.method = 'path( self, points: list, size: int=600x400 ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def bbox( self, west: float, south: float, east: float, north: float,
 			size: int = '600x400', maptype: int = 'roadmap' ) -> str | None:
-		"""
+		"""Build a Static Maps URL showing a bounding box.
 
-			Purpose:
-				Build a static map URL showing a rectangular bounding box.
+		Purpose:
+			Validates bounding-box edges, converts them into southwest, northwest,
+			northeast, southeast, and closing southwest coordinates, stores the box
+			state on the instance, and delegates to ``path`` to render the rectangle
+			as a red outline on a Static Maps image.
 
-			Parameters:
-				west (float):
-					Western longitude.
+		Args:
+			west: Western longitude.
+			south: Southern latitude.
+			east: Eastern longitude.
+			north: Northern latitude.
+			size: Static map image dimensions in ``WIDTHxHEIGHT`` format.
+			maptype: Map type: ``roadmap``, ``satellite``, ``terrain``, or ``hybrid``.
 
-				south (float):
-					Southern latitude.
+		Returns:
+			str | None: Fully qualified Static Maps URL.
 
-				east (float):
-					Eastern longitude.
-
-				north (float):
-					Northern latitude.
-
-				size (str):
-					Image dimensions in WxH format.
-
-				maptype (str):
-					Map type: roadmap, satellite, terrain, or hybrid.
-
-			Returns:
-				str | None:
-					Fully-qualified URL string suitable for embedding.
-
+		Raises:
+			Error: Raised after logging when validation or URL construction fails.
 		"""
 		try:
 			throw_if( 'west', west )
@@ -482,5 +490,6 @@ class StaticMap( ):
 			exception = Error( e )
 			exception.module = 'mappy'
 			exception.cause = 'StaticMap'
-			exception.method = 'bbox( self, west: float, south: float, east: float, north: float )'
+			exception.method = 'bbox( self, west: float, south: float, east: float, north: float ) -> str | None'
+			Logger( ).write( exception )
 			raise exception

@@ -50,24 +50,23 @@ from typing import Any, Dict, Optional, List, Tuple
 from caches import BaseCache
 from exceptions import NotFound
 from maps import Maps
-from boogr import Error
+from boogr import Error, Logger
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required geocoding value is present.
+
+	Purpose:
+		Provides a lightweight guard for required Geocoder inputs before cache-key
+		construction, coordinate validation, gateway requests, and batch processing.
+		The function rejects missing objects and blank strings so geocoding workflows
+		fail with clear validation messages before issuing external API calls.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -76,18 +75,21 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty.' )
 
 def flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
-	"""
+	"""Flatten a Google Geocoding result into Mappy's canonical row shape.
 
-		Purpose:
-			Reduce a geocode result into a compact, row-friendly dict.
+	Purpose:
+		Extracts the formatted address, coordinates, place identifier, result types,
+		country values, administrative areas, locality, and postal code from one
+		Google Geocoding API result. The returned dictionary is used by single-record
+		geocoding, reverse geocoding, batch geocoding, spreadsheet enrichment, and
+		Streamlit result previews.
 
-		Parameters:
-			result (Dict[str, Any]):
-				One element from 'results' in Geocoding API response.
+	Args:
+		result: One result dictionary from the Google Geocoding API ``results`` list.
 
-		Returns:
-			Dict with formatted_address, lat, lng, place_id, types, and components.
-
+	Returns:
+		Dict[str, Any]: Flattened geocode output suitable for rows, cache payloads,
+			and UI display.
 	"""
 	geometry = result.get( 'geometry', { } ) or { }
 	loc = geometry.get( 'location', { } ) or { }
@@ -114,19 +116,31 @@ def flatten_geocode( result: Dict[ str, Any ] ) -> Dict[ str, Any ]:
 	}
 
 class Geocoder( ):
-	"""
+	"""Provide forward, reverse, structured, and batch geocoding.
 
-		Purpose:
-		Provide address, city/state/country, reverse, and batch geocoding with
-		optional caching and a consistent flattened output shape.
+	Purpose:
+		Coordinates Google Geocoding API requests through the shared ``Maps`` gateway
+		and optional cache backend. The class resolves free-form addresses,
+		latitude/longitude pairs, and city/state/country triples into a consistent
+		flattened output shape used by Streamlit workflows, Excel/CSV enrichment,
+		local data-management updates, and downstream location intelligence tasks.
 
-		Parameters:
-		maps (Maps): Maps gateway instance.
-		cache (Optional[BaseCache]): Pluggable cache for memoization.
-
-		Returns:
-		Geocoder instance with forward, reverse, and batch geocoding methods.
-
+	Attributes:
+		maps: Public reference to the Google Maps gateway.
+		cache: Optional public cache backend reference.
+		prefix: Cache namespace prefix used during key construction.
+		data: Raw response payload returned by the Google Maps gateway.
+		output: Last flattened geocoding result.
+		parts: Structured query or cache-key parts from the latest request.
+		city: City value from the latest structured lookup.
+		address: Free-form address value from the latest lookup.
+		state: State, province, territory, or region from the latest lookup.
+		country: Country or country bias from the latest lookup.
+		comps: Optional component parameters sent to the Geocoding API.
+		key: Cache key for the latest lookup.
+		query: Query text built for the latest structured lookup.
+		latitude: Latitude from the latest reverse-geocode lookup.
+		longitude: Longitude from the latest reverse-geocode lookup.
 	"""
 	maps: Optional[ Maps ]
 	cache: Optional[ BaseCache ]
@@ -145,6 +159,18 @@ class Geocoder( ):
 	longitude: Optional[ float ]
 	
 	def __init__( self, maps: Maps, cache: Optional[ BaseCache ] = None ) -> None:
+		"""Initialize the geocoding service wrapper.
+
+		Purpose:
+			Stores the shared Google Maps gateway, optional cache backend, and runtime
+			state used by forward, reverse, structured, and batch geocoding methods.
+			The constructor performs local assignment only and prepares the instance for
+			later API-backed lookup operations.
+
+		Args:
+			maps: Google Maps gateway used for Geocoding API requests.
+			cache: Optional cache backend used to store and retrieve lookup results.
+		"""
 		self._maps = maps
 		self._cache = cache
 		self.maps = maps
@@ -164,22 +190,23 @@ class Geocoder( ):
 		self.longitude = None
 	
 	def key_for( self, prefix: str, *parts: str ) -> str | None:
-		"""
+		"""Build a stable cache key for a geocoding operation.
 
-			Purpose:
-				Create a stable cache key from a namespace prefix and one or more
-				string parts.
+		Purpose:
+			Combines an operation prefix and one or more identifying values into the
+			cache-key format used by forward and reverse geocoding. The method stores
+			the latest prefix and parts on the instance so cache behavior can be
+			inspected during debugging and Streamlit workflows.
 
-			Parameters:
-				prefix (str):
-					Cache namespace or operation prefix.
-				*parts (str):
-					Values that uniquely identify the request.
+		Args:
+			prefix: Cache namespace or operation prefix.
+			*parts: Values that uniquely identify the request.
 
-			Returns:
-				str | None:
-					Normalized cache key.
+		Returns:
+			str | None: Normalized cache key.
 
+		Raises:
+			Error: Raised after logging when validation or key construction fails.
 		"""
 		try:
 			throw_if( 'prefix', prefix )
@@ -190,27 +217,30 @@ class Geocoder( ):
 			return f'{prefix}::{joined}'
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'key_for( self, *kwargs )'
+			exception.method = 'key_for( self, prefix: str, *parts: str ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def validate_coordinates( self, latitude: float, longitude: float ) -> Tuple[ float, float ]:
-		"""
+		"""Validate and normalize a latitude/longitude pair.
 
-			Purpose:
-				Validate and normalize a latitude/longitude coordinate pair.
+		Purpose:
+			Converts coordinate inputs to floats and enforces valid geographic ranges
+			before reverse-geocoding requests are sent to the Google Geocoding API. The
+			method prevents invalid coordinates from reaching cache-key generation or
+			gateway request construction.
 
-			Parameters:
-				latitude (float):
-					Latitude in decimal degrees.
-				longitude (float):
-					Longitude in decimal degrees.
+		Args:
+			latitude: Latitude in decimal degrees.
+			longitude: Longitude in decimal degrees.
 
-			Returns:
-				Tuple[float, float]:
-					Validated latitude and longitude.
+		Returns:
+			Tuple[float, float]: Validated latitude and longitude values.
 
+		Raises:
+			Error: Raised after logging when validation or conversion fails.
 		"""
 		try:
 			throw_if( 'latitude', latitude )
@@ -224,32 +254,32 @@ class Geocoder( ):
 			return lat, lng
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'validate_coordinates( self, latitude: float, longitude: float )'
+			exception.method = 'validate_coordinates( self, latitude: float, longitude: float ) -> Tuple[ float, float ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def freeform( self, address: str, country: str = 'US' ) -> Dict[ str, Any ] | None:
-		"""
+		"""Geocode a free-form address string.
 
-			Purpose:
-				Geocode a free-form address string. Optionally bias by country code.
+		Purpose:
+			Resolves a human-readable address through the Google Geocoding API with an
+			optional country bias. The method checks the cache before calling the
+			gateway, stores raw and flattened response state on the instance, writes
+			successful lookups back to the cache, and returns Mappy's canonical
+			location output shape.
 
-			Parameters:
-				address (str):
-					Any human-entered address string.
-				country (str):
-					ISO-3166 alpha-2 country code to bias results, such as 'US'
-					or 'FR'. Pass an empty string to disable country bias.
+		Args:
+			address: Human-entered address, place, or location text.
+			country: Optional ISO-3166 alpha-2 country code used as a result bias.
 
-			Returns:
-				Dict[str, Any] | None:
-					Flattened geocode result.
+		Returns:
+			Dict[str, Any] | None: Flattened geocode result.
 
-			Raises:
-				NotFound:
-					Raised when no results are returned.
-
+		Raises:
+			Error: Raised after logging when validation, lookup, gateway handling, or
+				result processing fails.
 		"""
 		try:
 			throw_if( 'address', address )
@@ -274,31 +304,31 @@ class Geocoder( ):
 			return self.output
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'freeform( self, address: str, country: str=US )'
+			exception.method = 'freeform( self, address: str, country: str=US ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def reverse( self, latitude: float, longitude: float ) -> Dict[ str, Any ] | None:
-		"""
+		"""Reverse geocode a latitude/longitude coordinate pair.
 
-			Purpose:
-				Reverse geocode a latitude/longitude pair into a canonical address.
+		Purpose:
+			Resolves geographic coordinates into a canonical address using the Google
+			Geocoding API. The method validates coordinates, checks the cache, stores raw
+			and flattened response state on the instance, writes successful lookups to
+			the cache, and returns the same row-friendly shape used by forward geocoding.
 
-			Parameters:
-				latitude (float):
-					Latitude in decimal degrees.
-				longitude (float):
-					Longitude in decimal degrees.
+		Args:
+			latitude: Latitude in decimal degrees.
+			longitude: Longitude in decimal degrees.
 
-			Returns:
-				Dict[str, Any] | None:
-					Flattened geocode result.
+		Returns:
+			Dict[str, Any] | None: Flattened reverse-geocode result.
 
-			Raises:
-				NotFound:
-					Raised when no reverse-geocode result is returned.
-
+		Raises:
+			Error: Raised after logging when validation, lookup, gateway handling, or
+				result processing fails.
 		"""
 		try:
 			self.latitude, self.longitude = self.validate_coordinates( latitude, longitude )
@@ -321,33 +351,32 @@ class Geocoder( ):
 			return self.output
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'reverse( self, latitude: float, longitude: float )'
+			exception.method = 'reverse( self, latitude: float, longitude: float ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def city_state_country( self, city: str, state: str, country: str ) -> Dict[ str, Any ] | None:
-		"""
+		"""Geocode a structured city, state, and country query.
 
-			Purpose:
-				Geocode a structured city/state/country triple.
+		Purpose:
+			Builds a free-form geocoding query from structured locality fields and
+			delegates to ``freeform`` so caching, gateway execution, response flattening,
+			and error handling remain consistent with ordinary address lookups. The
+			method stores the structured parts and final query on the instance for later
+			inspection by enrichment or UI workflows.
 
-			Parameters:
-				city (str):
-					City or locality.
-				state (str):
-					State, province, territory, or region. May be empty.
-				country (str):
-					Country name or ISO-2 country code.
+		Args:
+			city: City or locality value.
+			state: State, province, territory, or region value.
+			country: Country name or short country code.
 
-			Returns:
-				Dict[str, Any] | None:
-					Flattened geocode result.
+		Returns:
+			Dict[str, Any] | None: Flattened geocode result.
 
-			Raises:
-				NotFound:
-					Raised when no result is available.
-
+		Raises:
+			Error: Raised after logging when validation or delegated geocoding fails.
 		"""
 		try:
 			throw_if( 'city', city )
@@ -363,30 +392,32 @@ class Geocoder( ):
 			return self.freeform( self.query, hint )
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'city_state_country( self, city: str, state: str, country: str )'
+			exception.method = 'city_state_country( self, city: str, state: str, country: str ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def batch_freeform( self, addresses: List[ str ], country: str = 'US' ) -> List[
 		Dict[ str, Any ] ]:
-		"""
+		"""Geocode a list of free-form addresses.
 
-			Purpose:
-				Geocode a list of free-form addresses while preserving row-level
-				success and failure status.
+		Purpose:
+			Processes multiple address strings while preserving row-level status for
+			successful lookups, skipped empty rows, and failed lookups. The method uses
+			``freeform`` for each populated address so cache behavior, gateway calls, and
+			flattened output remain consistent with single-record geocoding workflows.
 
-			Parameters:
-				addresses (List[str]):
-					Address strings to geocode.
-				country (str):
-					ISO-3166 alpha-2 country code used as a default country bias.
+		Args:
+			addresses: Address strings to geocode.
+			country: ISO-3166 alpha-2 country code used as the default country bias.
 
-			Returns:
-				List[Dict[str, Any]]:
-					List of flattened geocode results. Failed rows include
-					geocode_status='error' and geocode_error.
+		Returns:
+			List[Dict[str, Any]]: Flattened row-level geocode results with
+				``geocode_status`` and ``geocode_error`` fields.
 
+		Raises:
+			Error: Raised after logging when batch-level validation or processing fails.
 		"""
 		try:
 			throw_if( 'addresses', addresses )
@@ -440,7 +471,8 @@ class Geocoder( ):
 			return results
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'Geocoder'
-			exception.method = 'batch_freeform( self, *kwargs )'
+			exception.method = 'batch_freeform( self, *args ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception

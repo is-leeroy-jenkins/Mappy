@@ -1,16 +1,17 @@
 '''
   ******************************************************************************************
-      Assembly:                Name
-      Filename:                name.py
+      Assembly:                Mappy
+      Filename:                config.py
       Author:                  Terry D. Eppler
       Created:                 05-31-2022
 
       Last Modified By:        Terry D. Eppler
       Last Modified On:        05-01-2025
   ******************************************************************************************
-  <copyright file="guro.py" company="Terry D. Eppler">
+  <copyright file="config.py" company="Terry D. Eppler">
 
-	     name.py
+	     Mappy is a python framework encapsulating Google Maps, geospatial,
+	     environmental, astronomical, weather, and data-enrichment functionality.
 	     Copyright ©  2022  Terry Eppler
 
      Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -37,16 +38,164 @@
 
   </copyright>
   <summary>
-    name.py
+    config.py
   </summary>
   ******************************************************************************************
   '''
-import os
-from typing import Optional, List, Dict
 from pathlib import Path
+import os
+import re
 
-# ------------ CONSTANT
+# -------------- APP-LEVEL UTILITIES -------------
 
+def throw_if( name: str, value: object ) -> None:
+	"""Validate that a required configuration value is present.
+
+	Purpose:
+		Provides a small import-safe guard for required configuration helper inputs.
+		The function is used by environment readers to validate variable names and
+		default path objects before attempting conversion, while preserving the
+		caller-provided value when validation succeeds.
+
+	Args:
+		name: Name of the argument or configuration value being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is falsy.
+	"""
+	if not value:
+		raise ValueError( f'Argument "{name}" cannot be empty!' )
+
+def get_bool( name: str, default: bool = False ) -> bool:
+	"""Read a Boolean environment variable.
+
+	Purpose:
+		Converts optional environment-variable text into a deterministic Boolean
+		value for feature flags and runtime switches. Missing variables return the
+		caller-provided default so importing the configuration module remains safe
+		across local, Streamlit, and deployed environments.
+
+	Args:
+		name: Environment variable name.
+		default: Fallback Boolean used when the environment variable is not defined.
+
+	Returns:
+		bool: Parsed Boolean value, or ``default`` when parsing is not possible.
+	"""
+	try:
+		throw_if( 'name', name )
+		value = os.getenv( name )
+		return default if value is None else value.strip( ).lower( ) in (
+				'1',
+				'true',
+				'yes',
+				'y',
+				'on'
+		)
+	except Exception:
+		return default
+
+def get_int( name: str, default: int ) -> int:
+	"""Read an integer environment variable.
+
+	Purpose:
+		Parses optional integer configuration while preserving a safe fallback when
+		the environment variable is missing, empty, or malformed. This supports
+		deployment-specific settings without making module import dependent on a
+		complete environment.
+
+	Args:
+		name: Environment variable name.
+		default: Fallback integer used when parsing is not possible.
+
+	Returns:
+		int: Parsed integer value, or ``default`` when parsing fails.
+	"""
+	try:
+		throw_if( 'name', name )
+		value = os.getenv( name )
+		return default if value in (None, '') else int( str( value ).strip( ) )
+	except Exception:
+		return default
+
+def get_float( name: str, default: float ) -> float:
+	"""Read a floating-point environment variable.
+
+	Purpose:
+		Parses optional numeric configuration while preserving a safe fallback when
+		the environment variable is missing, empty, or malformed. This helper is used
+		for runtime settings that may vary between local execution and hosted
+		deployments.
+
+	Args:
+		name: Environment variable name.
+		default: Fallback floating-point value used when parsing is not possible.
+
+	Returns:
+		float: Parsed floating-point value, or ``default`` when parsing fails.
+	"""
+	try:
+		throw_if( 'name', name )
+		value = os.getenv( name )
+		return default if value in (None, '') else float( str( value ).strip( ) )
+	except Exception:
+		return default
+
+def get_path( name: str, default: Path ) -> Path:
+	"""Read a path environment variable.
+
+	Purpose:
+		Resolves optional filesystem configuration from the environment while
+		preserving a known default path. The helper keeps log, data, resource, and
+		application paths centralized without interrupting import when deployment
+		configuration is incomplete.
+
+	Args:
+		name: Environment variable name.
+		default: Fallback path used when the environment variable is not defined.
+
+	Returns:
+		Path: Resolved environment path, or the resolved fallback path.
+	"""
+	try:
+		throw_if( 'name', name )
+		throw_if( 'default', default )
+		value = os.getenv( name )
+		return Path( value ).resolve( ) if value else default.resolve( )
+	except Exception:
+		return default.resolve( )
+
+def get_text( name: str, default: str ) -> str:
+	"""Read a text environment variable.
+
+	Purpose:
+		Returns optional text configuration from the environment while preserving
+		the supplied fallback when the variable is missing or empty. This keeps API,
+		logging, resource, and app metadata configuration centralized and stable
+		during early application startup.
+
+	Args:
+		name: Environment variable name.
+		default: Fallback text value.
+
+	Returns:
+		str: Environment value, or ``default`` when no usable value exists.
+	"""
+	try:
+		throw_if( 'name', name )
+		value = os.getenv( name )
+		return default if value in (None, '') else str( value )
+	except Exception:
+		return default
+
+# ------ CONSTANTS  -------------------
+
+BASE_DIR = Path( __file__ ).resolve( ).parent
+ROOT_DIR = Path( __file__ ).resolve( ).parent
+LOG_DIR: Path = get_path( 'LOG_DIR', ROOT_DIR / 'logging' )
+LOG_PATH: str = get_text( 'LOG_PATH', str( LOG_DIR / 'Exceptions.db' ) )
+LOG_FILE: str = get_text( 'LOG_FILE', 'Exceptions' )
 BLUE_DIVIDER = "<div style='height:1.5px;align:left;background:#0078FC;margin:20px 0px 30px 0px;'></div>"
 APP_TITLE = 'Mappy'
 APP_SUBTITLE = 'Geospatial Toolkit'
@@ -63,6 +212,7 @@ STYLE_ID = r'86d00019936c16f936cc936c'
 STYLE_NAME = r'uap-dark'
 
 # ----------- API KEYS
+
 CLAUDE_API_KEY = os.getenv( 'CLAUDE_API_KEY' )
 GEOCODING_API_KEY = os.getenv( 'GEOCODING_API_KEY' )
 GOOGLE_API_KEY = os.getenv( 'GOOGLE_API_KEY' )

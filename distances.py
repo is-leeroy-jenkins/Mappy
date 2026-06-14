@@ -45,24 +45,23 @@ from __future__ import annotations
 from typing import Any, Dict, List, Tuple, Union
 import pandas as pd
 from maps import Maps
-from boogr import Error
+from boogr import Error, Logger
 
 def throw_if( name: str, value: object ) -> None:
-	"""
-	
-		Purpose:
-		--------
-		Validate that a required value is not empty.
-		
-		Parameters:
-		-----------
-		name (str): Name of the argument being validated.
-		value (object): Value to validate.
-		
-		Returns:
-		--------
-		None
-		
+	"""Validate that a required distance-matrix value is present.
+
+	Purpose:
+		Provides a lightweight guard for required Distance Matrix inputs before mode
+		normalization, origin/destination formatting, gateway request construction,
+		and row flattening. The function rejects missing objects and blank strings so
+		route workflows fail before issuing ambiguous external API calls.
+
+	Args:
+		name: Name of the argument being validated.
+		value: Runtime value to validate.
+
+	Raises:
+		ValueError: Raised when ``value`` is ``None`` or an empty string.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be None.' )
@@ -74,18 +73,19 @@ Coord = Tuple[ float, float ]
 AddressOrCoord = Union[ str, Coord ]
 
 def fmt( o: AddressOrCoord ) -> str:
-	"""
-	
-		Purpose:
-			Normalize an origin/destination input to the API's expected string.
-	
-		Parameters:
-			o (AddressOrCoord):
-				Either "lat,lng" as tuple or a free-form string address.
-	
-		Returns:
-			String representation for the API, "lat,lng" or the original string.
-			
+	"""Normalize an address or coordinate for the Distance Matrix API.
+
+	Purpose:
+		Converts a coordinate tuple into the ``lat,lng`` string expected by Google
+		Distance Matrix requests while preserving free-form address strings. The
+		helper is used when constructing origin and destination query strings and
+		when fallback labels are needed for flattened route rows.
+
+	Args:
+		o: Address string or ``(latitude, longitude)`` coordinate tuple.
+
+	Returns:
+		str: API-ready origin or destination text.
 	"""
 	if isinstance( o, tuple ) and len( o ) == 2:
 		return f'{o[ 0 ]},{o[ 1 ]}'
@@ -93,19 +93,20 @@ def fmt( o: AddressOrCoord ) -> str:
 	return str( o )
 
 class DistanceMatrix( ):
-	"""
-	
-		Purpose:
-			Provide route, route-comparison, and matrix wrappers around the Google
-			Distance Matrix API.
-	
-		Parameters:
-			maps (Maps):
-				Maps gateway instance.
-	
-		Returns:
-			DistanceMatrix with summary, matrix, compare_modes, and DataFrame helpers.
-			
+	"""Provide route, matrix, comparison, and dataframe helpers.
+
+	Purpose:
+		Wraps the Google Distance Matrix API through the shared ``Maps`` gateway and
+		normalizes results into row-friendly dictionaries. The class supports single
+		route summaries, many-origin/many-destination matrices, mode comparisons,
+		metric conversions, and pandas DataFrame output for Streamlit display,
+		spreadsheet enrichment, and downstream analytics.
+
+	Attributes:
+		_maps: Shared Google Maps gateway used for Distance Matrix requests.
+		modes: Supported Google Distance Matrix travel modes.
+		data: Raw Distance Matrix response payload from the latest request.
+		rows: Flattened route rows from the latest matrix request.
 	"""
 	_maps: Maps
 	modes: List[ str ]
@@ -113,25 +114,39 @@ class DistanceMatrix( ):
 	rows: List[ Dict[ str, Any ] ] | None
 	
 	def __init__( self, maps: Maps ) -> None:
+		"""Initialize the Distance Matrix service wrapper.
+
+		Purpose:
+			Stores the shared Google Maps gateway, supported travel modes, and runtime
+			state used by matrix, summary, comparison, conversion, and dataframe helper
+			methods. The constructor performs local assignment only and prepares the
+			instance for later API-backed route operations.
+
+		Args:
+			maps: Google Maps gateway used for Distance Matrix API requests.
+		"""
 		self._maps = maps
 		self.modes = [ 'driving', 'walking', 'bicycling', 'transit' ]
 		self.data = None
 		self.rows = None
 	
 	def normalize_mode( self, mode: str ) -> str:
-		"""
+		"""Validate and normalize a travel mode.
 
-			Purpose:
-				Validate and normalize a Google Distance Matrix travel mode.
+		Purpose:
+			Converts a requested travel mode to lowercase and verifies it is one of
+			the Google Distance Matrix modes supported by Mappy. The normalized value
+			is used in gateway parameters and route output rows.
 
-			Parameters:
-				mode (str):
-					Travel mode: driving, walking, bicycling, or transit.
+		Args:
+			mode: Travel mode such as ``driving``, ``walking``, ``bicycling``, or
+				``transit``.
 
-			Returns:
-				str:
-					Normalized travel mode.
+		Returns:
+			str: Normalized travel mode.
 
+		Raises:
+			Error: Raised after logging when validation or normalization fails.
 		"""
 		try:
 			throw_if( 'mode', mode )
@@ -142,26 +157,30 @@ class DistanceMatrix( ):
 			return value
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'normalize_mode( self, mode: str )'
+			exception.method = 'normalize_mode( self, mode: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_inputs( self, values: List[ AddressOrCoord ] | Tuple[ AddressOrCoord, ... ]
 	                                    | AddressOrCoord ) -> List[ AddressOrCoord ]:
-		"""
+		"""Normalize one or many origins or destinations into a list.
 
-			Purpose:
-				Normalize one or many origins/destinations into a list.
+		Purpose:
+			Accepts a single address, a single coordinate tuple, a list of addresses
+			or coordinates, or a tuple of values and returns a list shape suitable for
+			Distance Matrix query construction. Single coordinate tuples are preserved
+			as one coordinate instead of being expanded into two independent values.
 
-			Parameters:
-				values (List[AddressOrCoord] | Tuple[AddressOrCoord, ...] | AddressOrCoord):
-					Single address/coordinate or a list/tuple of them.
+		Args:
+			values: Single origin/destination value or a collection of values.
 
-			Returns:
-				List[AddressOrCoord]:
-					Normalized input list.
+		Returns:
+			List[AddressOrCoord]: Normalized input list.
 
+		Raises:
+			Error: Raised after logging when validation or normalization fails.
 		"""
 		try:
 			throw_if( 'values', values )
@@ -174,25 +193,29 @@ class DistanceMatrix( ):
 			return [ values ]
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'normalize_inputs( self, values: object )'
+			exception.method = 'normalize_inputs( self, values: object ) -> List[ AddressOrCoord ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def convert_distance( self, meters: int | float | None ) -> Dict[ str, float | None ]:
-		"""
+		"""Convert meters into kilometers and miles.
 
-			Purpose:
-				Convert meters into kilometers and miles.
+		Purpose:
+			Normalizes Google Distance Matrix meter values into kilometer and mile
+			fields used by summaries, matrix rows, dataframe output, and Streamlit
+			display. Missing distance values are preserved as ``None``.
 
-			Parameters:
-				meters (int | float | None):
-					Distance in meters.
+		Args:
+			meters: Distance in meters.
 
-			Returns:
-				Dict[str, float | None]:
-					Distance conversions.
+		Returns:
+			Dict[str, float | None]: Dictionary containing ``distance_km`` and
+				``distance_miles``.
 
+		Raises:
+			Error: Raised after logging when conversion fails.
 		"""
 		try:
 			if meters is None:
@@ -207,25 +230,29 @@ class DistanceMatrix( ):
 			}
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'convert_distance( self, meters: int | float | None )'
+			exception.method = 'convert_distance( self, meters: int | float | None ) -> Dict[ str, float | None ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def convert_duration( self, seconds: int | float | None ) -> Dict[ str, float | None ]:
-		"""
+		"""Convert seconds into minutes and hours.
 
-			Purpose:
-				Convert seconds into minutes and hours.
+		Purpose:
+			Normalizes Google Distance Matrix duration values into minute and hour
+			fields used by summaries, matrix rows, dataframe output, and Streamlit
+			display. Missing duration values are preserved as ``None``.
 
-			Parameters:
-				seconds (int | float | None):
-					Duration in seconds.
+		Args:
+			seconds: Duration in seconds.
 
-			Returns:
-				Dict[str, float | None]:
-					Duration conversions.
+		Returns:
+			Dict[str, float | None]: Dictionary containing ``duration_minutes`` and
+				``duration_hours``.
 
+		Raises:
+			Error: Raised after logging when conversion fails.
 		"""
 		try:
 			if seconds is None:
@@ -240,32 +267,35 @@ class DistanceMatrix( ):
 			}
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'convert_duration( self, seconds: int | float | None )'
+			exception.method = 'convert_duration( self, seconds: int | float | None ) -> Dict[ str, float | None ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def flatten_element( self, origin: str, destination: str, mode: str,
 			element: Dict[ str, Any ] ) -> Dict[ str, Any ]:
-		"""
+		"""Flatten one Distance Matrix element into a route row.
 
-			Purpose:
-				Flatten one Distance Matrix element into a row-friendly dictionary.
+		Purpose:
+			Converts one Google Distance Matrix element into a dictionary containing
+			origin, destination, mode, status, text fields, raw meter/second values,
+			converted distance values, converted duration values, and traffic-aware
+			duration values when available. The row shape is reused by summary,
+			comparison, dataframe, and Streamlit display workflows.
 
-			Parameters:
-				origin (str):
-					Resolved origin label from the API.
-				destination (str):
-					Resolved destination label from the API.
-				mode (str):
-					Travel mode used for the request.
-				element (Dict[str, Any]):
-					One Distance Matrix element.
+		Args:
+			origin: Resolved origin label from the API or fallback input value.
+			destination: Resolved destination label from the API or fallback input
+				value.
+			mode: Travel mode used for the request.
+			element: One Distance Matrix element dictionary.
 
-			Returns:
-				Dict[str, Any]:
-					Flattened route row.
+		Returns:
+			Dict[str, Any]: Flattened route row.
 
+		Raises:
+			Error: Raised after logging when validation or row flattening fails.
 		"""
 		try:
 			throw_if( 'origin', origin )
@@ -302,36 +332,40 @@ class DistanceMatrix( ):
 			return row
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'flatten_element( self, origin: str, destination: str, mode: str, element: Dict )'
+			exception.method = 'flatten_element( self, *args ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def matrix( self,
 			origins: List[ AddressOrCoord ] | Tuple[ AddressOrCoord, ... ] | AddressOrCoord,
 			destinations: List[ AddressOrCoord ] | Tuple[ AddressOrCoord, ... ] | AddressOrCoord,
 			mode: str = 'driving', departure_time: str = '' ) -> List[ Dict[ str, Any ] ]:
-		"""
+		"""Execute a Distance Matrix request.
 
-			Purpose:
-				Execute a Distance Matrix request for one or more origins and one
-				or more destinations.
+		Purpose:
+			Builds a Distance Matrix request for one or more origins and destinations,
+			normalizes the selected travel mode, optionally applies a departure time,
+			calls the shared Google Maps gateway, and flattens each returned element
+			into route rows. The latest raw payload and flattened rows are stored on
+			the instance for summaries, comparisons, dataframe conversion, and UI
+			inspection.
 
-			Parameters:
-				origins (List[AddressOrCoord] | Tuple[AddressOrCoord, ...] | AddressOrCoord):
-					Single origin or multiple origins.
-				destinations (List[AddressOrCoord] | Tuple[AddressOrCoord, ...] | AddressOrCoord):
-					Single destination or multiple destinations.
-				mode (str):
-					Travel mode: driving, walking, bicycling, or transit.
-				departure_time (str):
-					Optional departure time. Use 'now' for traffic-aware driving
-					results when supported.
+		Args:
+			origins: Single origin or collection of origins.
+			destinations: Single destination or collection of destinations.
+			mode: Travel mode such as ``driving``, ``walking``, ``bicycling``, or
+				``transit``.
+			departure_time: Optional departure time. Use ``now`` for traffic-aware
+				driving results when supported.
 
-			Returns:
-				List[Dict[str, Any]]:
-					Flattened route rows.
+		Returns:
+			List[Dict[str, Any]]: Flattened route rows.
 
+		Raises:
+			Error: Raised after logging when validation, gateway execution, response
+				handling, or row flattening fails.
 		"""
 		try:
 			travel_mode = self.normalize_mode( mode )
@@ -373,31 +407,34 @@ class DistanceMatrix( ):
 		
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'matrix( self, origins: object, destinations: object, mode: str=driving )'
+			exception.method = 'matrix( self, *args ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def summary( self, origin: AddressOrCoord, destination: AddressOrCoord,
 			mode: str = 'driving' ) -> Dict:
-		"""
-		
-			Purpose:
-				Return a compact dict with meters/seconds and human text fields
-				for one origin, one destination, and one travel mode.
-	
-			Parameters:
-				origin (AddressOrCoord):
-					Origin address string or (lat, lng) tuple.
-				destination (AddressOrCoord):
-					Destination address string or (lat, lng) tuple.
-				mode (str):
-					Travel mode: driving, walking, bicycling, transit.
-	
-			Returns:
-				Dict:
-					Distance and duration summary.
-				
+		"""Return a compact route summary.
+
+		Purpose:
+			Executes a one-origin, one-destination matrix request and returns the
+			first flattened route as a compact summary containing distance, duration,
+			traffic-aware duration, origin, destination, mode, and status fields. When
+			no rows are returned, the method preserves a predictable no-results shape.
+
+		Args:
+			origin: Origin address string or ``(latitude, longitude)`` tuple.
+			destination: Destination address string or ``(latitude, longitude)`` tuple.
+			mode: Travel mode such as ``driving``, ``walking``, ``bicycling``, or
+				``transit``.
+
+		Returns:
+			Dict: Compact distance and duration summary.
+
+		Raises:
+			Error: Raised after logging when matrix execution or summary construction
+				fails.
 		"""
 		try:
 			rows = self.matrix( origins=origin, destinations=destination, mode=mode )
@@ -430,34 +467,36 @@ class DistanceMatrix( ):
 			}
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'summary( self, **kwargs) -> Dict[ str, Any ]'
+			exception.method = 'summary( self, origin: AddressOrCoord, destination: AddressOrCoord, mode: str=driving ) -> Dict'
+			Logger( ).write( exception )
 			raise exception
 	
 	def compare_modes( self, origin: AddressOrCoord, destination: AddressOrCoord,
 			modes: List[ str ] | None = None, departure_time: str = '' ) -> List[
 		Dict[ str, Any ] ]:
-		"""
+		"""Compare route results across travel modes.
 
-			Purpose:
-				Compare route distance and duration across multiple travel modes.
+		Purpose:
+			Executes a single-route matrix request for each selected travel mode and
+			returns the first flattened route row for each successful mode. Driving
+			requests can preserve the supplied departure time for traffic-aware
+			results, while non-driving modes omit it to avoid unsupported combinations.
 
-			Parameters:
-				origin (AddressOrCoord):
-					Origin address string or coordinate tuple.
-				destination (AddressOrCoord):
-					Destination address string or coordinate tuple.
-				modes (List[str] | None):
-					Optional travel modes. Defaults to all supported modes.
-				departure_time (str):
-					Optional departure time. Use 'now' for traffic-aware driving
-					results when supported.
+		Args:
+			origin: Origin address string or coordinate tuple.
+			destination: Destination address string or coordinate tuple.
+			modes: Optional travel modes to compare. Defaults to all supported modes.
+			departure_time: Optional departure time. Use ``now`` for traffic-aware
+				driving results when supported.
 
-			Returns:
-				List[Dict[str, Any]]:
-					One flattened route summary per travel mode.
+		Returns:
+			List[Dict[str, Any]]: One flattened route row per successful travel mode.
 
+		Raises:
+			Error: Raised after logging when validation, matrix execution, or comparison
+				construction fails.
 		"""
 		try:
 			selected_modes = modes or self.modes
@@ -475,26 +514,28 @@ class DistanceMatrix( ):
 			return results
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'compare_modes( self, **kwargs)'
+			exception.method = 'compare_modes( self, *args ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def to_dataframe( self, rows: List[ Dict[ str, Any ] ] | None = None ) -> pd.DataFrame:
-		"""
+		"""Convert route rows into a pandas DataFrame.
 
-			Purpose:
-				Convert route rows into a pandas DataFrame for Streamlit display,
-				export, or downstream analytics.
+		Purpose:
+			Transforms caller-supplied rows or the latest matrix rows into a DataFrame
+			for Streamlit display, CSV/Excel export, diagnostics, or downstream
+			analytics. Missing or empty rows return an empty DataFrame.
 
-			Parameters:
-				rows (List[Dict[str, Any]] | None):
-					Optional rows. Defaults to the most recent matrix rows.
+		Args:
+			rows: Optional route rows. Defaults to the most recent matrix rows.
 
-			Returns:
-				pd.DataFrame:
-					Route results as a DataFrame.
+		Returns:
+			pd.DataFrame: Route results as a DataFrame.
 
+		Raises:
+			Error: Raised after logging when dataframe conversion fails.
 		"""
 		try:
 			active_rows = rows if rows is not None else self.rows
@@ -503,7 +544,8 @@ class DistanceMatrix( ):
 			return pd.DataFrame( active_rows )
 		except Exception as e:
 			exception = Error( e )
-			exception.module = 'Mappy'
+			exception.module = 'mappy'
 			exception.cause = 'DistanceMatrix'
-			exception.method = 'to_dataframe( self, **kwarg )'
+			exception.method = 'to_dataframe( self, rows: List[ Dict[ str, Any ] ] | None=None ) -> pd.DataFrame'
+			Logger( ).write( exception )
 			raise exception
