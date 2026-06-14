@@ -74,46 +74,44 @@ from requests import Response
 from sscws.sscws import SscWs
 import time
 import config as cfg
-from boogr import Error
+from boogr import Error, Logger
 from core import Result
 import xml.etree.ElementTree as ET
 
 def throw_if( name: str, value: Any ) -> None:
-	'''
-		
-		Purpose:
-		-----------
-		Simple guard which raises ValueError when `value` is falsy (None, empty).
-			
-		Parameters:
-		-----------
-		name (str): Variable name used in the raised message.
-		value (Any): Value to validate.
-			
-		Returns:
-		-----------
-		None: Raises ValueError when `value` is falsy.
-			
-	'''
+	"""Run throw if.
+	
+	Purpose:
+		Provides the documented throw if operation. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+	
+	Args:
+		name: str value supplied by the caller.
+		value: Any value supplied by the caller.
+	
+	Returns:
+		None: Result produced by the operation.
+	
+	Raises:
+		Exception: Raised when validation or operation handling fails.
+	"""
 	if value is None:
 		raise ValueError( f"Argument '{name}' cannot be empty!" )
 
 def encode_image( path: str ) -> str:
-	'''
-		
-		Purpose:
-		-----------
-		Simple guard which raises ValueError when `path` is falsy (None, empty).
-		
-		Parameters:
-		-----------
-		path (str): the path to an image file.
-		
-		Returns:
-		-----------
-		str: string representing the bytes of the image
-		
-	'''
+	"""Encode encode image.
+	
+	Purpose:
+		Provides the documented encode image operation. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+	
+	Args:
+		path: str value supplied by the caller.
+	
+	Returns:
+		str: Result produced by the operation.
+	
+	Raises:
+		Exception: Raised when validation or operation handling fails.
+	"""
 	if path is None:
 		raise ValueError( f"Argument '{path}' cannot be empty!" )
 	else:
@@ -121,27 +119,19 @@ def encode_image( path: str ) -> str:
 		return base64.b64encode( data ).decode( "utf-8" )
 
 class Fetcher:
-	'''
-
-		Purpose:
-		--------
-		Base class for fetchers.
-
-		Attribues:
-		-----------
-		timeout - int
-		headers - Dict[ str, Any ]
-		response - requests.Response
-		url - str
-		result - core.Result
-		query - string
-
-		Methods:
-		-----------
-		fetch( ) -> Dict[ str, Any ]
-
-
-	'''
+	"""Provide the Fetcher component.
+	
+	Purpose:
+		Defines the Fetcher workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		timeout: Runtime attribute maintained by the class.
+		headers: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		result: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+	"""
 	timeout: Optional[ int ]
 	headers: Optional[ Dict[ str, Any ] ]
 	response: Optional[ Response ]
@@ -150,13 +140,11 @@ class Fetcher:
 	query: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-
-			Purpose:
-			-----------
-			Base initializer. Subclasses should set defaults they require.
-
-		'''
+		"""Initialize the Fetcher instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Fetcher workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		self.timeout = None
 		self.headers = None
 		self.response = None
@@ -165,21 +153,14 @@ class Fetcher:
 		self.query = None
 	
 	def __dir__( self ) -> list[ str ]:
-		'''
-
-			Purpose:
-			-----------
-			Control ordering for introspection.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			list[str]: Ordered attribute/method names.
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the Fetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			list[str]: Result produced by the operation.
+		"""
 		return [ 'timeout',
 		         'headers',
 		         'response',
@@ -188,73 +169,40 @@ class Fetcher:
 		         'query',
 		         'fetch' ]
 	
-	def fetch( self, query: str, url:str, time: int=10 ) -> Result | None:
-		'''
-
-			Purpose:
-			--------
-			Abstract fetch method to be implemented by subclasses.
-
-			Parameters:
-			-----------
-			url (str): Resource URL to fetch.
-			time (int): Timeout in seconds.
-			query (str):  Text provided to Agent
-
-			Returns:
-			---------
-			Optional[Result]: Should return Result on success or None on failure.
-
-		'''
+	def fetch( self, query: str, url: str, time: int = 10 ) -> Result | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Fetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			url: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Result | None: Result produced by the operation.
+		
+		Raises:
+			Exception: Raised when validation or operation handling fails.
+		"""
 		raise NotImplementedError( 'Must be implemented by a subclass.' )
 
 class WebFetcher( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches web pages with requests and extracts common HTML content structures.
-
-		Attributes:
-		-----------
-		soup,
-		agents,
-		url,
-		html,
-		re_tag,
-		re_ws,
-		response,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		validate_required_string(...): Performs required string validation.
-		validate_positive_integer(...): Performs positive integer validation.
-		validate_non_negative_integer(...): Performs non-negative integer validation.
-		validate_non_negative_float(...): Performs non-negative float validation.
-		fetch(...): Performs the fetch operation for this fetcher.
-		html_to_text(...): Performs the html_to_text operation for this fetcher.
-		coerce_items(...): Performs the coerce_items operation for this fetcher.
-		extract_title(...): Performs the extract_title operation for this fetcher.
-		truncate_text(...): Performs the truncate_text operation for this fetcher.
-		normalize_url(...): Performs the normalize_url operation for this fetcher.
-		same_domain(...): Performs the same_domain operation for this fetcher.
-		extract_links(...): Performs the extract_links operation for this fetcher.
-		extract_structured_data(...): Performs structured extraction for this fetcher.
-		scrape_paragraphs(...): Performs the scrape_paragraphs operation for this fetcher.
-		scrape_lists(...): Performs the scrape_lists operation for this fetcher.
-		scrape_tables(...): Performs the scrape_tables operation for this fetcher.
-		scrape_articles(...): Performs the scrape_articles operation for this fetcher.
-		scrape_headings(...): Performs the scrape_headings operation for this fetcher.
-		scrape_divisions(...): Performs the scrape_divisions operation for this fetcher.
-		scrape_sections(...): Performs the scrape_sections operation for this fetcher.
-		scrape_blockquotes(...): Performs the scrape_blockquotes operation for this fetcher.
-		scrape_hyperlinks(...): Performs the scrape_hyperlinks operation for this fetcher.
-		scrape_images(...): Performs the scrape_images operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the WebFetcher component.
+	
+	Purpose:
+		Defines the WebFetcher workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		soup: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		html: Runtime attribute maintained by the class.
+		re_tag: Runtime attribute maintained by the class.
+		re_ws: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+	"""
 	soup: Optional[ BeautifulSoup ]
 	agents: Optional[ str ]
 	url: Optional[ str ]
@@ -264,20 +212,11 @@ class WebFetcher( Fetcher ):
 	response: Optional[ Response ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize WebFetcher with request defaults, regular expressions, headers,
-			and response state.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the WebFetcher instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the WebFetcher workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.timeout = 10
 		self.re_tag = re.compile( r'<[^>]+>' )
@@ -298,19 +237,14 @@ class WebFetcher( Fetcher ):
 				'Accept' ] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Return stable introspection names for the fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]: Ordered attribute and method names.
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'agents',
 				'url',
@@ -349,20 +283,21 @@ class WebFetcher( Fetcher ):
 		]
 	
 	def validate_required_string( self, name: str, value: Any ) -> str:
-		'''
-			Purpose:
-			--------
-			Validate that a mandatory string argument is present and non-empty.
-
-			Parameters:
-			-----------
-			name (str): Argument name used in the raised exception.
-			value (Any): Argument value to validate.
-
-			Returns:
-			--------
-			str: Stripped string value.
-		'''
+		"""Validate validate required string.
+		
+		Purpose:
+			Provides the documented validate required string operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			value: Any value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			throw_if( name, value )
@@ -381,23 +316,25 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'validate_required_string( self, name: str, value: Any ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def validate_positive_integer( self, name: str, value: Any ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate and return an integer greater than or equal to one.
-
-			Parameters:
-			-----------
-			name (str): Argument name used in the raised exception.
-			value (Any): Argument value to validate.
-
-			Returns:
-			--------
-			int: Validated integer value.
-		'''
+		"""Validate validate positive integer.
+		
+		Purpose:
+			Provides the documented validate positive integer operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			value: Any value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			throw_if( name, value )
@@ -414,23 +351,25 @@ class WebFetcher( Fetcher ):
 			exception.cause = 'WebFetcher'
 			exception.method = (
 					'validate_positive_integer( self, name: str, value: Any ) -> int')
+			Logger( ).write( exception )
 			raise exception
 	
 	def validate_non_negative_integer( self, name: str, value: Any ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate and return an integer greater than or equal to zero.
-
-			Parameters:
-			-----------
-			name (str): Argument name used in the raised exception.
-			value (Any): Argument value to validate.
-
-			Returns:
-			--------
-			int: Validated integer value.
-		'''
+		"""Validate validate non negative integer.
+		
+		Purpose:
+			Provides the documented validate non negative integer operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			value: Any value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			
@@ -449,23 +388,25 @@ class WebFetcher( Fetcher ):
 			exception.cause = 'WebFetcher'
 			exception.method = (
 					'validate_non_negative_integer( self, name: str, value: Any ) -> int')
+			Logger( ).write( exception )
 			raise exception
 	
 	def validate_non_negative_float( self, name: str, value: Any ) -> float:
-		'''
-			Purpose:
-			--------
-			Validate and return a float greater than or equal to zero.
-
-			Parameters:
-			-----------
-			name (str): Argument name used in the raised exception.
-			value (Any): Argument value to validate.
-
-			Returns:
-			--------
-			float: Validated float value.
-		'''
+		"""Validate validate non negative float.
+		
+		Purpose:
+			Provides the documented validate non negative float operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			value: Any value supplied by the caller.
+		
+		Returns:
+			float: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			
@@ -484,24 +425,25 @@ class WebFetcher( Fetcher ):
 			exception.cause = 'WebFetcher'
 			exception.method = (
 					'validate_non_negative_float( self, name: str, value: Any ) -> float')
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, url: str, time: int = 10 ) -> Result | None:
-		'''
-			Purpose:
-			--------
-			Perform an HTTP GET request and store the response, HTML, URL, timeout,
-			and canonical Result object.
-
-			Parameters:
-			-----------
-			url (str): Absolute HTTP or HTTPS URL to fetch.
-			time (int): Request timeout in seconds.
-
-			Returns:
-			--------
-			Result | None: Result wrapping the HTTP response when successful.
-		'''
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Result | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.url = self.validate_required_string( 'url', url )
 			self.timeout = self.validate_positive_integer( 'time', time )
@@ -522,22 +464,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'fetch( self, url: str, time: int=10 ) -> Result | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def html_to_text( self, html: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Convert raw HTML to compact plain text.
-
-			Parameters:
-			-----------
-			html (str): Raw HTML string.
-
-			Returns:
-			--------
-			str: Plain-text content extracted from the HTML.
-		'''
+		"""Run html to text.
+		
+		Purpose:
+			Provides the documented html to text operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			html: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			source = self.validate_required_string( 'html', html )
 			clean_html = re.sub( r'<script[\s\S]*?</script>', ' ', source, flags=re.IGNORECASE )
@@ -557,22 +501,21 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'html_to_text( self, html: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def coerce_items( self, value: Any ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Normalize extracted values into a list of strings.
-
-			Parameters:
-			-----------
-			value (Any): Value returned by a scraping or extraction operation.
-
-			Returns:
-			--------
-			List[str]: Clean list of string values.
-		'''
+		"""Run coerce items.
+		
+		Purpose:
+			Provides the documented coerce items operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			value: Any value supplied by the caller.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		if value is None:
 			return [ ]
 		
@@ -582,19 +525,20 @@ class WebFetcher( Fetcher ):
 		return [ str( value ) ]
 	
 	def extract_title( self, html: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Extract the title element from an HTML document.
-
-			Parameters:
-			-----------
-			html (str): Raw HTML content.
-
-			Returns:
-			--------
-			str: Decoded page title or an empty string.
-		'''
+		"""Run extract title.
+		
+		Purpose:
+			Provides the documented extract title operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			html: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			source = self.validate_required_string( 'html', html )
 			soup = BeautifulSoup( source, 'html.parser' )
@@ -618,23 +562,25 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'extract_title( self, html: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def truncate_text( self, text: str, limit: int = 12000 ) -> str:
-		'''
-			Purpose:
-			--------
-			Limit long text blocks for display or logging.
-
-			Parameters:
-			-----------
-			text (str): Text to truncate.
-			limit (int): Maximum visible character count.
-
-			Returns:
-			--------
-			str: Truncated or original text.
-		'''
+		"""Run truncate text.
+		
+		Purpose:
+			Provides the documented truncate text operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			text: str value supplied by the caller.
+			limit: int value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			source = self.validate_required_string( 'text', text )
 			maximum = self.validate_positive_integer( 'limit', limit )
@@ -649,23 +595,22 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'truncate_text( self, text: str, limit: int=12000 ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_url( self, base_url: str, href: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Convert a possibly relative URL into a normalized HTTP or HTTPS URL.
-
-			Parameters:
-			-----------
-			base_url (str): Base URL used for relative links.
-			href (str): Raw href value or absolute URL.
-
-			Returns:
-			--------
-			str: Normalized URL or an empty string.
-		'''
+		"""Normalize normalize url.
+		
+		Purpose:
+			Provides the documented normalize url operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			base_url: str value supplied by the caller.
+			href: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		"""
 		try:
 			base = self.validate_required_string( 'base_url', base_url )
 			raw_href = self.validate_required_string( 'href', href )
@@ -690,20 +635,18 @@ class WebFetcher( Fetcher ):
 			return ''
 	
 	def same_domain( self, left_url: str, right_url: str ) -> bool:
-		'''
-			Purpose:
-			--------
-			Determine whether two URLs share the same network location.
-
-			Parameters:
-			-----------
-			left_url (str): First URL.
-			right_url (str): Second URL.
-
-			Returns:
-			--------
-			bool: True when the network locations match.
-		'''
+		"""Run same domain.
+		
+		Purpose:
+			Provides the documented same domain operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			left_url: str value supplied by the caller.
+			right_url: str value supplied by the caller.
+		
+		Returns:
+			bool: Result produced by the operation.
+		"""
 		try:
 			left = self.validate_required_string( 'left_url', left_url )
 			right = self.validate_required_string( 'right_url', right_url )
@@ -715,20 +658,21 @@ class WebFetcher( Fetcher ):
 			return False
 	
 	def extract_links( self, base_url: str, html: str ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Extract normalized hyperlinks from an HTML document.
-
-			Parameters:
-			-----------
-			base_url (str): Base page URL used to resolve relative links.
-			html (str): Raw HTML content.
-
-			Returns:
-			--------
-			List[str]: Unique normalized hyperlinks in document order.
-		'''
+		"""Run extract links.
+		
+		Purpose:
+			Provides the documented extract links operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			base_url: str value supplied by the caller.
+			html: str value supplied by the caller.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			base = self.validate_required_string( 'base_url', base_url )
 			source = self.validate_required_string( 'html', html )
@@ -749,25 +693,27 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'extract_links( self, base_url: str, html: str ) -> List[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def extract_structured_data( self, url: str, html: str,
-			selected_methods: Optional[ List[ str ] ]=None ) -> Dict[ str, List[ str ] ]:
-		'''
-			Purpose:
-			--------
-			Extract selected structured HTML elements from a fetched HTML document.
-
-			Parameters:
-			-----------
-			url (str): Page URL used to resolve relative hyperlinks and image links.
-			html (str): Raw HTML content.
-			selected_methods (Optional[List[str]]): Selected extraction method names.
-
-			Returns:
-			--------
-			Dict[str, List[str]]: Structured extraction results by display label.
-		'''
+			selected_methods: Optional[ List[ str ] ] = None ) -> Dict[ str, List[ str ] ]:
+		"""Run extract structured data.
+		
+		Purpose:
+			Provides the documented extract structured data operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			html: str value supplied by the caller.
+			selected_methods: Optional[List[str]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, List[str]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			source_url = self.validate_required_string( 'url', url )
 			source_html = self.validate_required_string( 'html', html )
@@ -905,22 +851,24 @@ class WebFetcher( Fetcher ):
 					'selected_methods: Optional[ List[ str ] ]=None ) '
 					'-> Dict[ str, List[ str ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_paragraphs( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract readable text from all paragraph elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Cleaned paragraph text entries.
-		'''
+		"""Run scrape paragraphs.
+		
+		Purpose:
+			Provides the documented scrape paragraphs operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -931,22 +879,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_paragraphs( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_lists( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract readable text from all list item elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Cleaned list item text entries.
-		'''
+		"""Run scrape lists.
+		
+		Purpose:
+			Provides the documented scrape lists operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -957,22 +907,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_lists( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_tables( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract flattened table cell text from all table elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Table cell values from td and th elements.
-		'''
+		"""Run scrape tables.
+		
+		Purpose:
+			Provides the documented scrape tables operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -983,22 +935,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_tables( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_articles( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract consolidated readable text from all article elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Article-level text blocks.
-		'''
+		"""Run scrape articles.
+		
+		Purpose:
+			Provides the documented scrape articles operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1009,22 +963,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_articles( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_headings( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract readable text from h1 through h6 heading elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Cleaned heading strings.
-		'''
+		"""Run scrape headings.
+		
+		Purpose:
+			Provides the documented scrape headings operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1035,22 +991,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_headings( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_divisions( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract readable text from all div elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Cleaned division text blocks.
-		'''
+		"""Run scrape divisions.
+		
+		Purpose:
+			Provides the documented scrape divisions operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1061,22 +1019,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_divisions( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_sections( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract readable text from all section elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Cleaned section text blocks.
-		'''
+		"""Run scrape sections.
+		
+		Purpose:
+			Provides the documented scrape sections operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1087,22 +1047,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_sections( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_blockquotes( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract readable text from all blockquote elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Cleaned blockquote text entries.
-		'''
+		"""Run scrape blockquotes.
+		
+		Purpose:
+			Provides the documented scrape blockquotes operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1113,22 +1075,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_blockquotes( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_hyperlinks( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract hyperlink href values from all anchor elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Hyperlink href values.
-		'''
+		"""Run scrape hyperlinks.
+		
+		Purpose:
+			Provides the documented scrape hyperlinks operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1139,22 +1103,24 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_hyperlinks( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_images( self, uri: str ) -> List[ str ] | None:
-		'''
-			Purpose:
-			--------
-			Extract image source values from all image elements.
-
-			Parameters:
-			-----------
-			uri (str): Fully-qualified URI of the HTML document.
-
-			Returns:
-			--------
-			List[str] | None: Image source values.
-		'''
+		"""Run scrape images.
+		
+		Purpose:
+			Provides the documented scrape images operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			uri: str value supplied by the caller.
+		
+		Returns:
+			List[str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			url = self.validate_required_string( 'uri', uri )
 			self.fetch( url, time=int( self.timeout or 10 ) )
@@ -1165,27 +1131,29 @@ class WebFetcher( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebFetcher'
 			exception.method = 'scrape_images( self, uri: str ) -> List[ str ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str, description: str,
 			parameters: dict, required: list[ str ] ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a dynamic tool schema definition.
-
-			Parameters:
-			-----------
-			function (str): Function name exposed to the model.
-			tool (str): Underlying service or system name.
-			description (str): Description of the exposed function.
-			parameters (dict): JSON-schema-style parameter definitions.
-			required (list[str]): Required parameter names.
-
-			Returns:
-			--------
-			Dict[str, Any] | None: JSON-compatible tool schema dictionary.
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the WebFetcher workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			function_name = self.validate_required_string( 'function', function )
 			tool_name = self.validate_required_string( 'tool', tool )
@@ -1222,35 +1190,23 @@ class WebFetcher( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, Any ] | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class WebCrawler( WebFetcher ):
-	'''
-
-		Purpose:
-		--------
-		Extends WebFetcher with single-page scraping, optional Playwright rendering,
-		and bounded recursive crawl orchestration.
-
-		Attributes:
-		-----------
-		use_playwright,
-		browser_context,
-		raw_url,
-		raw_html,
-		pages,
-		summary,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this crawler.
-		__dir__(...): Performs the __dir__ operation for this crawler.
-		fetch(...): Performs the fetch operation for this crawler.
-		render_with_playwright(...): Performs the render_with_playwright operation.
-		scrape_page(...): Performs the scrape_page operation for this crawler.
-		crawl(...): Performs the crawl operation for this crawler.
-
-	'''
+	"""Provide the WebCrawler component.
+	
+	Purpose:
+		Defines the WebCrawler workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		use_playwright: Runtime attribute maintained by the class.
+		browser_context: Runtime attribute maintained by the class.
+		raw_url: Runtime attribute maintained by the class.
+		raw_html: Runtime attribute maintained by the class.
+		pages: Runtime attribute maintained by the class.
+		summary: Runtime attribute maintained by the class.
+	"""
 	use_playwright: Optional[ bool ]
 	browser_context: Optional[ Any ]
 	raw_url: Optional[ str ]
@@ -1260,20 +1216,15 @@ class WebCrawler( WebFetcher ):
 	
 	def __init__( self, headers: Optional[ Dict[ str, str ] ] = None,
 			use_playwright: bool = False ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize WebCrawler with optional headers and optional Playwright rendering.
-
-			Parameters:
-			-----------
-			headers (Optional[Dict[str, str]]): Optional request headers.
-			use_playwright (bool): Whether to render pages through Playwright.
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the WebCrawler instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the WebCrawler workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		
+		Args:
+			headers: Optional[Dict[str, str]] value supplied by the caller.
+			use_playwright: bool value supplied by the caller.
+		"""
 		super( ).__init__( )
 		self.browser_context = None
 		self.raw_url = None
@@ -1290,19 +1241,14 @@ class WebCrawler( WebFetcher ):
 			self.headers[ 'User-Agent' ] = cfg.AGENTS
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Return stable introspection names for the crawler.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]: Ordered attribute and method names.
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the WebCrawler workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'use_playwright',
 				'browser_context',
@@ -1325,22 +1271,21 @@ class WebCrawler( WebFetcher ):
 		]
 	
 	def fetch( self, url: str, time: int = 10 ) -> Result | None:
-		'''
-			Purpose:
-			--------
-			Fetch a page using either Playwright rendering or the base WebFetcher
-			requests-based fetch path.
-
-			Parameters:
-			-----------
-			url (str): Absolute URL to fetch.
-			time (int): Request timeout in seconds.
-
-			Returns:
-			--------
-			Result | None: Result returned by the base fetch path, or None when
-			Playwright rendering is used.
-		'''
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the WebCrawler workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Result | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -1360,23 +1305,25 @@ class WebCrawler( WebFetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebCrawler'
 			exception.method = 'fetch( self, url: str, time: int=10 ) -> Result | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def render_with_playwright( self, url: str, timeout: int = 15 ) -> str:
-		'''
-			Purpose:
-			--------
-			Render a page with Playwright and return the rendered HTML.
-
-			Parameters:
-			-----------
-			url (str): URL to render.
-			timeout (int): Timeout seconds for page navigation and network idle.
-
-			Returns:
-			--------
-			str: Rendered HTML for the page.
-		'''
+		"""Run render with playwright.
+		
+		Purpose:
+			Provides the documented render with playwright operation for the WebCrawler workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			timeout: int value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -1394,31 +1341,30 @@ class WebCrawler( WebFetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WebCrawler'
 			exception.method = 'render_with_playwright( self, url: str, timeout: int=15 ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def scrape_page( self, url: str, include_title: bool = True,
 			include_basic_text: bool = True, include_raw_html: bool = False,
 			selected_methods: Optional[ List[ str ] ] = None, request_timeout: int = 10,
 			max_bytes: int = 1000000 ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Fetch and extract one web page using the currently configured fetch path.
-
-			Parameters:
-			-----------
-			url (str): Page URL to fetch.
-			include_title (bool): Include the page title.
-			include_basic_text (bool): Include normalized page text.
-			include_raw_html (bool): Include raw HTML.
-			selected_methods (Optional[List[str]]): Structured extraction methods.
-			request_timeout (int): Request timeout in seconds.
-			max_bytes (int): Maximum accepted response size in bytes.
-
-			Returns:
-			--------
-			Dict[str, Any]: Page scrape result.
-		'''
+		"""Run scrape page.
+		
+		Purpose:
+			Provides the documented scrape page operation for the WebCrawler workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			include_title: bool value supplied by the caller.
+			include_basic_text: bool value supplied by the caller.
+			include_raw_html: bool value supplied by the caller.
+			selected_methods: Optional[List[str]] value supplied by the caller.
+			request_timeout: int value supplied by the caller.
+			max_bytes: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		"""
 		page_result: Dict[ str, Any ] = \
 			{
 					'url': url,
@@ -1486,30 +1432,31 @@ class WebCrawler( WebFetcher ):
 			max_depth: int = 1, max_pages: int = 10, same_domain_only: bool = True,
 			request_timeout: int = 10, delay_seconds: float = 0.25,
 			max_bytes: int = 1000000 ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Crawl one page or a bounded set of pages from a seed URL.
-
-			Parameters:
-			-----------
-			seed_url (str): Initial URL.
-			include_title (bool): Include page titles.
-			include_basic_text (bool): Include normalized page text.
-			include_raw_html (bool): Include raw HTML.
-			selected_methods (Optional[List[str]]): Structured extraction method names.
-			recursive (bool): Enable recursive crawling.
-			max_depth (int): Maximum crawl depth.
-			max_pages (int): Maximum number of pages to process.
-			same_domain_only (bool): Restrict discovered URLs to the seed domain.
-			request_timeout (int): Request timeout in seconds.
-			delay_seconds (float): Delay between page requests.
-			max_bytes (int): Maximum accepted response size in bytes.
-
-			Returns:
-			--------
-			Dict[str, Any]: Crawl result containing pages and summary.
-		'''
+		"""Run crawl.
+		
+		Purpose:
+			Provides the documented crawl operation for the WebCrawler workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			seed_url: str value supplied by the caller.
+			include_title: bool value supplied by the caller.
+			include_basic_text: bool value supplied by the caller.
+			include_raw_html: bool value supplied by the caller.
+			selected_methods: Optional[List[str]] value supplied by the caller.
+			recursive: bool value supplied by the caller.
+			max_depth: int value supplied by the caller.
+			max_pages: int value supplied by the caller.
+			same_domain_only: bool value supplied by the caller.
+			request_timeout: int value supplied by the caller.
+			delay_seconds: float value supplied by the caller.
+			max_bytes: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'seed_url', seed_url )
 			
@@ -1617,30 +1564,23 @@ class WebCrawler( WebFetcher ):
 					'request_timeout: int=10, delay_seconds: float=0.25, '
 					'max_bytes: int=1000000 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class ArXiv( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches ArXiv documents through the LangChain ArxivRetriever.
-
-		Attributes:
-		-----------
-		fetcher,
-		documents,
-		max_documents,
-		full_documents,
-		include_metadata,
-		query,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-
-	'''
+	"""Provide the ArXiv component.
+	
+	Purpose:
+		Defines the ArXiv workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		fetcher: Runtime attribute maintained by the class.
+		documents: Runtime attribute maintained by the class.
+		max_documents: Runtime attribute maintained by the class.
+		full_documents: Runtime attribute maintained by the class.
+		include_metadata: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+	"""
 	fetcher: Optional[ ArxivRetriever ]
 	documents: Optional[ List[ Document ] ]
 	max_documents: Optional[ int ]
@@ -1648,8 +1588,18 @@ class ArXiv( Fetcher ):
 	include_metadata: Optional[ bool ]
 	query: Optional[ str ]
 	
-	def __init__( self, max_documents: int=5, full_documents: bool=False,
-			include_metadata: bool=False ) -> None:
+	def __init__( self, max_documents: int = 5, full_documents: bool = False,
+			include_metadata: bool = False ) -> None:
+		"""Initialize the ArXiv instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the ArXiv workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		
+		Args:
+			max_documents: int value supplied by the caller.
+			full_documents: bool value supplied by the caller.
+			include_metadata: bool value supplied by the caller.
+		"""
 		super( ).__init__( )
 		self.fetcher = None
 		self.documents = None
@@ -1658,35 +1608,25 @@ class ArXiv( Fetcher ):
 		self.full_documents = bool( full_documents )
 		self.include_metadata = bool( include_metadata )
 	
-	def fetch( self, question: str, max_documents: int=None,
-			full_documents: bool=None, include_metadata: bool=None ) -> List[ Document ] | None:
-		'''
-
-			Purpose:
-			--------
-			Query ArXiv through LangChain's ArxivRetriever and return LangChain
-			Document objects.
-
-			Parameters:
-			-----------
-			question: str
-			Free-text search query or arXiv identifier.
-			
-			max_documents: int
-			Optional override for maximum number of returned documents.
-			
-			full_documents:  bool
-			Optional override indicating whether full document text should  be fetched instead of
-			summary-oriented retrieval.
-			
-			include_metadata: bool
-			Optional override indicating whether all available metadata should be included.
-
-			Returns:
-			--------
-			List[Document] | None
-
-		'''
+	def fetch( self, question: str, max_documents: int = None,
+			full_documents: bool = None, include_metadata: bool = None ) -> List[ Document ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the ArXiv workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			question: str value supplied by the caller.
+			max_documents: int value supplied by the caller.
+			full_documents: bool value supplied by the caller.
+			include_metadata: bool value supplied by the caller.
+		
+		Returns:
+			List[Document] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'question', question )
 			self.query = question.strip( )
@@ -1709,36 +1649,26 @@ class ArXiv( Fetcher ):
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'ArXiv'
-			exception.method =  'fetch( self, *kwargs ) -> List[ Document ]'
+			exception.method = 'fetch( self, *kwargs ) -> List[ Document ]'
+			Logger( ).write( exception )
 			raise exception
 
 class GoogleDrive( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Google Drive documents through the LangChain GoogleDriveRetriever.
-
-		Attributes:
-		-----------
-		fetcher,
-		documents,
-		num_results,
-		folder_id,
-		template,
-		query,
-		mime_type,
-		mode,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		mime_options(...): Performs the mime_options operation for this fetcher.
-		template_options(...): Performs the template_options operation for this fetcher.
-		mode_options(...): Performs the mode_options operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-
-	'''
+	"""Provide the GoogleDrive component.
+	
+	Purpose:
+		Defines the GoogleDrive workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		fetcher: Runtime attribute maintained by the class.
+		documents: Runtime attribute maintained by the class.
+		num_results: Runtime attribute maintained by the class.
+		folder_id: Runtime attribute maintained by the class.
+		template: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+		mime_type: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+	"""
 	fetcher: Optional[ GoogleDriveRetriever ]
 	documents: Optional[ List[ Document ] ]
 	num_results: Optional[ int ]
@@ -1749,6 +1679,11 @@ class GoogleDrive( Fetcher ):
 	mode: Optional[ str ]
 	
 	def __init__( self ) -> None:
+		"""Initialize the GoogleDrive instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GoogleDrive workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.fetcher = None
 		self.documents = None
@@ -1761,87 +1696,71 @@ class GoogleDrive( Fetcher ):
 	
 	@property
 	def mime_options( self ) -> List[ str ]:
-		'''
+		"""Run mime options.
 		
-			Purpose:
-			--------
-			Return supported MIME types aligned to the Google Drive retriever docs.
+		Purpose:
+			Provides the documented mime options operation for the GoogleDrive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Returns:
-			--------
-			List[str]
-		
-		'''
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [ '', 'text/text', 'text/plain', 'text/html', 'text/csv', 'text/markdown',
-				'image/png', 'image/jpeg', 'application/epub+zip', 'application/pdf',
-				'application/rtf', 'application/vnd.google-apps.document',
-				'application/vnd.google-apps.presentation', 'application/vnd.google-apps.spreadsheet',
-				'application/vnd.google.colaboratory',
-				'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ]
+		         'image/png', 'image/jpeg', 'application/epub+zip', 'application/pdf',
+		         'application/rtf', 'application/vnd.google-apps.document',
+		         'application/vnd.google-apps.presentation',
+		         'application/vnd.google-apps.spreadsheet',
+		         'application/vnd.google.colaboratory',
+		         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		         'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ]
 	
 	@property
 	def template_options( self ) -> List[ str ]:
-		'''
+		"""Run template options.
 		
-			Purpose:
-			--------
-			Return predefined template options supported by GoogleDriveRetriever.
+		Purpose:
+			Provides the documented template options operation for the GoogleDrive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Returns:
-			--------
-			List[str]
-		
-		'''
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [ 'gdrive-all-in-folder', 'gdrive-query', 'gdrive-by-name', 'gdrive-query-in-folder',
-				'gdrive-mime-type', 'gdrive-mime-type-in-folder', 'gdrive-query-with-mime-type',
-				'gdrive-query-with-mime-type-and-folder', ]
+		         'gdrive-mime-type', 'gdrive-mime-type-in-folder', 'gdrive-query-with-mime-type',
+		         'gdrive-query-with-mime-type-and-folder', ]
 	
 	@property
 	def mode_options( self ) -> List[ str ]:
-		'''
+		"""Run mode options.
 		
-			Purpose:
-			--------
-			Return supported retrieval display modes.
+		Purpose:
+			Provides the documented mode options operation for the GoogleDrive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Returns:
-			--------
-			List[str]
-		
-		'''
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [ 'documents', 'snippets' ]
 	
-	def fetch( self, question: str, folder_id: str='root', results: int=10, template: str='gdrive-query',
-			mime_type: str=None, mode: str='documents' ) -> List[ Document ] | None:
-		'''Query Google Drive through LangChain's GoogleDriveRetriever and return LangChain Document objects.
+	def fetch( self, question: str, folder_id: str = 'root', results: int = 10,
+			template: str = 'gdrive-query',
+			mime_type: str = None, mode: str = 'documents' ) -> List[ Document ] | None:
+		"""Fetch fetch.
 		
-			Parameters:
-			-----------
-			question: str
-				Free-text query used by the retriever. For templates that do not
-				require a query, a placeholder value may still be passed.
-				
-			folder_id: str
-				Google Drive folder id. Use 'root' for the user's root Drive.
-				
-			results: int
-				Maximum number of returned documents.
-				
-			template: str
-				Predefined GoogleDriveRetriever selection template.
-				
-			mime_type:
-				Optional MIME type filter.
-				
-			mode: str
-				Retrieval mode, typically 'documents' or 'snippets'.
+		Purpose:
+			Provides the documented fetch operation for the GoogleDrive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Returns:
-			--------
-			List[Document] | None
+		Args:
+			question: str value supplied by the caller.
+			folder_id: str value supplied by the caller.
+			results: int value supplied by the caller.
+			template: str value supplied by the caller.
+			mime_type: str value supplied by the caller.
+			mode: str value supplied by the caller.
 		
-		'''
+		Returns:
+			List[Document] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'template', template )
 			throw_if( 'folder_id', folder_id )
@@ -1850,10 +1769,11 @@ class GoogleDrive( Fetcher ):
 			self.folder_id = folder_id.strip( ) if folder_id else 'root'
 			self.num_results = max( 1, min( int( results ), 100 ) )
 			self.template = template.strip( )
-			self.mime_type = mime_type.strip( ) if isinstance( mime_type, str ) and mime_type.strip( ) else None
+			self.mime_type = mime_type.strip( ) if isinstance( mime_type,
+				str ) and mime_type.strip( ) else None
 			self.mode = mode.strip( ) if mode else 'documents'
 			
-			retriever_kwargs: Dict[ str, Any ]={
+			retriever_kwargs: Dict[ str, Any ] = {
 					'folder_id': self.folder_id,
 					'template': self.template,
 					'num_results': self.num_results,
@@ -1861,13 +1781,13 @@ class GoogleDrive( Fetcher ):
 			}
 			
 			if self.mime_type:
-				retriever_kwargs[ 'mime_type' ]=self.mime_type
+				retriever_kwargs[ 'mime_type' ] = self.mime_type
 			
 			if cfg.GOOGLE_ACCOUNT_FILE:
-				retriever_kwargs[ 'credentials_path' ]=cfg.GOOGLE_ACCOUNT_FILE
+				retriever_kwargs[ 'credentials_path' ] = cfg.GOOGLE_ACCOUNT_FILE
 			
 			if cfg.GOOGLE_DRIVE_TOKEN_PATH:
-				retriever_kwargs[ 'token_path' ]=cfg.GOOGLE_DRIVE_TOKEN_PATH
+				retriever_kwargs[ 'token_path' ] = cfg.GOOGLE_DRIVE_TOKEN_PATH
 			
 			self.fetcher = GoogleDriveRetriever( **retriever_kwargs )
 			
@@ -1877,7 +1797,8 @@ class GoogleDrive( Fetcher ):
 				                     'gdrive-mime-type-in-folder'):
 					invoke_query = '*'
 				else:
-					raise ValueError( 'A query is required for the selected Google Drive template.')
+					raise ValueError(
+						'A query is required for the selected Google Drive template.' )
 			
 			self.documents = self.fetcher.invoke( invoke_query )
 			return self.documents
@@ -1887,30 +1808,23 @@ class GoogleDrive( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleDrive'
 			exception.method = 'fetch( self, *kwargs ) -> List[ Document ]'
+			Logger( ).write( exception )
 			raise exception
 
 class Wikipedia( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Wikipedia documents through the LangChain WikipediaRetriever.
-
-		Attributes:
-		-----------
-		fetcher,
-		documents,
-		max_documents,
-		include_metadata,
-		language,
-		query,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-
-	'''
+	"""Provide the Wikipedia component.
+	
+	Purpose:
+		Defines the Wikipedia workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		fetcher: Runtime attribute maintained by the class.
+		documents: Runtime attribute maintained by the class.
+		max_documents: Runtime attribute maintained by the class.
+		include_metadata: Runtime attribute maintained by the class.
+		language: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+	"""
 	fetcher: Optional[ WikipediaRetriever ]
 	documents: Optional[ List[ Document ] ]
 	max_documents: Optional[ int ]
@@ -1918,8 +1832,18 @@ class Wikipedia( Fetcher ):
 	language: Optional[ str ]
 	query: Optional[ str ]
 	
-	def __init__( self, language: str='en', max_documents: int=5,
-			include_metadata: bool=False ) -> None:
+	def __init__( self, language: str = 'en', max_documents: int = 5,
+			include_metadata: bool = False ) -> None:
+		"""Initialize the Wikipedia instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Wikipedia workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		
+		Args:
+			language: str value supplied by the caller.
+			max_documents: int value supplied by the caller.
+			include_metadata: bool value supplied by the caller.
+		"""
 		super( ).__init__( )
 		self.fetcher = None
 		self.documents = None
@@ -1928,33 +1852,25 @@ class Wikipedia( Fetcher ):
 		self.max_documents = max( 1, min( int( max_documents ), 300 ) )
 		self.include_metadata = bool( include_metadata )
 	
-	def fetch( self, question: str, language: str=None, max_documents: int=None,
-			include_metadata: bool=None ) -> List[ Document ] | None:
-		'''
-			Query Wikipedia through LangChain's WikipediaRetriever and return
-			LangChain Document objects.
-
-			Parameters:
-			-----------
-			question:
-				Free-text Wikipedia query.
-				
-			language:
-				Optional language code override, e.g. "en", "fr", "de", "ja".
-				
-			max_documents:
-				Optional override for maximum number of returned documents.
-				Hard-capped at 300.
-				
-			include_metadata:
-				Optional override indicating whether all available metadata
-				should be included.
-
-			Returns:
-			--------
-			List[Document] | None
-
-		'''
+	def fetch( self, question: str, language: str = None, max_documents: int = None,
+			include_metadata: bool = None ) -> List[ Document ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Wikipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			question: str value supplied by the caller.
+			language: str value supplied by the caller.
+			max_documents: int value supplied by the caller.
+			include_metadata: bool value supplied by the caller.
+		
+		Returns:
+			List[Document] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'question', question )
 			self.query = question.strip( )
@@ -1979,16 +1895,25 @@ class Wikipedia( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Wikipedia'
 			exception.method = 'fetch( self, question: str, **kwargs ) -> List[ Document ]'
+			Logger( ).write( exception )
 			raise exception
 
 class TheNews( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides a structured wrapper around The News API endpoints.
-
-	'''
+	"""Provide the TheNews component.
+	
+	Purpose:
+		Defines the TheNews workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		agents: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		endpoint: Runtime attribute maintained by the class.
+		limit: Runtime attribute maintained by the class.
+		page: Runtime attribute maintained by the class.
+	"""
 	agents: Optional[ str ]
 	url: Optional[ str ]
 	response: Optional[ Response ]
@@ -1999,12 +1924,11 @@ class TheNews( Fetcher ):
 	page: Optional[ int ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize The News API wrapper with sane defaults and environment-
-			based authentication.
-		'''
+		"""Initialize the TheNews instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the TheNews workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.timeout = 10
 		self.url = 'https://api.thenewsapi.com/v1/news'
@@ -2019,92 +1943,65 @@ class TheNews( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
-			self.headers[ 'Accept' ]='application/json'
+			self.headers[ 'Accept' ] = 'application/json'
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Return visible member ordering.
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the TheNews workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [ 'api_key', 'url', 'timeout', 'headers', 'endpoint',
 		         'limit', 'page', 'params', 'fetch', ]
 	
-	def fetch( self, endpoint: str='all', query: str='', language: str='en', categories: str='',
-			exclude_categories: str='', locale: str='', domains: str='', exclude_domains: str='',
-			source_ids: str='', exclude_source_ids: str='', published_after: str='',
-			published_before: str='', published_on: str='', sort: str='published_at',
-			limit: int=10, page: int=1, include_similar: bool=True, headlines_per_category: int=6,
-			time: int=10, api_key: str=None ) -> Dict[ str, Any ] | None:
-		'''Send a request to The News API using one of the documented endpoints and return the parsed JSON response.
-
-			Parameters:
-			-----------
-			endpoint:
-				One of: all, top, headlines, sources
-				
-			query:
-				Search query for endpoints that support search.
-				
-			language:
-				Comma-separated language codes.
-				
-			categories:
-				Comma-separated category filter.
-				
-			exclude_categories:
-				Comma-separated excluded categories.
-				
-			locale:
-				Comma-separated country codes where supported.
-				
-			domains:
-				Comma-separated included domains.
-				
-			exclude_domains:
-				Comma-separated excluded domains.
-				
-			source_ids:
-				Comma-separated included source ids.
-				
-			exclude_source_ids:
-				Comma-separated excluded source ids.
-				
-			published_after:
-				Date/datetime filter when supported.
-				
-			published_before:
-				Date/datetime filter when supported.
-				
-			published_on:
-				Single publication date filter when supported.
-				
-			sort:
-				Sort order for applicable endpoints.
-				
-			limit:
-				Result size.
-				
-			page:
-				Page number.
-				
-			include_similar:
-				Headlines-only switch.
-				
-			headlines_per_category:
-				Headlines-only per-category limit.
-				
-			time:
-				Request timeout in seconds.
-				
-			api_key:
-				Optional runtime override. Falls back to cfg.THENEWS_API_KEY.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, endpoint: str = 'all', query: str = '', language: str = 'en',
+			categories: str = '',
+			exclude_categories: str = '', locale: str = '', domains: str = '',
+			exclude_domains: str = '',
+			source_ids: str = '', exclude_source_ids: str = '', published_after: str = '',
+			published_before: str = '', published_on: str = '', sort: str = 'published_at',
+			limit: int = 10, page: int = 1, include_similar: bool = True,
+			headlines_per_category: int = 6,
+			time: int = 10, api_key: str = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the TheNews workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			query: str value supplied by the caller.
+			language: str value supplied by the caller.
+			categories: str value supplied by the caller.
+			exclude_categories: str value supplied by the caller.
+			locale: str value supplied by the caller.
+			domains: str value supplied by the caller.
+			exclude_domains: str value supplied by the caller.
+			source_ids: str value supplied by the caller.
+			exclude_source_ids: str value supplied by the caller.
+			published_after: str value supplied by the caller.
+			published_before: str value supplied by the caller.
+			published_on: str value supplied by the caller.
+			sort: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			include_similar: bool value supplied by the caller.
+			headlines_per_category: int value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.endpoint = (endpoint or 'all').strip( ).lower( )
 			self.timeout = int( time )
@@ -2117,89 +2014,90 @@ class TheNews( Fetcher ):
 			valid_endpoints = { 'all', 'top', 'headlines', 'sources' }
 			if self.endpoint not in valid_endpoints:
 				raise ValueError( f"Unsupported endpoint '{self.endpoint}'. "
-					f"Supported endpoints: {', '.join( sorted( valid_endpoints ) )}." )
+				                  f"Supported endpoints: {', '.join( sorted( valid_endpoints ) )}." )
 			
 			self.params = { 'api_token': active_key }
 			if self.endpoint in ('all', 'top'):
 				if query and query.strip( ):
-					self.params[ 'search' ]=query.strip( )
+					self.params[ 'search' ] = query.strip( )
 				
 				if language and language.strip( ):
-					self.params[ 'language' ]=language.strip( )
+					self.params[ 'language' ] = language.strip( )
 				
 				if categories and categories.strip( ):
-					self.params[ 'categories' ]=categories.strip( )
+					self.params[ 'categories' ] = categories.strip( )
 				
 				if exclude_categories and exclude_categories.strip( ):
-					self.params[ 'exclude_categories' ]=exclude_categories.strip( )
+					self.params[ 'exclude_categories' ] = exclude_categories.strip( )
 				
 				if domains and domains.strip( ):
-					self.params[ 'domains' ]=domains.strip( )
+					self.params[ 'domains' ] = domains.strip( )
 				
 				if exclude_domains and exclude_domains.strip( ):
-					self.params[ 'exclude_domains' ]=exclude_domains.strip( )
+					self.params[ 'exclude_domains' ] = exclude_domains.strip( )
 				
 				if source_ids and source_ids.strip( ):
-					self.params[ 'source_ids' ]=source_ids.strip( )
+					self.params[ 'source_ids' ] = source_ids.strip( )
 				
 				if exclude_source_ids and exclude_source_ids.strip( ):
-					self.params[ 'exclude_source_ids' ]=exclude_source_ids.strip( )
+					self.params[ 'exclude_source_ids' ] = exclude_source_ids.strip( )
 				
 				if published_after and published_after.strip( ):
-					self.params[ 'published_after' ]=published_after.strip( )
+					self.params[ 'published_after' ] = published_after.strip( )
 				
 				if published_before and published_before.strip( ):
-					self.params[ 'published_before' ]=published_before.strip( )
+					self.params[ 'published_before' ] = published_before.strip( )
 				
 				if published_on and published_on.strip( ):
-					self.params[ 'published_on' ]=published_on.strip( )
+					self.params[ 'published_on' ] = published_on.strip( )
 				
 				if sort and sort.strip( ):
-					self.params[ 'sort' ]=sort.strip( )
+					self.params[ 'sort' ] = sort.strip( )
 				
-				self.params[ 'limit' ]=self.limit
-				self.params[ 'page' ]=self.page
+				self.params[ 'limit' ] = self.limit
+				self.params[ 'page' ] = self.page
 				if self.endpoint == 'top' and locale and locale.strip( ):
-					self.params[ 'locale' ]=locale.strip( )
+					self.params[ 'locale' ] = locale.strip( )
 			
 			elif self.endpoint == 'headlines':
 				if locale and locale.strip( ):
-					self.params[ 'locale' ]=locale.strip( )
+					self.params[ 'locale' ] = locale.strip( )
 				
 				if domains and domains.strip( ):
-					self.params[ 'domains' ]=domains.strip( )
+					self.params[ 'domains' ] = domains.strip( )
 				
 				if exclude_domains and exclude_domains.strip( ):
-					self.params[ 'exclude_domains' ]=exclude_domains.strip( )
+					self.params[ 'exclude_domains' ] = exclude_domains.strip( )
 				
 				if source_ids and source_ids.strip( ):
-					self.params[ 'source_ids' ]=source_ids.strip( )
+					self.params[ 'source_ids' ] = source_ids.strip( )
 				
 				if exclude_source_ids and exclude_source_ids.strip( ):
-					self.params[ 'exclude_source_ids' ]=exclude_source_ids.strip( )
+					self.params[ 'exclude_source_ids' ] = exclude_source_ids.strip( )
 				
 				if language and language.strip( ):
-					self.params[ 'language' ]=language.strip( )
+					self.params[ 'language' ] = language.strip( )
 				
 				if published_on and published_on.strip( ):
-					self.params[ 'published_on' ]=published_on.strip( )
+					self.params[ 'published_on' ] = published_on.strip( )
 				
-				self.params[ 'headlines_per_category' ]=max( 1, min( int( headlines_per_category ), 10 ) )
+				self.params[ 'headlines_per_category' ] = max( 1,
+					min( int( headlines_per_category ), 10 ) )
 				
-				self.params[ 'include_similar' ]=\
+				self.params[ 'include_similar' ] = \
 					'true' if bool( include_similar ) else 'false'
 			
 			elif self.endpoint == 'sources':
 				if categories and categories.strip( ):
-					self.params[ 'categories' ]=categories.strip( )
+					self.params[ 'categories' ] = categories.strip( )
 				
 				if exclude_categories and exclude_categories.strip( ):
-					self.params[ 'exclude_categories' ]=exclude_categories.strip( )
+					self.params[ 'exclude_categories' ] = exclude_categories.strip( )
 				
 				if language and language.strip( ):
-					self.params[ 'language' ]=language.strip( )
+					self.params[ 'language' ] = language.strip( )
 				
-				self.params[ 'page' ]=self.page
+				self.params[ 'page' ] = self.page
 			
 			request_url = f'{self.url}/{self.endpoint}'
 			self.response = requests.get( url=request_url, params=self.params, headers=self.headers,
@@ -2212,36 +2110,28 @@ class TheNews( Fetcher ):
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'TheNews'
-			exception.method =  'fetch( self, **kwargs ) -> Dict[ str, Any ]'
+			exception.method = 'fetch( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 
 class GoogleSearch( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Google Custom Search results.
+	"""Provide the GoogleSearch component.
 	
-		Attributes:
-		-----------
-		keywords,
-		url,
-		re_tag,
-		re_ws,
-		response,
-		api_key,
-		cse_id,
-		params,
-		results,
-		start,
+	Purpose:
+		Defines the GoogleSearch workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
 	
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-	
-	'''
+	Attributes:
+		keywords: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		re_tag: Runtime attribute maintained by the class.
+		re_ws: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		cse_id: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		results: Runtime attribute maintained by the class.
+		start: Runtime attribute maintained by the class.
+	"""
 	keywords: Optional[ str ]
 	url: Optional[ str ]
 	re_tag: Optional[ Pattern ]
@@ -2254,15 +2144,11 @@ class GoogleSearch( Fetcher ):
 	start: Optional[ int ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize GoogleSearch with environment-based credentials and sane defaults.
-
-			Returns:
-			-----------
-			None
-		'''
+		"""Initialize the GoogleSearch instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GoogleSearch workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.GOOGLE_API_KEY
 		self.cse_id = cfg.GOOGLE_CSE_ID
@@ -2279,85 +2165,65 @@ class GoogleSearch( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
-			self.headers[ 'Accept' ]='application/json'
+			self.headers[ 'Accept' ] = 'application/json'
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Control visible ordering for GoogleSearch.
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the GoogleSearch workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [ 'keywords', 'url', 'timeout', 'headers', 'fetch', 'api_key',
 		         'response', 'cse_id', 'params', 'agents', 'results', 'start', ]
 	
-	def fetch( self, keywords: str, results: int=10,
-			start: int=1, exact_terms: str='', exclude_terms: str='',
-			file_type: str='', date_restrict: str='', gl: str='', lr: str='',
-			safe: str='off', search_type: str='', site_search: str='', site_search_filter: str='',
-			sort: str='', img_size: str='', img_type: str='', img_color_type: str='',
-			img_dominant_color: str='', time: int=10, api_key: str=None,
-			cse_id: str=None ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Send a request to the Google Custom Search JSON API and return the
-			parsed JSON response.
-
-			Parameters:
-			-----------
-			keywords:
-				Search query string.
-			results:
-				Number of results per request. Google supports up to 10 per request.
-			start:
-				Index of the first result to return. Combined paging is limited to
-				the first 100 results.
-			exact_terms:
-				Phrase that all documents must contain.
-			exclude_terms:
-				Words or phrases that must not appear.
-			file_type:
-				File extension filter, e.g. pdf, docx.
-			date_restrict:
-				Date restriction such as d7, w2, m1, y1.
-			gl:
-				Country boost code, e.g. us.
-			lr:
-				Language restrict code, e.g. lang_en.
-			safe:
-				Safe search value, typically active or off.
-			search_type:
-				Set to image for image search.
-			site_search:
-				Restrict to a site or domain.
-			site_search_filter:
-				i to include, e to exclude the specified site.
-			sort:
-				Sort expression when supported by the engine.
-			img_size:
-				Image size filter when search_type=image.
-			img_type:
-				Image type filter when search_type=image.
-			img_color_type:
-				Image color type filter when search_type=image.
-			img_dominant_color:
-				Image dominant color filter when search_type=image.
-			time:
-				Request timeout in seconds.
-			api_key:
-				Optional runtime override. Falls back to cfg.GOOGLE_API_KEY.
-			cse_id:
-				Optional runtime override. Falls back to cfg.GOOGLE_CSE_ID.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, keywords: str, results: int = 10,
+			start: int = 1, exact_terms: str = '', exclude_terms: str = '',
+			file_type: str = '', date_restrict: str = '', gl: str = '', lr: str = '',
+			safe: str = 'off', search_type: str = '', site_search: str = '',
+			site_search_filter: str = '',
+			sort: str = '', img_size: str = '', img_type: str = '', img_color_type: str = '',
+			img_dominant_color: str = '', time: int = 10, api_key: str = None,
+			cse_id: str = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the GoogleSearch workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			keywords: str value supplied by the caller.
+			results: int value supplied by the caller.
+			start: int value supplied by the caller.
+			exact_terms: str value supplied by the caller.
+			exclude_terms: str value supplied by the caller.
+			file_type: str value supplied by the caller.
+			date_restrict: str value supplied by the caller.
+			gl: str value supplied by the caller.
+			lr: str value supplied by the caller.
+			safe: str value supplied by the caller.
+			search_type: str value supplied by the caller.
+			site_search: str value supplied by the caller.
+			site_search_filter: str value supplied by the caller.
+			sort: str value supplied by the caller.
+			img_size: str value supplied by the caller.
+			img_type: str value supplied by the caller.
+			img_color_type: str value supplied by the caller.
+			img_dominant_color: str value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: str value supplied by the caller.
+			cse_id: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'keywords', keywords )
 			active_key = (api_key or self.api_key or '').strip( )
@@ -2382,47 +2248,47 @@ class GoogleSearch( Fetcher ):
 			}
 			
 			if exact_terms and exact_terms.strip( ):
-				self.params[ 'exactTerms' ]=exact_terms.strip( )
+				self.params[ 'exactTerms' ] = exact_terms.strip( )
 			
 			if exclude_terms and exclude_terms.strip( ):
-				self.params[ 'excludeTerms' ]=exclude_terms.strip( )
+				self.params[ 'excludeTerms' ] = exclude_terms.strip( )
 			
 			if file_type and file_type.strip( ):
-				self.params[ 'fileType' ]=file_type.strip( )
+				self.params[ 'fileType' ] = file_type.strip( )
 			
 			if date_restrict and date_restrict.strip( ):
-				self.params[ 'dateRestrict' ]=date_restrict.strip( )
+				self.params[ 'dateRestrict' ] = date_restrict.strip( )
 			
 			if gl and gl.strip( ):
-				self.params[ 'gl' ]=gl.strip( )
+				self.params[ 'gl' ] = gl.strip( )
 			
 			if lr and lr.strip( ):
-				self.params[ 'lr' ]=lr.strip( )
+				self.params[ 'lr' ] = lr.strip( )
 			
 			if search_type and search_type.strip( ):
-				self.params[ 'searchType' ]=search_type.strip( )
+				self.params[ 'searchType' ] = search_type.strip( )
 			
 			if site_search and site_search.strip( ):
-				self.params[ 'siteSearch' ]=site_search.strip( )
+				self.params[ 'siteSearch' ] = site_search.strip( )
 			
 			if site_search_filter and site_search_filter.strip( ):
-				self.params[ 'siteSearchFilter' ]=site_search_filter.strip( )
+				self.params[ 'siteSearchFilter' ] = site_search_filter.strip( )
 			
 			if sort and sort.strip( ):
-				self.params[ 'sort' ]=sort.strip( )
+				self.params[ 'sort' ] = sort.strip( )
 			
 			if search_type.strip( ).lower( ) == 'image':
 				if img_size and img_size.strip( ):
-					self.params[ 'imgSize' ]=img_size.strip( )
+					self.params[ 'imgSize' ] = img_size.strip( )
 				
 				if img_type and img_type.strip( ):
-					self.params[ 'imgType' ]=img_type.strip( )
+					self.params[ 'imgType' ] = img_type.strip( )
 				
 				if img_color_type and img_color_type.strip( ):
-					self.params[ 'imgColorType' ]=img_color_type.strip( )
+					self.params[ 'imgColorType' ] = img_color_type.strip( )
 				
 				if img_dominant_color and img_dominant_color.strip( ):
-					self.params[ 'imgDominantColor' ]=img_dominant_color.strip( )
+					self.params[ 'imgDominantColor' ] = img_dominant_color.strip( )
 			
 			self.response = requests.get( url=self.url, params=self.params, headers=self.headers,
 				timeout=self.timeout )
@@ -2434,40 +2300,29 @@ class GoogleSearch( Fetcher ):
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleSearch'
-			exception.method = ( 'fetch( self, keywords: str, results: int=10 ) -> Dict[ str, Any ]')
+			exception.method = ('fetch( self, keywords: str, results: int=10 ) -> Dict[ str, Any ]')
+			Logger( ).write( exception )
 			raise exception
-			
+
 class GoogleMaps( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides Google Maps geocoding, validation, and directions requests.
-
-		Attributes:
-		-----------
-		file_path,
-		headers,
-		num_results,
-		api_key,
-		mode,
-		latitude,
-		longitude,
-		coordinates,
-		address,
-		directions,
-		params,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		geocode_location(...): Performs the geocode_location operation for this fetcher.
-		geocode_coordinates(...): Performs the geocode_coordinates operation for this fetcher.
-		validate_address(...): Performs the validate_address operation for this fetcher.
-		request_directions(...): Performs the request_directions operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the GoogleMaps component.
+	
+	Purpose:
+		Defines the GoogleMaps workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		file_path: Runtime attribute maintained by the class.
+		headers: Runtime attribute maintained by the class.
+		num_results: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		coordinates: Runtime attribute maintained by the class.
+		address: Runtime attribute maintained by the class.
+		directions: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+	"""
 	file_path: Optional[ str ]
 	headers: Optional[ Dict[ str, Any ] ]
 	num_results: Optional[ int ]
@@ -2481,6 +2336,11 @@ class GoogleMaps( Fetcher ):
 	params: Optional[ Dict[ str, Any ] ]
 	
 	def __init__( self ) -> None:
+		"""Initialize the GoogleMaps instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GoogleMaps workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.GOOGLE_API_KEY
 		self.headers = { }
@@ -2496,20 +2356,23 @@ class GoogleMaps( Fetcher ):
 		self.directions = None
 		self.agents = cfg.AGENTS
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def geocode_location( self, address: str ) -> Tuple[ float, float ]:
-		'''Uses gmaps to get coordinates from a given address.
-
-			Parameters:
-			-----------
-			address (str): address
-
-			Returns:
-			--------
-			Tuple[ float, float ] - a tuple of floats representing latitude and longitude (lat, lng)
-
-		'''
+		"""Run geocode location.
+		
+		Purpose:
+			Provides the documented geocode location operation for the GoogleMaps workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+		
+		Returns:
+			Tuple[float, float]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'address', address )
 			self.address = address
@@ -2523,75 +2386,77 @@ class GoogleMaps( Fetcher ):
 			_loc = _geo[ 'location' ]
 			_lat = _loc[ 'lat' ]
 			_lng = _loc[ 'lng' ]
-			return ( _lat, _lng )
+			return (_lat, _lng)
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleMaps'
 			exception.method = 'fetch_location( self, address: str ) -> Tuple[ float, float ]'
+			Logger( ).write( exception )
 			raise exception
-			
-
+	
 	def geocode_coordinates( self, lat: float, long: float ) -> str | None:
-		'''Uses the Google Maps API to get address from coordinates.
-
-			Parameters:
-			-----------
-			lat (float): The geographic latitude of a given location
-			long (floa): The geographic longitude of a given location
-
-			Returns:
-			--------
-			List[ Document ]: List of Document objects parsed from HTML content.
-
-		'''
+		"""Run geocode coordinates.
+		
+		Purpose:
+			Provides the documented geocode coordinates operation for the GoogleMaps workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			lat: float value supplied by the caller.
+			long: float value supplied by the caller.
+		
+		Returns:
+			str | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'latitiude', lat )
 			throw_if( 'longitude', long )
 			self.latitude = lat
 			self.longitude = long
-			self.coordinates =  ( lat, long )
+			self.coordinates = (lat, long)
 			self.url = r'https://maps.googleapis.com/maps/api/geocode/json?latlng='
 			self.url += f'{lat},' + f'{long}' + f'&key={self.api_key}'
 			_response = requests.get( self.url ).json( )
-			_address = _response[ 'results' ][0][ 'formatted_address' ]
+			_address = _response[ 'results' ][ 0 ][ 'formatted_address' ]
 			return _address
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleMaps'
 			exception.method = 'fetch_location( self, address: str ) -> Tuple[ float, float ]'
+			Logger( ).write( exception )
 			raise exception
-			
 	
-	def validate_address( self, address: List[ str ]  ) -> Dict[ Any, Any ] | None:
-		"""
-			
-			Purpose:
-			--------
-			Validate an address using Google's Address Validation API.
-	
-			Parameters:
-			-----------
-			address (list): List of address lines (e.g. ["1600 Amphitheatre Parkway"]).
-	
-			Returns:
-			--------
-			dict: Parsed JSON response from Google.
-			
+	def validate_address( self, address: List[ str ] ) -> Dict[ Any, Any ] | None:
+		"""Validate validate address.
+		
+		Purpose:
+			Provides the documented validate address operation for the GoogleMaps workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: List[str] value supplied by the caller.
+		
+		Returns:
+			Dict[Any, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'address', address )
 			url = 'https://addressvalidation.googleapis.com/v1:validateAddress'
 			payload = \
-			{
-				'address': { 'addressLines': address, }
-			}
+				{
+						'address': { 'addressLines': address, }
+				}
 			
 			self.params = \
-			{
-				'key': self.api_key
-			}
+				{
+						'key': self.api_key
+				}
 			
 			response = requests.post( url, params=self.params, json=payload )
 			if response.status_code != 200:
@@ -2603,27 +2468,26 @@ class GoogleMaps( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleMaps'
 			exception.method = 'validate_address( self, address: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
-			
 	
-	def request_directions( self, origin: str, destination: str, mode: str='driving' ) -> str | None:
-		"""
+	def request_directions( self, origin: str, destination: str,
+			mode: str = 'driving' ) -> str | None:
+		"""Execute request directions.
 		
-			Purpose:
-			----------
-			Request route directions from Google Maps Directions API.
+		Purpose:
+			Provides the documented request directions operation for the GoogleMaps workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Parameters:
-			-----------
-			api_key     (str): Google Maps Platform API key.
-			origin      (str): Starting location (address or lat,lng).
-			destination (str): Ending location (address or lat,lng).
-			mode        (str): travel mode: 'driving', 'walking', bicycling', or 'transit'.
+		Args:
+			origin: str value supplied by the caller.
+			destination: str value supplied by the caller.
+			mode: str value supplied by the caller.
 		
-			Returns:
-			---------
-			dict: Parsed JSON response from Google Directions API.
-			
+		Returns:
+			str | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'origin', origin )
@@ -2631,12 +2495,12 @@ class GoogleMaps( Fetcher ):
 			self.mode = mode
 			self.url = "https://maps.googleapis.com/maps/api/directions/json"
 			self.params = \
-			{
-				'origin': origin,
-				'destination': destination,
-				'mode': self.mode,
-				'key': self.api_key
-			}
+				{
+						'origin': origin,
+						'destination': destination,
+						'mode': self.mode,
+						'key': self.api_key
+				}
 			
 			self.response = requests.get( url=self.url, params=self.params )
 			self.response.raise_for_status( )
@@ -2648,60 +2512,28 @@ class GoogleMaps( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleMaps'
 			exception.method = 'request_directions( self, origin: str, destination: str ) -> dict'
+			Logger( ).write( exception )
 			raise exception
-			
-		
+	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None:
-		"""
-
-			Purpose:
-			________
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-			Supports arbitrary parameters, types, nested objects, and required fields.
-
-			Parameters:
-			___________
-			function (str):
-			The function name exposed to the LLM.
-
-			tool (str):
-			The underlying system or service the function wraps
-			(e.g., “Google Maps”, “SQLite”, “Weather API”).
-
-			description (str):
-			Precise explanation of what the function does.
-
-			parameters (dict):
-			A dictionary defining parameter names and JSON schema descriptors.
-			Each value must itself be a valid JSON-schema fragment.
-
-				Example:
-					{
-						"origin": {
-							"type": "string",
-							"description": "Starting location."
-						},
-						"destination": {
-							"type": "string",
-							"description": "Ending location."
-						},
-						"mode": {
-							"type": "string",
-							"enum": ["driving", "walking", "bicycling", "transit"],
-							"description": "Travel mode."
-						}
-					}
-
-			required (list[str] | None):
-			List of required parameter names.
-			If None, required = list(parameters.keys()).
-
-			Returns:
-			________
-			dict:
-			A JSON-compatible dictionary defining the tool schema.
-
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the GoogleMaps workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'function', function )
@@ -2716,60 +2548,45 @@ class GoogleMaps( Fetcher ):
 			desc = description.strip( )
 			if required is None:
 				required = list( parameters.keys( ) )
-			_schema  = \
-			{
-				'name': func_name,
-				'description': f'{desc} This function uses the {tool_name} service.',
-				'parameters':
+			_schema = \
 				{
-					'type': 'object',
-					'properties': parameters,
-					'required': required
+						'name': func_name,
+						'description': f'{desc} This function uses the {tool_name} service.',
+						'parameters':
+							{
+									'type': 'object',
+									'properties': parameters,
+									'required': required
+							}
 				}
-			}
 			return _schema
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleMaps'
 			exception.method = 'create_schema( self, *params ) -> Dict[ str, str ]'
+			Logger( ).write( exception )
 			raise exception
 
 class GoogleWeather( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides Google Weather current conditions, forecasts, hourly history,
-		and public weather alert requests.
-
-		Attributes:
-		-----------
-		gmaps,
-		headers,
-		api_key,
-		mode,
-		latitude,
-		longitude,
-		coordinates,
-		address,
-		params,
-		response,
-		result,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		resolve_coordinates(...): Performs the resolve_coordinates operation for this fetcher.
-		request(...): Performs the request operation for this fetcher.
-		fetch_current(...): Performs the fetch_current operation for this fetcher.
-		fetch_hourly_forecast(...): Performs the fetch_hourly_forecast operation for this fetcher.
-		fetch_daily_forecast(...): Performs the fetch_daily_forecast operation for this fetcher.
-		fetch_hourly_history(...): Performs the fetch_hourly_history operation for this fetcher.
-		fetch_alerts(...): Performs the fetch_alerts operation for this fetcher.
-
-	'''
+	"""Provide the GoogleWeather component.
+	
+	Purpose:
+		Defines the GoogleWeather workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		gmaps: Runtime attribute maintained by the class.
+		headers: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		coordinates: Runtime attribute maintained by the class.
+		address: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+		result: Runtime attribute maintained by the class.
+	"""
 	gmaps: Optional[ GoogleMaps ]
 	headers: Optional[ Dict[ str, Any ] ]
 	api_key: Optional[ str ]
@@ -2783,21 +2600,11 @@ class GoogleWeather( Fetcher ):
 	result: Optional[ Dict[ str, Any ] ]
 	
 	def __init__( self ) -> None:
-		'''
-			
-			Purpose:
-			--------
-			Initialize the Google Weather wrapper with API, request, and coordinate state.
-			
-			Parameters:
-			-----------
-			None
-			
-			Returns:
-			--------
-			None
-			
-		'''
+		"""Initialize the GoogleWeather instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GoogleWeather workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.GOOGLE_WEATHER_API_KEY
 		self.headers = { }
@@ -2816,27 +2623,20 @@ class GoogleWeather( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
-			self.headers[ 'Accept' ]='application/json'
+			self.headers[ 'Accept' ] = 'application/json'
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			
-			Purpose:
-			--------
-			Return stable introspection names for the Google Weather wrapper.
-			
-			Parameters:
-			-----------
-			None
-			
-			Returns:
-			--------
-			List[str]: Ordered attribute and method names.
-			
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'url',
@@ -2861,22 +2661,20 @@ class GoogleWeather( Fetcher ):
 		]
 	
 	def resolve_coordinates( self, address: str ) -> Tuple[ float, float ]:
-		'''
-			
-			Purpose:
-			--------
-			Resolve a user-supplied address into latitude and longitude using the existing
-			Google Maps helper.
-			
-			Parameters:
-			-----------
-			address (str): Physical address, named place, city, or other geocodable location.
-			
-			Returns:
-			--------
-			Tuple[float, float]: Latitude and longitude coordinates.
-			
-		'''
+		"""Run resolve coordinates.
+		
+		Purpose:
+			Provides the documented resolve coordinates operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+		
+		Returns:
+			Tuple[float, float]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'address', address )
 			self.address = address.strip( )
@@ -2894,26 +2692,27 @@ class GoogleWeather( Fetcher ):
 			exception.cause = 'GoogleWeather'
 			exception.method = (
 					'resolve_coordinates( self, address: str ) -> Tuple[ float, float ]')
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, path: str, params: Dict[ str, Any ], time: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-			
-			Purpose:
-			--------
-			Send a GET request to a Google Weather API endpoint and return the JSON response.
-			
-			Parameters:
-			-----------
-			path (str): Google Weather API path relative to https://weather.googleapis.com/v1.
-			params (Dict[str, Any]): Query parameters for the request.
-			time (int): Request timeout in seconds.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None: JSON response from the Google Weather API.
-			
-		'''
+	def request( self, path: str, params: Dict[ str, Any ], time: int = 10 ) -> Dict[
+		                                                                            str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			path: str value supplied by the caller.
+			params: Dict[str, Any] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'path', path )
 			
@@ -2926,7 +2725,7 @@ class GoogleWeather( Fetcher ):
 				self.timeout = 10
 			
 			request_params = dict( params or { } )
-			request_params[ 'key' ]=active_key
+			request_params[ 'key' ] = active_key
 			
 			clean_path = path.strip( ).lstrip( '/' )
 			request_url = f'{self.url}/{clean_path}'
@@ -2945,28 +2744,28 @@ class GoogleWeather( Fetcher ):
 			exception.method = (
 					'request( self, path: str, params: Dict[ str, Any ], '
 					'time: int=10 ) -> Dict[ str, Any ] | None')
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_current( self, address: str, units_system: str = 'METRIC',
-			language_code: str = 'en', time: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-			
-			Purpose:
-			--------
-			Retrieve current weather conditions for an address or named location.
-			
-			Parameters:
-			-----------
-			address (str): Physical address, named place, city, or geocodable location.
-			units_system (str): Units system used by the response, usually METRIC or IMPERIAL.
-			language_code (str): BCP-47 language code used by the response.
-			time (int): Request timeout in seconds.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None: Google Weather current conditions response.
-			
-		'''
+			language_code: str = 'en', time: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch current.
+		
+		Purpose:
+			Provides the documented fetch current operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+			units_system: str value supplied by the caller.
+			language_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			lat, lng = self.resolve_coordinates( address )
 			self.mode = 'current'
@@ -2985,29 +2784,29 @@ class GoogleWeather( Fetcher ):
 			exception.method = (
 					'fetch_current( self, address: str, units_system: str="METRIC", '
 					'language_code: str="en", time: int=10 ) -> Dict[ str, Any ] | None')
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_hourly_forecast( self, address: str, hours: int=24, units_system: str = 'METRIC',
-			language_code: str = 'en', time: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-			
-			Purpose:
-			--------
-			Retrieve hourly weather forecast data for an address or named location.
-			
-			Parameters:
-			-----------
-			address (str): Physical address, named place, city, or geocodable location.
-			hours (int): Number of forecast hours to request, clamped to 1 through 240.
-			units_system (str): Units system used by the response, usually METRIC or IMPERIAL.
-			language_code (str): BCP-47 language code used by the response.
-			time (int): Request timeout in seconds.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None: Google Weather hourly forecast response.
-			
-		'''
+	def fetch_hourly_forecast( self, address: str, hours: int = 24, units_system: str = 'METRIC',
+			language_code: str = 'en', time: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch hourly forecast.
+		
+		Purpose:
+			Provides the documented fetch hourly forecast operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+			hours: int value supplied by the caller.
+			units_system: str value supplied by the caller.
+			language_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			lat, lng = self.resolve_coordinates( address )
 			self.mode = 'hourly_forecast'
@@ -3028,29 +2827,29 @@ class GoogleWeather( Fetcher ):
 					'fetch_hourly_forecast( self, address: str, hours: int=24, '
 					'units_system: str="METRIC", language_code: str="en", '
 					'time: int=10 ) -> Dict[ str, Any ] | None')
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_daily_forecast( self, address: str, days: int=5, units_system: str = 'METRIC',
-			language_code: str = 'en', time: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-			
-			Purpose:
-			--------
-			Retrieve daily weather forecast data for an address or named location.
-			
-			Parameters:
-			-----------
-			address (str): Physical address, named place, city, or geocodable location.
-			days (int): Number of forecast days to request, clamped to 1 through 10.
-			units_system (str): Units system used by the response, usually METRIC or IMPERIAL.
-			language_code (str): BCP-47 language code used by the response.
-			time (int): Request timeout in seconds.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None: Google Weather daily forecast response.
-			
-		'''
+	def fetch_daily_forecast( self, address: str, days: int = 5, units_system: str = 'METRIC',
+			language_code: str = 'en', time: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch daily forecast.
+		
+		Purpose:
+			Provides the documented fetch daily forecast operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+			days: int value supplied by the caller.
+			units_system: str value supplied by the caller.
+			language_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			lat, lng = self.resolve_coordinates( address )
 			self.mode = 'daily_forecast'
@@ -3071,29 +2870,29 @@ class GoogleWeather( Fetcher ):
 					'fetch_daily_forecast( self, address: str, days: int=5, '
 					'units_system: str="METRIC", language_code: str="en", '
 					'time: int=10 ) -> Dict[ str, Any ] | None')
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_hourly_history( self, address: str, hours: int=24, units_system: str = 'METRIC',
-			language_code: str = 'en', time: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-			
-			Purpose:
-			--------
-			Retrieve hourly historical weather data for an address or named location.
-			
-			Parameters:
-			-----------
-			address (str): Physical address, named place, city, or geocodable location.
-			hours (int): Number of historical hours to request, clamped to 1 through 24.
-			units_system (str): Units system used by the response, usually METRIC or IMPERIAL.
-			language_code (str): BCP-47 language code used by the response.
-			time (int): Request timeout in seconds.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None: Google Weather hourly history response.
-			
-		'''
+	def fetch_hourly_history( self, address: str, hours: int = 24, units_system: str = 'METRIC',
+			language_code: str = 'en', time: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch hourly history.
+		
+		Purpose:
+			Provides the documented fetch hourly history operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+			hours: int value supplied by the caller.
+			units_system: str value supplied by the caller.
+			language_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			lat, lng = self.resolve_coordinates( address )
 			self.mode = 'hourly_history'
@@ -3114,27 +2913,27 @@ class GoogleWeather( Fetcher ):
 					'fetch_hourly_history( self, address: str, hours: int=24, '
 					'units_system: str="METRIC", language_code: str="en", '
 					'time: int=10 ) -> Dict[ str, Any ] | None')
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_alerts( self, address: str, language_code: str = 'en',
-			time: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-			
-			Purpose:
-			--------
-			Retrieve public weather alerts for an address or named location.
-			
-			Parameters:
-			-----------
-			address (str): Physical address, named place, city, or geocodable location.
-			language_code (str): BCP-47 language code used by the response.
-			time (int): Request timeout in seconds.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None: Google Weather public alerts response.
-			
-		'''
+			time: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch alerts.
+		
+		Purpose:
+			Provides the documented fetch alerts operation for the GoogleWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			address: str value supplied by the caller.
+			language_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			lat, lng = self.resolve_coordinates( address )
 			self.mode = 'alerts'
@@ -3151,39 +2950,26 @@ class GoogleWeather( Fetcher ):
 			exception.method = (
 					'fetch_alerts( self, address: str, language_code: str="en", '
 					'time: int=10 ) -> Dict[ str, Any ] | None')
+			Logger( ).write( exception )
 			raise exception
 
 class NavalObservatory( Fetcher ):
-	'''
-		
-		Purpose:
-		--------
-		Fetches celestial-navigation data from the U.S. Naval Observatory API.
-
-		Attributes:
-		-----------
-		base_url,
-		url,
-		params,
-		date_value,
-		time_value,
-		latitude,
-		longitude,
-		location_label,
-		agents,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		validate_date(...): Performs the validate_date operation for this fetcher.
-		validate_time(...): Performs the validate_time operation for this fetcher.
-		validate_coordinates(...): Performs the validate_coordinates operation for this fetcher.
-		fetch_celnav(...): Performs the fetch_celnav operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the NavalObservatory component.
+	
+	Purpose:
+		Defines the NavalObservatory workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		date_value: Runtime attribute maintained by the class.
+		time_value: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		location_label: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	url: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -3195,19 +2981,11 @@ class NavalObservatory( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the Naval Observatory fetcher with current API defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the NavalObservatory instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the NavalObservatory workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.base_url = 'https://aa.usno.navy.mil/api'
@@ -3221,37 +2999,35 @@ class NavalObservatory( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
-		return [ 'base_url', 'url', 'params', 'date_value', 'time_value', 'latitude', 'longitude', 
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
+		return [ 'base_url', 'url', 'params', 'date_value', 'time_value', 'latitude', 'longitude',
 		         'location_label', 'fetch_celnav', 'fetch', 'create_schema' ]
 	
 	def validate_date( self, date_value: str ) -> str:
-		'''Validate and normalize a USNO date string.
-
-			Parameters:
-			-----------
-			date_value (str):
-				Date in YYYY-MM-DD format.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Validate validate date.
+		
+		Purpose:
+			Provides the documented validate date operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			date_value: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( date_value ).strip( )
 			throw_if( 'date_value', value )
@@ -3262,27 +3038,31 @@ class NavalObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NavalObservatory'
 			exception.method = 'validate_date( self, date_value: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def validate_time( self, time_value: str ) -> str:
-		'''Validate and normalize a USNO time string.
-
-			Parameters:
-			-----------
-			time_value (str):
-				Time in HH:MM, HH:MM:SS, or HH:MM:SS.S format.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Validate validate time.
+		
+		Purpose:
+			Provides the documented validate time operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time_value: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( time_value ).strip( )
 			throw_if( 'time_value', value )
-			pattern = ( r'^(?:[01]\d|2[0-3]):[0-5]\d'
-					r'(?:'
-					r':[0-5]\d(?:\.\d{1,6})?'
-					r')?$' )
+			pattern = (r'^(?:[01]\d|2[0-3]):[0-5]\d'
+			           r'(?:'
+			           r':[0-5]\d(?:\.\d{1,6})?'
+			           r')?$')
 			
 			if not re.fullmatch( pattern, value ):
 				raise ValueError( "Invalid time format. Use HH:MM, HH:MM:SS, or HH:MM:SS.S" )
@@ -3294,23 +3074,25 @@ class NavalObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NavalObservatory'
 			exception.method = 'validate_time( self, time_value: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def validate_coordinates( self, latitude: float, longitude: float ) -> tuple[ float, float ]:
-		'''Validate latitude and longitude against documented decimal-degree ranges.
-
-			Parameters:
-			-----------
-			latitude (float):
-				Latitude in decimal degrees.
-
-			longitude (float):
-				Longitude in decimal degrees.
-
-			Returns:
-			--------
-			tuple[float, float]
-		'''
+		"""Validate validate coordinates.
+		
+		Purpose:
+			Provides the documented validate coordinates operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+		
+		Returns:
+			tuple[float, float]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			lat = float( latitude )
 			lon = float( longitude )
@@ -3327,37 +3109,30 @@ class NavalObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NavalObservatory'
 			exception.method = 'validate_coordinates( self, *params ) -> tuple[ float, float ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_celnav( self, date_value: str, time_value: str, latitude: float,
-			longitude: float, location_label: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch celestial navigation data for an assumed position and time.
-
-			Parameters:
-			-----------
-			date_value (str):
-				Date in YYYY-MM-DD format.
-
-			time_value (str):
-				Time in HH:MM, HH:MM:SS, or HH:MM:SS.S format.
-
-			latitude (float):
-				Latitude in decimal degrees. North positive.
-
-			longitude (float):
-				Longitude in decimal degrees. East positive.
-
-			location_label (str):
-				Optional client-side label preserved in the result payload.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-			
-		'''
+			longitude: float, location_label: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch celnav.
+		
+		Purpose:
+			Provides the documented fetch celnav operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			date_value: str value supplied by the caller.
+			time_value: str value supplied by the caller.
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+			location_label: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.date_value = self.validate_date( date_value )
 			self.time_value = self.validate_time( time_value )
@@ -3366,7 +3141,7 @@ class NavalObservatory( Fetcher ):
 			self.location_label = str( location_label or '' ).strip( )
 			self.url = f'{self.base_url}/celnav'
 			self.params = { 'date': self.date_value, 'time': self.time_value,
-					'coords': f'{self.latitude},{self.longitude}' }
+			                'coords': f'{self.latitude},{self.longitude}' }
 			
 			self.response = requests.get( url=self.url, params=self.params,
 				headers=self.headers, timeout=int( time ) )
@@ -3374,48 +3149,39 @@ class NavalObservatory( Fetcher ):
 			payload = self.response.json( ) or { }
 			
 			return { 'mode': 'celnav', 'url': self.url, 'params': self.params,
-					'location_label': self.location_label, 'data': payload }
+			         'location_label': self.location_label, 'data': payload }
 		
 		except Exception as e:
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'NavalObservatory'
 			exception.method = 'fetch_celnav( self, *params ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='celnav', date_value: str='',
-			time_value: str='', latitude: float=0.0, longitude: float=0.0,
-			location_label: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Unified dispatcher for Naval Observatory requests.
-
-			Parameters:
-			-----------
-			mode (str):
-				Currently supported:
-				- celnav
-
-			date_value (str):
-				Date in YYYY-MM-DD format.
-
-			time_value (str):
-				Time in HH:MM, HH:MM:SS, or HH:MM:SS.S format.
-
-			latitude (float):
-				Latitude in decimal degrees.
-
-			longitude (float):
-				Longitude in decimal degrees.
-
-			location_label (str):
-				Optional display label.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'celnav', date_value: str = '',
+			time_value: str = '', latitude: float = 0.0, longitude: float = 0.0,
+			location_label: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			date_value: str value supplied by the caller.
+			time_value: str value supplied by the caller.
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+			location_label: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'celnav' ).strip( ).lower( )
 			if active_mode == 'celnav':
@@ -3429,33 +3195,29 @@ class NavalObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NavalObservatory'
 			exception.method = 'fetch( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str, description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the NavalObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -3482,30 +3244,23 @@ class NavalObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NavalObservatory'
 			exception.method = 'create_schema( self, *params ) -> Dict[ str, str ]'
+			Logger( ).write( exception )
 			raise exception
 
 class SatelliteCenter( Fetcher ):
-	'''Fetches satellite observatory, ground-station, and location data from SSC Web Services.
+	"""Provide the SatelliteCenter component.
 	
-		Attributes:
-		-----------
-		ssc,
-		url,
-		params,
-		observatories,
-		ground_stations,
-		timeout,
+	Purpose:
+		Defines the SatelliteCenter workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
 	
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		fetch_observatories(...): Performs the fetch_observatories operation for this fetcher.
-		fetch_ground_stations(...): Performs the fetch_ground_stations operation for this fetcher.
-		fetch_locations(...): Performs the fetch_locations operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-	
-	'''
+	Attributes:
+		ssc: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		observatories: Runtime attribute maintained by the class.
+		ground_stations: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+	"""
 	ssc: Optional[ SscWs ]
 	url: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -3514,6 +3269,11 @@ class SatelliteCenter( Fetcher ):
 	timeout: Optional[ int ]
 	
 	def __init__( self ) -> None:
+		"""Initialize the SatelliteCenter instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the SatelliteCenter workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.ssc = None
 		self.url = 'https://sscweb.gsfc.nasa.gov/WS/sscr/2'
@@ -3525,22 +3285,34 @@ class SatelliteCenter( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
-			self.headers[ 'Accept' ]='application/json'
+			self.headers[ 'Accept' ] = 'application/json'
 	
 	def __dir__( self ) -> List[ str ]:
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the SatelliteCenter workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [ 'url', 'timeout', 'headers', 'fetch_observatories', 'fetch_ground_stations',
-				'fetch_locations', 'fetch', ]
+		         'fetch_locations', 'fetch', ]
 	
 	def fetch_observatories( self ) -> Dict[ str, Any ] | None:
-		"""Get descriptions of the observatories available from SSC.
-			
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+		"""Fetch fetch observatories.
+		
+		Purpose:
+			Provides the documented fetch observatories operation for the SatelliteCenter workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			self.ssc = SscWs( user_agent=self.agents, timeout=self.timeout )
@@ -3551,15 +3323,20 @@ class SatelliteCenter( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'SatelliteCenter'
 			exception.method = 'fetch_observatories( self ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_ground_stations( self ) -> Dict[ str, Any ] | None:
-		"""Get descriptions of the ground stations available from SSC.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+		"""Fetch fetch ground stations.
+		
+		Purpose:
+			Provides the documented fetch ground stations operation for the SatelliteCenter workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			self.ssc = SscWs( user_agent=self.agents, timeout=self.timeout )
@@ -3570,38 +3347,30 @@ class SatelliteCenter( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'SatelliteCenter'
 			exception.method = 'fetch_ground_stations( self ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_locations( self, observatories: str, start_time: str, end_time: str,
-			coordinate_systems: str='gse', resolution_factor: int=1,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		"""Get location data for one or more observatories over a time range using the documented
-		SSC REST GET endpoint.
-
-			Parameters:
-			-----------
-			observatories:
-				Comma-separated observatory identifiers such as "iss" or "mms1,mms2".
-				
-			start_time:
-				ISO 8601 UTC start like "2026-03-15T00:00:00Z".
-				
-			end_time:
-				ISO 8601 UTC end like "2026-03-15T02:00:00Z".
-				
-			coordinate_systems:
-				Comma-separated coordinate systems such as "gse", "geo", "gsm".
-				
-			resolution_factor:
-				Return one out of every N values.
-				
-			time:
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+			coordinate_systems: str = 'gse', resolution_factor: int = 1,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch locations.
+		
+		Purpose:
+			Provides the documented fetch locations operation for the SatelliteCenter workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			observatories: str value supplied by the caller.
+			start_time: str value supplied by the caller.
+			end_time: str value supplied by the caller.
+			coordinate_systems: str value supplied by the caller.
+			resolution_factor: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'observatories', observatories )
@@ -3611,10 +3380,10 @@ class SatelliteCenter( Fetcher ):
 			obs = observatories.strip( )
 			time_range = f'{start_time.strip( )},{end_time.strip( )}'
 			coords = (coordinate_systems or 'gse').strip( )
-			request_url = ( f'{self.url}/locations/'
-					f'{obs}/'
-					f'{time_range}/'
-					f'{coords}/' )
+			request_url = (f'{self.url}/locations/'
+			               f'{obs}/'
+			               f'{time_range}/'
+			               f'{coords}/')
 			
 			self.params = { 'resolutionFactor': max( 1, int( resolution_factor ) ) }
 			self.response = requests.get( url=request_url, params=self.params, headers=self.headers,
@@ -3627,16 +3396,32 @@ class SatelliteCenter( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'SatelliteCenter'
 			exception.method = 'fetch_locations( self, *params ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='observatories', query: str='', start_time: str='', end_time: str='',
-			coordinate_systems: str='gse', resolution_factor: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
-		"""Unified dispatch method for Satellite Center requests.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+	def fetch( self, mode: str = 'observatories', query: str = '', start_time: str = '',
+			end_time: str = '',
+			coordinate_systems: str = 'gse', resolution_factor: int = 1, time: int = 20 ) -> Dict[
+				                                                                                 str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the SatelliteCenter workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			start_time: str value supplied by the caller.
+			end_time: str value supplied by the caller.
+			coordinate_systems: str value supplied by the caller.
+			resolution_factor: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			active_mode = (mode or 'observatories').strip( ).lower( )
@@ -3657,120 +3442,29 @@ class SatelliteCenter( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'SatelliteCenter'
 			exception.method = 'fetch( self, *kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 
 class EarthObservatory( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		NASA Earth Observatory's Natural Event Tracker (EONET) allows users to access imagery,
-		often in near real-time (NRT), of natural events such as dust storms, forest fires, and
-		tropical cyclones—empowering people all across the planet to locate, track, and potentially
-		prepare for and manage events that affect communities in their paths.
-		Version 3 API for events, categories, sources, and layers.
-
-		This class is aligned to the current documented EONET v3 API and supports:
-		- events
-		- categories
-		- sources
-		- layers
-
-		Referenced API Requirements:
-		----------------------------
-		Base:
-			https://eonet.gsfc.nasa.gov/api/v3
-
-		Events:
-			https://eonet.gsfc.nasa.gov/api/v3/events
-			Optional parameters:
-				- source
-				- category
-				- status
-				- limit
-				- days
-				- start
-				- end
-
-		Categories:
-			https://eonet.gsfc.nasa.gov/api/v3/categories
-
-		Sources:
-			https://eonet.gsfc.nasa.gov/api/v3/sources
-
-		Layers:
-			https://eonet.gsfc.nasa.gov/api/v3/layers
-			Optional category-specific path:
-				https://eonet.gsfc.nasa.gov/api/v3/layers/{category}
-
-		Attributes:
-		-----------
-		base_url: Optional[str]
-			Base EONET API URL.
-
-		url: Optional[str]
-			Resolved request URL.
-
-		params: Optional[Dict[str, Any]]
-			Request parameters.
-
-		mode: Optional[str]
-			Selected API mode.
-
-		query: Optional[str]
-			Reserved generic query field.
-
-		status: Optional[str]
-			Event status filter.
-
-		category: Optional[str]
-			Event or layer category filter.
-
-		source: Optional[str]
-			Event source filter.
-
-		days: Optional[int]
-			Prior-day filter.
-
-		limit: Optional[int]
-			Returned record limit.
-
-		start_date: Optional[str]
-			Event-range start date in YYYY-MM-DD format.
-
-		end_date: Optional[str]
-			Event-range end date in YYYY-MM-DD format.
-
-		agents: Optional[str]
-			User-Agent string.
-
-		Methods:
-		--------
-		__init__() -> None
-			Initialize fetcher defaults.
-
-		__dir__() -> List[str]
-			Provide ordered member visibility.
-
-		fetch_events(...) -> Dict[str, Any] | None
-			Fetch event records.
-
-		fetch_categories() -> Dict[str, Any] | None
-			Fetch category metadata.
-
-		fetch_sources() -> Dict[str, Any] | None
-			Fetch source metadata.
-
-		fetch_layers(...) -> Dict[str, Any] | None
-			Fetch layer metadata, optionally filtered by category.
-
-		fetch(...) -> Dict[str, Any] | None
-			Unified dispatcher.
-
-		create_schema(...) -> Dict[str, str] | None
-			Construct a dynamic tool schema.
-
-	'''
+	"""Provide the EarthObservatory component.
+	
+	Purpose:
+		Defines the EarthObservatory workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		status: Runtime attribute maintained by the class.
+		category: Runtime attribute maintained by the class.
+		source: Runtime attribute maintained by the class.
+		days: Runtime attribute maintained by the class.
+		limit: Runtime attribute maintained by the class.
+		start_date: Runtime attribute maintained by the class.
+		end_date: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	url: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -3785,19 +3479,11 @@ class EarthObservatory( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the EONET fetcher with current API defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the EarthObservatory instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the EarthObservatory workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.base_url = 'https://eonet.gsfc.nasa.gov/api/v3'
@@ -3814,22 +3500,17 @@ class EarthObservatory( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'url',
@@ -3850,40 +3531,31 @@ class EarthObservatory( Fetcher ):
 				'create_schema'
 		]
 	
-	def fetch_events( self, status: str='open', category: str='', source: str='', limit: int=20,
-			days: int=30, start_date: str='', end_date: str='', time: int=20 ) -> Dict[ str, Any ]:
-		'''Fetch EONET events using documented v3 filters.
-
-			Parameters:
-			-----------
-			status (str):
-				Event status filter. Typical values: open, closed, all.
-
-			category (str):
-				Optional category slug or comma-separated category list.
-
-			source (str):
-				Optional source id or comma-separated source ids.
-
-			limit (int):
-				Maximum number of events to return.
-
-			days (int):
-				Number of prior days, including today, from which to return events.
-
-			start_date (str):
-				Optional inclusive start date in YYYY-MM-DD format.
-
-			end_date (str):
-				Optional inclusive end date in YYYY-MM-DD format.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_events( self, status: str = 'open', category: str = '', source: str = '',
+			limit: int = 20,
+			days: int = 30, start_date: str = '', end_date: str = '', time: int = 20 ) -> Dict[
+		str, Any ]:
+		"""Fetch fetch events.
+		
+		Purpose:
+			Provides the documented fetch events operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			status: str value supplied by the caller.
+			category: str value supplied by the caller.
+			source: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			days: int value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'events'
 			self.status = str( status or 'open' ).strip( ).lower( )
@@ -3897,22 +3569,22 @@ class EarthObservatory( Fetcher ):
 			self.params = { }
 			
 			if self.status:
-				self.params[ 'status' ]=self.status
+				self.params[ 'status' ] = self.status
 			
 			if self.category:
-				self.params[ 'category' ]=self.category
+				self.params[ 'category' ] = self.category
 			
 			if self.source:
-				self.params[ 'source' ]=self.source
+				self.params[ 'source' ] = self.source
 			
 			if self.limit > 0:
-				self.params[ 'limit' ]=self.limit
+				self.params[ 'limit' ] = self.limit
 			
 			if self.start_date and self.end_date:
-				self.params[ 'start' ]=self.start_date
-				self.params[ 'end' ]=self.end_date
+				self.params[ 'start' ] = self.start_date
+				self.params[ 'end' ] = self.end_date
 			elif self.days > 0:
-				self.params[ 'days' ]=self.days
+				self.params[ 'days' ] = self.days
 			
 			self.response = requests.get( url=self.url, params=self.params, headers=self.headers,
 				timeout=int( time ) )
@@ -3933,20 +3605,24 @@ class EarthObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'EarthObservatory'
 			exception.method = 'fetch_events( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_categories( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch EONET category metadata.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_categories( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch categories.
+		
+		Purpose:
+			Provides the documented fetch categories operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'categories'
 			self.url = f'{self.base_url}/categories'
@@ -3968,20 +3644,24 @@ class EarthObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'EarthObservatory'
 			exception.method = 'fetch_categories( self, time: int=20 ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_sources( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch EONET source metadata.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_sources( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch sources.
+		
+		Purpose:
+			Provides the documented fetch sources operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'sources'
 			self.url = f'{self.base_url}/sources'
@@ -4003,23 +3683,25 @@ class EarthObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'EarthObservatory'
 			exception.method = 'fetch_sources( self, time: int=20 ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_layers( self, category: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch EONET layer metadata, optionally scoped to a category.
-
-			Parameters:
-			-----------
-			category (str):
-				Optional category slug.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_layers( self, category: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch layers.
+		
+		Purpose:
+			Provides the documented fetch layers operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			category: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'layers'
 			self.category = str( category or '' ).strip( )
@@ -4047,45 +3729,35 @@ class EarthObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'EarthObservatory'
 			exception.method = 'fetch_layers( self, c**kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='events', status: str='open', category: str='', source: str='', limit: int=20,
-			days: int=30, start_date: str='', end_date: str='', time: int=20 ) -> Dict[ str, Any ]:
-		'''Unified dispatcher for EONET v3 operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of: events, categories, sources, layers
-
-			status (str):
-				Event status filter for events mode.
-
-			category (str):
-				Category filter for events mode or category path for layers mode.
-
-			source (str):
-				Source filter for events mode.
-
-			limit (int):
-				Event record limit for events mode.
-
-			days (int):
-				Prior-day window for events mode.
-
-			start_date (str):
-				Optional start date in YYYY-MM-DD format.
-
-			end_date (str):
-				Optional end date in YYYY-MM-DD format.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'events', status: str = 'open', category: str = '',
+			source: str = '', limit: int = 20,
+			days: int = 30, start_date: str = '', end_date: str = '', time: int = 20 ) -> Dict[
+		str, Any ]:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			status: str value supplied by the caller.
+			category: str value supplied by the caller.
+			source: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			days: int value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = (mode or 'events').strip( ).lower( )
 			if active_mode == 'events':
@@ -4107,37 +3779,30 @@ class EarthObservatory( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'EarthObservatory'
 			exception.method = 'fetch( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the EarthObservatory workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -4165,46 +3830,33 @@ class EarthObservatory( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class GlobalImagery( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Fetches NASA Global Imagery Browse Services (GIBS) WMS imagery and service
-		metadata.
-
-		Attributes:
-		-----------
-		file_path,
-		api_key,
-		url,
-		latitude,
-		longitude,
-		coordinates,
-		calendar_date,
-		julian_date,
-		sidereal_time,
-		utc_time,
-		local_time,
-		params,
-		era,
-		year,
-		month,
-		day,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		get_capabilities_url(...): Performs the get_capabilities_url operation.
-		build_wms_url(...): Performs the build_wms_url operation.
-		fetch_wms_map(...): Performs the fetch_wms_map operation.
-		fetch_map_services(...): Performs the fetch_map_services operation.
-		fetch_mercator_map(...): Performs the fetch_mercator_map operation.
-		create_schema(...): Performs the create_schema operation.
-
-	'''
+	"""Provide the GlobalImagery component.
+	
+	Purpose:
+		Defines the GlobalImagery workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		file_path: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		coordinates: Runtime attribute maintained by the class.
+		calendar_date: Runtime attribute maintained by the class.
+		julian_date: Runtime attribute maintained by the class.
+		sidereal_time: Runtime attribute maintained by the class.
+		utc_time: Runtime attribute maintained by the class.
+		local_time: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		era: Runtime attribute maintained by the class.
+		year: Runtime attribute maintained by the class.
+		month: Runtime attribute maintained by the class.
+		day: Runtime attribute maintained by the class.
+	"""
 	file_path: Optional[ str ]
 	api_key: Optional[ str ]
 	url: Optional[ str ]
@@ -4223,19 +3875,11 @@ class GlobalImagery( Fetcher ):
 	day: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the NASA GIBS imagery wrapper with request defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the GlobalImagery instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GlobalImagery workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.NASA_API_KEY
 		self.mode = None
@@ -4263,19 +3907,14 @@ class GlobalImagery( Fetcher ):
 		self.day = None
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Return stable introspection names for the NASA GIBS wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]: Ordered attribute and method names.
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'file_path',
 				'api_key',
@@ -4304,26 +3943,22 @@ class GlobalImagery( Fetcher ):
 	
 	def get_capabilities_url( self, projection: str = 'epsg4326',
 			quality: str = 'best', version: str = '1.1.1' ) -> str:
-		'''
-			Purpose:
-			--------
-			Build a NASA GIBS WMS GetCapabilities URL.
-
-			Parameters:
-			-----------
-			projection (str):
-				GIBS projection path segment such as epsg4326 or epsg3857.
-
-			quality (str):
-				GIBS quality path segment such as best or std.
-
-			version (str):
-				WMS version.
-
-			Returns:
-			--------
-			str: GetCapabilities URL.
-		'''
+		"""Fetch get capabilities url.
+		
+		Purpose:
+			Provides the documented get capabilities url operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			projection: str value supplied by the caller.
+			quality: str value supplied by the caller.
+			version: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			projection_value = str( projection or 'epsg4326' ).strip( ).lower( )
 			quality_value = str( quality or 'best' ).strip( ).lower( )
@@ -4350,53 +3985,36 @@ class GlobalImagery( Fetcher ):
 					'get_capabilities_url( self, projection: str="epsg4326", '
 					'quality: str="best", version: str="1.1.1" ) -> str'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_wms_url( self, layer: str, image_date: str, bbox: Tuple[ float, float, float, float ],
 			width: int = 1200, height: int = 600, projection: str = 'epsg4326',
 			quality: str = 'best', image_format: str = 'image/png',
 			transparent: bool = True, version: str = '1.1.1' ) -> str:
-		'''
-			Purpose:
-			--------
-			Build a NASA GIBS WMS GetMap URL.
-
-			Parameters:
-			-----------
-			layer (str):
-				GIBS layer identifier.
-
-			image_date (str):
-				Layer date in YYYY-MM-DD format.
-
-			bbox (Tuple[float, float, float, float]):
-				Bounding box as west, south, east, north.
-
-			width (int):
-				Output image width in pixels.
-
-			height (int):
-				Output image height in pixels.
-
-			projection (str):
-				GIBS projection path segment such as epsg4326 or epsg3857.
-
-			quality (str):
-				GIBS quality path segment such as best or std.
-
-			image_format (str):
-				Output MIME type.
-
-			transparent (bool):
-				Whether to request transparent no-data pixels.
-
-			version (str):
-				WMS version.
-
-			Returns:
-			--------
-			str: Fully-qualified WMS GetMap URL.
-		'''
+		"""Build build wms url.
+		
+		Purpose:
+			Provides the documented build wms url operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			layer: str value supplied by the caller.
+			image_date: str value supplied by the caller.
+			bbox: Tuple[float, float, float, float] value supplied by the caller.
+			width: int value supplied by the caller.
+			height: int value supplied by the caller.
+			projection: str value supplied by the caller.
+			quality: str value supplied by the caller.
+			image_format: str value supplied by the caller.
+			transparent: bool value supplied by the caller.
+			version: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'layer', layer )
 			throw_if( 'image_date', image_date )
@@ -4447,6 +4065,7 @@ class GlobalImagery( Fetcher ):
 					'image_format: str="image/png", transparent: bool=True, '
 					'version: str="1.1.1" ) -> str'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_wms_map( self, layer: str, image_date: str,
@@ -4455,53 +4074,31 @@ class GlobalImagery( Fetcher ):
 			image_format: str = 'image/png', transparent: bool = True,
 			output_dir: str = 'python-examples', output_name: str = '',
 			time: int = 20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a NASA GIBS WMS map image and save it to disk.
-
-			Parameters:
-			-----------
-			layer (str):
-				GIBS layer identifier.
-
-			image_date (str):
-				Layer date in YYYY-MM-DD format.
-
-			bbox (Tuple[float, float, float, float]):
-				Bounding box as west, south, east, north.
-
-			width (int):
-				Output image width in pixels.
-
-			height (int):
-				Output image height in pixels.
-
-			projection (str):
-				GIBS projection path segment.
-
-			quality (str):
-				GIBS quality path segment.
-
-			image_format (str):
-				Output MIME type.
-
-			transparent (bool):
-				Whether to request transparent no-data pixels.
-
-			output_dir (str):
-				Directory where the image will be written.
-
-			output_name (str):
-				Optional output filename. If empty, a deterministic filename is generated.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None: Normalized request and image metadata.
-		'''
+		"""Fetch fetch wms map.
+		
+		Purpose:
+			Provides the documented fetch wms map operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			layer: str value supplied by the caller.
+			image_date: str value supplied by the caller.
+			bbox: Tuple[float, float, float, float] value supplied by the caller.
+			width: int value supplied by the caller.
+			height: int value supplied by the caller.
+			projection: str value supplied by the caller.
+			quality: str value supplied by the caller.
+			image_format: str value supplied by the caller.
+			transparent: bool value supplied by the caller.
+			output_dir: str value supplied by the caller.
+			output_name: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'wms_map'
 			self.timeout = int( time )
@@ -4582,22 +4179,21 @@ class GlobalImagery( Fetcher ):
 					'output_dir: str="python-examples", output_name: str="", '
 					'time: int=20 ) -> Dict[ str, Any ] | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_map_services( self ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the legacy default NASA GIBS EPSG:4326 corrected-reflectance image.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			Dict[str, Any] | None: Normalized request and image metadata.
-		'''
+		"""Fetch fetch map services.
+		
+		Purpose:
+			Provides the documented fetch map services operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'fetch_map_services'
 			return self.fetch_wms_map( layer='MODIS_Terra_CorrectedReflectance_TrueColor',
@@ -4612,24 +4208,24 @@ class GlobalImagery( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GlobalImagery'
 			exception.method = 'fetch_map_services( self ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_mercator_map( self, ccrs=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the legacy default NASA GIBS EPSG:3857 Web Mercator image.
-
-			Parameters:
-			-----------
-			ccrs (Any | None):
-				Preserved for backward compatibility. The replacement fetches and writes the
-				image without attempting Cartopy rendering.
-
-			Returns:
-			--------
-			Dict[str, Any] | None: Normalized request and image metadata.
-		'''
+		"""Fetch fetch mercator map.
+		
+		Purpose:
+			Provides the documented fetch mercator map operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ccrs: Value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'mercator_map'
 			return self.fetch_wms_map(
@@ -4645,36 +4241,29 @@ class GlobalImagery( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GlobalImagery'
 			exception.method = 'fetch_mercator_map( self, ccrs=None ) -> Dict[ str, Any ] | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str, description: str,
 			parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a dynamic tool schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				Function name exposed to the model.
-
-			tool (str):
-				Underlying service or system name.
-
-			description (str):
-				Description of the exposed function.
-
-			parameters (dict):
-				JSON-schema-style parameter definitions.
-
-			required (list[str]):
-				Required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None: JSON-compatible tool schema dictionary.
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -4705,131 +4294,29 @@ class GlobalImagery( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None'
 			)
+			Logger( ).write( exception )
 			raise exception
-		
+
 class NearbyObjects( Fetcher ):
-	'''Provides access to current JPL SSD / CNEOS APIs relevant to near-Earth
-		objects, close approaches, and human-accessible target screening.
-
-		This class is aligned to the current documented APIs and supports the
-		following modes:
-
-		- close_approaches
-		- object_lookup
-		- nhats_summary
-		- nhats_object
-		- fireballs
-
-		Referenced API Requirements:
-		----------------------------
-		CAD API:
-			GET https://ssd-api.jpl.nasa.gov/cad.api
-			Common parameters used here:
-				- date-min
-				- date-max
-				- dist-max
-				- body
-				- sort
-				- limit
-
-		SBDB API:
-			GET https://ssd-api.jpl.nasa.gov/sbdb.api
-			One and only one of:
-				- sstr
-				- spk
-				- des
-			Optional parameters used here:
-				- phys-par
-				- ca-data
-				- ca-body
-				- discovery
-
-		NHATS API:
-			GET https://ssd-api.jpl.nasa.gov/nhats.api
-			Summary filters optionally include:
-				- dv
-				- dur
-				- stay
-				- launch
-				- h
-				- occ
-			Object-specific details use:
-				- des
-
-		Fireball API:
-			GET https://ssd-api.jpl.nasa.gov/fireball.api
-			Common parameters used here:
-				- date-min
-				- limit
-
-		Attributes:
-		-----------
-		base_url: Optional[str]
-			Base SSD API URL.
-
-		url: Optional[str]
-			Resolved request URL.
-
-		params: Optional[Dict[str, Any]]
-			Request parameters for the active call.
-
-		mode: Optional[str]
-			Selected operating mode.
-
-		start_date: Optional[str]
-			Inclusive start date in YYYY-MM-DD format.
-
-		end_date: Optional[str]
-			Inclusive end date in YYYY-MM-DD format.
-
-		query: Optional[str]
-			Generic object lookup string or designation.
-
-		dist_max: Optional[str]
-			Close-approach maximum distance filter.
-
-		body: Optional[str]
-			Close-approach body selector, typically Earth.
-
-		sort: Optional[str]
-			CAD sorting key.
-
-		limit: Optional[int]
-			Result limit.
-
-		agents: Optional[str]
-			User-Agent string.
-
-		Methods:
-		--------
-		__init__() -> None
-			Initialize fetcher defaults.
-
-		__dir__() -> List[str]
-			Provide ordered member visibility.
-
-		fetch_close_approaches(...) -> Dict[str, Any] | None
-			Fetch close-approach records from the CAD API.
-
-		fetch_object_lookup(...) -> Dict[str, Any] | None
-			Fetch detailed object information from the SBDB API.
-
-		fetch_nhats_summary(...) -> Dict[str, Any] | None
-			Fetch NHATS summary rows using screening constraints.
-
-		fetch_nhats_object(...) -> Dict[str, Any] | None
-			Fetch NHATS details for a single designation.
-
-		fetch_fireballs(...) -> Dict[str, Any] | None
-			Fetch fireball atmospheric impact records.
-
-		fetch(...) -> Dict[str, Any] | None
-			Unified dispatcher for NEO-related operations.
-
-		create_schema(...) -> Dict[str, str] | None
-			Construct a dynamic tool schema.
-
-	'''
+	"""Provide the NearbyObjects component.
+	
+	Purpose:
+		Defines the NearbyObjects workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		start_date: Runtime attribute maintained by the class.
+		end_date: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+		dist_max: Runtime attribute maintained by the class.
+		body: Runtime attribute maintained by the class.
+		sort: Runtime attribute maintained by the class.
+		limit: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	url: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -4844,19 +4331,11 @@ class NearbyObjects( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the NearbyObjects fetcher with current JPL SSD defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the NearbyObjects instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the NearbyObjects workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.base_url = 'https://ssd-api.jpl.nasa.gov'
@@ -4872,22 +4351,17 @@ class NearbyObjects( Fetcher ):
 		self.limit = 20
 		self.agents = cfg.AGENTS
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'url',
@@ -4909,40 +4383,29 @@ class NearbyObjects( Fetcher ):
 				'create_schema'
 		]
 	
-	def fetch_close_approaches( self, start_date: str, end_date: str, dist_max: str='10LD',
-			body: str='Earth', sort: str='date', limit: int=20, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch close-approach data from the JPL SB Close Approach Data API.
-
-			Parameters:
-			-----------
-			start_date (str):
-				Inclusive lower date bound in YYYY-MM-DD format.
-
-			end_date (str):
-				Inclusive upper date bound in YYYY-MM-DD format.
-
-			dist_max (str):
-				Maximum close-approach distance. Examples:
-				- 10LD
-				- 0.05AU
-
-			body (str):
-				Close-approach body selector. Example values include Earth, Moon,
-				Mars, Juptr.
-
-			sort (str):
-				Sort key for the returned records. Example values include date and dist.
-
-			limit (int):
-				Maximum number of rows to return.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_close_approaches( self, start_date: str, end_date: str, dist_max: str = '10LD',
+			body: str = 'Earth', sort: str = 'date', limit: int = 20, time: int = 20 ) -> Dict[
+				                                                                              str, Any ] | None:
+		"""Fetch fetch close approaches.
+		
+		Purpose:
+			Provides the documented fetch close approaches operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			dist_max: str value supplied by the caller.
+			body: str value supplied by the caller.
+			sort: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'start_date', start_date )
 			throw_if( 'end_date', end_date )
@@ -4982,48 +4445,33 @@ class NearbyObjects( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NearbyObjects'
 			exception.method = 'fetch_close_approaches( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_object_lookup( self, query: str, query_type: str='sstr',
-			include_physical: bool=True, include_close_approaches: bool=True,
-			ca_body: str='Earth', include_discovery: bool=True,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch a single-object record from the JPL SBDB API.
-
-			Parameters:
-			-----------
-			query (str):
-				Object identifier or name. Examples:
-				- Apophis
-				- Eros
-				- 2000 SG344
-				- 99942
-
-			query_type (str):
-				Exactly one of:
-				- sstr
-				- spk
-				- des
-
-			include_physical (bool):
-				If True, request physical parameters.
-
-			include_close_approaches (bool):
-				If True, request close-approach data.
-
-			ca_body (str):
-				Body filter for close-approach data, typically Earth.
-
-			include_discovery (bool):
-				If True, request discovery circumstances when available.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_object_lookup( self, query: str, query_type: str = 'sstr',
+			include_physical: bool = True, include_close_approaches: bool = True,
+			ca_body: str = 'Earth', include_discovery: bool = True,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch object lookup.
+		
+		Purpose:
+			Provides the documented fetch object lookup operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			query_type: str value supplied by the caller.
+			include_physical: bool value supplied by the caller.
+			include_close_approaches: bool value supplied by the caller.
+			ca_body: str value supplied by the caller.
+			include_discovery: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			throw_if( 'query_type', query_type )
@@ -5042,7 +4490,7 @@ class NearbyObjects( Fetcher ):
 			}
 			
 			if include_close_approaches and str( ca_body or '' ).strip( ):
-				self.params[ 'ca-body' ]=str( ca_body ).strip( )
+				self.params[ 'ca-body' ] = str( ca_body ).strip( )
 			
 			self.response = requests.get( url=self.url, params=self.params, headers=self.headers,
 				timeout=int( time ) )
@@ -5059,39 +4507,32 @@ class NearbyObjects( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NearbyObjects'
 			exception.method = 'fetch_object_lookup( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_nhats_summary( self, dv: float=6.0, dur: int=360, stay: int=8, launch: str='2020-2045',
-			h: float=26.0, occ: int=7, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch NHATS summary data using standard screening constraints.
-
-			Parameters:
-			-----------
-			dv (float):
-				Maximum total delta-V in km/s.
-
-			dur (int):
-				Maximum mission duration in days.
-
-			stay (int):
-				Minimum stay duration in days.
-
-			launch (str):
-				Launch window year range. Example: 2020-2045.
-
-			h (float):
-				Maximum H magnitude.
-
-			occ (int):
-				Maximum Orbit Condition Code.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_nhats_summary( self, dv: float = 6.0, dur: int = 360, stay: int = 8,
+			launch: str = '2020-2045',
+			h: float = 26.0, occ: int = 7, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch nhats summary.
+		
+		Purpose:
+			Provides the documented fetch nhats summary operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dv: float value supplied by the caller.
+			dur: int value supplied by the caller.
+			stay: int value supplied by the caller.
+			launch: str value supplied by the caller.
+			h: float value supplied by the caller.
+			occ: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'nhats_summary'
 			self.url = f'{self.base_url}/nhats.api'
@@ -5121,38 +4562,30 @@ class NearbyObjects( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NearbyObjects'
 			exception.method = 'fetch_nhats_summary( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_nhats_object( self, designation: str, dv: float=6.0, dur: int=360, stay: int=8,
-			launch: str='2020-2045', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch NHATS details for a single object designation.
-
-			Parameters:
-			-----------
-			designation (str):
-				Designation of the NEO. Examples:
-				- 99942
-				- 2000 SG344
-
-			dv (float):
-				Maximum total delta-V in km/s.
-
-			dur (int):
-				Maximum mission duration in days.
-
-			stay (int):
-				Minimum stay duration in days.
-
-			launch (str):
-				Launch window year range.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_nhats_object( self, designation: str, dv: float = 6.0, dur: int = 360, stay: int = 8,
+			launch: str = '2020-2045', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch nhats object.
+		
+		Purpose:
+			Provides the documented fetch nhats object operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			designation: str value supplied by the caller.
+			dv: float value supplied by the caller.
+			dur: int value supplied by the caller.
+			stay: int value supplied by the caller.
+			launch: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'designation', designation )
 			self.mode = 'nhats_object'
@@ -5183,34 +4616,34 @@ class NearbyObjects( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NearbyObjects'
 			exception.method = 'fetch_nhats_object( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_fireballs( self, date_min: str='', limit: int=20, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Fetch atmospheric fireball records from the JPL Fireball API.
-
-			Parameters:
-			-----------
-			date_min (str):
-				Optional lower date bound in YYYY-MM-DD or
-				YYYY-MM-DDThh:mm:ss format.
-
-			limit (int):
-				Maximum number of rows to return.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_fireballs( self, date_min: str = '', limit: int = 20, time: int = 20 ) -> Dict[
+		                                                                                    str, Any ] | None:
+		"""Fetch fetch fireballs.
+		
+		Purpose:
+			Provides the documented fetch fireballs operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			date_min: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'fireballs'
 			self.url = f'{self.base_url}/fireball.api'
 			self.params = { 'limit': int( limit ) }
 			
 			if str( date_min or '' ).strip( ):
-				self.params[ 'date-min' ]=str( date_min ).strip( )
+				self.params[ 'date-min' ] = str( date_min ).strip( )
 			
 			self.response = requests.get( url=self.url, params=self.params, headers=self.headers,
 				timeout=int( time ) )
@@ -5232,89 +4665,50 @@ class NearbyObjects( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NearbyObjects'
 			exception.method = 'fetch_fireballs( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='close_approaches', start_date: str='',
-			end_date: str='', query: str='', query_type: str='sstr',
-			dist_max: str='10LD', body: str='Earth', sort: str='date',
-			limit: int=20, dv: float=6.0, dur: int=360,
-			stay: int=8, launch: str='2020-2045', h: float=26.0,
-			occ: int=7, include_physical: bool=True,
-			include_close_approaches: bool=True, ca_body: str='Earth',
-			include_discovery: bool=True, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''Unified dispatcher for JPL SSD / CNEOS NEO-related endpoints.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of:
-				- close_approaches
-				- object_lookup
-				- nhats_summary
-				- nhats_object
-				- fireballs
-
-			start_date (str):
-				Date lower bound for close_approaches.
-
-			end_date (str):
-				Date upper bound for close_approaches.
-
-			query (str):
-				Object query or designation for object_lookup or nhats_object.
-
-			query_type (str):
-				Object lookup selector: sstr, spk, or des.
-
-			dist_max (str):
-				Close-approach distance ceiling.
-
-			body (str):
-				Close-approach body selector.
-
-			sort (str):
-				Close-approach sort key.
-
-			limit (int):
-				Result limit.
-
-			dv (float):
-				NHATS delta-V filter.
-
-			dur (int):
-				NHATS duration filter.
-
-			stay (int):
-				NHATS stay filter.
-
-			launch (str):
-				NHATS launch window.
-
-			h (float):
-				NHATS H-magnitude filter.
-
-			occ (int):
-				NHATS OCC filter.
-
-			include_physical (bool):
-				SBDB physical-parameter switch.
-
-			include_close_approaches (bool):
-				SBDB close-approach section switch.
-
-			ca_body (str):
-				SBDB close-approach body filter.
-
-			include_discovery (bool):
-				SBDB discovery-data switch.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'close_approaches', start_date: str = '',
+			end_date: str = '', query: str = '', query_type: str = 'sstr',
+			dist_max: str = '10LD', body: str = 'Earth', sort: str = 'date',
+			limit: int = 20, dv: float = 6.0, dur: int = 360,
+			stay: int = 8, launch: str = '2020-2045', h: float = 26.0,
+			occ: int = 7, include_physical: bool = True,
+			include_close_approaches: bool = True, ca_body: str = 'Earth',
+			include_discovery: bool = True, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			query: str value supplied by the caller.
+			query_type: str value supplied by the caller.
+			dist_max: str value supplied by the caller.
+			body: str value supplied by the caller.
+			sort: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			dv: float value supplied by the caller.
+			dur: int value supplied by the caller.
+			stay: int value supplied by the caller.
+			launch: str value supplied by the caller.
+			h: float value supplied by the caller.
+			occ: int value supplied by the caller.
+			include_physical: bool value supplied by the caller.
+			include_close_approaches: bool value supplied by the caller.
+			ca_body: str value supplied by the caller.
+			include_discovery: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'close_approaches' ).strip( ).lower( )
 			
@@ -5347,37 +4741,30 @@ class NearbyObjects( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'NearbyObjects'
 			exception.method = 'fetch( self, **kwargs) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the NearbyObjects workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -5405,40 +4792,25 @@ class NearbyObjects( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class OpenScience( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches open-science dataset, metadata, assay, and data resources.
-
-		Attributes:
-		-----------
-		base_url,
-		url,
-		params,
-		query_text,
-		format_value,
-		size,
-		endpoint,
-		agents,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_validate_format(...): Performs the _validate_format operation for this fetcher.
-		_coerce_response(...): Performs the _coerce_response operation for this fetcher.
-		fetch_dataset(...): Performs the fetch_dataset operation for this fetcher.
-		fetch_metadata(...): Performs the fetch_metadata operation for this fetcher.
-		fetch_assays(...): Performs the fetch_assays operation for this fetcher.
-		fetch_data(...): Performs the fetch_data operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the OpenScience component.
+	
+	Purpose:
+		Defines the OpenScience workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		query_text: Runtime attribute maintained by the class.
+		format_value: Runtime attribute maintained by the class.
+		size: Runtime attribute maintained by the class.
+		endpoint: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	url: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -5449,19 +4821,11 @@ class OpenScience( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the OpenScience fetcher with current OSDR defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the OpenScience instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the OpenScience workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.base_url = 'https://visualization.osdr.nasa.gov/biodata/api'
@@ -5474,22 +4838,17 @@ class OpenScience( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'url',
@@ -5507,20 +4866,20 @@ class OpenScience( Fetcher ):
 		]
 	
 	def _validate_format( self, format_value: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Validate output format for OSDR query endpoints.
-
-			Parameters:
-			-----------
-			format_value (str):
-				Desired format.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Validate validate format.
+		
+		Purpose:
+			Provides the documented validate format operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			format_value: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( format_value or 'json' ).strip( ).lower( )
 			
@@ -5537,20 +4896,24 @@ class OpenScience( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenScience'
 			exception.method = '_validate_format( self, format_value: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _coerce_response( self, response: requests.Response ) -> Dict[ str, Any ] | str:
-		'''Convert an HTTP response into JSON when possible, otherwise text.
-
-			Parameters:
-			-----------
-			response (requests.Response):
-				HTTP response object.
-
-			Returns:
-			--------
-			Dict[str, Any] | str
-		'''
+		"""Run coerce response.
+		
+		Purpose:
+			Provides the documented coerce response operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			response: requests.Response value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			content_type = str( response.headers.get( 'Content-Type', '' ) ).lower( )
 			
@@ -5570,26 +4933,25 @@ class OpenScience( Fetcher ):
 					'_coerce_response( self, response: requests.Response ) '
 					'-> Dict[ str, Any ] | str'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_dataset( self, accession: str, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch dataset-level metadata by OSDR accession.
-
-			Parameters:
-			-----------
-			accession (str):
-				OSDR accession such as OSD-48.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_dataset( self, accession: str, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch dataset.
+		
+		Purpose:
+			Provides the documented fetch dataset operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			accession: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'accession', accession )
 			value = str( accession ).strip( )
@@ -5611,30 +4973,27 @@ class OpenScience( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenScience'
 			exception.method = 'fetch_dataset( self, **kwargs ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_metadata( self, query: str, format_value: str='json',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Query OSDR sample-level metadata using the current metadata query endpoint.
-
-			Parameters:
-			-----------
-			query (str):
-				Query string to pass through to the endpoint.
-
-			format_value (str):
-				Output format. Supports json, csv, tsv, browser.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_metadata( self, query: str, format_value: str = 'json',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch metadata.
+		
+		Purpose:
+			Provides the documented fetch metadata operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			format_value: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			self.query_text = str( query ).strip( )
@@ -5664,30 +5023,27 @@ class OpenScience( Fetcher ):
 					'fetch_metadata( self, query: str, format_value: str=json, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_assays( self, query: str, format_value: str='json',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Query OSDR assay-grouped metadata using the current assays query endpoint.
-
-			Parameters:
-			-----------
-			query (str):
-				Query string to pass through to the endpoint.
-
-			format_value (str):
-				Output format. Supports json, csv, tsv, browser.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_assays( self, query: str, format_value: str = 'json',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch assays.
+		
+		Purpose:
+			Provides the documented fetch assays operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			format_value: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			
@@ -5719,30 +5075,27 @@ class OpenScience( Fetcher ):
 					'fetch_assays( self, query: str, format_value: str=json, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_data( self, query: str, format_value: str='json',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Query OSDR data using the current data query endpoint.
-
-			Parameters:
-			-----------
-			query (str):
-				Query string to pass through to the endpoint.
-
-			format_value (str):
-				Output format. Supports json, csv, tsv, browser.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_data( self, query: str, format_value: str = 'json',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch data.
+		
+		Purpose:
+			Provides the documented fetch data operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			format_value: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			
@@ -5778,41 +5131,30 @@ class OpenScience( Fetcher ):
 					'fetch_data( self, query: str, format_value: str=json, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='dataset', query: str='',
-			accession: str='', format_value: str='json',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for Open Science requests.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- dataset
-				- metadata
-				- assays
-				- data
-
-			query (str):
-				Query expression for metadata, assays, or data modes.
-
-			accession (str):
-				OSDR dataset accession for dataset mode.
-
-			format_value (str):
-				Output format for query modes.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'dataset', query: str = '',
+			accession: str = '', format_value: str = 'json',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			accession: str value supplied by the caller.
+			format_value: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'dataset' ).strip( ).lower( )
 			
@@ -5855,37 +5197,30 @@ class OpenScience( Fetcher ):
 					'fetch( self, mode: str=dataset, query: str=, accession: str=, '
 					'format_value: str=json, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the OpenScience workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -5916,107 +5251,29 @@ class OpenScience( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class SpaceWeather( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides access to NASA DONKI space weather endpoints through the
-		NASA Open APIs gateway.
-
-		This class is aligned to the currently documented DONKI endpoints and
-		supports the following modes:
-
-		- cme
-		- cme_analysis
-		- gst
-		- ips
-		- flr
-		- sep
-		- mpc
-		- rbe
-		- hss
-		- wsa_enlil
-		- notifications
-
-		Referenced API Requirements:
-		----------------------------
-		Base:
-			https://api.nasa.gov/DONKI
-
-		Common parameters:
-			- startDate
-			- endDate
-			- api_key
-
-		Endpoint-specific parameters supported here:
-			- location
-			- catalog
-			- type
-			- mostAccurateOnly
-			- completeEntryOnly
-			- speed
-			- halfAngle
-			- keyword
-
-		Attributes:
-		-----------
-		base_url: Optional[str]
-			Base DONKI API URL.
-
-		api_key: Optional[str]
-			NASA API key from configuration.
-
-		url: Optional[str]
-			Resolved endpoint URL.
-
-		params: Optional[Dict[str, Any]]
-			Request parameters sent to DONKI.
-
-		mode: Optional[str]
-			Selected DONKI endpoint mode.
-
-		start_date: Optional[str]
-			Inclusive start date in YYYY-MM-DD format.
-
-		end_date: Optional[str]
-			Inclusive end date in YYYY-MM-DD format.
-
-		location: Optional[str]
-			IPS endpoint location filter.
-
-		catalog: Optional[str]
-			CMEAnalysis or IPS catalog filter.
-
-		notification_type: Optional[str]
-			Notifications endpoint event type filter.
-
-		limit_note: Optional[str]
-			Reserved descriptive note.
-
-		agents: Optional[str]
-			User-Agent string.
-
-		Methods:
-		--------
-		__init__() -> None
-			Initialize fetcher defaults.
-
-		__dir__() -> List[str]
-			Provide ordered member visibility.
-
-		fetch_endpoint(...) -> Dict[str, Any] | None
-			Fetch a single DONKI endpoint with normalized parameters.
-
-		fetch(...) -> Dict[str, Any] | None
-			Unified dispatcher for DONKI modes.
-
-		create_schema(...) -> Dict[str, str] | None
-			Construct a dynamic tool schema.
-
-	'''
+	"""Provide the SpaceWeather component.
+	
+	Purpose:
+		Defines the SpaceWeather workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		start_date: Runtime attribute maintained by the class.
+		end_date: Runtime attribute maintained by the class.
+		location: Runtime attribute maintained by the class.
+		catalog: Runtime attribute maintained by the class.
+		notification_type: Runtime attribute maintained by the class.
+		limit_note: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	api_key: Optional[ str ]
 	url: Optional[ str ]
@@ -6031,19 +5288,11 @@ class SpaceWeather( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the DONKI fetcher with current endpoint defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the SpaceWeather instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the SpaceWeather workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.base_url = 'https://api.nasa.gov/DONKI'
@@ -6060,22 +5309,17 @@ class SpaceWeather( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the SpaceWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'api_key',
@@ -6093,61 +5337,37 @@ class SpaceWeather( Fetcher ):
 		]
 	
 	def fetch_endpoint( self, endpoint: str, start_date: str, end_date: str,
-			time: int=20, location: str='', catalog: str='',
-			notification_type: str='', most_accurate_only: bool=True,
-			complete_entry_only: bool=True, speed: int=0,
-			half_angle: int=0, keyword: str='',
-			api_key: str=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Send a request to a specific DONKI endpoint and return normalized JSON.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				DONKI endpoint path fragment.
-
-			start_date (str):
-				Inclusive start date in YYYY-MM-DD format.
-
-			end_date (str):
-				Inclusive end date in YYYY-MM-DD format.
-
-			time (int):
-				Request timeout in seconds.
-
-			location (str):
-				IPS location filter.
-
-			catalog (str):
-				CMEAnalysis or IPS catalog filter.
-
-			notification_type (str):
-				Notifications type filter.
-
-			most_accurate_only (bool):
-				CMEAnalysis filter.
-
-			complete_entry_only (bool):
-				CMEAnalysis filter.
-
-			speed (int):
-				CMEAnalysis lower-bound speed filter.
-
-			half_angle (int):
-				CMEAnalysis lower-bound half-angle filter.
-
-			keyword (str):
-				CMEAnalysis keyword filter.
-
-			api_key (str | None):
-				Optional runtime override for NASA API key.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20, location: str = '', catalog: str = '',
+			notification_type: str = '', most_accurate_only: bool = True,
+			complete_entry_only: bool = True, speed: int = 0,
+			half_angle: int = 0, keyword: str = '',
+			api_key: str = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch endpoint.
+		
+		Purpose:
+			Provides the documented fetch endpoint operation for the SpaceWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			time: int value supplied by the caller.
+			location: str value supplied by the caller.
+			catalog: str value supplied by the caller.
+			notification_type: str value supplied by the caller.
+			most_accurate_only: bool value supplied by the caller.
+			complete_entry_only: bool value supplied by the caller.
+			speed: int value supplied by the caller.
+			half_angle: int value supplied by the caller.
+			keyword: str value supplied by the caller.
+			api_key: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			throw_if( 'start_date', start_date )
@@ -6165,25 +5385,25 @@ class SpaceWeather( Fetcher ):
 			}
 			
 			if endpoint == 'IPS' and location.strip( ):
-				self.params[ 'location' ]=location.strip( )
+				self.params[ 'location' ] = location.strip( )
 			
 			if endpoint == 'IPS' and catalog.strip( ):
-				self.params[ 'catalog' ]=catalog.strip( )
+				self.params[ 'catalog' ] = catalog.strip( )
 			
 			if endpoint == 'CMEAnalysis':
-				self.params[ 'mostAccurateOnly' ]=str( bool( most_accurate_only ) ).lower( )
-				self.params[ 'completeEntryOnly' ]=str( bool( complete_entry_only ) ).lower( )
-				self.params[ 'speed' ]=int( speed )
-				self.params[ 'halfAngle' ]=int( half_angle )
+				self.params[ 'mostAccurateOnly' ] = str( bool( most_accurate_only ) ).lower( )
+				self.params[ 'completeEntryOnly' ] = str( bool( complete_entry_only ) ).lower( )
+				self.params[ 'speed' ] = int( speed )
+				self.params[ 'halfAngle' ] = int( half_angle )
 				
 				if catalog.strip( ):
-					self.params[ 'catalog' ]=catalog.strip( )
+					self.params[ 'catalog' ] = catalog.strip( )
 				
 				if keyword.strip( ):
-					self.params[ 'keyword' ]=keyword.strip( )
+					self.params[ 'keyword' ] = keyword.strip( )
 			
 			if endpoint == 'notifications' and notification_type.strip( ):
-				self.params[ 'type' ]=notification_type.strip( )
+				self.params[ 'type' ] = notification_type.strip( )
 			
 			self.response = requests.get(
 				url=self.url,
@@ -6213,75 +5433,41 @@ class SpaceWeather( Fetcher ):
 					'speed: int=0, half_angle: int=0, keyword: str=, '
 					'api_key: str|None=None ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='cme', start_date: str='', end_date: str='',
-			time: int=20, location: str='ALL', catalog: str='ALL',
-			notification_type: str='all', most_accurate_only: bool=True,
-			complete_entry_only: bool=True, speed: int=0,
-			half_angle: int=0, keyword: str='',
-			api_key: str=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for NASA DONKI endpoints.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of:
-				- cme
-				- cme_analysis
-				- gst
-				- ips
-				- flr
-				- sep
-				- mpc
-				- rbe
-				- hss
-				- wsa_enlil
-				- notifications
-
-			start_date (str):
-				Inclusive start date in YYYY-MM-DD format.
-
-			end_date (str):
-				Inclusive end date in YYYY-MM-DD format.
-
-			time (int):
-				Request timeout in seconds.
-
-			location (str):
-				IPS location filter.
-
-			catalog (str):
-				CMEAnalysis or IPS catalog filter.
-
-			notification_type (str):
-				Notifications type filter.
-
-			most_accurate_only (bool):
-				CMEAnalysis filter.
-
-			complete_entry_only (bool):
-				CMEAnalysis filter.
-
-			speed (int):
-				CMEAnalysis speed filter.
-
-			half_angle (int):
-				CMEAnalysis half-angle filter.
-
-			keyword (str):
-				CMEAnalysis keyword filter.
-
-			api_key (str | None):
-				Optional runtime override for NASA API key.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'cme', start_date: str = '', end_date: str = '',
+			time: int = 20, location: str = 'ALL', catalog: str = 'ALL',
+			notification_type: str = 'all', most_accurate_only: bool = True,
+			complete_entry_only: bool = True, speed: int = 0,
+			half_angle: int = 0, keyword: str = '',
+			api_key: str = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the SpaceWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			time: int value supplied by the caller.
+			location: str value supplied by the caller.
+			catalog: str value supplied by the caller.
+			notification_type: str value supplied by the caller.
+			most_accurate_only: bool value supplied by the caller.
+			complete_entry_only: bool value supplied by the caller.
+			speed: int value supplied by the caller.
+			half_angle: int value supplied by the caller.
+			keyword: str value supplied by the caller.
+			api_key: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'cme' ).strip( ).lower( )
 			self.mode = active_mode
@@ -6333,37 +5519,30 @@ class SpaceWeather( Fetcher ):
 					'complete_entry_only: bool=True, speed: int=0, half_angle: int=0, '
 					'keyword: str=, api_key: str|None=None ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the SpaceWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -6391,16 +5570,24 @@ class SpaceWeather( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class AstroCatalog( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides structured access to the Open Astronomy Catalog API (OACAPI).
-
-	'''
+	"""Provide the AstroCatalog component.
+	
+	Purpose:
+		Defines the AstroCatalog workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		format: Runtime attribute maintained by the class.
+		name: Runtime attribute maintained by the class.
+		declination: Runtime attribute maintained by the class.
+		right_ascension: Runtime attribute maintained by the class.
+		radius: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	format: Optional[ str ]
 	name: Optional[ str ]
@@ -6410,6 +5597,11 @@ class AstroCatalog( Fetcher ):
 	params: Optional[ Dict[ str, Any ] ]
 	
 	def __init__( self ):
+		"""Initialize the AstroCatalog instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the AstroCatalog workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://api.astrocats.space'
 		self.format = 'json'
@@ -6423,12 +5615,20 @@ class AstroCatalog( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
-			self.headers[ 'Accept' ]='application/json'
+			self.headers[ 'Accept' ] = 'application/json'
 	
 	def __dir__( self ) -> List[ str ]:
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'timeout',
@@ -6438,17 +5638,20 @@ class AstroCatalog( Fetcher ):
 				'fetch',
 		]
 	
-	def _normalize_attribute_path( self, quantity: str='', attributes: str='' ) -> str:
+	def _normalize_attribute_path( self, quantity: str = '', attributes: str = '' ) -> str:
+		"""Normalize normalize attribute path.
+		
+		Purpose:
+			Provides the documented normalize attribute path operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			quantity: str value supplied by the caller.
+			attributes: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
 		"""
-			Purpose:
-			--------
-			Build the OAC route path segment from quantity and attribute inputs.
-
-			Returns:
-			--------
-			str
-		"""
-		parts: list[ str ]=[ ]
+		parts: list[ str ] = [ ]
 		if quantity and quantity.strip( ):
 			parts.append( quantity.strip( ) )
 		
@@ -6459,17 +5662,18 @@ class AstroCatalog( Fetcher ):
 		return '/'.join( parts )
 	
 	def _parse_argument_string( self, argument_string: str ) -> Dict[ str, Any ]:
+		"""Parse parse argument string.
+		
+		Purpose:
+			Provides the documented parse argument string operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			argument_string: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
 		"""
-			Purpose:
-			--------
-			Parse a comma-separated or newline-separated list of OAC query
-			arguments into a dictionary.
-
-			Examples:
-			---------
-			band=R,time,e_magnitude,complete
-		"""
-		params: Dict[ str, Any ]={ }
+		params: Dict[ str, Any ] = { }
 		
 		if not argument_string or not argument_string.strip( ):
 			return params
@@ -6480,22 +5684,29 @@ class AstroCatalog( Fetcher ):
 		for item in items:
 			if '=' in item:
 				k, v = item.split( '=', 1 )
-				params[ k.strip( ) ]=v.strip( )
+				params[ k.strip( ) ] = v.strip( )
 			else:
-				params[ item ]=''
+				params[ item ] = ''
 		
 		return params
 	
-	def request( self, route: str, params: Dict[ str, Any ] | None=None,
-			time: int=20 ) -> Any:
-		"""
-			Purpose:
-			--------
-			Send an HTTP request to the OAC API and return parsed JSON when possible.
-
-			Returns:
-			--------
-			Any
+	def request( self, route: str, params: Dict[ str, Any ] | None = None,
+			time: int = 20 ) -> Any:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			route: str value supplied by the caller.
+			params: Dict[str, Any] | None value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Any: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			self.timeout = int( time )
@@ -6521,18 +5732,29 @@ class AstroCatalog( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'AstroCatalog'
 			exception.method = 'request( self, route: str, params: Dict[ str, Any ] | None=None, time: int=20 ) -> Any'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_object( self, name: str, quantity: str='', attributes: str='',
-			arguments: str='', data_format: str='json', time: int=20 ) -> Any:
-		"""
-			Purpose:
-			--------
-			Query OAC by object/event name using the documented route pattern.
-
-			Returns:
-			--------
-			Any
+	def fetch_object( self, name: str, quantity: str = '', attributes: str = '',
+			arguments: str = '', data_format: str = 'json', time: int = 20 ) -> Any:
+		"""Fetch fetch object.
+		
+		Purpose:
+			Provides the documented fetch object operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			quantity: str value supplied by the caller.
+			attributes: str value supplied by the caller.
+			arguments: str value supplied by the caller.
+			data_format: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Any: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'name', name )
@@ -6548,7 +5770,7 @@ class AstroCatalog( Fetcher ):
 			params = self._parse_argument_string( arguments )
 			
 			if self.format:
-				params[ 'format' ]=self.format
+				params[ 'format' ] = self.format
 			
 			return self.request( route=route, params=params, time=time )
 		
@@ -6560,18 +5782,32 @@ class AstroCatalog( Fetcher ):
 					'fetch_object( self, name: str, quantity: str=, attributes: str=, '
 					'arguments: str=, data_format: str=json, time: int=20 ) -> Any'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def cone_search( self, ra: str, dec: str, radius: int=2, quantity: str='',
-			attributes: str='', arguments: str='', data_format: str='json', time: int=20 ) -> Any:
-		"""
-			Purpose:
-			--------
-			Query OAC using a coordinate cone search via special arguments.
-
-			Returns:
-			--------
-			Any
+	def cone_search( self, ra: str, dec: str, radius: int = 2, quantity: str = '',
+			attributes: str = '', arguments: str = '', data_format: str = 'json',
+			time: int = 20 ) -> Any:
+		"""Run cone search.
+		
+		Purpose:
+			Provides the documented cone search operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ra: str value supplied by the caller.
+			dec: str value supplied by the caller.
+			radius: int value supplied by the caller.
+			quantity: str value supplied by the caller.
+			attributes: str value supplied by the caller.
+			arguments: str value supplied by the caller.
+			data_format: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Any: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'ra', ra )
@@ -6586,33 +5822,48 @@ class AstroCatalog( Fetcher ):
 				route = f'{route}/{attr_path}'
 			
 			params = self._parse_argument_string( arguments )
-			params[ 'ra' ]=self.right_ascension
-			params[ 'dec' ]=self.declination
-			params[ 'radius' ]=str( self.radius )
+			params[ 'ra' ] = self.right_ascension
+			params[ 'dec' ] = self.declination
+			params[ 'radius' ] = str( self.radius )
 			if self.format:
-				params[ 'format' ]=self.format
+				params[ 'format' ] = self.format
 			
 			return self.request( route=route, params=params, time=time )
 		except Exception as exc:
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'AstroCatalog'
-			exception.method = ( 'cone_search( self, ra: str, dec: str, radius: int=2, '
-					'quantity: str=, attributes: str=, arguments: str=, '
-					'data_format: str=json, time: int=20 ) -> Any' )
+			exception.method = ('cone_search( self, ra: str, dec: str, radius: int=2, '
+			                    'quantity: str=, attributes: str=, arguments: str=, '
+			                    'data_format: str=json, time: int=20 ) -> Any')
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='object_query', query: str='', quantity: str='',
-			attributes: str='', arguments: str='', ra: str='', dec: str='',
-			radius: int=2, data_format: str='json', time: int=20 ) -> Any:
-		"""
-			Purpose:
-			--------
-			Unified dispatch for Astronomy Catalog operations.
-
-			Returns:
-			--------
-			Any
+	def fetch( self, mode: str = 'object_query', query: str = '', quantity: str = '',
+			attributes: str = '', arguments: str = '', ra: str = '', dec: str = '',
+			radius: int = 2, data_format: str = 'json', time: int = 20 ) -> Any:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the AstroCatalog workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			quantity: str value supplied by the caller.
+			attributes: str value supplied by the caller.
+			arguments: str value supplied by the caller.
+			ra: str value supplied by the caller.
+			dec: str value supplied by the caller.
+			radius: int value supplied by the caller.
+			data_format: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Any: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			active_mode = (mode or 'object_query').strip( ).lower( )
@@ -6648,36 +5899,24 @@ class AstroCatalog( Fetcher ):
 					'attributes: str=, arguments: str=, ra: str=, dec: str=, '
 					'radius: int=2, data_format: str=json, time: int=20 ) -> Any'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class AstroQuery( Fetcher ):
-	'''
+	"""Provide the AstroQuery component.
 	
-		Purpose:
-		--------
-		Fetches astronomical object and region data with astroquery SIMBAD operations.
+	Purpose:
+		Defines the AstroQuery workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
 	
-		Attributes:
-		-----------
-		url,
-		radius,
-		name,
-		declination,
-		right_ascension,
-		params,
-		row_limit,
-	
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_table_to_records(...): Performs the _table_to_records operation for this fetcher.
-		object_search(...): Performs the object_search operation for this fetcher.
-		object_ids(...): Performs the object_ids operation for this fetcher.
-		region_search(...): Performs the region_search operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-	
-	'''
+	Attributes:
+		url: Runtime attribute maintained by the class.
+		radius: Runtime attribute maintained by the class.
+		name: Runtime attribute maintained by the class.
+		declination: Runtime attribute maintained by the class.
+		right_ascension: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		row_limit: Runtime attribute maintained by the class.
+	"""
 	url: Optional[ str ]
 	radius: Optional[ float ]
 	name: Optional[ str ]
@@ -6687,6 +5926,11 @@ class AstroQuery( Fetcher ):
 	row_limit: Optional[ int ]
 	
 	def __init__( self ) -> None:
+		"""Initialize the AstroQuery instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the AstroQuery workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.url = None
 		self.radius = None
@@ -6698,9 +5942,17 @@ class AstroQuery( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the AstroQuery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'headers',
 				'row_limit',
@@ -6711,30 +5963,27 @@ class AstroQuery( Fetcher ):
 		]
 	
 	def _table_to_records( self, table: Table | None ) -> List[ Dict[ str, Any ] ]:
-		"""
-
-			Purpose:
-			--------
-			Convert an Astropy Table into a list of row dictionaries that can be
-			rendered easily in Streamlit.
-
-			Parameters:
-			-----------
-			table:
-				An astropy.table.Table returned by astroquery.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-
+		"""Run table to records.
+		
+		Purpose:
+			Provides the documented table to records operation for the AstroQuery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			table: Table | None value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			if table is None:
 				return [ ]
 			
-			records: List[ Dict[ str, Any ] ]=[ ]
+			records: List[ Dict[ str, Any ] ] = [ ]
 			for row in table:
-				record: Dict[ str, Any ]={ }
+				record: Dict[ str, Any ] = { }
 				for col in table.colnames:
 					try:
 						value = row[ col ]
@@ -6743,9 +5992,9 @@ class AstroQuery( Fetcher ):
 								value = value.item( )
 							except Exception:
 								pass
-						record[ str( col ) ]=str( value )
+						record[ str( col ) ] = str( value )
 					except Exception:
-						record[ str( col ) ]=''
+						record[ str( col ) ] = ''
 				records.append( record )
 			
 			return records
@@ -6755,27 +6004,24 @@ class AstroQuery( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'AstroQuery'
 			exception.method = '_table_to_records( self, table: Table | None ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def object_search( self, name: str, row_limit: int=100 ) -> Dict[ str, Any ] | None:
-		"""
-
-			Purpose:
-			--------
-			Query SIMBAD for a named astronomical object.
-
-			Parameters:
-			-----------
-			name:
-				Object identifier or common name such as "M81", "Sirius", or
-				"NGC 1300".
-			row_limit:
-				Maximum number of rows to return.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+	def object_search( self, name: str, row_limit: int = 100 ) -> Dict[ str, Any ] | None:
+		"""Run object search.
+		
+		Purpose:
+			Provides the documented object search operation for the AstroQuery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			row_limit: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'name', name )
@@ -6799,26 +6045,24 @@ class AstroQuery( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'AstroQuery'
 			exception.method = 'object_search( self, name: str, row_limit: int=100 ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def object_ids( self, name: str, row_limit: int=100 ) -> Dict[ str, Any ] | None:
-		"""
-
-			Purpose:
-			--------
-			Query SIMBAD for alternate identifiers of a named astronomical object.
-
-			Parameters:
-			-----------
-			name:
-				Object identifier or common name such as "M81" or "Sirius".
-			row_limit:
-				Maximum number of rows to return.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+	def object_ids( self, name: str, row_limit: int = 100 ) -> Dict[ str, Any ] | None:
+		"""Run object ids.
+		
+		Purpose:
+			Provides the documented object ids operation for the AstroQuery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			row_limit: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'name', name )
@@ -6842,44 +6086,28 @@ class AstroQuery( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'AstroQuery'
 			exception.method = 'object_ids( self, name: str, row_limit: int=100 ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def region_search( self, ra: str, dec: str, radius: float=0.5,
-			radius_unit: str='deg', row_limit: int=100 ) -> Dict[ str, Any ] | None:
-		"""
-
-			Purpose:
-			--------
-			Query SIMBAD in a cone around a sky position.
-
-			Parameters:
-			-----------
-			ra:
-				Right Ascension of the search center. This is the east-west sky
-				coordinate. Example values:
-				- "13:09:48.09"
-				- "197.45037"
-
-			dec:
-				Declination of the search center. This is the north-south sky
-				coordinate. Example values:
-				- "-23:22:53.3"
-				- "-23.38148"
-
-			radius:
-				Angular search radius around the sky position.
-
-			radius_unit:
-				Unit for the radius. Supported values here are "deg", "arcmin",
-				and "arcsec".
-
-			row_limit:
-				Maximum number of rows to return.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+	def region_search( self, ra: str, dec: str, radius: float = 0.5,
+			radius_unit: str = 'deg', row_limit: int = 100 ) -> Dict[ str, Any ] | None:
+		"""Run region search.
+		
+		Purpose:
+			Provides the documented region search operation for the AstroQuery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ra: str value supplied by the caller.
+			dec: str value supplied by the caller.
+			radius: float value supplied by the caller.
+			radius_unit: str value supplied by the caller.
+			row_limit: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'ra', ra )
@@ -6928,46 +6156,31 @@ class AstroQuery( Fetcher ):
 					'region_search( self, ra: str, dec: str, radius: float=0.5, '
 					'radius_unit: str=deg, row_limit: int=100 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='object_search', query: str='', ra: str='', dec: str='',
-			radius: float=0.5, radius_unit: str='deg', row_limit: int=100 ) -> Dict[ str, Any ] | None:
-		"""
-
-			Purpose:
-			--------
-			Unified dispatch for AstroQuery / SIMBAD operations.
-
-			Parameters:
-			-----------
-			mode:
-				One of:
-				- "object_search"
-				- "object_ids"
-				- "region_search"
-
-			query:
-				Named object for object-based modes.
-
-			ra:
-				Right Ascension used for region_search.
-
-			dec:
-				Declination used for region_search.
-
-			radius:
-				Angular radius used for region_search.
-
-			radius_unit:
-				Unit for radius used for region_search.
-
-			row_limit:
-				Maximum number of rows to return.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
+	def fetch( self, mode: str = 'object_search', query: str = '', ra: str = '', dec: str = '',
+			radius: float = 0.5, radius_unit: str = 'deg', row_limit: int = 100 ) -> Dict[
+				                                                                         str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the AstroQuery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			ra: str value supplied by the caller.
+			dec: str value supplied by the caller.
+			radius: float value supplied by the caller.
+			radius_unit: str value supplied by the caller.
+			row_limit: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			active_mode = (mode or 'object_search').strip( ).lower( )
@@ -7003,44 +6216,31 @@ class AstroQuery( Fetcher ):
 					'dec: str=, radius: float=0.5, radius_unit: str=deg, '
 					'row_limit: int=100 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class StarMap( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Builds star-map links and image snapshots for objects or coordinates.
-
-		Attributes:
-		-----------
-		base_url,
-		snapshot_url,
-		image_source,
-		object,
-		right_ascension,
-		declination,
-		box_color,
-		show_box,
-		show_grid,
-		show_lines,
-		show_boundaries,
-		show_const_names,
-		zoom,
-		params,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_normalize_bool(...): Performs the _normalize_bool operation for this fetcher.
-		_extract_snapshot_links(...): Performs the _extract_snapshot_links operation for this fetcher.
-		fetch_object_link(...): Performs the fetch_object_link operation for this fetcher.
-		fetch_coordinate_link(...): Performs the fetch_coordinate_link operation for this fetcher.
-		fetch_snapshot(...): Performs the fetch_snapshot operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-
-	'''
+	"""Provide the StarMap component.
+	
+	Purpose:
+		Defines the StarMap workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		snapshot_url: Runtime attribute maintained by the class.
+		image_source: Runtime attribute maintained by the class.
+		object: Runtime attribute maintained by the class.
+		right_ascension: Runtime attribute maintained by the class.
+		declination: Runtime attribute maintained by the class.
+		box_color: Runtime attribute maintained by the class.
+		show_box: Runtime attribute maintained by the class.
+		show_grid: Runtime attribute maintained by the class.
+		show_lines: Runtime attribute maintained by the class.
+		show_boundaries: Runtime attribute maintained by the class.
+		show_const_names: Runtime attribute maintained by the class.
+		zoom: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	snapshot_url: Optional[ str ]
 	image_source: Optional[ str ]
@@ -7057,17 +6257,11 @@ class StarMap( Fetcher ):
 	params: Optional[ Dict[ str, Any ] ]
 	
 	def __init__( self ) -> None:
-		'''
+		"""Initialize the StarMap instance.
 		
-			Purpose:
-			--------
-			Initialize the StarMap
-
-			Returns:
-			--------
-			None
-
-		'''
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the StarMap workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://www.sky-map.org/'
 		self.snapshot_url = 'https://www.sky-map.org/snapshot'
@@ -7088,13 +6282,21 @@ class StarMap( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
 			self.headers[
-				'Accept' ]='text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+				'Accept' ] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
 	
 	def __dir__( self ) -> List[ str ]:
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'snapshot_url',
@@ -7117,47 +6319,37 @@ class StarMap( Fetcher ):
 		]
 	
 	def _normalize_bool( self, value: bool ) -> str:
-		'''
+		"""Normalize normalize bool.
 		
-			Purpose:
-			--------
-			Convert a Python bool into the integer-style string form frequently
-			used by Sky-Map query parameters.
-
-			Parameters:
-			-----------
-			value:
-				Boolean value to convert.
-
-			Returns:
-			--------
-			str
-
-		'''
+		Purpose:
+			Provides the documented normalize bool operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			value: bool value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		"""
 		return '1' if bool( value ) else '0'
 	
 	def _extract_snapshot_links( self, html: str, base_url: str ) -> Dict[ str, str ]:
-		'''
+		"""Run extract snapshot links.
 		
-			Purpose:
-			--------
-			Parse the snapshot HTML page and extract save-as image links for
-			formats like jpeg, png, gif, bmp, and tiff.
-
-			Parameters:
-			-----------
-			html:
-				Raw HTML returned by the snapshot endpoint.
-			base_url:
-				Base URL used to resolve relative hyperlinks.
-
-			Returns:
-			--------
-			Dict[str, str]
-
-		'''
+		Purpose:
+			Provides the documented extract snapshot links operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			html: str value supplied by the caller.
+			base_url: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			links: Dict[ str, str ]={ }
+			links: Dict[ str, str ] = { }
 			if not html or not isinstance( html, str ):
 				return links
 			
@@ -7168,7 +6360,7 @@ class StarMap( Fetcher ):
 			for match in pattern.finditer( html ):
 				href = match.group( 1 )
 				label = match.group( 2 ).lower( )
-				links[ label ]=urllib.parse.urljoin( base_url, href )
+				links[ label ] = urllib.parse.urljoin( base_url, href )
 			
 			return links
 		
@@ -7177,41 +6369,34 @@ class StarMap( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'StarMap'
 			exception.method = '_extract_snapshot_links( self, html: str, base_url: str ) -> Dict[ str, str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_object_link(
 			self,
 			name: str,
-			zoom: int=5,
-			box_color: str='yellow',
-			show_box: bool=True,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
+			zoom: int = 5,
+			box_color: str = 'yellow',
+			show_box: bool = True,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch object link.
 		
-			Purpose:
-			--------
-			Construct an interactive Sky-Map link centered on a named object.
-
-			Parameters:
-			-----------
-			name:
-				Object name or identifier such as "Polaris", "M31", or
-				"NGC 1300".
-			zoom:
-				Map zoom level. Smaller values show a wider field; larger values
-				zoom further in.
-			box_color:
-				Color of the selection/highlight box.
-			show_box:
-				Whether to show the highlight box around the object.
-			time:
-				Request timeout in seconds used for validation.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+		Purpose:
+			Provides the documented fetch object link operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			zoom: int value supplied by the caller.
+			box_color: str value supplied by the caller.
+			show_box: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			
@@ -7257,59 +6442,42 @@ class StarMap( Fetcher ):
 					'fetch_object_link( self, name: str, zoom: int=5, box_color: str=yellow, '
 					'show_box: bool=True, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_coordinate_link(
 			self,
 			ra: float,
 			dec: float,
-			zoom: int=5,
-			box_color: str='yellow',
-			show_box: bool=True,
-			show_grid: bool=True,
-			show_lines: bool=True,
-			show_boundaries: bool=True,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
+			zoom: int = 5,
+			box_color: str = 'yellow',
+			show_box: bool = True,
+			show_grid: bool = True,
+			show_lines: bool = True,
+			show_boundaries: bool = True,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch coordinate link.
 		
-			Purpose:
-			--------
-			Construct an interactive Sky-Map link centered on sky coordinates.
-
-			Parameters:
-			-----------
-			ra:
-				Right Ascension of the map center in hours.
-				Example values:
-				- 15.2976
-				- 5.9195
-
-			dec:
-				Declination of the map center in degrees.
-				Example values:
-				- -17.5892
-				- 41.2692
-
-			zoom:
-				Map zoom level.
-			box_color:
-				Color of the selection/highlight box.
-			show_box:
-				Whether to show the highlight box.
-			show_grid:
-				Whether to display coordinate grid lines.
-			show_lines:
-				Whether to display constellation lines.
-			show_boundaries:
-				Whether to display constellation boundaries.
-			time:
-				Request timeout in seconds used for validation.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+		Purpose:
+			Provides the documented fetch coordinate link operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ra: float value supplied by the caller.
+			dec: float value supplied by the caller.
+			zoom: int value supplied by the caller.
+			box_color: str value supplied by the caller.
+			show_box: bool value supplied by the caller.
+			show_grid: bool value supplied by the caller.
+			show_lines: bool value supplied by the caller.
+			show_boundaries: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'ra', ra )
 			throw_if( 'dec', dec )
@@ -7365,60 +6533,42 @@ class StarMap( Fetcher ):
 					'show_lines: bool=True, show_boundaries: bool=True, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_snapshot(
 			self,
 			ra: float,
 			dec: float,
-			zoom: int=10,
-			image_source: str='DSS2',
-			show_grid: bool=True,
-			show_lines: bool=True,
-			show_boundaries: bool=True,
-			show_const_names: bool=False,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
+			zoom: int = 10,
+			image_source: str = 'DSS2',
+			show_grid: bool = True,
+			show_lines: bool = True,
+			show_boundaries: bool = True,
+			show_const_names: bool = False,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch snapshot.
 		
-			Purpose:
-			--------
-			Request the Sky-Map snapshot generator page and extract the available
-			static image links.
-
-			Parameters:
-			-----------
-			ra:
-				Right Ascension of the image center in hours.
-				Example values:
-				- 15.2976
-				- 5.9195
-
-			dec:
-				Declination of the image center in degrees.
-				Example values:
-				- -17.5892
-				- 41.2692
-
-			zoom:
-				Snapshot zoom level / field scale.
-			image_source:
-				Survey source such as DSS2, SDSS, GALEX, IRAS, or RASS.
-			show_grid:
-				Whether to display the coordinate grid.
-			show_lines:
-				Whether to display constellation lines.
-			show_boundaries:
-				Whether to display constellation boundaries.
-			show_const_names:
-				Whether to display constellation names.
-			time:
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+		Purpose:
+			Provides the documented fetch snapshot operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ra: float value supplied by the caller.
+			dec: float value supplied by the caller.
+			zoom: int value supplied by the caller.
+			image_source: str value supplied by the caller.
+			show_grid: bool value supplied by the caller.
+			show_lines: bool value supplied by the caller.
+			show_boundaries: bool value supplied by the caller.
+			show_const_names: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'ra', ra )
 			throw_if( 'dec', dec )
@@ -7466,7 +6616,8 @@ class StarMap( Fetcher ):
 					'params': self.params,
 					'snapshot_page_url': page_url,
 					'image_links': image_links,
-					'preferred_image_url': image_links.get( 'png' ) or image_links.get( 'jpeg', '' ),
+					'preferred_image_url': image_links.get( 'png' ) or image_links.get( 'jpeg',
+						'' ),
 					'status_code': self.response.status_code,
 					'html_preview': self.response.text[ : 2000 ],
 			}
@@ -7481,79 +6632,50 @@ class StarMap( Fetcher ):
 					'show_boundaries: bool=True, show_const_names: bool=False, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch(
 			self,
-			mode: str='object_link',
-			query: str='',
-			ra: float=0.0,
-			dec: float=0.0,
-			zoom: int=5,
-			image_source: str='DSS2',
-			box_color: str='yellow',
-			show_box: bool=True,
-			show_grid: bool=True,
-			show_lines: bool=True,
-			show_boundaries: bool=True,
-			show_const_names: bool=False,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
+			mode: str = 'object_link',
+			query: str = '',
+			ra: float = 0.0,
+			dec: float = 0.0,
+			zoom: int = 5,
+			image_source: str = 'DSS2',
+			box_color: str = 'yellow',
+			show_box: bool = True,
+			show_grid: bool = True,
+			show_lines: bool = True,
+			show_boundaries: bool = True,
+			show_const_names: bool = False,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
 		
-			Purpose:
-			--------
-			Unified dispatch for StarMap object links, coordinate links, and
-			static snapshot generation.
-
-			Parameters:
-			-----------
-			mode:
-				One of:
-				- "object_link"
-				- "coordinate_link"
-				- "snapshot"
-
-			query:
-				Object name used for object_link.
-
-			ra:
-				Right Ascension used for coordinate_link and snapshot.
-
-			dec:
-				Declination used for coordinate_link and snapshot.
-
-			zoom:
-				Zoom level.
-
-			image_source:
-				Sky survey source used for snapshot.
-
-			box_color:
-				Highlight box color for interactive modes.
-
-			show_box:
-				Show highlight box for interactive modes.
-
-			show_grid:
-				Show grid for coordinate/snapshot modes.
-
-			show_lines:
-				Show constellation lines.
-
-			show_boundaries:
-				Show constellation boundaries.
-
-			show_const_names:
-				Show constellation names for snapshot mode.
-
-			time:
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+		Purpose:
+			Provides the documented fetch operation for the StarMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			ra: float value supplied by the caller.
+			dec: float value supplied by the caller.
+			zoom: int value supplied by the caller.
+			image_source: str value supplied by the caller.
+			box_color: str value supplied by the caller.
+			show_box: bool value supplied by the caller.
+			show_grid: bool value supplied by the caller.
+			show_lines: bool value supplied by the caller.
+			show_boundaries: bool value supplied by the caller.
+			show_const_names: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = (mode or 'object_link').strip( ).lower( )
 			
@@ -7604,47 +6726,31 @@ class StarMap( Fetcher ):
 					'show_lines: bool=True, show_boundaries: bool=True, '
 					'show_const_names: bool=False, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class GovData( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Data.gov package search, package summary, and collection records.
-
-		Attributes:
-		-----------
-		api_key,
-		base_url,
-		url,
-		params,
-		payload,
-		query,
-		page_size,
-		offset_mark,
-		sort_field,
-		sort_order,
-		package_id,
-		collection,
-		start_date,
-		agents,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_resolve_api_key(...): Performs the _resolve_api_key operation for this fetcher.
-		_validate_page_size(...): Performs the _validate_page_size operation for this fetcher.
-		_validate_sort_field(...): Performs the _validate_sort_field operation for this fetcher.
-		_validate_sort_order(...): Performs the _validate_sort_order operation for this fetcher.
-		fetch_search(...): Performs the fetch_search operation for this fetcher.
-		fetch_package_summary(...): Performs the fetch_package_summary operation for this fetcher.
-		fetch_collection(...): Performs the fetch_collection operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the GovData component.
+	
+	Purpose:
+		Defines the GovData workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+		page_size: Runtime attribute maintained by the class.
+		offset_mark: Runtime attribute maintained by the class.
+		sort_field: Runtime attribute maintained by the class.
+		sort_order: Runtime attribute maintained by the class.
+		package_id: Runtime attribute maintained by the class.
+		collection: Runtime attribute maintained by the class.
+		start_date: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	base_url: Optional[ str ]
 	url: Optional[ str ]
@@ -7661,19 +6767,11 @@ class GovData( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the GovInfo fetcher with current API defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the GovData instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GovData workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.GOVINFO_API_KEY
 		self.base_url = 'https://api.govinfo.gov'
@@ -7696,19 +6794,14 @@ class GovData( Fetcher ):
 		self.agents = cfg.AGENTS
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'base_url',
@@ -7731,19 +6824,17 @@ class GovData( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> str:
-		'''
-			Purpose:
-			--------
-			Resolve the GovInfo API key, falling back to DEMO_KEY if none is set.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			str
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( self.api_key or '' ).strip( )
 			return value if value else 'DEMO_KEY'
@@ -7753,23 +6844,24 @@ class GovData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GovData'
 			exception.method = '_resolve_api_key( self ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_page_size( self, page_size: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate GovInfo page size.
-
-			Parameters:
-			-----------
-			page_size (int):
-				Requested page size.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate page size.
+		
+		Purpose:
+			Provides the documented validate page size operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			page_size: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( page_size )
 			if value < 1 or value > 1000:
@@ -7782,23 +6874,24 @@ class GovData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GovData'
 			exception.method = '_validate_page_size( self, page_size: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_sort_field( self, sort_field: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Validate supported sort field values for the search expander.
-
-			Parameters:
-			-----------
-			sort_field (str):
-				Sort field.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Validate validate sort field.
+		
+		Purpose:
+			Provides the documented validate sort field operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			sort_field: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( sort_field or 'score' ).strip( )
 			allowed = { 'score', 'lastModified' }
@@ -7815,23 +6908,24 @@ class GovData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GovData'
 			exception.method = '_validate_sort_field( self, sort_field: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_sort_order( self, sort_order: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Validate supported sort order values.
-
-			Parameters:
-			-----------
-			sort_order (str):
-				Sort order.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Validate validate sort order.
+		
+		Purpose:
+			Provides the documented validate sort order operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			sort_order: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( sort_order or 'DESC' ).strip( ).upper( )
 			allowed = { 'ASC', 'DESC' }
@@ -7846,45 +6940,31 @@ class GovData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GovData'
 			exception.method = '_validate_sort_order( self, sort_order: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_search( self, query: str, page_size: int=10,
-			offset_mark: str='*', sort_field: str='score',
-			sort_order: str='DESC', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
+	def fetch_search( self, query: str, page_size: int = 10,
+			offset_mark: str = '*', sort_field: str = 'score',
+			sort_order: str = 'DESC', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch search.
 		
-			Purpose:
-			--------
-			Execute a GovInfo Search Service query.
-
-			Parameters:
-			-----------
-			query (str):
-				GovInfo search expression. May include field operators such as
-				collection, congress, publishdate, and lastModified.
-
-			page_size (int):
-				Number of records to return. GovInfo allows up to 1000.
-
-			offset_mark (str):
-				Use '*' for the first page; for subsequent pages use the offsetMark
-				returned by the prior response.
-
-			sort_field (str):
-				Supported here:
-				- score
-				- lastModified
-
-			sort_order (str):
-				ASC or DESC.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+		Purpose:
+			Provides the documented fetch search operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			page_size: int value supplied by the caller.
+			offset_mark: str value supplied by the caller.
+			sort_field: str value supplied by the caller.
+			sort_order: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			
@@ -7936,27 +7016,26 @@ class GovData( Fetcher ):
 					'offset_mark: str=*, sort_field: str=score, '
 					'sort_order: str=DESC, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_package_summary( self, package_id: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a GovInfo package summary by package ID.
-
-			Parameters:
-			-----------
-			package_id (str):
-				GovInfo package identifier, such as CREC-2018-10-10.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch package summary.
+		
+		Purpose:
+			Provides the documented fetch package summary operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			package_id: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'package_id', package_id )
 			
@@ -7990,37 +7069,30 @@ class GovData( Fetcher ):
 					'fetch_package_summary( self, package_id: str, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_collection( self, collection: str, start_date: str,
-			page_size: int=10, offset_mark: str='*',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch packages from a GovInfo collection since a given ISO timestamp.
-
-			Parameters:
-			-----------
-			collection (str):
-				Collection code, such as CREC, FR, or BILLS.
-
-			start_date (str):
-				ISO timestamp such as 2018-10-01T00:00:00Z.
-
-			page_size (int):
-				Number of records to return.
-
-			offset_mark (str):
-				Use '*' for the first page.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			page_size: int = 10, offset_mark: str = '*',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch collection.
+		
+		Purpose:
+			Provides the documented fetch collection operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			collection: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			page_size: int value supplied by the caller.
+			offset_mark: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'collection', collection )
 			throw_if( 'start_date', start_date )
@@ -8062,57 +7134,37 @@ class GovData( Fetcher ):
 					'page_size: int=10, offset_mark: str=*, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='search', query: str='',
-			page_size: int=10, offset_mark: str='*',
-			sort_field: str='score', sort_order: str='DESC',
-			package_id: str='', collection: str='',
-			start_date: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for GovInfo requests.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- search
-				- package_summary
-				- collection
-
-			query (str):
-				GovInfo search query for search mode.
-
-			page_size (int):
-				Page size for search or collection mode.
-
-			offset_mark (str):
-				Offset marker for search or collection mode.
-
-			sort_field (str):
-				Sort field for search mode.
-
-			sort_order (str):
-				Sort order for search mode.
-
-			package_id (str):
-				Package ID for package_summary mode.
-
-			collection (str):
-				Collection code for collection mode.
-
-			start_date (str):
-				ISO timestamp for collection mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'search', query: str = '',
+			page_size: int = 10, offset_mark: str = '*',
+			sort_field: str = 'score', sort_order: str = 'DESC',
+			package_id: str = '', collection: str = '',
+			start_date: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			page_size: int value supplied by the caller.
+			offset_mark: str value supplied by the caller.
+			sort_field: str value supplied by the caller.
+			sort_order: str value supplied by the caller.
+			package_id: str value supplied by the caller.
+			collection: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'search' ).strip( ).lower( )
 			
@@ -8155,37 +7207,30 @@ class GovData( Fetcher ):
 					'sort_order: str=DESC, package_id: str=, collection: str=, '
 					'start_date: str=, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the GovData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -8216,146 +7261,38 @@ class GovData( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class StarChart( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides static and link-based star chart generation using the SKY-MAP.ORG
-		XML API, Site Linker, and Image Generator interfaces.
-
-		This class is intentionally chart-focused and kept separate from StarMap.
-
-		Referenced API Requirements:
-		----------------------------
-		XML Search:
-			- Endpoint: https://server1.sky-map.org/search
-			- Required parameter:
-				- star
-
-		Site Linker:
-			- Endpoint: https://www.sky-map.org/
-			- Supported parameters used here:
-				- object
-				- ra
-				- de
-				- zoom
-				- show_box
-				- box_color
-				- show_grid
-				- show_constellation_lines
-				- show_constellation_boundaries
-				- img_source
-
-		Image Generator:
-			- Endpoint: https://server2.sky-map.org/map
-			- Supported parameters used here:
-				- ra
-				- de
-				- zoom
-				- show_grid
-				- show_constellation_lines
-				- show_constellation_boundaries
-				- show_const_names
-				- img_source
-				- w
-				- h
-				- mag
-
-		Attributes:
-		-----------
-		search_url: Optional[str]
-			SKY-MAP XML search endpoint.
-
-		link_url: Optional[str]
-			SKY-MAP site-link endpoint.
-
-		image_url: Optional[str]
-			SKY-MAP image-generator endpoint.
-
-		url: Optional[str]
-			Resolved request URL.
-
-		params: Optional[Dict[str, Any]]
-			Request parameters.
-
-		mode: Optional[str]
-			Selected chart mode.
-
-		query: Optional[str]
-			Object query string.
-
-		ra: Optional[float]
-			Right Ascension in decimal hours.
-
-		dec: Optional[float]
-			Declination in decimal degrees.
-
-		zoom: Optional[int]
-			Chart zoom level.
-
-		image_source: Optional[str]
-			Chart image source.
-
-		box_color: Optional[str]
-			Pointer box color.
-
-		show_box: Optional[bool]
-			Show highlight box.
-
-		show_grid: Optional[bool]
-			Show coordinate grid.
-
-		show_lines: Optional[bool]
-			Show constellation lines.
-
-		show_boundaries: Optional[bool]
-			Show constellation boundaries.
-
-		show_const_names: Optional[bool]
-			Show constellation names.
-
-		width: Optional[int]
-			Generated image width.
-
-		height: Optional[int]
-			Generated image height.
-
-		magnitude: Optional[float]
-			Image generator limiting magnitude.
-
-		agents: Optional[str]
-			User-Agent string.
-
-		Methods:
-		--------
-		__init__() -> None
-			Initialize chart defaults.
-
-		__dir__() -> List[str]
-			Provide ordered member visibility.
-
-		search_object(...) -> Dict[str, Any] | None
-			Resolve an object name through the SKY-MAP XML API.
-
-		fetch_object_chart(...) -> Dict[str, Any] | None
-			Build an object-based chart link.
-
-		fetch_coordinate_chart(...) -> Dict[str, Any] | None
-			Build a coordinate-based chart link.
-
-		fetch_static_chart(...) -> Dict[str, Any] | None
-			Build a static chart image URL.
-
-		fetch(...) -> Dict[str, Any] | None
-			Unified dispatcher.
-
-		create_schema(...) -> Dict[str, str] | None
-			Construct a dynamic tool schema.
-
-	'''
+	"""Provide the StarChart component.
+	
+	Purpose:
+		Defines the StarChart workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		search_url: Runtime attribute maintained by the class.
+		link_url: Runtime attribute maintained by the class.
+		image_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+		ra: Runtime attribute maintained by the class.
+		dec: Runtime attribute maintained by the class.
+		zoom: Runtime attribute maintained by the class.
+		image_source: Runtime attribute maintained by the class.
+		box_color: Runtime attribute maintained by the class.
+		show_box: Runtime attribute maintained by the class.
+		show_grid: Runtime attribute maintained by the class.
+		show_lines: Runtime attribute maintained by the class.
+		show_boundaries: Runtime attribute maintained by the class.
+		show_const_names: Runtime attribute maintained by the class.
+		width: Runtime attribute maintained by the class.
+		height: Runtime attribute maintained by the class.
+		magnitude: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	search_url: Optional[ str ]
 	link_url: Optional[ str ]
 	image_url: Optional[ str ]
@@ -8379,19 +7316,11 @@ class StarChart( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the StarChart fetcher with current SKY-MAP defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the StarChart instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the StarChart workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.search_url = 'https://server1.sky-map.org/search'
@@ -8417,23 +7346,17 @@ class StarChart( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-			
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'search_url',
 				'link_url',
@@ -8463,50 +7386,40 @@ class StarChart( Fetcher ):
 				'create_schema'
 		]
 	
-	def _flag( self, value: bool, invert: bool=False ) -> int:
-		'''
-			Purpose:
-			--------
-			Convert boolean UI flags into SKY-MAP numeric flags.
-
-			Parameters:
-			-----------
-			value (bool):
-				Input boolean value.
-
-			invert (bool):
-				If True, invert the SKY-MAP convention.
-
-			Returns:
-			--------
-			int
-		'''
+	def _flag( self, value: bool, invert: bool = False ) -> int:
+		"""Run flag.
+		
+		Purpose:
+			Provides the documented flag operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			value: bool value supplied by the caller.
+			invert: bool value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		"""
 		if invert:
 			return 0 if bool( value ) else 1
 		
 		return 1 if bool( value ) else 0
 	
-	def search_object( self, name: str, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Resolve an object name into SKY-MAP coordinates using the XML API.
-
-			Parameters:
-			-----------
-			name (str):
-				Object name or catalog id. Examples:
-				- Polaris
-				- M31
-				- NGC 1300
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def search_object( self, name: str, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Search search object.
+		
+		Purpose:
+			Provides the documented search object operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			self.query = str( name ).strip( )
@@ -8565,40 +7478,31 @@ class StarChart( Fetcher ):
 					'search_object( self, name: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_object_chart( self, name: str, zoom: int=5,
-			box_color: str='yellow', show_box: bool=True,
-			image_source: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Build an object-based SKY-MAP chart link.
-
-			Parameters:
-			-----------
-			name (str):
-				Object name or catalog id.
-
-			zoom (int):
-				Chart zoom level.
-
-			box_color (str):
-				Pointer box color.
-
-			show_box (bool):
-				Show pointer box.
-
-			image_source (str):
-				Optional image source such as SDSS.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_object_chart( self, name: str, zoom: int = 5,
+			box_color: str = 'yellow', show_box: bool = True,
+			image_source: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch object chart.
+		
+		Purpose:
+			Provides the documented fetch object chart operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			name: str value supplied by the caller.
+			zoom: int value supplied by the caller.
+			box_color: str value supplied by the caller.
+			show_box: bool value supplied by the caller.
+			image_source: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'name', name )
 			self.mode = 'object_chart'
@@ -8617,7 +7521,7 @@ class StarChart( Fetcher ):
 			}
 			
 			if self.image_source:
-				self.params[ 'img_source' ]=self.image_source
+				self.params[ 'img_source' ] = self.image_source
 			
 			link = requests.Request( 'GET', self.url, params=self.params ).prepare( ).url
 			
@@ -8640,50 +7544,35 @@ class StarChart( Fetcher ):
 					'box_color: str=yellow, show_box: bool=True, image_source: str=, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_coordinate_chart( self, ra: float, dec: float, zoom: int=5,
-			box_color: str='yellow', show_box: bool=True,
-			show_grid: bool=True, show_lines: bool=True,
-			show_boundaries: bool=True, image_source: str='' ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Build a coordinate-based SKY-MAP chart link.
-
-			Parameters:
-			-----------
-			ra (float):
-				Right Ascension in decimal hours.
-
-			dec (float):
-				Declination in decimal degrees.
-
-			zoom (int):
-				Chart zoom level.
-
-			box_color (str):
-				Pointer box color.
-
-			show_box (bool):
-				Show pointer box.
-
-			show_grid (bool):
-				Show coordinate grid.
-
-			show_lines (bool):
-				Show constellation lines.
-
-			show_boundaries (bool):
-				Show constellation boundaries.
-
-			image_source (str):
-				Optional image source such as SDSS.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_coordinate_chart( self, ra: float, dec: float, zoom: int = 5,
+			box_color: str = 'yellow', show_box: bool = True,
+			show_grid: bool = True, show_lines: bool = True,
+			show_boundaries: bool = True, image_source: str = '' ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch coordinate chart.
+		
+		Purpose:
+			Provides the documented fetch coordinate chart operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ra: float value supplied by the caller.
+			dec: float value supplied by the caller.
+			zoom: int value supplied by the caller.
+			box_color: str value supplied by the caller.
+			show_box: bool value supplied by the caller.
+			show_grid: bool value supplied by the caller.
+			show_lines: bool value supplied by the caller.
+			show_boundaries: bool value supplied by the caller.
+			image_source: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'coordinate_chart'
 			self.ra = float( ra )
@@ -8709,7 +7598,7 @@ class StarChart( Fetcher ):
 			}
 			
 			if self.image_source:
-				self.params[ 'img_source' ]=self.image_source
+				self.params[ 'img_source' ] = self.image_source
 			
 			link = requests.Request( 'GET', self.url, params=self.params ).prepare( ).url
 			
@@ -8730,57 +7619,38 @@ class StarChart( Fetcher ):
 					'show_lines: bool=True, show_boundaries: bool=True, image_source: str= ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_static_chart( self, ra: float, dec: float, zoom: int=5,
-			image_source: str='DSS2', show_grid: bool=True,
-			show_lines: bool=True, show_boundaries: bool=True,
-			show_const_names: bool=False, width: int=900,
-			height: int=450, magnitude: float=7.5 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Build a static SKY-MAP chart image URL.
-
-			Parameters:
-			-----------
-			ra (float):
-				Right Ascension in decimal hours.
-
-			dec (float):
-				Declination in decimal degrees.
-
-			zoom (int):
-				Chart zoom level.
-
-			image_source (str):
-				Image survey source.
-
-			show_grid (bool):
-				Show grid.
-
-			show_lines (bool):
-				Show constellation lines.
-
-			show_boundaries (bool):
-				Show constellation boundaries.
-
-			show_const_names (bool):
-				Show constellation names.
-
-			width (int):
-				Image width in pixels.
-
-			height (int):
-				Image height in pixels.
-
-			magnitude (float):
-				Limiting magnitude.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_static_chart( self, ra: float, dec: float, zoom: int = 5,
+			image_source: str = 'DSS2', show_grid: bool = True,
+			show_lines: bool = True, show_boundaries: bool = True,
+			show_const_names: bool = False, width: int = 900,
+			height: int = 450, magnitude: float = 7.5 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch static chart.
+		
+		Purpose:
+			Provides the documented fetch static chart operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			ra: float value supplied by the caller.
+			dec: float value supplied by the caller.
+			zoom: int value supplied by the caller.
+			image_source: str value supplied by the caller.
+			show_grid: bool value supplied by the caller.
+			show_lines: bool value supplied by the caller.
+			show_boundaries: bool value supplied by the caller.
+			show_const_names: bool value supplied by the caller.
+			width: int value supplied by the caller.
+			height: int value supplied by the caller.
+			magnitude: float value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'static_chart'
 			self.ra = float( ra )
@@ -8833,79 +7703,46 @@ class StarChart( Fetcher ):
 					'width: int=900, height: int=450, magnitude: float=7.5 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='object_chart', query: str='',
-			ra: float=0.0, dec: float=0.0, zoom: int=5,
-			image_source: str='DSS2', box_color: str='yellow',
-			show_box: bool=True, show_grid: bool=True,
-			show_lines: bool=True, show_boundaries: bool=True,
-			show_const_names: bool=False, width: int=900,
-			height: int=450, magnitude: float=7.5,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for SKY-MAP chart generation.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of:
-				- object_search
-				- object_chart
-				- coordinate_chart
-				- static_chart
-
-			query (str):
-				Object query for object_search and object_chart.
-
-			ra (float):
-				Right Ascension for coordinate_chart and static_chart.
-
-			dec (float):
-				Declination for coordinate_chart and static_chart.
-
-			zoom (int):
-				Chart zoom level.
-
-			image_source (str):
-				Image source.
-
-			box_color (str):
-				Pointer box color.
-
-			show_box (bool):
-				Show pointer box.
-
-			show_grid (bool):
-				Show coordinate grid.
-
-			show_lines (bool):
-				Show constellation lines.
-
-			show_boundaries (bool):
-				Show constellation boundaries.
-
-			show_const_names (bool):
-				Show constellation names.
-
-			width (int):
-				Static image width.
-
-			height (int):
-				Static image height.
-
-			magnitude (float):
-				Static image limiting magnitude.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'object_chart', query: str = '',
+			ra: float = 0.0, dec: float = 0.0, zoom: int = 5,
+			image_source: str = 'DSS2', box_color: str = 'yellow',
+			show_box: bool = True, show_grid: bool = True,
+			show_lines: bool = True, show_boundaries: bool = True,
+			show_const_names: bool = False, width: int = 900,
+			height: int = 450, magnitude: float = 7.5,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			ra: float value supplied by the caller.
+			dec: float value supplied by the caller.
+			zoom: int value supplied by the caller.
+			image_source: str value supplied by the caller.
+			box_color: str value supplied by the caller.
+			show_box: bool value supplied by the caller.
+			show_grid: bool value supplied by the caller.
+			show_lines: bool value supplied by the caller.
+			show_boundaries: bool value supplied by the caller.
+			show_const_names: bool value supplied by the caller.
+			width: int value supplied by the caller.
+			height: int value supplied by the caller.
+			magnitude: float value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = (mode or 'object_chart').strip( ).lower( )
 			if active_mode == 'object_search':
@@ -8924,7 +7761,7 @@ class StarChart( Fetcher ):
 					show_grid=show_grid,
 					show_lines=show_lines,
 					show_boundaries=show_boundaries,
-					image_source=image_source if image_source != 'DSS2' else '')
+					image_source=image_source if image_source != 'DSS2' else '' )
 			
 			if active_mode == 'static_chart':
 				return self.fetch_static_chart(
@@ -8958,37 +7795,30 @@ class StarChart( Fetcher ):
 					'show_const_names: bool=False, width: int=900, height: int=450, '
 					'magnitude: float=7.5, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the StarChart workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -9015,59 +7845,36 @@ class StarChart( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class Congress( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Congress.gov congress, bill, law, and report resources.
-
-		Attributes:
-		-----------
-		api_key,
-		base_url,
-		url,
-		params,
-		mode,
-		congress_number,
-		bill_type,
-		bill_number,
-		law_type,
-		law_number,
-		report_type,
-		report_number,
-		offset,
-		limit,
-		sort,
-		from_date_time,
-		to_date_time,
-		conference,
-		agents,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_resolve_api_key(...): Performs the _resolve_api_key operation for this fetcher.
-		_validate_limit(...): Performs the _validate_limit operation for this fetcher.
-		_validate_offset(...): Performs the _validate_offset operation for this fetcher.
-		_normalize_bill_type(...): Performs the _normalize_bill_type operation for this fetcher.
-		_normalize_law_type(...): Performs the _normalize_law_type operation for this fetcher.
-		_normalize_report_type(...): Performs the _normalize_report_type operation for this fetcher.
-		_base_params(...): Performs the _base_params operation for this fetcher.
-		fetch_congresses(...): Performs the fetch_congresses operation for this fetcher.
-		fetch_bills(...): Performs the fetch_bills operation for this fetcher.
-		fetch_bill(...): Performs the fetch_bill operation for this fetcher.
-		fetch_laws(...): Performs the fetch_laws operation for this fetcher.
-		fetch_law(...): Performs the fetch_law operation for this fetcher.
-		fetch_reports(...): Performs the fetch_reports operation for this fetcher.
-		fetch_report(...): Performs the fetch_report operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the Congress component.
+	
+	Purpose:
+		Defines the Congress workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		congress_number: Runtime attribute maintained by the class.
+		bill_type: Runtime attribute maintained by the class.
+		bill_number: Runtime attribute maintained by the class.
+		law_type: Runtime attribute maintained by the class.
+		law_number: Runtime attribute maintained by the class.
+		report_type: Runtime attribute maintained by the class.
+		report_number: Runtime attribute maintained by the class.
+		offset: Runtime attribute maintained by the class.
+		limit: Runtime attribute maintained by the class.
+		sort: Runtime attribute maintained by the class.
+		from_date_time: Runtime attribute maintained by the class.
+		to_date_time: Runtime attribute maintained by the class.
+		conference: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	base_url: Optional[ str ]
 	url: Optional[ str ]
@@ -9089,19 +7896,11 @@ class Congress( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the Congress fetcher with current API defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the Congress instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Congress workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.CONGRESS_API_KEY
 		self.base_url = 'https://api.congress.gov/v3'
@@ -9128,19 +7927,14 @@ class Congress( Fetcher ):
 		self.agents = cfg.AGENTS
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'base_url',
@@ -9172,19 +7966,17 @@ class Congress( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> str:
-		'''
-			Purpose:
-			--------
-			Resolve the Congress.gov API key.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			str
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( self.api_key or '' ).strip( )
 			throw_if( 'CONGRESS_API_KEY', value )
@@ -9195,23 +7987,24 @@ class Congress( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Congress'
 			exception.method = '_resolve_api_key( self ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_limit( self, limit: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate list request page size.
-
-			Parameters:
-			-----------
-			limit (int):
-				Page size.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate limit.
+		
+		Purpose:
+			Provides the documented validate limit operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			limit: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( limit )
 			if value < 1 or value > 250:
@@ -9224,23 +8017,24 @@ class Congress( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Congress'
 			exception.method = '_validate_limit( self, limit: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_offset( self, offset: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate list request offset.
-
-			Parameters:
-			-----------
-			offset (int):
-				Offset value.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate offset.
+		
+		Purpose:
+			Provides the documented validate offset operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			offset: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( offset )
 			if value < 0:
@@ -9253,23 +8047,24 @@ class Congress( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Congress'
 			exception.method = '_validate_offset( self, offset: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _normalize_bill_type( self, bill_type: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Normalize bill type codes.
-
-			Parameters:
-			-----------
-			bill_type (str):
-				Bill type code.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Normalize normalize bill type.
+		
+		Purpose:
+			Provides the documented normalize bill type operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			bill_type: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( bill_type or '' ).strip( ).lower( )
 			throw_if( 'bill_type', value )
@@ -9292,23 +8087,24 @@ class Congress( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Congress'
 			exception.method = '_normalize_bill_type( self, bill_type: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _normalize_law_type( self, law_type: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Normalize law type codes.
-
-			Parameters:
-			-----------
-			law_type (str):
-				Law type code.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Normalize normalize law type.
+		
+		Purpose:
+			Provides the documented normalize law type operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			law_type: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( law_type or '' ).strip( ).lower( )
 			throw_if( 'law_type', value )
@@ -9325,23 +8121,24 @@ class Congress( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Congress'
 			exception.method = '_normalize_law_type( self, law_type: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _normalize_report_type( self, report_type: str ) -> str:
-		'''
-			Purpose:
-			--------
-			Normalize committee report type codes.
-
-			Parameters:
-			-----------
-			report_type (str):
-				Committee report type code.
-
-			Returns:
-			--------
-			str
-		'''
+		"""Normalize normalize report type.
+		
+		Purpose:
+			Provides the documented normalize report type operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			report_type: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( report_type or '' ).strip( ).lower( )
 			throw_if( 'report_type', value )
@@ -9360,30 +8157,27 @@ class Congress( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Congress'
 			exception.method = '_normalize_report_type( self, report_type: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def _base_params( self, limit: int=20, offset: int=0,
-			sort: str='updateDate+desc' ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Construct shared list-query parameters.
-
-			Parameters:
-			-----------
-			limit (int):
-				Page size.
-
-			offset (int):
-				Result offset.
-
-			sort (str):
-				Sort directive.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+	def _base_params( self, limit: int = 20, offset: int = 0,
+			sort: str = 'updateDate+desc' ) -> Dict[ str, Any ]:
+		"""Run base params.
+		
+		Purpose:
+			Provides the documented base params operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			sort: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			return {
 					'api_key': self._resolve_api_key( ),
@@ -9401,30 +8195,27 @@ class Congress( Fetcher ):
 					'_base_params( self, limit: int=20, offset: int=0, '
 					'sort: str=updateDate+desc ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_congresses( self, limit: int=20, offset: int=0,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the list of congresses and sessions.
-
-			Parameters:
-			-----------
-			limit (int):
-				Page size.
-
-			offset (int):
-				Result offset.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_congresses( self, limit: int = 20, offset: int = 0,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch congresses.
+		
+		Purpose:
+			Provides the documented fetch congresses operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.url = f'{self.base_url}/congress'
 			self.params = self._base_params(
@@ -9456,47 +8247,34 @@ class Congress( Fetcher ):
 					'fetch_congresses( self, limit: int=20, offset: int=0, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_bills( self, congress: int, bill_type: str='',
-			offset: int=0, limit: int=20, from_date_time: str='',
-			to_date_time: str='', sort: str='updateDate+desc',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch bills for a congress, optionally filtered by bill type.
-
-			Parameters:
-			-----------
-			congress (int):
-				Congress number.
-
-			bill_type (str):
-				Optional bill type code.
-
-			offset (int):
-				Result offset.
-
-			limit (int):
-				Page size.
-
-			from_date_time (str):
-				Optional ISO timestamp filter.
-
-			to_date_time (str):
-				Optional ISO timestamp filter.
-
-			sort (str):
-				Sort directive.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_bills( self, congress: int, bill_type: str = '',
+			offset: int = 0, limit: int = 20, from_date_time: str = '',
+			to_date_time: str = '', sort: str = 'updateDate+desc',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch bills.
+		
+		Purpose:
+			Provides the documented fetch bills operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			congress: int value supplied by the caller.
+			bill_type: str value supplied by the caller.
+			offset: int value supplied by the caller.
+			limit: int value supplied by the caller.
+			from_date_time: str value supplied by the caller.
+			to_date_time: str value supplied by the caller.
+			sort: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'congress', congress )
 			
@@ -9516,10 +8294,10 @@ class Congress( Fetcher ):
 			)
 			
 			if from_date_time:
-				self.params[ 'fromDateTime' ]=str( from_date_time ).strip( )
+				self.params[ 'fromDateTime' ] = str( from_date_time ).strip( )
 			
 			if to_date_time:
-				self.params[ 'toDateTime' ]=str( to_date_time ).strip( )
+				self.params[ 'toDateTime' ] = str( to_date_time ).strip( )
 			
 			self.response = requests.get(
 				url=self.url,
@@ -9546,33 +8324,28 @@ class Congress( Fetcher ):
 					'to_date_time: str=, sort: str=updateDate+desc, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_bill( self, congress: int, bill_type: str,
-			bill_number: int, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a specific bill by congress, bill type, and bill number.
-
-			Parameters:
-			-----------
-			congress (int):
-				Congress number.
-
-			bill_type (str):
-				Bill type code.
-
-			bill_number (int):
-				Bill number.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			bill_number: int, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch bill.
+		
+		Purpose:
+			Provides the documented fetch bill operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			congress: int value supplied by the caller.
+			bill_type: str value supplied by the caller.
+			bill_number: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'congress', congress )
 			throw_if( 'bill_type', bill_type )
@@ -9614,37 +8387,30 @@ class Congress( Fetcher ):
 					'fetch_bill( self, congress: int, bill_type: str, '
 					'bill_number: int, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_laws( self, congress: int, law_type: str='',
-			offset: int=0, limit: int=20,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch laws for a congress, optionally filtered by law type.
-
-			Parameters:
-			-----------
-			congress (int):
-				Congress number.
-
-			law_type (str):
-				Optional law type code: pub or priv.
-
-			offset (int):
-				Result offset.
-
-			limit (int):
-				Page size.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_laws( self, congress: int, law_type: str = '',
+			offset: int = 0, limit: int = 20,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch laws.
+		
+		Purpose:
+			Provides the documented fetch laws operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			congress: int value supplied by the caller.
+			law_type: str value supplied by the caller.
+			offset: int value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'congress', congress )
 			
@@ -9687,33 +8453,28 @@ class Congress( Fetcher ):
 					'offset: int=0, limit: int=20, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_law( self, congress: int, law_type: str,
-			law_number: int, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a specific law by congress, law type, and law number.
-
-			Parameters:
-			-----------
-			congress (int):
-				Congress number.
-
-			law_type (str):
-				Law type code: pub or priv.
-
-			law_number (int):
-				Law number.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			law_number: int, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch law.
+		
+		Purpose:
+			Provides the documented fetch law operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			congress: int value supplied by the caller.
+			law_type: str value supplied by the caller.
+			law_number: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'congress', congress )
 			throw_if( 'law_type', law_type )
@@ -9755,41 +8516,31 @@ class Congress( Fetcher ):
 					'fetch_law( self, congress: int, law_type: str, '
 					'law_number: int, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_reports( self, congress: int, report_type: str='',
-			offset: int=0, limit: int=20, conference: bool=False,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch committee reports for a congress, optionally filtered by
-			report type.
-
-			Parameters:
-			-----------
-			congress (int):
-				Congress number.
-
-			report_type (str):
-				Optional report type code: hrpt, srpt, or erpt.
-
-			offset (int):
-				Result offset.
-
-			limit (int):
-				Page size.
-
-			conference (bool):
-				Whether to request conference reports where supported.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_reports( self, congress: int, report_type: str = '',
+			offset: int = 0, limit: int = 20, conference: bool = False,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch reports.
+		
+		Purpose:
+			Provides the documented fetch reports operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			congress: int value supplied by the caller.
+			report_type: str value supplied by the caller.
+			offset: int value supplied by the caller.
+			limit: int value supplied by the caller.
+			conference: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'congress', congress )
 			
@@ -9811,7 +8562,7 @@ class Congress( Fetcher ):
 				offset=offset,
 				sort='updateDate+desc'
 			)
-			self.params[ 'conference' ]=str( self.conference ).lower( )
+			self.params[ 'conference' ] = str( self.conference ).lower( )
 			
 			self.response = requests.get(
 				url=self.url,
@@ -9837,33 +8588,28 @@ class Congress( Fetcher ):
 					'offset: int=0, limit: int=20, conference: bool=False, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_report( self, congress: int, report_type: str,
-			report_number: int, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a specific committee report.
-
-			Parameters:
-			-----------
-			congress (int):
-				Congress number.
-
-			report_type (str):
-				Report type code.
-
-			report_number (int):
-				Report number.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			report_number: int, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch report.
+		
+		Purpose:
+			Provides the documented fetch report operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			congress: int value supplied by the caller.
+			report_type: str value supplied by the caller.
+			report_number: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'congress', congress )
 			throw_if( 'report_type', report_type )
@@ -9905,78 +8651,44 @@ class Congress( Fetcher ):
 					'fetch_report( self, congress: int, report_type: str, '
 					'report_number: int, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='congresses', congress: int=0,
-			bill_type: str='', bill_number: int=0, law_type: str='',
-			law_number: int=0, report_type: str='',
-			report_number: int=0, offset: int=0, limit: int=20,
-			sort: str='updateDate+desc', from_date_time: str='',
-			to_date_time: str='', conference: bool=False,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for Congress.gov requests.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- congresses
-				- bills
-				- bill_detail
-				- laws
-				- law_detail
-				- reports
-				- report_detail
-
-			congress (int):
-				Congress number for congress-scoped modes.
-
-			bill_type (str):
-				Bill type code for bill modes.
-
-			bill_number (int):
-				Bill number for bill_detail mode.
-
-			law_type (str):
-				Law type code for law modes.
-
-			law_number (int):
-				Law number for law_detail mode.
-
-			report_type (str):
-				Report type code for report modes.
-
-			report_number (int):
-				Report number for report_detail mode.
-
-			offset (int):
-				Result offset for list modes.
-
-			limit (int):
-				Page size for list modes.
-
-			sort (str):
-				Sort directive for bill list modes.
-
-			from_date_time (str):
-				Optional ISO timestamp for bill list mode.
-
-			to_date_time (str):
-				Optional ISO timestamp for bill list mode.
-
-			conference (bool):
-				Conference report filter for report list mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'congresses', congress: int = 0,
+			bill_type: str = '', bill_number: int = 0, law_type: str = '',
+			law_number: int = 0, report_type: str = '',
+			report_number: int = 0, offset: int = 0, limit: int = 20,
+			sort: str = 'updateDate+desc', from_date_time: str = '',
+			to_date_time: str = '', conference: bool = False,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			congress: int value supplied by the caller.
+			bill_type: str value supplied by the caller.
+			bill_number: int value supplied by the caller.
+			law_type: str value supplied by the caller.
+			law_number: int value supplied by the caller.
+			report_type: str value supplied by the caller.
+			report_number: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			limit: int value supplied by the caller.
+			sort: str value supplied by the caller.
+			from_date_time: str value supplied by the caller.
+			to_date_time: str value supplied by the caller.
+			conference: bool value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'congresses' ).strip( ).lower( )
 			
@@ -10059,37 +8771,30 @@ class Congress( Fetcher ):
 					'from_date_time: str=, to_date_time: str=, '
 					'conference: bool=False, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the Congress workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -10120,40 +8825,28 @@ class Congress( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class InternetArchive( Fetcher ):
-	'''
+	"""Provide the InternetArchive component.
 	
-		Purpose:
-		--------
-		Fetches Internet Archive search records.
+	Purpose:
+		Defines the InternetArchive workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
 	
-		Attributes:
-		-----------
-		keywords,
-		url,
-		response,
-		fields,
-		rows,
-		page,
-		sort,
-		media_type,
-		collection,
-		params,
-		agents,
-	
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_validate_rows(...): Performs the _validate_rows operation for this fetcher.
-		_validate_page(...): Performs the _validate_page operation for this fetcher.
-		_build_query(...): Performs the _build_query operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-	
-	'''
+	Attributes:
+		keywords: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+		fields: Runtime attribute maintained by the class.
+		rows: Runtime attribute maintained by the class.
+		page: Runtime attribute maintained by the class.
+		sort: Runtime attribute maintained by the class.
+		media_type: Runtime attribute maintained by the class.
+		collection: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	keywords: Optional[ str ]
 	url: Optional[ str ]
 	response: Optional[ Response ]
@@ -10167,19 +8860,11 @@ class InternetArchive( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the Internet Archive wrapper with sane defaults.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the InternetArchive instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the InternetArchive workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.url = 'https://archive.org/advancedsearch.php'
 		self.headers = { }
@@ -10204,25 +8889,20 @@ class InternetArchive( Fetcher ):
 		self.agents = cfg.AGENTS
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		if 'Accept' not in self.headers:
-			self.headers[ 'Accept' ]='application/json'
+			self.headers[ 'Accept' ] = 'application/json'
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the InternetArchive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'keywords',
 				'url',
@@ -10241,20 +8921,20 @@ class InternetArchive( Fetcher ):
 		]
 	
 	def _validate_rows( self, rows: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate requested page size.
-
-			Parameters:
-			-----------
-			rows (int):
-				Requested number of results.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate rows.
+		
+		Purpose:
+			Provides the documented validate rows operation for the InternetArchive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( rows )
 			if value < 1 or value > 100:
@@ -10267,23 +8947,24 @@ class InternetArchive( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'InternetArchive'
 			exception.method = '_validate_rows( self, rows: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_page( self, page: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate requested page number.
-
-			Parameters:
-			-----------
-			page (int):
-				Requested page number.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate page.
+		
+		Purpose:
+			Provides the documented validate page operation for the InternetArchive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			page: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( page )
 			if value < 1:
@@ -10296,34 +8977,31 @@ class InternetArchive( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'InternetArchive'
 			exception.method = '_validate_page( self, page: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
-	def _build_query( self, keywords: str, media_type: str='',
-			collection: str='' ) -> str:
-		'''
-			Purpose:
-			--------
-			Build an Internet Archive advanced search query expression.
-
-			Parameters:
-			-----------
-			keywords (str):
-				Base free-text query.
-
-			media_type (str):
-				Optional mediatype filter.
-
-			collection (str):
-				Optional collection filter.
-
-			Returns:
-			--------
-			str
-		'''
+	def _build_query( self, keywords: str, media_type: str = '',
+			collection: str = '' ) -> str:
+		"""Build build query.
+		
+		Purpose:
+			Provides the documented build query operation for the InternetArchive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			keywords: str value supplied by the caller.
+			media_type: str value supplied by the caller.
+			collection: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'keywords', keywords )
 			
-			parts: List[ str ]=[ f'({str( keywords ).strip( )})' ]
+			parts: List[ str ] = [ f'({str( keywords ).strip( )})' ]
 			
 			if media_type and str( media_type ).strip( ):
 				parts.append( f'AND mediatype:({str( media_type ).strip( )})' )
@@ -10341,47 +9019,34 @@ class InternetArchive( Fetcher ):
 					'_build_query( self, keywords: str, media_type: str=, '
 					'collection: str= ) -> str'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, keywords: str, fields: List[ str ] | None=None,
-			rows: int=10, page: int=1, sort: str='downloads desc',
-			media_type: str='', collection: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Execute an Internet Archive advanced search request.
-
-			Parameters:
-			-----------
-			keywords (str):
-				Free-text Internet Archive query.
-
-			fields (List[str] | None):
-				Optional list of result fields to request.
-
-			rows (int):
-				Number of results per page.
-
-			page (int):
-				Page number.
-
-			sort (str):
-				Archive sort directive such as downloads desc or publicdate desc.
-
-			media_type (str):
-				Optional media type filter.
-
-			collection (str):
-				Optional collection filter.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, keywords: str, fields: List[ str ] | None = None,
+			rows: int = 10, page: int = 1, sort: str = 'downloads desc',
+			media_type: str = '', collection: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the InternetArchive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			keywords: str value supplied by the caller.
+			fields: List[str] | None value supplied by the caller.
+			rows: int value supplied by the caller.
+			page: int value supplied by the caller.
+			sort: str value supplied by the caller.
+			media_type: str value supplied by the caller.
+			collection: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.keywords = str( keywords ).strip( )
 			throw_if( 'keywords', self.keywords )
@@ -10439,37 +9104,30 @@ class InternetArchive( Fetcher ):
 					'media_type: str=, collection: str=, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the InternetArchive workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -10500,118 +9158,34 @@ class InternetArchive( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class OpenWeather( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides forecast weather retrieval by location name using the Open-Meteo
-		Geocoding API and Open-Meteo Forecast API.
-
-		This class is forecast-only by design and intentionally excludes archive /
-		historical date-based retrieval so it does not overlap with the separate
-		HistoricalWeather class.
-
-		Referenced API Requirements:
-		----------------------------
-		Geocoding API:
-			- Endpoint: https://geocoding-api.open-meteo.com/v1/search
-			- Required parameter: name
-			- Optional parameter: count
-
-		Forecast API:
-			- Endpoint: https://api.open-meteo.com/v1/forecast
-			- Required parameters: latitude, longitude
-			- Optional parameters used here:
-				- current
-				- hourly
-				- daily
-				- timezone
-				- forecast_days
-				- past_days
-				- temperature_unit
-				- wind_speed_unit
-				- precipitation_unit
-
-		Attributes:
-		-----------
-		geocode_url: Optional[str]
-			The Open-Meteo geocoding endpoint.
-
-		forecast_url: Optional[str]
-			The Open-Meteo forecast endpoint.
-
-		location: Optional[str]
-			User-supplied location query.
-
-		latitude: Optional[float]
-			Resolved latitude from geocoding.
-
-		longitude: Optional[float]
-			Resolved longitude from geocoding.
-
-		timezone: Optional[str]
-			Resolved or user-requested timezone.
-
-		mode: Optional[str]
-			Forecast mode: current, hourly, or daily.
-
-		current_metrics: Optional[List[str]]
-			Current weather metrics requested from the API.
-
-		hourly_metrics: Optional[List[str]]
-			Hourly metrics requested from the API.
-
-		daily_metrics: Optional[List[str]]
-			Daily metrics requested from the API.
-
-		windspeed_unit: Optional[str]
-			Wind speed unit passed to the API.
-
-		temperature_unit: Optional[str]
-			Temperature unit passed to the API.
-
-		precipitation_unit: Optional[str]
-			Precipitation unit passed to the API.
-
-		params: Optional[Dict[str, Any]]
-			Request parameters for the forecast call.
-
-		geocode_params: Optional[Dict[str, Any]]
-			Request parameters for the geocoding call.
-
-		result_limit: Optional[int]
-			Maximum number of geocoding candidates to request.
-
-		Methods:
-		--------
-		__init__() -> None
-			Initialize the fetcher and default metric sets.
-
-		__dir__() -> List[str]
-			Provide ordered member visibility.
-
-		geocode_location(...) -> Dict[str, Any] | None
-			Resolve a place name into a selected geocoding record.
-
-		fetch(...) -> Dict[str, Any] | None
-			Resolve a location string and retrieve forecast weather.
-
-		fetch_current(...) -> Dict[str, Any] | None
-			Retrieve current forecast conditions only.
-
-		fetch_hourly(...) -> Dict[str, Any] | None
-			Retrieve hourly forecast data.
-
-		fetch_daily(...) -> Dict[str, Any] | None
-			Retrieve daily forecast data.
-
-		create_schema(...) -> Dict[str, str] | None
-			Generate a dynamic tool schema definition.
-
-	'''
+	"""Provide the OpenWeather component.
+	
+	Purpose:
+		Defines the OpenWeather workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		geocode_url: Runtime attribute maintained by the class.
+		forecast_url: Runtime attribute maintained by the class.
+		location: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		timezone: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		current_metrics: Runtime attribute maintained by the class.
+		hourly_metrics: Runtime attribute maintained by the class.
+		daily_metrics: Runtime attribute maintained by the class.
+		windspeed_unit: Runtime attribute maintained by the class.
+		temperature_unit: Runtime attribute maintained by the class.
+		precipitation_unit: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		geocode_params: Runtime attribute maintained by the class.
+		result_limit: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	geocode_url: Optional[ str ]
 	forecast_url: Optional[ str ]
 	location: Optional[ str ]
@@ -10631,22 +9205,11 @@ class OpenWeather( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-
-			Purpose:
-			--------
-			Initialize the OpenWeather forecast fetcher with forecast-only defaults,
-			endpoints, headers, unit selections, and metric collections.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-
-		'''
+		"""Initialize the OpenWeather instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the OpenWeather workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.agents = cfg.AGENTS
@@ -10665,7 +9228,7 @@ class OpenWeather( Fetcher ):
 		self.params = None
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		self.current_metrics = [
 				'temperature_2m',
@@ -10726,22 +9289,14 @@ class OpenWeather( Fetcher ):
 		]
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-
-			Purpose:
-			--------
-			Provide ordered member visibility for introspection and editor discovery.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Ordered attribute and method names.
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'geocode_url',
 				'forecast_url',
@@ -10767,28 +9322,22 @@ class OpenWeather( Fetcher ):
 				'create_schema'
 		]
 	
-	def geocode_location( self, location: str, count: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Resolve a user-supplied location string into a geocoding result from
-			the Open-Meteo Geocoding API.
-
-			Parameters:
-			-----------
-			location (str):
-				The place name or postal code to search for.
-
-			count (int):
-				The maximum number of geocoding matches to request.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				The selected geocoding record, typically the first result.
-
-		'''
+	def geocode_location( self, location: str, count: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Run geocode location.
+		
+		Purpose:
+			Provides the documented geocode location operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			location: str value supplied by the caller.
+			count: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'location', location )
 			self.location = location.strip( )
@@ -10830,37 +9379,28 @@ class OpenWeather( Fetcher ):
 					'geocode_location( self, location: str, count: int=10 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_current( self, lat: float, long: float, zone: str='auto',
-			past_days: int=0 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Retrieve current forecast conditions for a coordinate pair.
-
-			Parameters:
-			-----------
-			lat (float):
-				The latitude of the resolved location.
-
-			long (float):
-				The longitude of the resolved location.
-
-			zone (str):
-				The timezone for the response. Supports 'auto'.
-
-			past_days (int):
-				Optional number of previous days to include when supported by
-				the forecast API.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Normalized forecast response containing current conditions.
-
-		'''
+	def fetch_current( self, lat: float, long: float, zone: str = 'auto',
+			past_days: int = 0 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch current.
+		
+		Purpose:
+			Provides the documented fetch current operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			lat: float value supplied by the caller.
+			long: float value supplied by the caller.
+			zone: str value supplied by the caller.
+			past_days: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'lat', lat )
 			throw_if( 'long', long )
@@ -10912,39 +9452,29 @@ class OpenWeather( Fetcher ):
 					'fetch_current( self, lat: float, long: float, zone: str=auto, '
 					'past_days: int=0 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_hourly( self, lat: float, long: float, zone: str='auto',
-			forecast_days: int=7, past_days: int=0 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Retrieve hourly forecast data for a coordinate pair.
-
-			Parameters:
-			-----------
-			lat (float):
-				The latitude of the resolved location.
-
-			long (float):
-				The longitude of the resolved location.
-
-			zone (str):
-				The timezone for the response. Supports 'auto'.
-
-			forecast_days (int):
-				Number of forecast days to request.
-
-			past_days (int):
-				Optional number of previous days to include.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Normalized forecast response containing hourly data.
-
-		'''
+	def fetch_hourly( self, lat: float, long: float, zone: str = 'auto',
+			forecast_days: int = 7, past_days: int = 0 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch hourly.
+		
+		Purpose:
+			Provides the documented fetch hourly operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			lat: float value supplied by the caller.
+			long: float value supplied by the caller.
+			zone: str value supplied by the caller.
+			forecast_days: int value supplied by the caller.
+			past_days: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'lat', lat )
 			throw_if( 'long', long )
@@ -10997,39 +9527,29 @@ class OpenWeather( Fetcher ):
 					'fetch_hourly( self, lat: float, long: float, zone: str=auto, '
 					'forecast_days: int=7, past_days: int=0 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_daily( self, lat: float, long: float, zone: str='auto',
-			forecast_days: int=7, past_days: int=0 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Retrieve daily forecast data for a coordinate pair.
-
-			Parameters:
-			-----------
-			lat (float):
-				The latitude of the resolved location.
-
-			long (float):
-				The longitude of the resolved location.
-
-			zone (str):
-				The timezone for the response. Supports 'auto'.
-
-			forecast_days (int):
-				Number of forecast days to request.
-
-			past_days (int):
-				Optional number of previous days to include.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Normalized forecast response containing daily data.
-
-		'''
+	def fetch_daily( self, lat: float, long: float, zone: str = 'auto',
+			forecast_days: int = 7, past_days: int = 0 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch daily.
+		
+		Purpose:
+			Provides the documented fetch daily operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			lat: float value supplied by the caller.
+			long: float value supplied by the caller.
+			zone: str value supplied by the caller.
+			forecast_days: int value supplied by the caller.
+			past_days: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'lat', lat )
 			throw_if( 'long', long )
@@ -11082,46 +9602,31 @@ class OpenWeather( Fetcher ):
 					'fetch_daily( self, lat: float, long: float, zone: str=auto, '
 					'forecast_days: int=7, past_days: int=0 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, location: str, mode: str='current', zone: str='auto',
-			forecast_days: int=7, past_days: int=0,
-			count: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Resolve a location string to coordinates, then retrieve forecast weather
-			using the selected non-historical mode.
-
-			Parameters:
-			-----------
-			location (str):
-				The place name entered by the user.
-
-			mode (str):
-				Forecast mode. Supported values are current, hourly, and daily.
-
-			zone (str):
-				The timezone requested for the forecast response. If 'auto', the API
-				will resolve the local timezone for the coordinates.
-
-			forecast_days (int):
-				Number of forecast days to request for hourly and daily modes.
-
-			past_days (int):
-				Optional number of previous days to include.
-
-			count (int):
-				Maximum number of geocoding matches to request before selecting the
-				first result.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Combined geocoding and forecast result.
-
-		'''
+	def fetch( self, location: str, mode: str = 'current', zone: str = 'auto',
+			forecast_days: int = 7, past_days: int = 0,
+			count: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			location: str value supplied by the caller.
+			mode: str value supplied by the caller.
+			zone: str value supplied by the caller.
+			forecast_days: int value supplied by the caller.
+			past_days: int value supplied by the caller.
+			count: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'location', location )
 			throw_if( 'mode', mode )
@@ -11181,7 +9686,7 @@ class OpenWeather( Fetcher ):
 					"Unsupported mode. Use 'current', 'hourly', or 'daily'."
 				)
 			
-			result[ 'geocoding' ]=selected
+			result[ 'geocoding' ] = selected
 			return result
 		
 		except Exception as e:
@@ -11193,40 +9698,30 @@ class OpenWeather( Fetcher ):
 					'forecast_days: int=7, past_days: int=0, count: int=10 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None:
-				A JSON-compatible dictionary defining the tool schema.
-
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the OpenWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -11254,106 +9749,33 @@ class OpenWeather( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class HistoricalWeather( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides historical weather retrieval by location name and date using the
-		Open-Meteo Geocoding API and Open-Meteo Historical Weather API.
-
-		This class is intentionally designed around the actual user-facing need in
-		the Foo fetcher expander: enter a location and a date, resolve that location
-		to coordinates, then retrieve historical weather for that date.
-
-		Referenced API Requirements:
-		----------------------------
-		Geocoding API:
-			- Endpoint: https://geocoding-api.open-meteo.com/v1/search
-			- Required parameter: name
-			- Optional parameter: count
-
-		Historical Weather API:
-			- Endpoint: https://archive-api.open-meteo.com/v1/archive
-			- Required parameters: latitude, longitude, start_date, end_date
-			- Optional parameters used here:
-				- timezone
-				- daily
-				- hourly
-				- temperature_unit
-				- wind_speed_unit
-				- precipitation_unit
-
-		Attributes:
-		-----------
-		geocode_url: Optional[str]
-			The Open-Meteo geocoding endpoint.
-
-		archive_url: Optional[str]
-			The Open-Meteo historical weather endpoint.
-
-		location: Optional[str]
-			User-supplied location query.
-
-		latitude: Optional[float]
-			Resolved latitude from geocoding.
-
-		longitude: Optional[float]
-			Resolved longitude from geocoding.
-
-		timezone: Optional[str]
-			Resolved or user-requested timezone. Defaults to 'auto'.
-
-		target_date: Optional[dt.date]
-			The requested historical date.
-
-		daily_metrics: Optional[List[str]]
-			Daily historical metrics requested from the archive API.
-
-		hourly_metrics: Optional[List[str]]
-			Hourly historical metrics requested from the archive API.
-
-		windspeed_unit: Optional[str]
-			Wind speed unit passed to the API.
-
-		temperature_unit: Optional[str]
-			Temperature unit passed to the API.
-
-		precipitation_unit: Optional[str]
-			Precipitation unit passed to the API.
-
-		params: Optional[Dict[str, Any]]
-			Request parameters for the historical weather call.
-
-		geocode_params: Optional[Dict[str, Any]]
-			Request parameters for the geocoding call.
-
-		result_limit: Optional[int]
-			Maximum number of geocoding candidates to request.
-
-		Methods:
-		--------
-		__init__() -> None
-			Initialize the fetcher and default metrics.
-
-		__dir__() -> List[str]
-			Provide ordered introspection members.
-
-		fetch(...) -> Dict[str, Any] | None
-			Resolve a location string and retrieve historical weather for one date.
-
-		geocode_location(...) -> Dict[str, Any] | None
-			Resolve a place name into a selected geocoding record.
-
-		fetch_historical(...) -> Dict[str, Any] | None
-			Retrieve historical weather for resolved coordinates and a date.
-
-		create_schema(...) -> Dict[str, str] | None
-			Generate a dynamic tool schema definition.
-
-	'''
+	"""Provide the HistoricalWeather component.
+	
+	Purpose:
+		Defines the HistoricalWeather workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		geocode_url: Runtime attribute maintained by the class.
+		archive_url: Runtime attribute maintained by the class.
+		location: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		timezone: Runtime attribute maintained by the class.
+		target_date: Runtime attribute maintained by the class.
+		daily_metrics: Runtime attribute maintained by the class.
+		hourly_metrics: Runtime attribute maintained by the class.
+		windspeed_unit: Runtime attribute maintained by the class.
+		temperature_unit: Runtime attribute maintained by the class.
+		precipitation_unit: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		geocode_params: Runtime attribute maintained by the class.
+		result_limit: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	geocode_url: Optional[ str ]
 	archive_url: Optional[ str ]
 	location: Optional[ str ]
@@ -11372,22 +9794,11 @@ class HistoricalWeather( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-
-			Purpose:
-			--------
-			Initialize the HistoricalWeather fetcher with default endpoints,
-			request headers, metric collections, and unit selections.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-
-		'''
+		"""Initialize the HistoricalWeather instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the HistoricalWeather workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.headers = { }
 		self.agents = cfg.AGENTS
@@ -11406,7 +9817,7 @@ class HistoricalWeather( Fetcher ):
 		self.params = None
 		
 		if 'User-Agent' not in self.headers:
-			self.headers[ 'User-Agent' ]=self.agents
+			self.headers[ 'User-Agent' ] = self.agents
 		
 		self.daily_metrics = [
 				'weather_code',
@@ -11446,22 +9857,14 @@ class HistoricalWeather( Fetcher ):
 		]
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-
-			Purpose:
-			--------
-			Provide ordered member visibility for introspection and editor discovery.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Ordered attribute and method names.
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the HistoricalWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'geocode_url',
 				'archive_url',
@@ -11484,28 +9887,22 @@ class HistoricalWeather( Fetcher ):
 				'create_schema'
 		]
 	
-	def geocode_location( self, location: str, count: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Resolve a user-supplied location string into a geocoding result from
-			the Open-Meteo Geocoding API.
-
-			Parameters:
-			-----------
-			location (str):
-				The place name or postal code to search for.
-
-			count (int):
-				The maximum number of geocoding matches to request.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				The selected geocoding record, typically the first result.
-
-		'''
+	def geocode_location( self, location: str, count: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Run geocode location.
+		
+		Purpose:
+			Provides the documented geocode location operation for the HistoricalWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			location: str value supplied by the caller.
+			count: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'location', location )
 			self.location = location.strip( )
@@ -11547,39 +9944,28 @@ class HistoricalWeather( Fetcher ):
 					'geocode_location( self, location: str, count: int=10 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_historical( self, lat: float, long: float, date: dt.date,
-			zone: str='auto' ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Retrieve historical weather for a single date using the Open-Meteo
-			Historical Weather API.
-
-			Parameters:
-			-----------
-			lat (float):
-				The latitude of the resolved location.
-
-			long (float):
-				The longitude of the resolved location.
-
-			date (dt.date):
-				The requested historical date. This is used for both start_date
-				and end_date so the response is limited to that day.
-
-			zone (str):
-				The timezone to use in the response. Supports 'auto'.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Normalized response payload including request metadata, selected
-				location metadata, and archive data.
-
-		'''
+			zone: str = 'auto' ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch historical.
+		
+		Purpose:
+			Provides the documented fetch historical operation for the HistoricalWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			lat: float value supplied by the caller.
+			long: float value supplied by the caller.
+			date: dt.date value supplied by the caller.
+			zone: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'lat', lat )
 			throw_if( 'long', long )
@@ -11634,39 +10020,28 @@ class HistoricalWeather( Fetcher ):
 					'fetch_historical( self, lat: float, long: float, date: dt.date, '
 					'zone: str=auto ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, location: str, date: dt.date,
-			zone: str='auto', count: int=10 ) -> Dict[ str, Any ] | None:
-		'''
-
-			Purpose:
-			--------
-			Resolve a location string to coordinates, then retrieve historical
-			weather for the requested date.
-
-			Parameters:
-			-----------
-			location (str):
-				The place name entered by the user.
-
-			date (dt.date):
-				The requested historical date.
-
-			zone (str):
-				The timezone requested for the archive response. If 'auto', the API
-				will resolve the local timezone for the coordinates.
-
-			count (int):
-				Maximum number of geocoding matches to request before selecting the
-				first result.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Combined geocoding and historical weather result.
-
-		'''
+			zone: str = 'auto', count: int = 10 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the HistoricalWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			location: str value supplied by the caller.
+			date: dt.date value supplied by the caller.
+			zone: str value supplied by the caller.
+			count: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'location', location )
 			throw_if( 'date', date )
@@ -11701,7 +10076,7 @@ class HistoricalWeather( Fetcher ):
 				zone=str( zone or 'auto' ).strip( )
 			) or { }
 			
-			result[ 'geocoding' ]=selected
+			result[ 'geocoding' ] = selected
 			return result
 		
 		except Exception as e:
@@ -11712,40 +10087,30 @@ class HistoricalWeather( Fetcher ):
 					'fetch( self, location: str, date: dt.date, zone: str=auto, '
 					'count: int=10 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None:
-				A JSON-compatible dictionary defining the tool schema.
-
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the HistoricalWeather workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -11773,40 +10138,26 @@ class HistoricalWeather( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class Grokipedia( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Grokipedia search results and page content.
-
-		Attributes:
-		-----------
-		api_key,
-		client,
-		query,
-		page,
-		limit,
-		offset,
-		include_content,
-		response,
-		params,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_validate_limit(...): Performs the _validate_limit operation for this fetcher.
-		_validate_offset(...): Performs the _validate_offset operation for this fetcher.
-		_get_client(...): Performs the _get_client operation for this fetcher.
-		fetch_search(...): Performs the fetch_search operation for this fetcher.
-		fetch_page(...): Performs the fetch_page operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the Grokipedia component.
+	
+	Purpose:
+		Defines the Grokipedia workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		client: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+		page: Runtime attribute maintained by the class.
+		limit: Runtime attribute maintained by the class.
+		offset: Runtime attribute maintained by the class.
+		include_content: Runtime attribute maintained by the class.
+		response: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	client: Optional[ GrokipediaClient ]
 	query: Optional[ str ]
@@ -11818,19 +10169,11 @@ class Grokipedia( Fetcher ):
 	params: Optional[ Dict[ str, Any ] ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the Grokipedia wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the Grokipedia instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Grokipedia workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.XAI_API_KEY
 		self.url = None
@@ -11846,19 +10189,14 @@ class Grokipedia( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'client',
@@ -11876,20 +10214,20 @@ class Grokipedia( Fetcher ):
 		]
 	
 	def _validate_limit( self, limit: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate result limit.
-
-			Parameters:
-			-----------
-			limit (int):
-				Requested maximum number of results.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate limit.
+		
+		Purpose:
+			Provides the documented validate limit operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			limit: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( limit )
 			if value < 1 or value > 100:
@@ -11902,23 +10240,24 @@ class Grokipedia( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Grokipedia'
 			exception.method = '_validate_limit( self, limit: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _validate_offset( self, offset: int ) -> int:
-		'''
-			Purpose:
-			--------
-			Validate pagination offset.
-
-			Parameters:
-			-----------
-			offset (int):
-				Requested result offset.
-
-			Returns:
-			--------
-			int
-		'''
+		"""Validate validate offset.
+		
+		Purpose:
+			Provides the documented validate offset operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			offset: int value supplied by the caller.
+		
+		Returns:
+			int: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = int( offset )
 			if value < 0:
@@ -11931,22 +10270,21 @@ class Grokipedia( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Grokipedia'
 			exception.method = '_validate_offset( self, offset: int ) -> int'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _get_client( self ) -> GrokipediaClient:
-		'''
-			Purpose:
-			--------
-			Create a Grokipedia client instance.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			GrokipediaClient
-		'''
+		"""Fetch get client.
+		
+		Purpose:
+			Provides the documented get client operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			GrokipediaClient: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			return GrokipediaClient( )
 		
@@ -11955,30 +10293,27 @@ class Grokipedia( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Grokipedia'
 			exception.method = '_get_client( self ) -> GrokipediaClient'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_search( self, query: str, limit: int=12,
-			offset: int=0 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Search Grokipedia for matching articles.
-
-			Parameters:
-			-----------
-			query (str):
-				Free-text search query.
-
-			limit (int):
-				Maximum number of results to request.
-
-			offset (int):
-				Result offset for pagination.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_search( self, query: str, limit: int = 12,
+			offset: int = 0 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch search.
+		
+		Purpose:
+			Provides the documented fetch search operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			
@@ -12014,27 +10349,26 @@ class Grokipedia( Fetcher ):
 					'fetch_search( self, query: str, limit: int=12, '
 					'offset: int=0 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_page( self, page: str,
-			include_content: bool=True ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a specific Grokipedia page by slug or page identifier.
-
-			Parameters:
-			-----------
-			page (str):
-				Page slug or page identifier.
-
-			include_content (bool):
-				If True, request full page content.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			include_content: bool = True ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch page.
+		
+		Purpose:
+			Provides the documented fetch page operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			page: str value supplied by the caller.
+			include_content: bool value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'page', page )
 			
@@ -12067,42 +10401,31 @@ class Grokipedia( Fetcher ):
 					'fetch_page( self, page: str, include_content: bool=True ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='search', query: str='',
-			page: str='', limit: int=12, offset: int=0,
-			include_content: bool=True ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for Grokipedia operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- search
-				- page
-
-			query (str):
-				Free-text search query for search mode.
-
-			page (str):
-				Page slug or identifier for page mode.
-
-			limit (int):
-				Maximum search results for search mode.
-
-			offset (int):
-				Pagination offset for search mode.
-
-			include_content (bool):
-				Whether to request full page content for page mode.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'search', query: str = '',
+			page: str = '', limit: int = 12, offset: int = 0,
+			include_content: bool = True ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			page: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			include_content: bool value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'search' ).strip( ).lower( )
 			
@@ -12130,37 +10453,30 @@ class Grokipedia( Fetcher ):
 					'limit: int=12, offset: int=0, include_content: bool=True ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the Grokipedia workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -12196,45 +10512,31 @@ class Grokipedia( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class GoogleGeocoding( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Google Geocoding forward, reverse, and place lookup records.
-
-		Attributes:
-		-----------
-		api_key,
-		url,
-		params,
-		mode,
-		query,
-		latitude,
-		longitude,
-		place_id,
-		language,
-		region,
-		result_type,
-		location_type,
-		timeout,
-		agents,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_resolve_api_key(...): Performs the _resolve_api_key operation for this fetcher.
-		request(...): Performs the request operation for this fetcher.
-		fetch_forward(...): Performs the fetch_forward operation for this fetcher.
-		fetch_reverse(...): Performs the fetch_reverse operation for this fetcher.
-		fetch_place(...): Performs the fetch_place operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the GoogleGeocoding component.
+	
+	Purpose:
+		Defines the GoogleGeocoding workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		url: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		query: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		place_id: Runtime attribute maintained by the class.
+		language: Runtime attribute maintained by the class.
+		region: Runtime attribute maintained by the class.
+		result_type: Runtime attribute maintained by the class.
+		location_type: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	url: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -12251,19 +10553,11 @@ class GoogleGeocoding( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the Google Geocoding fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the GoogleGeocoding instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GoogleGeocoding workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.GOOGLE_API_KEY
 		self.url = 'https://maps.googleapis.com/maps/api/geocode/json'
@@ -12285,19 +10579,14 @@ class GoogleGeocoding( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'url',
@@ -12319,21 +10608,21 @@ class GoogleGeocoding( Fetcher ):
 				'create_schema'
 		]
 	
-	def _resolve_api_key( self, api_key: Optional[ str ]=None ) -> str:
-		'''
-			Purpose:
-			--------
-			Resolve the Google API key.
-
-			Parameters:
-			-----------
-			api_key (Optional[str]):
-				Optional explicit API key override.
-
-			Returns:
-			--------
-			str
-		'''
+	def _resolve_api_key( self, api_key: Optional[ str ] = None ) -> str:
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			api_key: Optional[str] value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			value = str( api_key or self.api_key or '' ).strip( )
 			throw_if( 'GOOGLE_API_KEY', value )
@@ -12344,33 +10633,30 @@ class GoogleGeocoding( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GoogleGeocoding'
 			exception.method = '_resolve_api_key( self, api_key: Optional[ str ]=None ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, params: Dict[ str, Any ], time: int=10,
-			api_key: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Submit a request to the Google Geocoding API.
-
-			Parameters:
-			-----------
-			params (Dict[str, Any]):
-				Request parameters excluding the key.
-
-			time (int):
-				Request timeout in seconds.
-
-			api_key (Optional[str]):
-				Optional explicit API key override.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, params: Dict[ str, Any ], time: int = 10,
+			api_key: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			params: Dict[str, Any] value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: Optional[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			request_params = dict( params or { } )
-			request_params[ 'key' ]=self._resolve_api_key( api_key=api_key )
+			request_params[ 'key' ] = self._resolve_api_key( api_key=api_key )
 			
 			self.params = request_params
 			self.response = requests.get(
@@ -12400,37 +10686,30 @@ class GoogleGeocoding( Fetcher ):
 					'request( self, params: Dict[ str, Any ], time: int=10, '
 					'api_key: Optional[ str ]=None ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_forward( self, query: str, language: str='en',
-			region: str='', time: int=10,
-			api_key: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Forward geocode an address or place string.
-
-			Parameters:
-			-----------
-			query (str):
-				Human-readable address or place query.
-
-			language (str):
-				Preferred response language.
-
-			region (str):
-				Optional region bias, such as 'us'.
-
-			time (int):
-				Request timeout in seconds.
-
-			api_key (Optional[str]):
-				Optional explicit API key override.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_forward( self, query: str, language: str = 'en',
+			region: str = '', time: int = 10,
+			api_key: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch forward.
+		
+		Purpose:
+			Provides the documented fetch forward operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			language: str value supplied by the caller.
+			region: str value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: Optional[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query', query )
 			
@@ -12445,7 +10724,7 @@ class GoogleGeocoding( Fetcher ):
 			}
 			
 			if self.region:
-				params[ 'region' ]=self.region
+				params[ 'region' ] = self.region
 			
 			return self.request(
 				params=params,
@@ -12462,44 +10741,33 @@ class GoogleGeocoding( Fetcher ):
 					'region: str=, time: int=10, api_key: Optional[ str ]=None ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_reverse( self, latitude: float, longitude: float,
-			language: str='en', result_type: str='',
-			location_type: str='', time: int=10,
-			api_key: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Reverse geocode a latitude / longitude coordinate pair.
-
-			Parameters:
-			-----------
-			latitude (float):
-				Latitude.
-
-			longitude (float):
-				Longitude.
-
-			language (str):
-				Preferred response language.
-
-			result_type (str):
-				Optional pipe-delimited result type filter.
-
-			location_type (str):
-				Optional pipe-delimited location type filter.
-
-			time (int):
-				Request timeout in seconds.
-
-			api_key (Optional[str]):
-				Optional explicit API key override.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			language: str = 'en', result_type: str = '',
+			location_type: str = '', time: int = 10,
+			api_key: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch reverse.
+		
+		Purpose:
+			Provides the documented fetch reverse operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+			language: str value supplied by the caller.
+			result_type: str value supplied by the caller.
+			location_type: str value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: Optional[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'reverse'
 			self.latitude = float( latitude )
@@ -12514,10 +10782,10 @@ class GoogleGeocoding( Fetcher ):
 			}
 			
 			if self.result_type:
-				params[ 'result_type' ]=self.result_type
+				params[ 'result_type' ] = self.result_type
 			
 			if self.location_type:
-				params[ 'location_type' ]=self.location_type
+				params[ 'location_type' ] = self.location_type
 			
 			return self.request(
 				params=params,
@@ -12534,37 +10802,30 @@ class GoogleGeocoding( Fetcher ):
 					'language: str=en, result_type: str=, location_type: str=, '
 					'time: int=10, api_key: Optional[ str ]=None ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_place( self, place_id: str, language: str='en',
-			region: str='', time: int=10,
-			api_key: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Geocode a Google place_id into address details.
-
-			Parameters:
-			-----------
-			place_id (str):
-				Google place ID.
-
-			language (str):
-				Preferred response language.
-
-			region (str):
-				Optional region bias.
-
-			time (int):
-				Request timeout in seconds.
-
-			api_key (Optional[str]):
-				Optional explicit API key override.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_place( self, place_id: str, language: str = 'en',
+			region: str = '', time: int = 10,
+			api_key: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch place.
+		
+		Purpose:
+			Provides the documented fetch place operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			place_id: str value supplied by the caller.
+			language: str value supplied by the caller.
+			region: str value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: Optional[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'place_id', place_id )
 			
@@ -12579,7 +10840,7 @@ class GoogleGeocoding( Fetcher ):
 			}
 			
 			if self.region:
-				params[ 'region' ]=self.region
+				params[ 'region' ] = self.region
 			
 			return self.request(
 				params=params,
@@ -12595,60 +10856,38 @@ class GoogleGeocoding( Fetcher ):
 					'fetch_place( self, place_id: str, language: str=en, region: str=, '
 					'time: int=10, api_key: Optional[ str ]=None ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='forward', query: str='',
-			latitude: float=0.0, longitude: float=0.0,
-			place_id: str='', language: str='en', region: str='',
-			result_type: str='', location_type: str='', time: int=10,
-			api_key: Optional[ str ]=None ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for Google Geocoding requests.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- forward
-				- reverse
-				- place
-
-			query (str):
-				Address / place query for forward mode.
-
-			latitude (float):
-				Latitude for reverse mode.
-
-			longitude (float):
-				Longitude for reverse mode.
-
-			place_id (str):
-				Place ID for place mode.
-
-			language (str):
-				Response language.
-
-			region (str):
-				Region bias for forward / place mode.
-
-			result_type (str):
-				Reverse-geocoding result filter.
-
-			location_type (str):
-				Reverse-geocoding location filter.
-
-			time (int):
-				Request timeout in seconds.
-
-			api_key (Optional[str]):
-				Optional explicit API key override.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'forward', query: str = '',
+			latitude: float = 0.0, longitude: float = 0.0,
+			place_id: str = '', language: str = 'en', region: str = '',
+			result_type: str = '', location_type: str = '', time: int = 10,
+			api_key: Optional[ str ] = None ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+			place_id: str value supplied by the caller.
+			language: str value supplied by the caller.
+			region: str value supplied by the caller.
+			result_type: str value supplied by the caller.
+			location_type: str value supplied by the caller.
+			time: int value supplied by the caller.
+			api_key: Optional[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'forward' ).strip( ).lower( )
 			
@@ -12694,37 +10933,30 @@ class GoogleGeocoding( Fetcher ):
 					'time: int=10, api_key: Optional[ str ]=None ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the GoogleGeocoding workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -12755,43 +10987,28 @@ class GoogleGeocoding( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class CensusData( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches Census API variables and tabular data.
-
-		Attributes:
-		-----------
-		api_key,
-		base_url,
-		year,
-		dataset,
-		mode,
-		fields,
-		geography_for,
-		geography_in,
-		predicates,
-		params,
-		payload,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_resolve_api_key(...): Performs the _resolve_api_key operation for this fetcher.
-		_normalize_fields(...): Performs the _normalize_fields operation for this fetcher.
-		_parse_predicates(...): Performs the _parse_predicates operation for this fetcher.
-		_shape_table(...): Performs the _shape_table operation for this fetcher.
-		fetch_variables(...): Performs the fetch_variables operation for this fetcher.
-		fetch_data(...): Performs the fetch_data operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the CensusData component.
+	
+	Purpose:
+		Defines the CensusData workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		year: Runtime attribute maintained by the class.
+		dataset: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		fields: Runtime attribute maintained by the class.
+		geography_for: Runtime attribute maintained by the class.
+		geography_in: Runtime attribute maintained by the class.
+		predicates: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	base_url: Optional[ str ]
 	year: Optional[ str ]
@@ -12805,20 +11022,11 @@ class CensusData( Fetcher ):
 	payload: Optional[ Dict[ str, Any ] ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the U.S. Census Bureau API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the CensusData instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the CensusData workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = getattr( cfg, 'CENSUS_API_KEY', '' )
 		self.base_url = 'https://api.census.gov/data'
@@ -12838,20 +11046,14 @@ class CensusData( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Return ordered CensusData members.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			List[str]
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'base_url',
@@ -12875,38 +11077,32 @@ class CensusData( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			-----------
-			Resolve the configured Census API key.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			Optional[str]
-
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		"""
 		key = str( self.api_key or '' ).strip( )
 		return key if key else None
 	
 	def _normalize_fields( self, fields: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the comma-delimited Census get-field string.
-
-			Parameters:
-			-----------
-			fields (str): Comma-delimited field list.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize fields.
+		
+		Purpose:
+			Provides the documented normalize fields operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			fields: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'fields', fields )
 			parts = [ p.strip( ) for p in str( fields ).split( ',' ) if p.strip( ) ]
@@ -12919,26 +11115,26 @@ class CensusData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'CensusData'
 			exception.method = '_normalize_fields( self, fields: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _parse_predicates( self, predicates: str ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			-----------
-			Parse optional Census predicate text into a parameter dictionary.
-
-			Parameters:
-			-----------
-			predicates (str):
-				Newline-delimited key=value pairs.
-
-			Returns:
-			-----------
-			Dict[str, Any]
-
-		'''
+		"""Parse parse predicates.
+		
+		Purpose:
+			Provides the documented parse predicates operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			predicates: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			output: Dict[ str, Any ]={ }
+			output: Dict[ str, Any ] = { }
 			text = str( predicates or '' ).strip( )
 			if not text:
 				return output
@@ -12960,7 +11156,7 @@ class CensusData( Fetcher ):
 				if not k:
 					raise ValueError( 'Predicate key cannot be empty.' )
 				
-				output[ k ]=v
+				output[ k ] = v
 			
 			return output
 		except Exception as e:
@@ -12970,24 +11166,24 @@ class CensusData( Fetcher ):
 			exception.method = (
 					'_parse_predicates( self, predicates: str ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_table( self, rows: List[ Any ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			-----------
-			Transform Census array-style responses into header/row dictionaries.
-
-			Parameters:
-			-----------
-			rows (List[Any]):
-				Raw Census API response payload.
-
-			Returns:
-			-----------
-			Dict[str, Any]
-
-		'''
+		"""Run shape table.
+		
+		Purpose:
+			Provides the documented shape table operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Any] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if not isinstance( rows, list ) or not rows:
 				return {
@@ -12998,7 +11194,7 @@ class CensusData( Fetcher ):
 			
 			headers = [ str( h ) for h in rows[ 0 ] ] if isinstance( rows[ 0 ], list ) else [ ]
 			data_rows = rows[ 1: ] if len( rows ) > 1 else [ ]
-			records: List[ Dict[ str, Any ] ]=[ ]
+			records: List[ Dict[ str, Any ] ] = [ ]
 			
 			for row in data_rows:
 				if isinstance( row, list ) and headers:
@@ -13019,30 +11215,26 @@ class CensusData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'CensusData'
 			exception.method = '_shape_table( self, rows: List[ Any ] ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_variables( self, year: str, dataset: str, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the variables metadata for a Census dataset.
-
-			Parameters:
-			-----------
-			year (str):
-				Dataset year such as 2022.
-
-			dataset (str):
-				Dataset path such as acs/acs5 or 2020/dec/dhc.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_variables( self, year: str, dataset: str, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch variables.
+		
+		Purpose:
+			Provides the documented fetch variables operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			year: str value supplied by the caller.
+			dataset: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'year', year )
 			throw_if( 'dataset', dataset )
@@ -13054,7 +11246,7 @@ class CensusData( Fetcher ):
 			self.params = { }
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.params[ 'key' ]=api_key
+				self.params[ 'key' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -13077,44 +11269,32 @@ class CensusData( Fetcher ):
 					'fetch_variables( self, year: str, dataset: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_data( self, year: str, dataset: str, fields: str,
-			geography_for: str='', geography_in: str='',
-			predicates: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch tabular Census dataset values.
-
-			Parameters:
-			-----------
-			year (str):
-				Dataset year such as 2022.
-
-			dataset (str):
-				Dataset path such as acs/acs5.
-
-			fields (str):
-				Comma-delimited get variables such as NAME,B01001_001E.
-
-			geography_for (str):
-				Census `for` geography clause, e.g. state:*.
-
-			geography_in (str):
-				Optional Census `in` geography clause.
-
-			predicates (str):
-				Optional newline-delimited key=value predicates.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+			geography_for: str = '', geography_in: str = '',
+			predicates: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch data.
+		
+		Purpose:
+			Provides the documented fetch data operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			year: str value supplied by the caller.
+			dataset: str value supplied by the caller.
+			fields: str value supplied by the caller.
+			geography_for: str value supplied by the caller.
+			geography_in: str value supplied by the caller.
+			predicates: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'year', year )
 			throw_if( 'dataset', dataset )
@@ -13132,17 +11312,17 @@ class CensusData( Fetcher ):
 			}
 			
 			if self.geography_for:
-				self.params[ 'for' ]=self.geography_for
+				self.params[ 'for' ] = self.geography_for
 			
 			if self.geography_in:
-				self.params[ 'in' ]=self.geography_in
+				self.params[ 'in' ] = self.geography_in
 			
 			if self.predicates:
 				self.params.update( self.predicates )
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.params[ 'key' ]=api_key
+				self.params[ 'key' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -13169,48 +11349,34 @@ class CensusData( Fetcher ):
 					'geography_for: str="", geography_in: str="", predicates: str="", '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='variables', year: str='2022',
-			dataset: str='acs/acs5', fields: str='NAME,B01001_001E',
-			geography_for: str='state:*', geography_in: str='',
-			predicates: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Dispatch Census API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of variables or data.
-
-			year (str):
-				Dataset year.
-
-			dataset (str):
-				Dataset path.
-
-			fields (str):
-				Comma-delimited data fields for data mode.
-
-			geography_for (str):
-				Census `for` clause for data mode.
-
-			geography_in (str):
-				Optional Census `in` clause for data mode.
-
-			predicates (str):
-				Optional newline-delimited key=value predicates.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'variables', year: str = '2022',
+			dataset: str = 'acs/acs5', fields: str = 'NAME,B01001_001E',
+			geography_for: str = 'state:*', geography_in: str = '',
+			predicates: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			year: str value supplied by the caller.
+			dataset: str value supplied by the caller.
+			fields: str value supplied by the caller.
+			geography_for: str value supplied by the caller.
+			geography_in: str value supplied by the caller.
+			predicates: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = str( mode or 'variables' ).strip( ).lower( )
 			
@@ -13243,28 +11409,29 @@ class CensusData( Fetcher ):
 					'geography_for: str="state:*", geography_in: str="", '
 					'predicates: str="", time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		"""
-			Purpose:
-			________
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			___________
-			function (str): Tool function name.
-			tool (str): Service name.
-			description (str): What the function does.
-			parameters (dict): JSON-schema properties.
-			required (list[str]): Required parameter names.
-
-			Returns:
-			________
-			dict
-
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the CensusData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'function', function )
@@ -13303,44 +11470,30 @@ class CensusData( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class Socrata( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches metadata and rows from Socrata-backed open-data portals.
-
-		Attributes:
-		-----------
-		api_key,
-		base_url,
-		domain,
-		dataset_id,
-		mode,
-		select_clause,
-		where_clause,
-		order_clause,
-		group_clause,
-		limit_value,
-		offset_value,
-		params,
-		payload,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_resolve_api_key(...): Performs the _resolve_api_key operation for this fetcher.
-		_normalize_domain(...): Performs the _normalize_domain operation for this fetcher.
-		_normalize_dataset_id(...): Performs the _normalize_dataset_id operation for this fetcher.
-		fetch_metadata(...): Performs the fetch_metadata operation for this fetcher.
-		fetch_rows(...): Performs the fetch_rows operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the Socrata component.
+	
+	Purpose:
+		Defines the Socrata workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		domain: Runtime attribute maintained by the class.
+		dataset_id: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		select_clause: Runtime attribute maintained by the class.
+		where_clause: Runtime attribute maintained by the class.
+		order_clause: Runtime attribute maintained by the class.
+		group_clause: Runtime attribute maintained by the class.
+		limit_value: Runtime attribute maintained by the class.
+		offset_value: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	base_url: Optional[ str ]
 	domain: Optional[ str ]
@@ -13356,20 +11509,11 @@ class Socrata( Fetcher ):
 	payload: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the Socrata API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the Socrata instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Socrata workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = getattr( cfg, 'SOCRATA_API_KEY', '' )
 		self.base_url = 'https://{domain}/resource/{dataset}.json'
@@ -13391,20 +11535,14 @@ class Socrata( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Return ordered Socrata members.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			List[str]
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'base_url',
@@ -13429,38 +11567,32 @@ class Socrata( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			-----------
-			Resolve the configured Socrata application token.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			Optional[str]
-
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		"""
 		key = str( self.api_key or '' ).strip( )
 		return key if key else None
 	
 	def _normalize_domain( self, domain: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the Socrata domain.
-
-			Parameters:
-			-----------
-			domain (str): Domain such as data.cdc.gov.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize domain.
+		
+		Purpose:
+			Provides the documented normalize domain operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			domain: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'domain', domain )
 			value = str( domain ).strip( )
@@ -13473,23 +11605,24 @@ class Socrata( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Socrata'
 			exception.method = '_normalize_domain( self, domain: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _normalize_dataset_id( self, dataset_id: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the Socrata dataset identifier.
-
-			Parameters:
-			-----------
-			dataset_id (str): 4x4 dataset identifier.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize dataset id.
+		
+		Purpose:
+			Provides the documented normalize dataset id operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset_id: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'dataset_id', dataset_id )
 			value = str( dataset_id ).strip( )
@@ -13502,31 +11635,27 @@ class Socrata( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Socrata'
 			exception.method = '_normalize_dataset_id( self, dataset_id: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_metadata( self, domain: str, dataset_id: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch Socrata dataset metadata.
-
-			Parameters:
-			-----------
-			domain (str):
-				Portal domain such as data.cdc.gov.
-
-			dataset_id (str):
-				Dataset identifier such as q8xq-ygsk.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch metadata.
+		
+		Purpose:
+			Provides the documented fetch metadata operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			domain: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'metadata'
 			self.domain = self._normalize_domain( domain )
@@ -13536,7 +11665,7 @@ class Socrata( Fetcher ):
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.headers[ 'X-App-Token' ]=api_key
+				self.headers[ 'X-App-Token' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -13559,51 +11688,35 @@ class Socrata( Fetcher ):
 					'fetch_metadata( self, domain: str, dataset_id: str, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_rows( self, domain: str, dataset_id: str, select: str='',
-			where: str='', order: str='', group: str='',
-			limit: int=25, offset: int=0,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch Socrata dataset rows using standard SoQL query options.
-
-			Parameters:
-			-----------
-			domain (str):
-				Portal domain such as data.cdc.gov.
-
-			dataset_id (str):
-				Dataset identifier such as q8xq-ygsk.
-
-			select (str):
-				Optional $select clause.
-
-			where (str):
-				Optional $where clause.
-
-			order (str):
-				Optional $order clause.
-
-			group (str):
-				Optional $group clause.
-
-			limit (int):
-				Optional row limit.
-
-			offset (int):
-				Optional offset for pagination.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_rows( self, domain: str, dataset_id: str, select: str = '',
+			where: str = '', order: str = '', group: str = '',
+			limit: int = 25, offset: int = 0,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch rows.
+		
+		Purpose:
+			Provides the documented fetch rows operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			domain: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			select: str value supplied by the caller.
+			where: str value supplied by the caller.
+			order: str value supplied by the caller.
+			group: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'rows'
 			self.domain = self._normalize_domain( domain )
@@ -13625,20 +11738,20 @@ class Socrata( Fetcher ):
 			}
 			
 			if self.select_clause:
-				self.params[ '$select' ]=self.select_clause
+				self.params[ '$select' ] = self.select_clause
 			
 			if self.where_clause:
-				self.params[ '$where' ]=self.where_clause
+				self.params[ '$where' ] = self.where_clause
 			
 			if self.order_clause:
-				self.params[ '$order' ]=self.order_clause
+				self.params[ '$order' ] = self.order_clause
 			
 			if self.group_clause:
-				self.params[ '$group' ]=self.group_clause
+				self.params[ '$group' ] = self.group_clause
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.headers[ 'X-App-Token' ]=api_key
+				self.headers[ 'X-App-Token' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -13665,54 +11778,36 @@ class Socrata( Fetcher ):
 					'where: str="", order: str="", group: str="", limit: int=25, '
 					'offset: int=0, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='rows', domain: str='data.cdc.gov',
-			dataset_id: str='', select: str='', where: str='',
-			order: str='', group: str='', limit: int=25,
-			offset: int=0, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Dispatch Socrata API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of metadata or rows.
-
-			domain (str):
-				Portal domain.
-
-			dataset_id (str):
-				Dataset identifier.
-
-			select (str):
-				Optional $select clause.
-
-			where (str):
-				Optional $where clause.
-
-			order (str):
-				Optional $order clause.
-
-			group (str):
-				Optional $group clause.
-
-			limit (int):
-				Optional row limit.
-
-			offset (int):
-				Optional row offset.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'rows', domain: str = 'data.cdc.gov',
+			dataset_id: str = '', select: str = '', where: str = '',
+			order: str = '', group: str = '', limit: int = 25,
+			offset: int = 0, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			domain: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			select: str value supplied by the caller.
+			where: str value supplied by the caller.
+			order: str value supplied by the caller.
+			group: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'rows' ).strip( ).lower( )
 			
@@ -13745,28 +11840,29 @@ class Socrata( Fetcher ):
 					'group: str="", limit: int=25, offset: int=0, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		"""
-			Purpose:
-			________
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			___________
-			function (str): Tool function name.
-			tool (str): Service name.
-			description (str): What the function does.
-			parameters (dict): JSON-schema properties.
-			required (list[str]): Required parameter names.
-
-			Returns:
-			________
-			dict
-
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the Socrata workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
 		"""
 		try:
 			throw_if( 'function', function )
@@ -13805,44 +11901,30 @@ class Socrata( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class HealthData( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches metadata and rows from HealthData.gov Socrata datasets.
-
-		Attributes:
-		-----------
-		api_key,
-		base_url,
-		domain,
-		dataset_id,
-		mode,
-		select_clause,
-		where_clause,
-		order_clause,
-		group_clause,
-		limit_value,
-		offset_value,
-		params,
-		payload,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_resolve_api_key(...): Performs the _resolve_api_key operation for this fetcher.
-		_normalize_domain(...): Performs the _normalize_domain operation for this fetcher.
-		_normalize_dataset_id(...): Performs the _normalize_dataset_id operation for this fetcher.
-		fetch_metadata(...): Performs the fetch_metadata operation for this fetcher.
-		fetch_rows(...): Performs the fetch_rows operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the HealthData component.
+	
+	Purpose:
+		Defines the HealthData workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		domain: Runtime attribute maintained by the class.
+		dataset_id: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		select_clause: Runtime attribute maintained by the class.
+		where_clause: Runtime attribute maintained by the class.
+		order_clause: Runtime attribute maintained by the class.
+		group_clause: Runtime attribute maintained by the class.
+		limit_value: Runtime attribute maintained by the class.
+		offset_value: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	base_url: Optional[ str ]
 	domain: Optional[ str ]
@@ -13858,20 +11940,11 @@ class HealthData( Fetcher ):
 	payload: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the HealthData.gov API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the HealthData instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the HealthData workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = getattr( cfg, 'HEALTHDATA_API_KEY', '' )
 		self.base_url = 'https://{domain}/resource/{dataset}.json'
@@ -13893,20 +11966,14 @@ class HealthData( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Return ordered HealthData members.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			List[str]
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'base_url',
@@ -13931,39 +11998,32 @@ class HealthData( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			-----------
-			Resolve the configured HealthData.gov application token.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			Optional[str]
-
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		"""
 		key = str( self.api_key or '' ).strip( )
 		return key if key else None
 	
 	def _normalize_domain( self, domain: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the HealthData.gov domain.
-
-			Parameters:
-			-----------
-			domain (str):
-				Domain such as healthdata.gov.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize domain.
+		
+		Purpose:
+			Provides the documented normalize domain operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			domain: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'domain', domain )
 			value = str( domain ).strip( )
@@ -13976,24 +12036,24 @@ class HealthData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'HealthData'
 			exception.method = '_normalize_domain( self, domain: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _normalize_dataset_id( self, dataset_id: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the HealthData.gov dataset identifier.
-
-			Parameters:
-			-----------
-			dataset_id (str):
-				Dataset identifier.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize dataset id.
+		
+		Purpose:
+			Provides the documented normalize dataset id operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset_id: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'dataset_id', dataset_id )
 			value = str( dataset_id ).strip( )
@@ -14006,31 +12066,27 @@ class HealthData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'HealthData'
 			exception.method = '_normalize_dataset_id( self, dataset_id: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_metadata( self, domain: str, dataset_id: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch HealthData.gov dataset metadata.
-
-			Parameters:
-			-----------
-			domain (str):
-				Portal domain such as healthdata.gov.
-
-			dataset_id (str):
-				Dataset identifier.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch metadata.
+		
+		Purpose:
+			Provides the documented fetch metadata operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			domain: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'metadata'
 			self.domain = self._normalize_domain( domain )
@@ -14040,7 +12096,7 @@ class HealthData( Fetcher ):
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.headers[ 'X-App-Token' ]=api_key
+				self.headers[ 'X-App-Token' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -14063,51 +12119,35 @@ class HealthData( Fetcher ):
 					'fetch_metadata( self, domain: str, dataset_id: str, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_rows( self, domain: str, dataset_id: str, select: str='',
-			where: str='', order: str='', group: str='',
-			limit: int=25, offset: int=0,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch HealthData.gov dataset rows using standard SoQL query options.
-
-			Parameters:
-			-----------
-			domain (str):
-				Portal domain such as healthdata.gov.
-
-			dataset_id (str):
-				Dataset identifier.
-
-			select (str):
-				Optional $select clause.
-
-			where (str):
-				Optional $where clause.
-
-			order (str):
-				Optional $order clause.
-
-			group (str):
-				Optional $group clause.
-
-			limit (int):
-				Optional row limit.
-
-			offset (int):
-				Optional offset for pagination.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_rows( self, domain: str, dataset_id: str, select: str = '',
+			where: str = '', order: str = '', group: str = '',
+			limit: int = 25, offset: int = 0,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch rows.
+		
+		Purpose:
+			Provides the documented fetch rows operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			domain: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			select: str value supplied by the caller.
+			where: str value supplied by the caller.
+			order: str value supplied by the caller.
+			group: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'rows'
 			self.domain = self._normalize_domain( domain )
@@ -14129,20 +12169,20 @@ class HealthData( Fetcher ):
 			}
 			
 			if self.select_clause:
-				self.params[ '$select' ]=self.select_clause
+				self.params[ '$select' ] = self.select_clause
 			
 			if self.where_clause:
-				self.params[ '$where' ]=self.where_clause
+				self.params[ '$where' ] = self.where_clause
 			
 			if self.order_clause:
-				self.params[ '$order' ]=self.order_clause
+				self.params[ '$order' ] = self.order_clause
 			
 			if self.group_clause:
-				self.params[ '$group' ]=self.group_clause
+				self.params[ '$group' ] = self.group_clause
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.headers[ 'X-App-Token' ]=api_key
+				self.headers[ 'X-App-Token' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -14169,54 +12209,36 @@ class HealthData( Fetcher ):
 					'where: str="", order: str="", group: str="", limit: int=25, '
 					'offset: int=0, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='rows', domain: str='healthdata.gov',
-			dataset_id: str='', select: str='', where: str='',
-			order: str='', group: str='', limit: int=25,
-			offset: int=0, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Dispatch HealthData.gov API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of metadata or rows.
-
-			domain (str):
-				Portal domain.
-
-			dataset_id (str):
-				Dataset identifier.
-
-			select (str):
-				Optional $select clause.
-
-			where (str):
-				Optional $where clause.
-
-			order (str):
-				Optional $order clause.
-
-			group (str):
-				Optional $group clause.
-
-			limit (int):
-				Optional row limit.
-
-			offset (int):
-				Optional row offset.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'rows', domain: str = 'healthdata.gov',
+			dataset_id: str = '', select: str = '', where: str = '',
+			order: str = '', group: str = '', limit: int = 25,
+			offset: int = 0, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			domain: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			select: str value supplied by the caller.
+			where: str value supplied by the caller.
+			order: str value supplied by the caller.
+			group: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'rows' ).strip( ).lower( )
 			
@@ -14249,38 +12271,30 @@ class HealthData( Fetcher ):
 					'group: str="", limit: int=25, offset: int=0, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			-----------
-			Construct and return a dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				Tool function name.
-
-			tool (str):
-				Service name.
-
-			description (str):
-				Description of what the tool does.
-
-			parameters (dict):
-				JSON-schema properties.
-
-			required (list[str]):
-				Required parameter names.
-
-			Returns:
-			-----------
-			Dict[str, str] | None
-
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the HealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -14318,35 +12332,24 @@ class HealthData( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class GlobalHealthData( Fetcher ):
-	'''
+	"""Provide the GlobalHealthData component.
 	
-		Purpose:
-		--------
-		Fetches United Nations SDMX catalog and query data.
+	Purpose:
+		Defines the GlobalHealthData workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
 	
-		Attributes:
-		-----------
-		base_url,
-		catalog_url,
-		mode,
-		query_path,
-		params,
-		payload,
-	
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_normalize_query_path(...): Performs the _normalize_query_path operation for this fetcher.
-		fetch_datasets(...): Performs the fetch_datasets operation for this fetcher.
-		fetch_sdmx_query(...): Performs the fetch_sdmx_query operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-	
-	'''
+	Attributes:
+		api_key: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		athena_base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		query_path: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	api_key: Optional[ str ]
 	base_url: Optional[ str ]
 	athena_base_url: Optional[ str ]
@@ -14356,20 +12359,11 @@ class GlobalHealthData( Fetcher ):
 	payload: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the WHO Global Health Observatory API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the GlobalHealthData instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the GlobalHealthData workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.api_key = getattr( cfg, 'WHO_API_KEY', '' )
 		self.base_url = 'https://www.who.int/data/gho'
@@ -14385,6 +12379,14 @@ class GlobalHealthData( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'api_key',
 				'base_url',
@@ -14402,43 +12404,32 @@ class GlobalHealthData( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-
-			Purpose:
-			--------
-			Fetch a NASA GIBS Mercator map image and render it through the provided
-			Cartopy coordinate reference system module.
+		"""Run resolve api key.
 		
-			Parameters:
-			-----------
-			ccrs (Any | None): Optional Cartopy coordinate reference system module used
-			to project and render the returned map image.
+		Purpose:
+			Provides the documented resolve api key operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Returns:
-			--------
-			Any | None: The rendered map result or None when the request fails.
-		
-		'''
+		Returns:
+			Optional[str]: Result produced by the operation.
+		"""
 		key = str( self.api_key or '' ).strip( )
 		return key if key else None
 	
 	def _normalize_query_path( self, query_path: str ) -> str:
-		'''
+		"""Normalize normalize query path.
 		
-			Purpose:
-			--------
-			Normalize a Global Health query path by trimming whitespace and removing
-			leading path separators before composing a request URL.
+		Purpose:
+			Provides the documented normalize query path operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Parameters:
-			-----------
-			query_path (str): Raw Global Health query path supplied by the caller.
+		Args:
+			query_path: str value supplied by the caller.
 		
-			Returns:
-			--------
-			str: Normalized query path suitable for request URL composition.
+		Returns:
+			str: Result produced by the operation.
 		
-		'''
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query_path', query_path )
 			value = str( query_path ).strip( )
@@ -14451,24 +12442,24 @@ class GlobalHealthData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'GlobalHealthData'
 			exception.method = '_normalize_query_path( self, query_path: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_indicator_registry( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the WHO indicator metadata registry landing content.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_indicator_registry( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch indicator registry.
+		
+		Purpose:
+			Provides the documented fetch indicator registry operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'indicator_registry'
 			self.url = f'{self.base_url}/indicator-metadata-registry'
@@ -14476,7 +12467,7 @@ class GlobalHealthData( Fetcher ):
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.headers[ 'X-API-Key' ]=api_key
+				self.headers[ 'X-API-Key' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -14508,31 +12499,27 @@ class GlobalHealthData( Fetcher ):
 					'fetch_indicator_registry( self, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_athena( self, query_path: str, fmt: str='json',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Execute a WHO GHO Athena/OData-style query path.
-
-			Parameters:
-			-----------
-			query_path (str):
-				The path segment to append after the base WHO API endpoint.
-
-			fmt (str):
-				Response format hint, typically json or xml.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_athena( self, query_path: str, fmt: str = 'json',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch athena.
+		
+		Purpose:
+			Provides the documented fetch athena operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query_path: str value supplied by the caller.
+			fmt: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'athena'
 			self.query_path = self._normalize_query_path( query_path )
@@ -14540,11 +12527,11 @@ class GlobalHealthData( Fetcher ):
 			self.params = { }
 			
 			if str( fmt or '' ).strip( ):
-				self.params[ '$format' ]=str( fmt ).strip( )
+				self.params[ '$format' ] = str( fmt ).strip( )
 			
 			api_key = self._resolve_api_key( )
 			if api_key:
-				self.headers[ 'X-API-Key' ]=api_key
+				self.headers[ 'X-API-Key' ] = api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -14576,34 +12563,28 @@ class GlobalHealthData( Fetcher ):
 					'fetch_athena( self, query_path: str, fmt: str="json", '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='indicator_registry', query_path: str='',
-			fmt: str='json', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Dispatch WHO Global Health Observatory API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of indicator_registry or athena.
-
-			query_path (str):
-				Query path for athena mode.
-
-			fmt (str):
-				Response format hint.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'indicator_registry', query_path: str = '',
+			fmt: str = 'json', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query_path: str value supplied by the caller.
+			fmt: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'indicator_registry' ).strip( ).lower( )
 			
@@ -14628,11 +12609,30 @@ class GlobalHealthData( Fetcher ):
 					'fetch( self, mode: str="indicator_registry", query_path: str="", '
 					'fmt: str="json", time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the GlobalHealthData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -14670,34 +12670,23 @@ class GlobalHealthData( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class UnitedNations( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Fetch catalog and SDMX query results from the United Nations UNdata API.
-
-		Attribues:
-		-----------
-		base_url - Optional[ str ]
-		catalog_url - Optional[ str ]
-		mode - Optional[ str ]
-		query_path - Optional[ str ]
-		params - Optional[ Dict[ str, Any ] ]
-		payload - Optional[ Any ]
-
-		Methods:
-		-----------
-		_normalize_query_path( query_path: str ) -> str
-		fetch_datasets( time: int=20 ) -> Dict[ str, Any ]
-		fetch_sdmx_query( query_path: str, time: int=20 ) -> Dict[ str, Any ]
-		fetch( mode: str='datasets', query_path: str='', time: int=20 )
-			-> Dict[ str, Any ]
-		create_schema( self, function: str, tool: str, description: str,
-			parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None
-
-	'''
+	"""Provide the UnitedNations component.
+	
+	Purpose:
+		Defines the UnitedNations workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		catalog_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		query_path: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	catalog_url: Optional[ str ]
 	mode: Optional[ str ]
@@ -14706,20 +12695,11 @@ class UnitedNations( Fetcher ):
 	payload: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the United Nations UNdata API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the UnitedNations instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the UnitedNations workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://data.un.org/WS/rest'
 		self.catalog_url = 'https://data.un.org/datamartinfo.aspx'
@@ -14734,20 +12714,14 @@ class UnitedNations( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Return ordered UnitedNations members.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			List[str]
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the UnitedNations workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'catalog_url',
@@ -14763,21 +12737,20 @@ class UnitedNations( Fetcher ):
 		]
 	
 	def _normalize_query_path( self, query_path: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the SDMX query path appended to the UNdata REST endpoint.
-
-			Parameters:
-			-----------
-			query_path (str):
-				Path appended after the UNdata REST base endpoint.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize query path.
+		
+		Purpose:
+			Provides the documented normalize query path operation for the UnitedNations workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query_path: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'query_path', query_path )
 			value = str( query_path ).strip( )
@@ -14790,24 +12763,24 @@ class UnitedNations( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'UnitedNations'
 			exception.method = '_normalize_query_path( self, query_path: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_datasets( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the UNdata dataset catalog landing page.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_datasets( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch datasets.
+		
+		Purpose:
+			Provides the documented fetch datasets operation for the UnitedNations workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'datasets'
 			self.url = self.catalog_url
@@ -14842,28 +12815,26 @@ class UnitedNations( Fetcher ):
 			exception.method = (
 					'fetch_datasets( self, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_sdmx_query( self, query_path: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Execute a REST SDMX query against the UNdata API.
-
-			Parameters:
-			-----------
-			query_path (str):
-				Path appended after the UNdata REST base endpoint.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch sdmx query.
+		
+		Purpose:
+			Provides the documented fetch sdmx query operation for the UnitedNations workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query_path: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'sdmx_query'
 			self.query_path = self._normalize_query_path( query_path )
@@ -14900,31 +12871,27 @@ class UnitedNations( Fetcher ):
 					'fetch_sdmx_query( self, query_path: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='datasets', query_path: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Dispatch United Nations UNdata API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of datasets or sdmx_query.
-
-			query_path (str):
-				Query path for sdmx_query mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'datasets', query_path: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the UnitedNations workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query_path: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'datasets' ).strip( ).lower( )
 			
@@ -14948,38 +12915,30 @@ class UnitedNations( Fetcher ):
 					'fetch( self, mode: str="datasets", query_path: str="", '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			-----------
-			Construct and return a dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				Tool function name.
-
-			tool (str):
-				Service name.
-
-			description (str):
-				Description of what the tool does.
-
-			parameters (dict):
-				JSON-schema properties.
-
-			required (list[str]):
-				Required parameter names.
-
-			Returns:
-			-----------
-			Dict[str, str] | None
-
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the UnitedNations workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -15017,37 +12976,24 @@ class UnitedNations( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class WorldPopulation( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Fetches WorldPop catalog and raster metadata records.
-
-		Attributes:
-		-----------
-		base_url,
-		stac_url,
-		mode,
-		query_text,
-		asset_path,
-		params,
-		payload,
-
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_normalize_asset_path(...): Performs the _normalize_asset_path operation for this fetcher.
-		fetch_catalog(...): Performs the fetch_catalog operation for this fetcher.
-		search_catalog(...): Performs the search_catalog operation for this fetcher.
-		fetch_raster_metadata(...): Performs the fetch_raster_metadata operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-
-	'''
+	"""Provide the WorldPopulation component.
+	
+	Purpose:
+		Defines the WorldPopulation workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		stac_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		query_text: Runtime attribute maintained by the class.
+		asset_path: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	stac_url: Optional[ str ]
 	mode: Optional[ str ]
@@ -15057,20 +13003,11 @@ class WorldPopulation( Fetcher ):
 	payload: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the WorldPop API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the WorldPopulation instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the WorldPopulation workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://api.worldpop.org/v1'
 		self.stac_url = 'https://api.worldpop.org/stac'
@@ -15086,20 +13023,14 @@ class WorldPopulation( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Return ordered WorldPopulation members.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			List[str]
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'stac_url',
@@ -15117,21 +13048,20 @@ class WorldPopulation( Fetcher ):
 		]
 	
 	def _normalize_asset_path( self, asset_path: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize an asset or metadata path appended to the WorldPop API.
-
-			Parameters:
-			-----------
-			asset_path (str):
-				Path appended after the API base endpoint.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize asset path.
+		
+		Purpose:
+			Provides the documented normalize asset path operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			asset_path: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'asset_path', asset_path )
 			value = str( asset_path ).strip( )
@@ -15144,24 +13074,24 @@ class WorldPopulation( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'WorldPopulation'
 			exception.method = '_normalize_asset_path( self, asset_path: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_catalog( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the WorldPop API catalog or landing payload.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_catalog( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch catalog.
+		
+		Purpose:
+			Provides the documented fetch catalog operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'catalog'
 			self.url = self.base_url
@@ -15196,34 +13126,28 @@ class WorldPopulation( Fetcher ):
 			exception.method = (
 					'fetch_catalog( self, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def search_catalog( self, query: str='', page: int=1, page_size: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Execute a simple WorldPop catalog search request.
-
-			Parameters:
-			-----------
-			query (str):
-				Free-text search query.
-
-			page (int):
-				Page number.
-
-			page_size (int):
-				Requested page size.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def search_catalog( self, query: str = '', page: int = 1, page_size: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Search search catalog.
+		
+		Purpose:
+			Provides the documented search catalog operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			query: str value supplied by the caller.
+			page: int value supplied by the caller.
+			page_size: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'search'
 			self.query_text = str( query or '' ).strip( )
@@ -15234,7 +13158,7 @@ class WorldPopulation( Fetcher ):
 			}
 			
 			if self.query_text:
-				self.params[ 'q' ]=self.query_text
+				self.params[ 'q' ] = self.query_text
 			
 			self.response = requests.get(
 				url=self.url,
@@ -15266,28 +13190,26 @@ class WorldPopulation( Fetcher ):
 					'search_catalog( self, query: str="", page: int=1, '
 					'page_size: int=25, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_raster_metadata( self, asset_path: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch metadata or asset information for a WorldPop raster path.
-
-			Parameters:
-			-----------
-			asset_path (str):
-				Path appended after the API base endpoint.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch raster metadata.
+		
+		Purpose:
+			Provides the documented fetch raster metadata operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			asset_path: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'raster_metadata'
 			self.asset_path = self._normalize_asset_path( asset_path )
@@ -15324,41 +13246,31 @@ class WorldPopulation( Fetcher ):
 					'fetch_raster_metadata( self, asset_path: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='catalog', query: str='',
-			asset_path: str='', page: int=1, page_size: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Dispatch WorldPop API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of catalog, search, or raster_metadata.
-
-			query (str):
-				Free-text query for search mode.
-
-			asset_path (str):
-				Asset or metadata path for raster_metadata mode.
-
-			page (int):
-				Page number for search mode.
-
-			page_size (int):
-				Page size for search mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'catalog', query: str = '',
+			asset_path: str = '', page: int = 1, page_size: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			query: str value supplied by the caller.
+			asset_path: str value supplied by the caller.
+			page: int value supplied by the caller.
+			page_size: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'catalog' ).strip( ).lower( )
 			
@@ -15390,38 +13302,30 @@ class WorldPopulation( Fetcher ):
 					'page: int=1, page_size: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			-----------
-			Construct and return a dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				Tool function name.
-
-			tool (str):
-				Service name.
-
-			description (str):
-				Description of what the tool does.
-
-			parameters (dict):
-				JSON-schema properties.
-
-			required (list[str]):
-				Required parameter names.
-
-			Returns:
-			-----------
-			Dict[str, str] | None
-
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the WorldPopulation workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -15459,36 +13363,23 @@ class WorldPopulation( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class Wonder( Fetcher ):
-	'''
+	"""Provide the Wonder component.
 	
-		Purpose:
-		--------
-		Builds and submits CDC WONDER query templates.
+	Purpose:
+		Defines the Wonder workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
 	
-		Attributes:
-		-----------
-		base_url,
-		mode,
-		dataset_id,
-		request_xml,
-		params,
-		payload,
-	
-		Methods:
-		--------
-		__init__(...): Performs the __init__ operation for this fetcher.
-		__dir__(...): Performs the __dir__ operation for this fetcher.
-		_normalize_dataset_id(...): Performs the _normalize_dataset_id operation for this fetcher.
-		build_template(...): Performs the build_template operation for this fetcher.
-		fetch_template(...): Performs the fetch_template operation for this fetcher.
-		submit_query(...): Performs the submit_query operation for this fetcher.
-		fetch(...): Performs the fetch operation for this fetcher.
-		create_schema(...): Performs the create_schema operation for this fetcher.
-	
-	'''
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		dataset_id: Runtime attribute maintained by the class.
+		request_xml: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	dataset_id: Optional[ str ]
@@ -15497,20 +13388,11 @@ class Wonder( Fetcher ):
 	payload: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			-----------
-			Initialize the CDC WONDER API wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the Wonder instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Wonder workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://wonder.cdc.gov/controller/datarequest'
 		self.mode = 'metadata_template'
@@ -15526,20 +13408,14 @@ class Wonder( Fetcher ):
 		self.timeout = 20
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			-----------
-			Return ordered Wonder members.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			-----------
-			List[str]
-
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -15556,21 +13432,20 @@ class Wonder( Fetcher ):
 		]
 	
 	def _normalize_dataset_id( self, dataset_id: str ) -> str:
-		'''
-			Purpose:
-			-----------
-			Normalize the CDC WONDER database identifier.
-
-			Parameters:
-			-----------
-			dataset_id (str):
-				Database identifier such as D76.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Normalize normalize dataset id.
+		
+		Purpose:
+			Provides the documented normalize dataset id operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset_id: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'dataset_id', dataset_id )
 			value = str( dataset_id ).strip( ).upper( )
@@ -15582,24 +13457,24 @@ class Wonder( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Wonder'
 			exception.method = '_normalize_dataset_id( self, dataset_id: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def build_template( self, dataset_id: str='D76' ) -> str:
-		'''
-			Purpose:
-			-----------
-			Build a starter XML request document for a CDC WONDER query.
-
-			Parameters:
-			-----------
-			dataset_id (str):
-				Database identifier such as D76.
-
-			Returns:
-			-----------
-			str
-
-		'''
+	def build_template( self, dataset_id: str = 'D76' ) -> str:
+		"""Build build template.
+		
+		Purpose:
+			Provides the documented build template operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset_id: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.dataset_id = self._normalize_dataset_id( dataset_id )
 			
@@ -15630,24 +13505,24 @@ class Wonder( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Wonder'
 			exception.method = 'build_template( self, dataset_id: str="D76" ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_template( self, dataset_id: str='D76' ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			-----------
-			Return a local CDC WONDER XML request template.
-
-			Parameters:
-			-----------
-			dataset_id (str):
-				Database identifier such as D76.
-
-			Returns:
-			-----------
-			Dict[str, Any] | None
-
-		'''
+	def fetch_template( self, dataset_id: str = 'D76' ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch template.
+		
+		Purpose:
+			Provides the documented fetch template operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset_id: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'metadata_template'
 			self.dataset_id = self._normalize_dataset_id( dataset_id )
@@ -15675,31 +13550,27 @@ class Wonder( Fetcher ):
 					'fetch_template( self, dataset_id: str="D76" ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def submit_query( self, dataset_id: str, request_xml: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			-----------
-			Submit a CDC WONDER XML query request.
-
-			Parameters:
-			-----------
-			dataset_id (str):
-				Database identifier such as D76.
-
-			request_xml (str):
-				Full XML query document to POST as request_xml.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			-----------
-			Dict[str, Any] | None
-
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Run submit query.
+		
+		Purpose:
+			Provides the documented submit query operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset_id: str value supplied by the caller.
+			request_xml: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'dataset_id', dataset_id )
 			throw_if( 'request_xml', request_xml )
@@ -15742,34 +13613,28 @@ class Wonder( Fetcher ):
 					'submit_query( self, dataset_id: str, request_xml: str, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='metadata_template', dataset_id: str='D76',
-			request_xml: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			-----------
-			Dispatch CDC WONDER API operations.
-
-			Parameters:
-			-----------
-			mode (str):
-				One of metadata_template or query_xml.
-
-			dataset_id (str):
-				Database identifier such as D76.
-
-			request_xml (str):
-				Full XML request document for query_xml mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			-----------
-			Dict[str, Any] | None
-
-		'''
+	def fetch( self, mode: str = 'metadata_template', dataset_id: str = 'D76',
+			request_xml: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			dataset_id: str value supplied by the caller.
+			request_xml: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'metadata_template' ).strip( ).lower( )
 			
@@ -15794,38 +13659,30 @@ class Wonder( Fetcher ):
 					'fetch( self, mode: str="metadata_template", dataset_id: str="D76", '
 					'request_xml: str="", time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			-----------
-			Construct and return a dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				Tool function name.
-
-			tool (str):
-				Service name.
-
-			description (str):
-				Description of what the tool does.
-
-			parameters (dict):
-				JSON-schema properties.
-
-			required (list[str]):
-				Required parameter names.
-
-			Returns:
-			-----------
-			Dict[str, str] | None
-
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the Wonder workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -15863,45 +13720,35 @@ class Wonder( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class USGSEarthquakes( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the U.S. Geological Survey (USGS) earthquake feeds and
-		event search API for human-readable geospatial earthquake retrieval.
-
-		Referenced API Requirements:
-		----------------------------
-		USGS GeoJSON Summary Feeds:
-			- Endpoint:
-			  https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/
-			- Examples:
-			  - all_hour.geojson
-			  - all_day.geojson
-			  - all_week.geojson
-			  - all_month.geojson
-			  - significant_day.geojson
-
-		USGS Earthquake Catalog API:
-			- Endpoint:
-			  https://earthquake.usgs.gov/fdsnws/event/1/query
-			- Required parameter used here:
-			  - format=geojson
-			- Optional parameters used here:
-			  - starttime
-			  - endtime
-			  - minmagnitude
-			  - maxmagnitude
-			  - limit
-			  - orderby
-			  - eventtype
-			  - latitude
-			  - longitude
-			  - maxradiuskm
-
-	'''
+	"""Provide the USGSEarthquakes component.
+	
+	Purpose:
+		Defines the USGSEarthquakes workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		feed_url: Runtime attribute maintained by the class.
+		search_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		feed: Runtime attribute maintained by the class.
+		start_date: Runtime attribute maintained by the class.
+		end_date: Runtime attribute maintained by the class.
+		min_magnitude: Runtime attribute maintained by the class.
+		max_magnitude: Runtime attribute maintained by the class.
+		limit: Runtime attribute maintained by the class.
+		order_by: Runtime attribute maintained by the class.
+		event_type: Runtime attribute maintained by the class.
+		latitude: Runtime attribute maintained by the class.
+		longitude: Runtime attribute maintained by the class.
+		max_radius_km: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	feed_url: Optional[ str ]
 	search_url: Optional[ str ]
 	mode: Optional[ str ]
@@ -15922,19 +13769,11 @@ class USGSEarthquakes( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the USGS earthquake fetcher with feed and catalog endpoints.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the USGSEarthquakes instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the USGSEarthquakes workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.feed_url = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary'
 		self.search_url = 'https://earthquake.usgs.gov/fdsnws/event/1/query'
@@ -15960,19 +13799,14 @@ class USGSEarthquakes( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'feed_url',
 				'search_url',
@@ -16000,22 +13834,22 @@ class USGSEarthquakes( Fetcher ):
 		]
 	
 	def _shape_feature_rows( self, features: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize USGS GeoJSON feature records into human-readable tabular rows.
-
-			Parameters:
-			-----------
-			features (List[Dict[str, Any]]):
-				Feature collection returned by the USGS feed or search API.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape feature rows.
+		
+		Purpose:
+			Provides the documented shape feature rows operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			features: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for feature in features or [ ]:
 				properties = feature.get( 'properties', { } ) or { }
@@ -16077,23 +13911,24 @@ class USGSEarthquakes( Fetcher ):
 					'_shape_feature_rows( self, features: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_features( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Build a compact summary block from normalized earthquake rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized earthquake rows.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize features.
+		
+		Purpose:
+			Provides the documented summarize features operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			max_magnitude = None
@@ -16129,32 +13964,26 @@ class USGSEarthquakes( Fetcher ):
 					'_summarize_features( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_feed( self, feed: str='all_day.geojson',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Retrieve one of the USGS real-time GeoJSON summary feeds.
-
-			Parameters:
-			-----------
-			feed (str):
-				Feed filename such as:
-				- all_hour.geojson
-				- all_day.geojson
-				- all_week.geojson
-				- all_month.geojson
-				- significant_day.geojson
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_feed( self, feed: str = 'all_day.geojson',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch feed.
+		
+		Purpose:
+			Provides the documented fetch feed operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			feed: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'feed', feed )
 			
@@ -16196,62 +14025,38 @@ class USGSEarthquakes( Fetcher ):
 					'fetch_feed( self, feed: str=all_day.geojson, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_search( self, start_date: str, end_date: str, min_magnitude: float=1.0,
-			max_magnitude: float=10.0, limit: int=25, order_by: str='time',
-			event_type: str='earthquake', latitude: float | None=None,
-			longitude: float | None=None, max_radius_km: float | None=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Retrieve earthquake events from the USGS catalog search endpoint.
-
-			Parameters:
-			-----------
-			start_date (str):
-				Inclusive start date in YYYY-MM-DD format.
-
-			end_date (str):
-				Inclusive end date in YYYY-MM-DD format.
-
-			min_magnitude (float):
-				Minimum magnitude filter.
-
-			max_magnitude (float):
-				Maximum magnitude filter.
-
-			limit (int):
-				Maximum number of returned events.
-
-			order_by (str):
-				Catalog sort order such as:
-				- time
-				- time-asc
-				- magnitude
-				- magnitude-asc
-
-			event_type (str):
-				Event type filter, usually 'earthquake'.
-
-			latitude (float | None):
-				Optional latitude center for radial searches.
-
-			longitude (float | None):
-				Optional longitude center for radial searches.
-
-			max_radius_km (float | None):
-				Optional radial search distance in kilometers. Only used when both
-				latitude and longitude are supplied.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_search( self, start_date: str, end_date: str, min_magnitude: float = 1.0,
+			max_magnitude: float = 10.0, limit: int = 25, order_by: str = 'time',
+			event_type: str = 'earthquake', latitude: float | None = None,
+			longitude: float | None = None, max_radius_km: float | None = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch search.
+		
+		Purpose:
+			Provides the documented fetch search operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			min_magnitude: float value supplied by the caller.
+			max_magnitude: float value supplied by the caller.
+			limit: int value supplied by the caller.
+			order_by: str value supplied by the caller.
+			event_type: str value supplied by the caller.
+			latitude: float | None value supplied by the caller.
+			longitude: float | None value supplied by the caller.
+			max_radius_km: float | None value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'start_date', start_date )
 			throw_if( 'end_date', end_date )
@@ -16280,11 +14085,11 @@ class USGSEarthquakes( Fetcher ):
 			}
 			
 			if self.latitude is not None and self.longitude is not None:
-				self.params[ 'latitude' ]=self.latitude
-				self.params[ 'longitude' ]=self.longitude
+				self.params[ 'latitude' ] = self.latitude
+				self.params[ 'longitude' ] = self.longitude
 				
 				if self.max_radius_km is not None:
-					self.params[ 'maxradiuskm' ]=self.max_radius_km
+					self.params[ 'maxradiuskm' ] = self.max_radius_km
 			
 			self.url = self.search_url
 			self.response = requests.get(
@@ -16324,66 +14129,41 @@ class USGSEarthquakes( Fetcher ):
 					'max_radius_km: float | None=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='feed', feed: str='all_day.geojson',
-			start_date: str='', end_date: str='', min_magnitude: float=1.0,
-			max_magnitude: float=10.0, limit: int=25, order_by: str='time',
-			event_type: str='earthquake', latitude: float | None=None,
-			longitude: float | None=None, max_radius_km: float | None=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for USGS earthquake feed and search retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- feed
-				- search
-
-			feed (str):
-				USGS summary feed filename for feed mode.
-
-			start_date (str):
-				Start date for search mode.
-
-			end_date (str):
-				End date for search mode.
-
-			min_magnitude (float):
-				Minimum magnitude filter for search mode.
-
-			max_magnitude (float):
-				Maximum magnitude filter for search mode.
-
-			limit (int):
-				Maximum returned rows for search mode.
-
-			order_by (str):
-				Sort order for search mode.
-
-			event_type (str):
-				Event type for search mode.
-
-			latitude (float | None):
-				Optional latitude center for radial search mode.
-
-			longitude (float | None):
-				Optional longitude center for radial search mode.
-
-			max_radius_km (float | None):
-				Optional radial search distance.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'feed', feed: str = 'all_day.geojson',
+			start_date: str = '', end_date: str = '', min_magnitude: float = 1.0,
+			max_magnitude: float = 10.0, limit: int = 25, order_by: str = 'time',
+			event_type: str = 'earthquake', latitude: float | None = None,
+			longitude: float | None = None, max_radius_km: float | None = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			feed: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			min_magnitude: float value supplied by the caller.
+			max_magnitude: float value supplied by the caller.
+			limit: int value supplied by the caller.
+			order_by: str value supplied by the caller.
+			event_type: str value supplied by the caller.
+			latitude: float | None value supplied by the caller.
+			longitude: float | None value supplied by the caller.
+			max_radius_km: float | None value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'feed' ).strip( ).lower( )
 			
@@ -16422,37 +14202,30 @@ class USGSEarthquakes( Fetcher ):
 					'longitude: float | None=None, max_radius_km: float | None=None, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the USGSEarthquakes workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -16483,32 +14256,24 @@ class USGSEarthquakes( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class USGSWaterData( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the modern USGS Water Data APIs for monitoring
-		locations, time-series metadata, latest continuous values, and latest
-		daily values.
-
-		Referenced API Requirements:
-		----------------------------
-		Base Endpoint:
-			- https://api.waterdata.usgs.gov/ogcapi/v0
-
-		Collections used here:
-			- monitoring-locations
-			- time-series-metadata
-			- latest-continuous
-			- latest-daily
-
-		Optional Authentication:
-			- X-Api-Key header
-			- API keys increase rate limits but are not required for basic use
-
-	'''
+	"""Provide the USGSWaterData component.
+	
+	Purpose:
+		Defines the USGSWaterData workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	api_key: Optional[ str ]
@@ -16518,19 +14283,11 @@ class USGSWaterData( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the USGS Water Data wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the USGSWaterData instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the USGSWaterData workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://api.waterdata.usgs.gov/ogcapi/v0'
 		self.mode = 'monitoring-locations'
@@ -16545,22 +14302,17 @@ class USGSWaterData( Fetcher ):
 		}
 		
 		if self.api_key:
-			self.headers[ 'X-Api-Key' ]=self.api_key
+			self.headers[ 'X-Api-Key' ] = self.api_key
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -16584,21 +14336,19 @@ class USGSWaterData( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			--------
-			Resolve an API key for the USGS Water Data APIs.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			Optional[str]
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			candidates: List[ Optional[ str ] ]=[
+			candidates: List[ Optional[ str ] ] = [
 					os.getenv( 'USGS_WATERDATA_API_KEY' ),
 					os.getenv( 'DATA_GOV_API_KEY' ),
 					os.getenv( 'GOVINFO_API_KEY' )
@@ -16615,24 +14365,24 @@ class USGSWaterData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'USGSWaterData'
 			exception.method = '_resolve_api_key( self ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _coalesce( self, payload: Any ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize several possible USGS Water Data response layouts into a list
-			of record dictionaries.
-
-			Parameters:
-			-----------
-			payload (Any):
-				Decoded JSON payload returned by the API.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run coalesce.
+		
+		Purpose:
+			Provides the documented coalesce operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Any value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if isinstance( payload, list ):
 				return [ item for item in payload if isinstance( item, dict ) ]
@@ -16652,31 +14402,28 @@ class USGSWaterData( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'USGSWaterData'
 			exception.method = '_coalesce( self, payload: Any ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def request( self, collection: str,
-			params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a USGS Water Data collection endpoint.
-
-			Parameters:
-			-----------
-			collection (str):
-				Collection name under the OGC API base path.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			collection: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'collection', collection )
 			
@@ -16688,7 +14435,7 @@ class USGSWaterData( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -16715,26 +14462,27 @@ class USGSWaterData( Fetcher ):
 					'params: Optional[ Dict[ str, Any ] ]=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_monitoring_locations( self,
 			records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize monitoring-location records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Monitoring location records.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape monitoring locations.
+		
+		Purpose:
+			Provides the documented shape monitoring locations operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				properties = item.get( 'properties', { } ) or item
@@ -16807,26 +14555,27 @@ class USGSWaterData( Fetcher ):
 					'_shape_monitoring_locations( self, records: '
 					'List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_time_series_metadata( self,
 			records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize time-series metadata records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Time-series metadata records.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape time series metadata.
+		
+		Purpose:
+			Provides the documented shape time series metadata operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				properties = item.get( 'properties', { } ) or item
@@ -16879,26 +14628,27 @@ class USGSWaterData( Fetcher ):
 					'_shape_time_series_metadata( self, records: '
 					'List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_latest_values( self,
 			records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize latest continuous or daily value records into a readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Value records.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape latest values.
+		
+		Purpose:
+			Provides the documented shape latest values operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				properties = item.get( 'properties', { } ) or item
@@ -16958,23 +14708,24 @@ class USGSWaterData( Fetcher ):
 					'_shape_latest_values( self, records: '
 					'List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_site = ''
@@ -17004,40 +14755,31 @@ class USGSWaterData( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_monitoring_locations( self, monitoring_location_id: str='',
-			state_code: str='', county_code: str='', site_type: str='',
-			limit: int=25, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch monitoring locations.
-
-			Parameters:
-			-----------
-			monitoring_location_id (str):
-				Optional monitoring location identifier such as USGS-01491000.
-
-			state_code (str):
-				Optional state filter.
-
-			county_code (str):
-				Optional county filter.
-
-			site_type (str):
-				Optional site type filter.
-
-			limit (int):
-				Maximum rows requested.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_monitoring_locations( self, monitoring_location_id: str = '',
+			state_code: str = '', county_code: str = '', site_type: str = '',
+			limit: int = 25, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch monitoring locations.
+		
+		Purpose:
+			Provides the documented fetch monitoring locations operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			monitoring_location_id: str value supplied by the caller.
+			state_code: str value supplied by the caller.
+			county_code: str value supplied by the caller.
+			site_type: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'monitoring-locations'
 			base = self.request(
@@ -17073,35 +14815,29 @@ class USGSWaterData( Fetcher ):
 					'state_code: str=, county_code: str=, site_type: str=, '
 					'limit: int=25, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_time_series_metadata( self, monitoring_location_id: str='',
-			parameter_code: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch time-series metadata for a monitoring location and optional
-			parameter code.
-
-			Parameters:
-			-----------
-			monitoring_location_id (str):
-				Optional monitoring location identifier.
-
-			parameter_code (str):
-				Optional USGS parameter code.
-
-			limit (int):
-				Maximum rows requested.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_time_series_metadata( self, monitoring_location_id: str = '',
+			parameter_code: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch time series metadata.
+		
+		Purpose:
+			Provides the documented fetch time series metadata operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			monitoring_location_id: str value supplied by the caller.
+			parameter_code: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'time-series-metadata'
 			base = self.request(
@@ -17135,34 +14871,29 @@ class USGSWaterData( Fetcher ):
 					'parameter_code: str=, limit: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_latest_continuous( self, monitoring_location_id: str='',
-			parameter_code: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the latest continuous values for a monitoring location.
-
-			Parameters:
-			-----------
-			monitoring_location_id (str):
-				Optional monitoring location identifier.
-
-			parameter_code (str):
-				Optional USGS parameter code.
-
-			limit (int):
-				Maximum rows requested.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_latest_continuous( self, monitoring_location_id: str = '',
+			parameter_code: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch latest continuous.
+		
+		Purpose:
+			Provides the documented fetch latest continuous operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			monitoring_location_id: str value supplied by the caller.
+			parameter_code: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'latest-continuous'
 			base = self.request(
@@ -17196,34 +14927,29 @@ class USGSWaterData( Fetcher ):
 					'parameter_code: str=, limit: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_latest_daily( self, monitoring_location_id: str='',
-			parameter_code: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch the latest daily values for a monitoring location.
-
-			Parameters:
-			-----------
-			monitoring_location_id (str):
-				Optional monitoring location identifier.
-
-			parameter_code (str):
-				Optional USGS parameter code.
-
-			limit (int):
-				Maximum rows requested.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_latest_daily( self, monitoring_location_id: str = '',
+			parameter_code: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch latest daily.
+		
+		Purpose:
+			Provides the documented fetch latest daily operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			monitoring_location_id: str value supplied by the caller.
+			parameter_code: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'latest-daily'
 			base = self.request(
@@ -17257,52 +14983,35 @@ class USGSWaterData( Fetcher ):
 					'parameter_code: str=, limit: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='monitoring-locations',
-			monitoring_location_id: str='', state_code: str='',
-			county_code: str='', site_type: str='',
-			parameter_code: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for USGS Water Data retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- monitoring-locations
-				- time-series-metadata
-				- latest-continuous
-				- latest-daily
-
-			monitoring_location_id (str):
-				Optional monitoring location identifier.
-
-			state_code (str):
-				Optional state filter for monitoring locations.
-
-			county_code (str):
-				Optional county filter for monitoring locations.
-
-			site_type (str):
-				Optional site type filter for monitoring locations.
-
-			parameter_code (str):
-				Optional USGS parameter code.
-
-			limit (int):
-				Maximum rows requested.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'monitoring-locations',
+			monitoring_location_id: str = '', state_code: str = '',
+			county_code: str = '', site_type: str = '',
+			parameter_code: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			monitoring_location_id: str value supplied by the caller.
+			state_code: str value supplied by the caller.
+			county_code: str value supplied by the caller.
+			site_type: str value supplied by the caller.
+			parameter_code: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'monitoring-locations' ).strip( ).lower( )
 			
@@ -17355,37 +15064,30 @@ class USGSWaterData( Fetcher ):
 					'county_code: str=, site_type: str=, parameter_code: str=, '
 					'limit: int=25, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the USGSWaterData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -17416,33 +15118,23 @@ class USGSWaterData( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class USGSTheNationalMap( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the USGS The National Map (TNM) TNMAccess API for
-		dataset discovery and downloadable product search.
-
-		Referenced API Requirements:
-		----------------------------
-		Base Endpoint:
-			- https://tnmaccess.nationalmap.gov/api/v1
-
-		Resources used here:
-			- /datasets
-			- /products
-
-		Common product query concepts:
-			- datasets
-			- q
-			- bbox
-			- prodFormats
-			- max
-			- offset
-
-	'''
+	"""Provide the USGSTheNationalMap component.
+	
+	Purpose:
+		Defines the USGSTheNationalMap workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -17451,19 +15143,11 @@ class USGSTheNationalMap( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the USGS The National Map wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the USGSTheNationalMap instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the USGSTheNationalMap workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://tnmaccess.nationalmap.gov/api/v1'
 		self.mode = 'products'
@@ -17477,19 +15161,14 @@ class USGSTheNationalMap( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -17508,28 +15187,24 @@ class USGSTheNationalMap( Fetcher ):
 		]
 	
 	def request( self, endpoint: str,
-			params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a TNMAccess endpoint.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				Endpoint path under the TNMAccess base URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			
@@ -17541,7 +15216,7 @@ class USGSTheNationalMap( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -17568,23 +15243,24 @@ class USGSTheNationalMap( Fetcher ):
 					'params: Optional[ Dict[ str, Any ] ]=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _coalesce( self, payload: Any ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize possible TNMAccess response layouts into a list of records.
-
-			Parameters:
-			-----------
-			payload (Any):
-				Decoded JSON payload returned by the API.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run coalesce.
+		
+		Purpose:
+			Provides the documented coalesce operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Any value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if isinstance( payload, list ):
 				return [ item for item in payload if isinstance( item, dict ) ]
@@ -17604,26 +15280,27 @@ class USGSTheNationalMap( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'USGSTheNationalMap'
 			exception.method = '_coalesce( self, payload: Any ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_dataset_rows( self,
 			records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize TNM dataset records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Dataset records returned by TNMAccess.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape dataset rows.
+		
+		Purpose:
+			Provides the documented shape dataset rows operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				rows.append(
@@ -17657,26 +15334,27 @@ class USGSTheNationalMap( Fetcher ):
 					'_shape_dataset_rows( self, records: '
 					'List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_product_rows( self,
 			records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize TNM product records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Product records returned by TNMAccess.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape product rows.
+		
+		Purpose:
+			Provides the documented shape product rows operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				download_url = (
@@ -17736,23 +15414,24 @@ class USGSTheNationalMap( Fetcher ):
 					'_shape_product_rows( self, records: '
 					'List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_title = ''
@@ -17779,23 +15458,24 @@ class USGSTheNationalMap( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_datasets( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch dataset metadata from TNMAccess.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_datasets( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch datasets.
+		
+		Purpose:
+			Provides the documented fetch datasets operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'datasets'
 			base = self.request(
@@ -17821,43 +15501,32 @@ class USGSTheNationalMap( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'USGSTheNationalMap'
 			exception.method = 'fetch_datasets( self, time: int=20 ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_products( self, dataset: str='', q: str='',
-			bbox: str='', prod_formats: str='', max_items: int=25,
-			offset: int=0, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch downloadable product records from TNMAccess.
-
-			Parameters:
-			-----------
-			dataset (str):
-				Optional TNM dataset filter.
-
-			q (str):
-				Optional free-text search string.
-
-			bbox (str):
-				Optional bounding box in minx,miny,maxx,maxy format.
-
-			prod_formats (str):
-				Optional product format filter such as GeoTIFF, IMG, LAS, or LAZ.
-
-			max_items (int):
-				Maximum number of returned products.
-
-			offset (int):
-				Result offset for paging.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_products( self, dataset: str = '', q: str = '',
+			bbox: str = '', prod_formats: str = '', max_items: int = 25,
+			offset: int = 0, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch products.
+		
+		Purpose:
+			Provides the documented fetch products operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset: str value supplied by the caller.
+			q: str value supplied by the caller.
+			bbox: str value supplied by the caller.
+			prod_formats: str value supplied by the caller.
+			max_items: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'products'
 			base = self.request(
@@ -17894,49 +15563,34 @@ class USGSTheNationalMap( Fetcher ):
 					'prod_formats: str=, max_items: int=25, offset: int=0, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='products', dataset: str='',
-			q: str='', bbox: str='', prod_formats: str='',
-			max_items: int=25, offset: int=0,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for TNMAccess dataset and product retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- datasets
-				- products
-
-			dataset (str):
-				Optional TNM dataset filter for product search.
-
-			q (str):
-				Optional free-text search string for product search.
-
-			bbox (str):
-				Optional bounding box string for product search.
-
-			prod_formats (str):
-				Optional format filter for product search.
-
-			max_items (int):
-				Maximum returned products.
-
-			offset (int):
-				Result offset for paging.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'products', dataset: str = '',
+			q: str = '', bbox: str = '', prod_formats: str = '',
+			max_items: int = 25, offset: int = 0,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			dataset: str value supplied by the caller.
+			q: str value supplied by the caller.
+			bbox: str value supplied by the caller.
+			prod_formats: str value supplied by the caller.
+			max_items: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'products' ).strip( ).lower( )
 			
@@ -17967,37 +15621,30 @@ class USGSTheNationalMap( Fetcher ):
 					'bbox: str=, prod_formats: str=, max_items: int=25, '
 					'offset: int=0, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the USGSTheNationalMap workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -18028,31 +15675,23 @@ class USGSTheNationalMap( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class USGSScienceBase( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides read-only access to the USGS ScienceBase REST/JSON API for
-		item search and item retrieval.
-
-		Referenced API Requirements:
-		----------------------------
-		Base Endpoint:
-			- https://www.sciencebase.gov/catalog
-
-		Resources used here:
-			- /items
-			- /item/{id}
-
-		Common query concepts:
-			- q
-			- max
-			- offset
-			- fields
-
-	'''
+	"""Provide the USGSScienceBase component.
+	
+	Purpose:
+		Defines the USGSScienceBase workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -18061,19 +15700,11 @@ class USGSScienceBase( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the USGS ScienceBase wrapper.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the USGSScienceBase instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the USGSScienceBase workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://www.sciencebase.gov/catalog'
 		self.mode = 'items'
@@ -18087,19 +15718,14 @@ class USGSScienceBase( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -18118,28 +15744,24 @@ class USGSScienceBase( Fetcher ):
 		]
 	
 	def request( self, endpoint: str,
-			params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a ScienceBase endpoint.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				Endpoint path under the ScienceBase base URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			
@@ -18151,7 +15773,7 @@ class USGSScienceBase( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -18178,23 +15800,24 @@ class USGSScienceBase( Fetcher ):
 					'params: Optional[ Dict[ str, Any ] ]=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _coalesce( self, payload: Any ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize possible ScienceBase response layouts into a list of items.
-
-			Parameters:
-			-----------
-			payload (Any):
-				Decoded JSON payload returned by the API.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run coalesce.
+		
+		Purpose:
+			Provides the documented coalesce operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Any value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if isinstance( payload, list ):
 				return [ item for item in payload if isinstance( item, dict ) ]
@@ -18217,26 +15840,27 @@ class USGSScienceBase( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'USGSScienceBase'
 			exception.method = '_coalesce( self, payload: Any ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_item_rows( self,
 			records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize ScienceBase item records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Item records returned by ScienceBase.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape item rows.
+		
+		Purpose:
+			Provides the documented shape item rows operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				title = item.get( 'title', '' )
@@ -18257,7 +15881,8 @@ class USGSScienceBase( Fetcher ):
 				if item.get( 'facets', None ):
 					try:
 						for facet in item.get( 'facets', [ ] ) or [ ]:
-							if isinstance( facet, dict ) and facet.get( 'boundingBox', None ) is not None:
+							if isinstance( facet, dict ) and facet.get( 'boundingBox',
+									None ) is not None:
 								has_spatial = True
 								break
 					except Exception:
@@ -18298,23 +15923,24 @@ class USGSScienceBase( Fetcher ):
 					'_shape_item_rows( self, records: '
 					'List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_single_item( self, item: Dict[ str, Any ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Normalize a single ScienceBase item into a readable detail dictionary.
-
-			Parameters:
-			-----------
-			item (Dict[str, Any]):
-				Single item payload returned by ScienceBase.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Run shape single item.
+		
+		Purpose:
+			Provides the documented shape single item operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			item: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			files_value = item.get( 'files', [ ] ) or [ ]
 			file_count = len( files_value ) if isinstance( files_value, list ) else 0
@@ -18352,23 +15978,24 @@ class USGSScienceBase( Fetcher ):
 					'_shape_single_item( self, item: Dict[ str, Any ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_title = ''
@@ -18398,37 +16025,30 @@ class USGSScienceBase( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_items( self, q: str='', max_items: int=25,
-			offset: int=0, fields: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Search ScienceBase items.
-
-			Parameters:
-			-----------
-			q (str):
-				Optional search query string.
-
-			max_items (int):
-				Maximum number of returned items.
-
-			offset (int):
-				Result offset for paging.
-
-			fields (str):
-				Optional fields selector.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_items( self, q: str = '', max_items: int = 25,
+			offset: int = 0, fields: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch items.
+		
+		Purpose:
+			Provides the documented fetch items operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			q: str value supplied by the caller.
+			max_items: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			fields: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'items'
 			base = self.request(
@@ -18462,27 +16082,26 @@ class USGSScienceBase( Fetcher ):
 					'fetch_items( self, q: str=, max_items: int=25, offset: int=0, '
 					'fields: str=, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_item( self, item_id: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Retrieve a single ScienceBase item by identifier.
-
-			Parameters:
-			-----------
-			item_id (str):
-				ScienceBase item identifier.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch item.
+		
+		Purpose:
+			Provides the documented fetch item operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			item_id: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'item_id', item_id )
 			
@@ -18518,45 +16137,32 @@ class USGSScienceBase( Fetcher ):
 					'fetch_item( self, item_id: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='items', q: str='',
-			item_id: str='', max_items: int=25, offset: int=0,
-			fields: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for ScienceBase item search and item retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- items
-				- item
-
-			q (str):
-				Optional search query for items mode.
-
-			item_id (str):
-				Item identifier for item mode.
-
-			max_items (int):
-				Maximum number of items returned in items mode.
-
-			offset (int):
-				Result offset for items mode.
-
-			fields (str):
-				Optional fields selector for items mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'items', q: str = '',
+			item_id: str = '', max_items: int = 25, offset: int = 0,
+			fields: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			q: str value supplied by the caller.
+			item_id: str value supplied by the caller.
+			max_items: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			fields: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'items' ).strip( ).lower( )
 			
@@ -18586,37 +16192,30 @@ class USGSScienceBase( Fetcher ):
 					'max_items: int=25, offset: int=0, fields: str=, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the USGSScienceBase workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -18647,27 +16246,24 @@ class USGSScienceBase( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class AirNow( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the AirNow API for current observations and forecasts by
-		Zip code or latitude/longitude, returning human-readable normalized rows.
-
-		Referenced API Requirements:
-		----------------------------
-		AirNow Web Services support:
-			- Current observations by Zip code
-			- Current observations by latitude/longitude
-			- Forecasts by Zip code
-			- Forecasts by latitude/longitude
-
-		Optional Authentication:
-			- API key required by AirNow web services
-
-	'''
+	"""Provide the AirNow component.
+	
+	Purpose:
+		Defines the AirNow workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	api_key: Optional[ str ]
 	mode: Optional[ str ]
@@ -18677,19 +16273,11 @@ class AirNow( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the AirNow fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the AirNow instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the AirNow workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://www.airnowapi.org/aq'
 		self.api_key = self._resolve_api_key( )
@@ -18704,19 +16292,14 @@ class AirNow( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'api_key',
@@ -18737,21 +16320,19 @@ class AirNow( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			--------
-			Resolve the AirNow API key from environment variables.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			Optional[str]
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			candidates: List[ Optional[ str ] ]=[
+			candidates: List[ Optional[ str ] ] = [
 					os.getenv( 'AIRNOW_API_KEY' ),
 					os.getenv( 'EPA_AIRNOW_API_KEY' )
 			]
@@ -18767,30 +16348,27 @@ class AirNow( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'AirNow'
 			exception.method = '_resolve_api_key( self ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to an AirNow endpoint.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				Endpoint path under the AirNow base URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			
@@ -18807,10 +16385,10 @@ class AirNow( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
-			self.params[ 'format' ]='application/json'
-			self.params[ 'API_KEY' ]=self.api_key
+			self.params[ 'format' ] = 'application/json'
+			self.params[ 'API_KEY' ] = self.api_key
 			
 			self.response = requests.get(
 				url=self.url,
@@ -18836,25 +16414,26 @@ class AirNow( Fetcher ):
 					'request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ]=None, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize AirNow records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				AirNow records returned by the API.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape rows.
+		
+		Purpose:
+			Provides the documented shape rows operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				rows.append(
@@ -18888,23 +16467,24 @@ class AirNow( Fetcher ):
 					'_shape_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized AirNow rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized AirNow row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			max_aqi = None
@@ -18942,30 +16522,27 @@ class AirNow( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_current_zip( self, zip_code: str, distance: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch current AQI observations by Zip code.
-
-			Parameters:
-			-----------
-			zip_code (str):
-				U.S. Zip code.
-
-			distance (int):
-				Radius distance in miles.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_current_zip( self, zip_code: str, distance: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch current zip.
+		
+		Purpose:
+			Provides the documented fetch current zip operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			zip_code: str value supplied by the caller.
+			distance: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'zip_code', zip_code )
 			
@@ -18999,33 +16576,28 @@ class AirNow( Fetcher ):
 					'fetch_current_zip( self, zip_code: str, distance: int=25, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_current_latlon( self, latitude: float, longitude: float,
-			distance: int=25, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch current AQI observations by latitude and longitude.
-
-			Parameters:
-			-----------
-			latitude (float):
-				Latitude of the query point.
-
-			longitude (float):
-				Longitude of the query point.
-
-			distance (int):
-				Radius distance in miles.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			distance: int = 25, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch current latlon.
+		
+		Purpose:
+			Provides the documented fetch current latlon operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+			distance: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'current-latlon'
 			base = self.request(
@@ -19058,33 +16630,28 @@ class AirNow( Fetcher ):
 					'fetch_current_latlon( self, latitude: float, longitude: float, '
 					'distance: int=25, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_forecast_zip( self, zip_code: str, date: str,
-			distance: int=25, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch AQI forecasts by Zip code.
-
-			Parameters:
-			-----------
-			zip_code (str):
-				U.S. Zip code.
-
-			date (str):
-				Forecast date in YYYY-MM-DD format.
-
-			distance (int):
-				Radius distance in miles.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			distance: int = 25, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch forecast zip.
+		
+		Purpose:
+			Provides the documented fetch forecast zip operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			zip_code: str value supplied by the caller.
+			date: str value supplied by the caller.
+			distance: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'zip_code', zip_code )
 			throw_if( 'date', date )
@@ -19120,36 +16687,29 @@ class AirNow( Fetcher ):
 					'fetch_forecast_zip( self, zip_code: str, date: str, distance: int=25, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_forecast_latlon( self, latitude: float, longitude: float,
-			date: str, distance: int=25, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch AQI forecasts by latitude and longitude.
-
-			Parameters:
-			-----------
-			latitude (float):
-				Latitude of the query point.
-
-			longitude (float):
-				Longitude of the query point.
-
-			date (str):
-				Forecast date in YYYY-MM-DD format.
-
-			distance (int):
-				Radius distance in miles.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			date: str, distance: int = 25, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch forecast latlon.
+		
+		Purpose:
+			Provides the documented fetch forecast latlon operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			latitude: float value supplied by the caller.
+			longitude: float value supplied by the caller.
+			date: str value supplied by the caller.
+			distance: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'date', date )
 			
@@ -19185,48 +16745,33 @@ class AirNow( Fetcher ):
 					'fetch_forecast_latlon( self, latitude: float, longitude: float, '
 					'date: str, distance: int=25, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='current-zip', zip_code: str='',
-			latitude: float | None=None, longitude: float | None=None,
-			date: str='', distance: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for AirNow observation and forecast retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- current-zip
-				- current-latlon
-				- forecast-zip
-				- forecast-latlon
-
-			zip_code (str):
-				Optional U.S. Zip code.
-
-			latitude (float | None):
-				Optional latitude.
-
-			longitude (float | None):
-				Optional longitude.
-
-			date (str):
-				Optional forecast date in YYYY-MM-DD format.
-
-			distance (int):
-				Radius distance in miles.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'current-zip', zip_code: str = '',
+			latitude: float | None = None, longitude: float | None = None,
+			date: str = '', distance: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			zip_code: str value supplied by the caller.
+			latitude: float | None value supplied by the caller.
+			longitude: float | None value supplied by the caller.
+			date: str value supplied by the caller.
+			distance: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'current-zip' ).strip( ).lower( )
 			
@@ -19276,37 +16821,30 @@ class AirNow( Fetcher ):
 					'latitude: float | None=None, longitude: float | None=None, '
 					'date: str=, distance: int=25, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the AirNow workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -19337,39 +16875,24 @@ class AirNow( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class ClimateData( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to NOAA NCEI climate data search and retrieval services for
-		dataset discovery and subsetted climate data extraction.
-
-		Referenced API Requirements:
-		----------------------------
-		NOAA NCEI Access Data Service:
-			- Endpoint:
-			  https://www.ncei.noaa.gov/access/services/data/v1
-			- Common parameters:
-			  - dataset
-			  - startDate
-			  - endDate
-			  - stations
-			  - dataTypes
-			  - format
-
-		NOAA NCEI Access Search Service:
-			- Endpoint:
-			  https://www.ncei.noaa.gov/access/services/search/v1/datasets
-			- Common parameters:
-			  - keyword
-			  - startDate
-			  - endDate
-			  - offset
-			  - limit
-
-	'''
+	"""Provide the ClimateData component.
+	
+	Purpose:
+		Defines the ClimateData workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		data_url: Runtime attribute maintained by the class.
+		search_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	data_url: Optional[ str ]
 	search_url: Optional[ str ]
 	mode: Optional[ str ]
@@ -19379,19 +16902,11 @@ class ClimateData( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the NOAA climate data fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the ClimateData instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the ClimateData workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.data_url = 'https://www.ncei.noaa.gov/access/services/data/v1'
 		self.search_url = 'https://www.ncei.noaa.gov/access/services/search/v1'
@@ -19406,19 +16921,14 @@ class ClimateData( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'data_url',
 				'search_url',
@@ -19436,28 +16946,24 @@ class ClimateData( Fetcher ):
 				'create_schema'
 		]
 	
-	def request( self, url: str, params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a NOAA NCEI endpoint.
-
-			Parameters:
-			-----------
-			url (str):
-				Target endpoint URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, url: str, params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -19469,7 +16975,7 @@ class ClimateData( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -19495,25 +17001,26 @@ class ClimateData( Fetcher ):
 					'request( self, url: str, params: Optional[ Dict[ str, Any ] ]=None, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_dataset_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize NOAA dataset search records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Dataset discovery records returned by the search service.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape dataset rows.
+		
+		Purpose:
+			Provides the documented shape dataset rows operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				rows.append(
@@ -19546,32 +17053,33 @@ class ClimateData( Fetcher ):
 					'_shape_dataset_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_data_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize NOAA climate data records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Climate data records returned by the data service.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape data rows.
+		
+		Purpose:
+			Provides the documented shape data rows operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
-				row: Dict[ str, Any ]={ }
+				row: Dict[ str, Any ] = { }
 				
 				for key, value in item.items( ):
 					friendly_key = str( key ).replace( '_', ' ' ).title( )
-					row[ friendly_key ]=value
+					row[ friendly_key ] = value
 				
 				rows.append( row )
 			
@@ -19585,23 +17093,24 @@ class ClimateData( Fetcher ):
 					'_shape_data_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_title = ''
@@ -19632,40 +17141,31 @@ class ClimateData( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_datasets( self, keyword: str='', start_date: str='',
-			end_date: str='', limit: int=25, offset: int=0,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch discoverable NOAA climate datasets.
-
-			Parameters:
-			-----------
-			keyword (str):
-				Optional dataset keyword search string.
-
-			start_date (str):
-				Optional ISO date lower bound.
-
-			end_date (str):
-				Optional ISO date upper bound.
-
-			limit (int):
-				Maximum returned datasets.
-
-			offset (int):
-				Result offset.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_datasets( self, keyword: str = '', start_date: str = '',
+			end_date: str = '', limit: int = 25, offset: int = 0,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch datasets.
+		
+		Purpose:
+			Provides the documented fetch datasets operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			keyword: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'datasets'
 			base = self.request(
@@ -19701,43 +17201,32 @@ class ClimateData( Fetcher ):
 					'fetch_datasets( self, keyword: str=, start_date: str=, end_date: str=, '
 					'limit: int=25, offset: int=0, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_data( self, dataset: str, start_date: str, end_date: str,
-			stations: str='', data_types: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch subsetted NOAA climate data records.
-
-			Parameters:
-			-----------
-			dataset (str):
-				NCEI dataset identifier, such as daily-summaries.
-
-			start_date (str):
-				ISO start date.
-
-			end_date (str):
-				ISO end date.
-
-			stations (str):
-				Optional comma-separated station identifiers.
-
-			data_types (str):
-				Optional comma-separated datatype identifiers.
-
-			limit (int):
-				Maximum returned rows.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			stations: str = '', data_types: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch data.
+		
+		Purpose:
+			Provides the documented fetch data operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			dataset: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			stations: str value supplied by the caller.
+			data_types: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'dataset', dataset )
 			throw_if( 'start_date', start_date )
@@ -19779,55 +17268,36 @@ class ClimateData( Fetcher ):
 					'stations: str=, data_types: str=, limit: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='datasets', keyword: str='', dataset: str='',
-			start_date: str='', end_date: str='', stations: str='',
-			data_types: str='', limit: int=25, offset: int=0,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for NOAA climate dataset discovery and data retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- datasets
-				- data
-
-			keyword (str):
-				Optional dataset search keyword.
-
-			dataset (str):
-				Dataset identifier for data mode.
-
-			start_date (str):
-				Optional start date.
-
-			end_date (str):
-				Optional end date.
-
-			stations (str):
-				Optional comma-separated station identifiers.
-
-			data_types (str):
-				Optional comma-separated datatype identifiers.
-
-			limit (int):
-				Maximum returned rows.
-
-			offset (int):
-				Result offset for datasets mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'datasets', keyword: str = '', dataset: str = '',
+			start_date: str = '', end_date: str = '', stations: str = '',
+			data_types: str = '', limit: int = 25, offset: int = 0,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			keyword: str value supplied by the caller.
+			dataset: str value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			stations: str value supplied by the caller.
+			data_types: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			offset: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'datasets' ).strip( ).lower( )
 			
@@ -19863,37 +17333,30 @@ class ClimateData( Fetcher ):
 					'start_date: str=, end_date: str=, stations: str=, data_types: str=, '
 					'limit: int=25, offset: int=0, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the ClimateData workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -19924,36 +17387,23 @@ class ClimateData( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class EoNet( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to NASA EONET Version 3 for event discovery and category
-		discovery, returning human-readable normalized rows.
-
-		Referenced API Requirements:
-		----------------------------
-		EONET Version 3 Base Endpoint:
-			- https://eonet.gsfc.nasa.gov/api/v3
-
-		Resources used here:
-			- /events
-			- /events/geojson
-			- /categories
-
-		Common event filters:
-			- source
-			- category
-			- status
-			- limit
-			- days
-			- start
-			- end
-			- bbox
-
-	'''
+	"""Provide the EoNet component.
+	
+	Purpose:
+		Defines the EoNet workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -19962,19 +17412,11 @@ class EoNet( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the NASA EONET fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the EoNet instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the EoNet workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://eonet.gsfc.nasa.gov/api/v3'
 		self.mode = 'events'
@@ -19988,19 +17430,14 @@ class EoNet( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -20018,28 +17455,24 @@ class EoNet( Fetcher ):
 		]
 	
 	def request( self, endpoint: str,
-			params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to an EONET endpoint.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				Endpoint path under the EONET base URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			
@@ -20051,7 +17484,7 @@ class EoNet( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -20078,25 +17511,26 @@ class EoNet( Fetcher ):
 					'params: Optional[ Dict[ str, Any ] ]=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_event_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize EONET event records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Event records returned by EONET.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape event rows.
+		
+		Purpose:
+			Provides the documented shape event rows operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				categories = item.get( 'categories', [ ] ) or [ ]
@@ -20157,25 +17591,26 @@ class EoNet( Fetcher ):
 					'_shape_event_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_category_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize EONET category records into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Category records returned by EONET.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape category rows.
+		
+		Purpose:
+			Provides the documented shape category rows operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
 				rows.append(
@@ -20197,23 +17632,24 @@ class EoNet( Fetcher ):
 					'_shape_category_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized EONET rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			open_count = 0
@@ -20243,54 +17679,35 @@ class EoNet( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_events( self, source: str='', category: str='',
-			status: str='open', limit: int=25, days: int=30,
-			start_date: str='', end_date: str='', bbox: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch EONET events.
-
-			Parameters:
-			-----------
-			source (str):
-				Optional source identifier or comma-separated source identifiers.
-
-			category (str):
-				Optional category identifier or comma-separated category identifiers.
-
-			status (str):
-				Event status filter:
-				- open
-				- closed
-				- all
-
-			limit (int):
-				Maximum returned events.
-
-			days (int):
-				Number of prior days including today.
-
-			start_date (str):
-				Optional ISO start date.
-
-			end_date (str):
-				Optional ISO end date.
-
-			bbox (str):
-				Optional bounding box in:
-				min_lon,max_lat,max_lon,min_lat
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_events( self, source: str = '', category: str = '',
+			status: str = 'open', limit: int = 25, days: int = 30,
+			start_date: str = '', end_date: str = '', bbox: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch events.
+		
+		Purpose:
+			Provides the documented fetch events operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			source: str value supplied by the caller.
+			category: str value supplied by the caller.
+			status: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			days: int value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			bbox: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'events'
 			base = self.request(
@@ -20330,23 +17747,24 @@ class EoNet( Fetcher ):
 					'limit: int=25, days: int=30, start_date: str=, end_date: str=, '
 					'bbox: str=, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_categories( self, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch EONET categories.
-
-			Parameters:
-			-----------
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_categories( self, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch categories.
+		
+		Purpose:
+			Provides the documented fetch categories operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'categories'
 			base = self.request(
@@ -20373,55 +17791,36 @@ class EoNet( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'EoNet'
 			exception.method = 'fetch_categories( self, time: int=20 ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='events', source: str='', category: str='',
-			status: str='open', limit: int=25, days: int=30,
-			start_date: str='', end_date: str='', bbox: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for EONET event and category retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- events
-				- categories
-
-			source (str):
-				Optional event source filter.
-
-			category (str):
-				Optional event category filter.
-
-			status (str):
-				Optional event status filter.
-
-			limit (int):
-				Maximum returned events.
-
-			days (int):
-				Number of prior days including today.
-
-			start_date (str):
-				Optional ISO start date.
-
-			end_date (str):
-				Optional ISO end date.
-
-			bbox (str):
-				Optional bounding box string.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'events', source: str = '', category: str = '',
+			status: str = 'open', limit: int = 25, days: int = 30,
+			start_date: str = '', end_date: str = '', bbox: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			source: str value supplied by the caller.
+			category: str value supplied by the caller.
+			status: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			days: int value supplied by the caller.
+			start_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			bbox: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'events' ).strip( ).lower( )
 			
@@ -20454,37 +17853,30 @@ class EoNet( Fetcher ):
 					'status: str=open, limit: int=25, days: int=30, start_date: str=, '
 					'end_date: str=, bbox: str=, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the EoNet workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -20515,34 +17907,23 @@ class EoNet( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class EnviroFacts( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to selected EPA Envirofacts Data Service API tables using
-		a constrained, human-readable wrapper for common environmental queries.
-
-		Referenced API Requirements:
-		----------------------------
-		Envirofacts Data Service API:
-			- Base:
-			  https://enviro.epa.gov/enviro/efservice
-
-		Supported first-pass tables in this wrapper:
-			- TRI_FACILITY
-			- TRI_RELEASE
-			- EF_W_EMISSIONS_SOURCE_GHG
-
-		Common query concepts:
-			- table selection
-			- row limiting
-			- optional state filtering
-			- optional facility-name prefix filtering
-			- JSON output
-
-	'''
+	"""Provide the EnviroFacts component.
+	
+	Purpose:
+		Defines the EnviroFacts workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -20551,19 +17932,11 @@ class EnviroFacts( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the Envirofacts fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the EnviroFacts instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the EnviroFacts workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://enviro.epa.gov/enviro/efservice'
 		self.mode = 'table'
@@ -20577,19 +17950,14 @@ class EnviroFacts( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -20606,31 +17974,25 @@ class EnviroFacts( Fetcher ):
 		]
 	
 	def _resolve_table_path( self, table_name: str,
-			state_code: str='', facility_name: str='',
-			limit: int=25 ) -> str:
-		'''
-			Purpose:
-			--------
-			Construct a constrained Envirofacts REST path for a supported table.
-
-			Parameters:
-			-----------
-			table_name (str):
-				Supported table name.
-
-			state_code (str):
-				Optional state code filter.
-
-			facility_name (str):
-				Optional facility name prefix filter.
-
-			limit (int):
-				Maximum number of returned rows.
-
-			Returns:
-			--------
-			str
-		'''
+			state_code: str = '', facility_name: str = '',
+			limit: int = 25 ) -> str:
+		"""Run resolve table path.
+		
+		Purpose:
+			Provides the documented resolve table path operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			table_name: str value supplied by the caller.
+			state_code: str value supplied by the caller.
+			facility_name: str value supplied by the caller.
+			limit: int value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'table_name', table_name )
 			
@@ -20640,7 +18002,7 @@ class EnviroFacts( Fetcher ):
 			row_limit = max( 1, int( limit ) )
 			
 			base_path = f'{table_value}'
-			segments: List[ str ]=[ ]
+			segments: List[ str ] = [ ]
 			
 			if table_value in [ 'TRI_FACILITY', 'TRI_RELEASE' ]:
 				if state_value:
@@ -20672,26 +18034,25 @@ class EnviroFacts( Fetcher ):
 					'_resolve_table_path( self, table_name: str, state_code: str=, '
 					'facility_name: str=, limit: int=25 ) -> str'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, url: str, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to an Envirofacts endpoint.
-
-			Parameters:
-			-----------
-			url (str):
-				Fully qualified request URL.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, url: str, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -20721,33 +18082,33 @@ class EnviroFacts( Fetcher ):
 					'request( self, url: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize Envirofacts rows into a human-readable table by title-casing
-			column names and preserving the original values.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				Envirofacts records returned by the service.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape rows.
+		
+		Purpose:
+			Provides the documented shape rows operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
-				row: Dict[ str, Any ]={ }
+				row: Dict[ str, Any ] = { }
 				
 				for key, value in item.items( ):
 					friendly_key = str( key ).replace( '_', ' ' ).title( )
-					row[ friendly_key ]=value
+					row[ friendly_key ] = value
 				
 				rows.append( row )
 			
@@ -20761,23 +18122,24 @@ class EnviroFacts( Fetcher ):
 					'_shape_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized Envirofacts rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_facility = ''
@@ -20809,45 +18171,35 @@ class EnviroFacts( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_table( self, table_name: str, state_code: str='',
-			facility_name: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a constrained set of rows from a supported Envirofacts table.
-
-			Parameters:
-			-----------
-			table_name (str):
-				Supported table name:
-				- TRI_FACILITY
-				- TRI_RELEASE
-				- EF_W_EMISSIONS_SOURCE_GHG
-
-			state_code (str):
-				Optional state filter.
-
-			facility_name (str):
-				Optional facility-name prefix filter.
-
-			limit (int):
-				Maximum returned rows.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_table( self, table_name: str, state_code: str = '',
+			facility_name: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch table.
+		
+		Purpose:
+			Provides the documented fetch table operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			table_name: str value supplied by the caller.
+			state_code: str value supplied by the caller.
+			facility_name: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'table_name', table_name )
 			
 			table_value = str( table_name ).strip( ).upper( )
-			supported_tables: List[ str ]=[
+			supported_tables: List[ str ] = [
 					'TRI_FACILITY',
 					'TRI_RELEASE',
 					'EF_W_EMISSIONS_SOURCE_GHG'
@@ -20900,37 +18252,30 @@ class EnviroFacts( Fetcher ):
 					'facility_name: str=, limit: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, table_name: str='TRI_FACILITY', state_code: str='',
-			facility_name: str='', limit: int=25,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for the constrained Envirofacts table wrapper.
-
-			Parameters:
-			-----------
-			table_name (str):
-				Supported table name.
-
-			state_code (str):
-				Optional state filter.
-
-			facility_name (str):
-				Optional facility-name prefix filter.
-
-			limit (int):
-				Maximum returned rows.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, table_name: str = 'TRI_FACILITY', state_code: str = '',
+			facility_name: str = '', limit: int = 25,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			table_name: str value supplied by the caller.
+			state_code: str value supplied by the caller.
+			facility_name: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			return self.fetch_table(
 				table_name=table_name,
@@ -20949,37 +18294,30 @@ class EnviroFacts( Fetcher ):
 					'facility_name: str=, limit: int=25, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the EnviroFacts workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -21010,34 +18348,24 @@ class EnviroFacts( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class TidesAndCurrents( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to NOAA CO-OPS Tides and Currents APIs for station metadata,
-		water-level observations, and tide predictions.
-
-		Referenced API Requirements:
-		----------------------------
-		NOAA CO-OPS Data API:
-			- https://api.tidesandcurrents.noaa.gov/api/prod/datagetter
-
-		NOAA CO-OPS Metadata API:
-			- https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi
-
-		Common Data API parameters:
-			- product
-			- station
-			- begin_date
-			- end_date
-			- datum
-			- units
-			- time_zone
-			- format
-
-	'''
+	"""Provide the TidesAndCurrents component.
+	
+	Purpose:
+		Defines the TidesAndCurrents workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		data_url: Runtime attribute maintained by the class.
+		metadata_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	data_url: Optional[ str ]
 	metadata_url: Optional[ str ]
 	mode: Optional[ str ]
@@ -21047,19 +18375,11 @@ class TidesAndCurrents( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the NOAA Tides and Currents fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the TidesAndCurrents instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the TidesAndCurrents workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.data_url = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter'
 		self.metadata_url = 'https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi'
@@ -21074,19 +18394,14 @@ class TidesAndCurrents( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'data_url',
 				'metadata_url',
@@ -21105,28 +18420,24 @@ class TidesAndCurrents( Fetcher ):
 				'create_schema'
 		]
 	
-	def request( self, url: str, params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a NOAA CO-OPS endpoint.
-
-			Parameters:
-			-----------
-			url (str):
-				Target endpoint URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, url: str, params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -21138,7 +18449,7 @@ class TidesAndCurrents( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -21164,23 +18475,24 @@ class TidesAndCurrents( Fetcher ):
 					'request( self, url: str, params: Optional[ Dict[ str, Any ] ]=None, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_station_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize station metadata into a human-readable table.
-
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				Station metadata payload.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape station rows.
+		
+		Purpose:
+			Provides the documented shape station rows operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			station = payload.get( 'stations', None )
 			
@@ -21190,7 +18502,7 @@ class TidesAndCurrents( Fetcher ):
 			if not isinstance( station, dict ):
 				station = payload
 			
-			row: Dict[ str, Any ]={
+			row: Dict[ str, Any ] = {
 					'Station Id': station.get( 'id', '' ),
 					'Name': station.get( 'name', '' ),
 					'State': station.get( 'state', '' ),
@@ -21212,36 +18524,37 @@ class TidesAndCurrents( Fetcher ):
 					'_shape_station_rows( self, payload: Dict[ str, Any ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_data_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize NOAA CO-OPS data payloads into a human-readable table.
-
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				Data API payload.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape data rows.
+		
+		Purpose:
+			Provides the documented shape data rows operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			records = payload.get( 'data', None )
 			
 			if records is None:
 				records = payload.get( 'predictions', [ ] )
 			
 			for item in records or [ ]:
-				row: Dict[ str, Any ]={ }
+				row: Dict[ str, Any ] = { }
 				
 				for key, value in item.items( ):
 					friendly_key = str( key ).replace( '_', ' ' ).title( )
-					row[ friendly_key ]=value
+					row[ friendly_key ] = value
 				
 				rows.append( row )
 			
@@ -21255,23 +18568,24 @@ class TidesAndCurrents( Fetcher ):
 					'_shape_data_rows( self, payload: Dict[ str, Any ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_time = ''
@@ -21308,27 +18622,26 @@ class TidesAndCurrents( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_station( self, station_id: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch station metadata.
-
-			Parameters:
-			-----------
-			station_id (str):
-				NOAA station identifier.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch station.
+		
+		Purpose:
+			Provides the documented fetch station operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			station_id: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'station_id', station_id )
 			
@@ -21360,42 +18673,33 @@ class TidesAndCurrents( Fetcher ):
 					'fetch_station( self, station_id: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_water_level( self, station_id: str, begin_date: str, end_date: str, datum: str='MLLW',
-			units: str='metric', time_zone: str='gmt', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch water-level observations.
-
-			Parameters:
-			-----------
-			station_id (str):
-				NOAA station identifier.
-
-			begin_date (str):
-				Begin date in YYYYMMDD format.
-
-			end_date (str):
-				End date in YYYYMMDD format.
-
-			datum (str):
-				Datum such as MLLW.
-
-			units (str):
-				english or metric.
-
-			time_zone (str):
-				gmt, lst, or lst_ldt.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_water_level( self, station_id: str, begin_date: str, end_date: str,
+			datum: str = 'MLLW',
+			units: str = 'metric', time_zone: str = 'gmt', time: int = 20 ) -> Dict[
+				                                                                   str, Any ] | None:
+		"""Fetch fetch water level.
+		
+		Purpose:
+			Provides the documented fetch water level operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			station_id: str value supplied by the caller.
+			begin_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			datum: str value supplied by the caller.
+			units: str value supplied by the caller.
+			time_zone: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'station_id', station_id )
 			throw_if( 'begin_date', begin_date )
@@ -21440,47 +18744,34 @@ class TidesAndCurrents( Fetcher ):
 					'end_date: str, datum: str=MLLW, units: str=metric, '
 					'time_zone: str=gmt, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_tide_predictions( self, station_id: str, begin_date: str,
-			end_date: str, datum: str='MLLW', units: str='metric',
-			time_zone: str='gmt', interval: str='hilo',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch tide predictions.
-
-			Parameters:
-			-----------
-			station_id (str):
-				NOAA station identifier.
-
-			begin_date (str):
-				Begin date in YYYYMMDD format.
-
-			end_date (str):
-				End date in YYYYMMDD format.
-
-			datum (str):
-				Datum such as MLLW.
-
-			units (str):
-				english or metric.
-
-			time_zone (str):
-				gmt, lst, or lst_ldt.
-
-			interval (str):
-				Prediction interval such as hilo or h.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			end_date: str, datum: str = 'MLLW', units: str = 'metric',
+			time_zone: str = 'gmt', interval: str = 'hilo',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch tide predictions.
+		
+		Purpose:
+			Provides the documented fetch tide predictions operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			station_id: str value supplied by the caller.
+			begin_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			datum: str value supplied by the caller.
+			units: str value supplied by the caller.
+			time_zone: str value supplied by the caller.
+			interval: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'station_id', station_id )
 			throw_if( 'begin_date', begin_date )
@@ -21527,53 +18818,35 @@ class TidesAndCurrents( Fetcher ):
 					'time_zone: str=gmt, interval: str=hilo, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='water-level', station_id: str='',
-			begin_date: str='', end_date: str='', datum: str='MLLW',
-			units: str='metric', time_zone: str='gmt',
-			interval: str='hilo', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for NOAA Tides and Currents retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- station
-				- water-level
-				- tide-predictions
-
-			station_id (str):
-				NOAA station identifier.
-
-			begin_date (str):
-				Begin date in YYYYMMDD format.
-
-			end_date (str):
-				End date in YYYYMMDD format.
-
-			datum (str):
-				Datum.
-
-			units (str):
-				english or metric.
-
-			time_zone (str):
-				gmt, lst, or lst_ldt.
-
-			interval (str):
-				Prediction interval.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'water-level', station_id: str = '',
+			begin_date: str = '', end_date: str = '', datum: str = 'MLLW',
+			units: str = 'metric', time_zone: str = 'gmt',
+			interval: str = 'hilo', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			station_id: str value supplied by the caller.
+			begin_date: str value supplied by the caller.
+			end_date: str value supplied by the caller.
+			datum: str value supplied by the caller.
+			units: str value supplied by the caller.
+			time_zone: str value supplied by the caller.
+			interval: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'water-level' ).strip( ).lower( )
 			
@@ -21613,36 +18886,29 @@ class TidesAndCurrents( Fetcher ):
 					'units: str=metric, time_zone: str=gmt, interval: str=hilo, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str, description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the TidesAndCurrents workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -21673,27 +18939,23 @@ class TidesAndCurrents( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class UvIndex( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the EPA UV Index web services for daily and hourly UV
-		forecast retrieval by ZIP code or by city and state.
-
-		Referenced API Requirements:
-		----------------------------
-		EPA Envirofacts UV Index Web Services:
-			- Hourly by ZIP
-			- Hourly by City/State
-			- Daily by ZIP
-			- Daily by City/State
-
-		Base Endpoint:
-			- https://enviro.epa.gov/enviro/efservice
-
-	'''
+	"""Provide the UvIndex component.
+	
+	Purpose:
+		Defines the UvIndex workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	mode: Optional[ str ]
 	params: Optional[ Dict[ str, Any ] ]
@@ -21702,19 +18964,11 @@ class UvIndex( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the EPA UV Index fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the UvIndex instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the UvIndex workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://enviro.epa.gov/enviro/efservice'
 		self.mode = 'daily-zip'
@@ -21728,19 +18982,14 @@ class UvIndex( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'mode',
@@ -21758,24 +19007,22 @@ class UvIndex( Fetcher ):
 				'create_schema'
 		]
 	
-	def request( self, url: str, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a UV Index endpoint.
-
-			Parameters:
-			-----------
-			url (str):
-				Fully qualified request URL.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, url: str, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -21805,32 +19052,33 @@ class UvIndex( Fetcher ):
 					'request( self, url: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_rows( self, records: List[ Dict[ str, Any ] ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize UV Index rows into a human-readable table.
-
-			Parameters:
-			-----------
-			records (List[Dict[str, Any]]):
-				UV Index records returned by the EPA web services.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape rows.
+		
+		Purpose:
+			Provides the documented shape rows operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			records: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for item in records or [ ]:
-				row: Dict[ str, Any ]={ }
+				row: Dict[ str, Any ] = { }
 				
 				for key, value in item.items( ):
 					friendly_key = str( key ).replace( '_', ' ' ).title( )
-					row[ friendly_key ]=value
+					row[ friendly_key ] = value
 				
 				rows.append( row )
 			
@@ -21844,23 +19092,24 @@ class UvIndex( Fetcher ):
 					'_shape_rows( self, records: List[ Dict[ str, Any ] ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized UV Index rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			max_uv = None
@@ -21900,27 +19149,26 @@ class UvIndex( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_daily_zip( self, zip_code: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch daily UV forecast and alert by ZIP code.
-
-			Parameters:
-			-----------
-			zip_code (str):
-				U.S. ZIP code.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch daily zip.
+		
+		Purpose:
+			Provides the documented fetch daily zip operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			zip_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'zip_code', zip_code )
 			
@@ -21951,30 +19199,27 @@ class UvIndex( Fetcher ):
 					'fetch_daily_zip( self, zip_code: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_daily_city_state( self, city: str, state: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch daily UV forecast and alert by city and state.
-
-			Parameters:
-			-----------
-			city (str):
-				U.S. city name.
-
-			state (str):
-				U.S. state abbreviation.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch daily city state.
+		
+		Purpose:
+			Provides the documented fetch daily city state operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			city: str value supplied by the caller.
+			state: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'city', city )
 			throw_if( 'state', state )
@@ -22012,27 +19257,26 @@ class UvIndex( Fetcher ):
 					'fetch_daily_city_state( self, city: str, state: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_hourly_zip( self, zip_code: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch hourly UV forecast by ZIP code.
-
-			Parameters:
-			-----------
-			zip_code (str):
-				U.S. ZIP code.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch hourly zip.
+		
+		Purpose:
+			Provides the documented fetch hourly zip operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			zip_code: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'zip_code', zip_code )
 			
@@ -22063,30 +19307,27 @@ class UvIndex( Fetcher ):
 					'fetch_hourly_zip( self, zip_code: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_hourly_city_state( self, city: str, state: str,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch hourly UV forecast by city and state.
-
-			Parameters:
-			-----------
-			city (str):
-				U.S. city name.
-
-			state (str):
-				U.S. state abbreviation.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch hourly city state.
+		
+		Purpose:
+			Provides the documented fetch hourly city state operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			city: str value supplied by the caller.
+			state: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'city', city )
 			throw_if( 'state', state )
@@ -22124,41 +19365,30 @@ class UvIndex( Fetcher ):
 					'fetch_hourly_city_state( self, city: str, state: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='daily-zip', zip_code: str='',
-			city: str='', state: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for UV Index forecast retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- daily-zip
-				- daily-city-state
-				- hourly-zip
-				- hourly-city-state
-
-			zip_code (str):
-				Optional U.S. ZIP code.
-
-			city (str):
-				Optional city name.
-
-			state (str):
-				Optional state abbreviation.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'daily-zip', zip_code: str = '',
+			city: str = '', state: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			zip_code: str value supplied by the caller.
+			city: str value supplied by the caller.
+			state: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'daily-zip' ).strip( ).lower( )
 			
@@ -22201,37 +19431,30 @@ class UvIndex( Fetcher ):
 					'fetch( self, mode: str=daily-zip, zip_code: str=, city: str=, '
 					'state: str=, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the UvIndex workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -22262,37 +19485,24 @@ class UvIndex( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class PurpleAir( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the PurpleAir API for bounding-box sensor discovery and
-		single-sensor detail retrieval using explicit field selection to reduce
-		point consumption and improve readability.
-
-		Referenced API Requirements:
-		----------------------------
-		PurpleAir API Base Endpoint:
-			- https://api.purpleair.com/v1
-
-		Resources used here:
-			- /sensors
-			- /sensors/{sensor_index}
-
-		Common query concepts:
-			- X-API-Key header
-			- fields
-			- location_type
-			- nwlng
-			- nwlat
-			- selng
-			- selat
-			- max_age
-			- modified_since
-
-	'''
+	"""Provide the PurpleAir component.
+	
+	Purpose:
+		Defines the PurpleAir workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	api_key: Optional[ str ]
 	mode: Optional[ str ]
@@ -22302,19 +19512,11 @@ class PurpleAir( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the PurpleAir fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the PurpleAir instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the PurpleAir workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://api.purpleair.com/v1'
 		self.api_key = self._resolve_api_key( )
@@ -22329,22 +19531,17 @@ class PurpleAir( Fetcher ):
 		}
 		
 		if self.api_key:
-			self.headers[ 'X-API-Key' ]=self.api_key
+			self.headers[ 'X-API-Key' ] = self.api_key
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'api_key',
@@ -22364,21 +19561,19 @@ class PurpleAir( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			--------
-			Resolve the PurpleAir API key from environment variables.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			Optional[str]
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			candidates: List[ Optional[ str ] ]=[
+			candidates: List[ Optional[ str ] ] = [
 					os.getenv( 'PURPLEAIR_API_KEY' ),
 					os.getenv( 'PURPLE_AIR_API_KEY' )
 			]
@@ -22394,30 +19589,27 @@ class PurpleAir( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'PurpleAir'
 			exception.method = '_resolve_api_key( self ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a PurpleAir endpoint.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				Endpoint path under the PurpleAir base URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			
@@ -22435,7 +19627,7 @@ class PurpleAir( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -22462,35 +19654,36 @@ class PurpleAir( Fetcher ):
 					'params: Optional[ Dict[ str, Any ] ]=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_sensor_list_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize PurpleAir sensor-list payloads into a human-readable table.
-
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				Sensor-list payload returned by PurpleAir.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape sensor list rows.
+		
+		Purpose:
+			Provides the documented shape sensor list rows operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			fields = payload.get( 'fields', [ ] ) or [ ]
 			data = payload.get( 'data', [ ] ) or [ ]
 			
 			for record in data:
-				row_map: Dict[ str, Any ]={ }
+				row_map: Dict[ str, Any ] = { }
 				
 				if isinstance( record, list ):
 					for index, field_name in enumerate( fields ):
 						if index < len( record ):
-							row_map[ str( field_name ) ]=record[ index ]
+							row_map[ str( field_name ) ] = record[ index ]
 				elif isinstance( record, dict ):
 					row_map = record
 				
@@ -22518,27 +19711,28 @@ class PurpleAir( Fetcher ):
 					'_shape_sensor_list_rows( self, payload: Dict[ str, Any ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_sensor_detail_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize PurpleAir single-sensor detail payload into a readable row.
-
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				Single-sensor payload returned by PurpleAir.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape sensor detail rows.
+		
+		Purpose:
+			Provides the documented shape sensor detail rows operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			sensor = payload.get( 'sensor', { } ) or { }
 			
-			row: Dict[ str, Any ]={
+			row: Dict[ str, Any ] = {
 					'Sensor Index': sensor.get( 'sensor_index', '' ),
 					'Name': sensor.get( 'name', '' ),
 					'Model': sensor.get( 'model', '' ),
@@ -22565,23 +19759,24 @@ class PurpleAir( Fetcher ):
 					'_shape_sensor_detail_rows( self, payload: Dict[ str, Any ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized PurpleAir rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			max_pm25 = None
@@ -22616,69 +19811,53 @@ class PurpleAir( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_sensors( self, nwlng: float, nwlat: float, selng: float, selat: float,
-			location_type: int=0, max_age: int=0, modified_since: int=0,
-			fields: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch PurpleAir sensors within a bounding box.
-	
-			Parameters:
-			-----------
-			nwlng (float):
-				Northwest longitude.
-	
-			nwlat (float):
-				Northwest latitude.
-	
-			selng (float):
-				Southeast longitude.
-	
-			selat (float):
-				Southeast latitude.
-	
-			location_type (int):
-				PurpleAir location type. Public outdoor sensors are commonly 0.
-	
-			max_age (int):
-				Maximum sensor age filter in minutes. 0 keeps current behavior broad.
-	
-			modified_since (int):
-				UNIX timestamp filter. 0 disables the filter.
-	
-			fields (str):
-				Optional comma-separated PurpleAir field list. If empty, the legacy
-				default field list is used.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			location_type: int = 0, max_age: int = 0, modified_since: int = 0,
+			fields: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch sensors.
+		
+		Purpose:
+			Provides the documented fetch sensors operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			nwlng: float value supplied by the caller.
+			nwlat: float value supplied by the caller.
+			selng: float value supplied by the caller.
+			selat: float value supplied by the caller.
+			location_type: int value supplied by the caller.
+			max_age: int value supplied by the caller.
+			modified_since: int value supplied by the caller.
+			fields: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			self.mode = 'sensors'			
-			default_fields = ( 'name,pm2.5,temperature,humidity,latitude,longitude,last_seen,'
-					'location_type' )
+			self.mode = 'sensors'
+			default_fields = ('name,pm2.5,temperature,humidity,latitude,longitude,last_seen,'
+			                  'location_type')
 			
 			selected_fields = str( fields or '' ).strip( )
 			if not selected_fields:
 				selected_fields = default_fields
 			
 			base = self.request( endpoint='sensors', params={
-						'fields': selected_fields,
-						'location_type': int( location_type ),
-						'nwlng': float( nwlng ),
-						'nwlat': float( nwlat ),
-						'selng': float( selng ),
-						'selat': float( selat ),
-						'max_age': int( max_age ),
-						'modified_since': int( modified_since )
-				},
+					'fields': selected_fields,
+					'location_type': int( location_type ),
+					'nwlng': float( nwlng ),
+					'nwlat': float( nwlat ),
+					'selng': float( selng ),
+					'selat': float( selat ),
+					'max_age': int( max_age ),
+					'modified_since': int( modified_since )
+			},
 				time=int( time ) ) or { }
 			
 			payload = base.get( 'raw', { } ) or { }
@@ -22698,37 +19877,34 @@ class PurpleAir( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'PurpleAir'
 			exception.method = ('fetch_sensors( self, nwlng: float, nwlat: float, selng: float, '
-					'selat: float, location_type: int=0, max_age: int=0, '
-					'modified_since: int=0, fields: str="", time: int=20 ) '
-					'-> Dict[ str, Any ]' )
+			                    'selat: float, location_type: int=0, max_age: int=0, '
+			                    'modified_since: int=0, fields: str="", time: int=20 ) '
+			                    '-> Dict[ str, Any ]')
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_sensor( self, sensor_index: int, fields: str='', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch a single PurpleAir sensor detail record.
-	
-			Parameters:
-			-----------
-			sensor_index (int):
-				PurpleAir sensor index.
-	
-			fields (str):
-				Optional comma-separated PurpleAir field list. If empty, the legacy
-				default field list is used.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_sensor( self, sensor_index: int, fields: str = '', time: int = 20 ) -> Dict[
+		                                                                                 str, Any ] | None:
+		"""Fetch fetch sensor.
+		
+		Purpose:
+			Provides the documented fetch sensor operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			sensor_index: int value supplied by the caller.
+			fields: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'sensor'
-			default_fields = ( 'name,model,hardware,pm2.5_cf_1_a,pm2.5_cf_1_b,temperature,'
-					'humidity,pressure,latitude,longitude,last_seen,firmware_version,rssi' )
+			default_fields = ('name,model,hardware,pm2.5_cf_1_a,pm2.5_cf_1_b,temperature,'
+			                  'humidity,pressure,latitude,longitude,last_seen,firmware_version,rssi')
 			
 			selected_fields = str( fields or '' ).strip( )
 			if not selected_fields:
@@ -22756,61 +19932,41 @@ class PurpleAir( Fetcher ):
 			exception = Error( e )
 			exception.module = 'fetchers'
 			exception.cause = 'PurpleAir'
-			exception.method = ( 'fetch_sensor( self, sensor_index: int, fields: str="", time: int=20 ) '
-					'-> Dict[ str, Any ]' )
+			exception.method = (
+				'fetch_sensor( self, sensor_index: int, fields: str="", time: int=20 ) '
+				'-> Dict[ str, Any ]')
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str = 'sensors', sensor_index: int=None,
+	def fetch( self, mode: str = 'sensors', sensor_index: int = None,
 			nwlng: float | None = None, nwlat: float | None = None,
 			selng: float | None = None, selat: float | None = None,
-			location_type: int=0, max_age: int=0, modified_since: int=0,
-			fields: str = '', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for PurpleAir sensor discovery and sensor detail retrieval.
-	
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- sensors
-				- sensor
-	
-			sensor_index (int | None):
-				PurpleAir sensor index for single-sensor mode.
-	
-			nwlng (float | None):
-				Northwest longitude.
-	
-			nwlat (float | None):
-				Northwest latitude.
-	
-			selng (float | None):
-				Southeast longitude.
-	
-			selat (float | None):
-				Southeast latitude.
-	
-			location_type (int):
-				PurpleAir location type.
-	
-			max_age (int):
-				Maximum age filter.
-	
-			modified_since (int):
-				UNIX timestamp filter.
-	
-			fields (str):
-				Optional comma-separated PurpleAir field list.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			location_type: int = 0, max_age: int = 0, modified_since: int = 0,
+			fields: str = '', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			sensor_index: int value supplied by the caller.
+			nwlng: float | None value supplied by the caller.
+			nwlat: float | None value supplied by the caller.
+			selng: float | None value supplied by the caller.
+			selat: float | None value supplied by the caller.
+			location_type: int value supplied by the caller.
+			max_age: int value supplied by the caller.
+			modified_since: int value supplied by the caller.
+			fields: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			mode_value = str( mode or '' ).strip( ).lower( )
 			if mode_value == 'sensors':
@@ -22841,37 +19997,30 @@ class PurpleAir( Fetcher ):
 					'location_type: int=0, max_age: int=0, modified_since: int=0, '
 					'fields: str="", time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the PurpleAir workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -22902,36 +20051,24 @@ class PurpleAir( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class OpenAQ( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to the OpenAQ v3 API for location discovery and latest
-		measurement retrieval using authenticated requests and human-readable
-		normalized output.
-
-		Referenced API Requirements:
-		----------------------------
-		OpenAQ API Base Endpoint:
-			- https://api.openaq.org/v3
-
-		Resources used here:
-			- /locations
-			- /locations/{id}/latest
-
-		Common query concepts:
-			- X-API-Key header
-			- country_id
-			- coordinates
-			- radius
-			- providers_id
-			- parameters_id
-			- limit
-			- page
-
-	'''
+	"""Provide the OpenAQ component.
+	
+	Purpose:
+		Defines the OpenAQ workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		api_key: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	api_key: Optional[ str ]
 	mode: Optional[ str ]
@@ -22941,19 +20078,11 @@ class OpenAQ( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the OpenAQ fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the OpenAQ instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the OpenAQ workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://api.openaq.org/v3'
 		self.api_key = self._resolve_api_key( )
@@ -22962,24 +20091,19 @@ class OpenAQ( Fetcher ):
 		self.payload = { }
 		self.timeout = 20
 		self.agents = cfg.AGENTS
-		self.headers = { 'Accept': 'application/json', 'User-Agent': self.agents }		
+		self.headers = { 'Accept': 'application/json', 'User-Agent': self.agents }
 		if self.api_key:
-			self.headers[ 'X-API-Key' ]=self.api_key
+			self.headers[ 'X-API-Key' ] = self.api_key
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-	
-			Parameters:
-			-----------
-			None
-	
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'api_key',
@@ -23004,22 +20128,20 @@ class OpenAQ( Fetcher ):
 		]
 	
 	def _resolve_api_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			--------
-			Resolve the OpenAQ API key from environment variables.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			Optional[str]
-		'''
+		"""Run resolve api key.
+		
+		Purpose:
+			Provides the documented resolve api key operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			candidates: List[ Optional[ str ] ]=[ os.getenv( 'OPENAQ_API_KEY' ),
-			                                      os.getenv( 'OPEN_AQ_API_KEY' ) ]
+			candidates: List[ Optional[ str ] ] = [ os.getenv( 'OPENAQ_API_KEY' ),
+			                                        os.getenv( 'OPEN_AQ_API_KEY' ) ]
 			
 			for candidate in candidates:
 				if candidate is not None and str( candidate ).strip( ):
@@ -23032,30 +20154,27 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = '_resolve_api_key( self ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ]=None,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to an OpenAQ endpoint.
-
-			Parameters:
-			-----------
-			endpoint (str):
-				Endpoint path under the OpenAQ base URL.
-
-			params (Optional[Dict[str, Any]]):
-				Query string parameters.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request( self, endpoint: str, params: Optional[ Dict[ str, Any ] ] = None,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Optional[Dict[str, Any]] value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			if self.api_key is None or not str( self.api_key ).strip( ):
@@ -23070,7 +20189,7 @@ class OpenAQ( Fetcher ):
 					continue
 				if isinstance( value, str ) and not value.strip( ):
 					continue
-				self.params[ key ]=value
+				self.params[ key ] = value
 			
 			self.response = requests.get(
 				url=self.url,
@@ -23097,25 +20216,26 @@ class OpenAQ( Fetcher ):
 					'params: Optional[ Dict[ str, Any ] ]=None, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_location_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize OpenAQ location payloads into a human-readable table.
-
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				Location payload returned by OpenAQ.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape location rows.
+		
+		Purpose:
+			Provides the documented shape location rows operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			results = payload.get( 'results', [ ] ) or [ ]
 			for item in results:
 				country = item.get( 'country', { } ) or { }
@@ -23123,19 +20243,19 @@ class OpenAQ( Fetcher ):
 				owner = item.get( 'owner', { } ) or { }
 				coordinates = item.get( 'coordinates', { } ) or { }
 				rows.append( {
-							'Location Id': item.get( 'id', '' ),
-							'Name': item.get( 'name', '' ),
-							'Locality': item.get( 'locality', '' ),
-							'Country': country.get( 'name', '' ),
-							'Country Code': country.get( 'code', '' ),
-							'Provider': provider.get( 'name', '' ),
-							'Owner': owner.get( 'name', '' ),
-							'Latitude': coordinates.get( 'latitude', None ),
-							'Longitude': coordinates.get( 'longitude', None ),
-							'Time Zone': item.get( 'timezone', '' ),
-							'Is Mobile': item.get( 'isMobile', None ),
-							'Is Monitor': item.get( 'isMonitor', None )
-					} )
+						'Location Id': item.get( 'id', '' ),
+						'Name': item.get( 'name', '' ),
+						'Locality': item.get( 'locality', '' ),
+						'Country': country.get( 'name', '' ),
+						'Country Code': country.get( 'code', '' ),
+						'Provider': provider.get( 'name', '' ),
+						'Owner': owner.get( 'name', '' ),
+						'Latitude': coordinates.get( 'latitude', None ),
+						'Longitude': coordinates.get( 'longitude', None ),
+						'Time Zone': item.get( 'timezone', '' ),
+						'Is Mobile': item.get( 'isMobile', None ),
+						'Is Monitor': item.get( 'isMonitor', None )
+				} )
 			
 			return rows
 		except Exception as e:
@@ -23143,50 +20263,51 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = '_shape_location_rows( self, *args ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _shape_latest_rows( self, payload: Dict[ str, Any ] ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize OpenAQ latest-measurement payloads into a human-readable table.
-
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				Latest-measurement payload returned by OpenAQ.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run shape latest rows.
+		
+		Purpose:
+			Provides the documented shape latest rows operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			results = payload.get( 'results', [ ] ) or [ ]
 			for item in results:
 				parameter = item.get( 'parameter', { } ) or { }
 				datetime_local = item.get( 'datetime', { } ) or { }
 				rows.append( {
-							'Parameter': (
-									parameter.get( 'displayName', None ) or
-									parameter.get( 'name', '' )
-							),
-							'Parameter Name': parameter.get( 'name', '' ),
-							'Units': parameter.get( 'units', '' ),
-							'Value': item.get( 'value', None ),
-							'Date Time UTC': (
-									(item.get( 'datetime', { } ) or { }).get( 'utc', '' )
-									if isinstance( item.get( 'datetime', { } ), dict )
-									else ''
-							),
-							'Date Time Local': datetime_local.get( 'local', '' ),
-							'Sensor Id': (
-									(item.get( 'sensorsId', [ ] ) or [ None ])[ 0 ]
-									if isinstance( item.get( 'sensorsId', [ ] ), list )
-									   and len( item.get( 'sensorsId', [ ] ) ) > 0
-									else None
-							)
-					} )
+						'Parameter': (
+								parameter.get( 'displayName', None ) or
+								parameter.get( 'name', '' )
+						),
+						'Parameter Name': parameter.get( 'name', '' ),
+						'Units': parameter.get( 'units', '' ),
+						'Value': item.get( 'value', None ),
+						'Date Time UTC': (
+								(item.get( 'datetime', { } ) or { }).get( 'utc', '' )
+								if isinstance( item.get( 'datetime', { } ), dict )
+								else ''
+						),
+						'Date Time Local': datetime_local.get( 'local', '' ),
+						'Sensor Id': (
+								(item.get( 'sensorsId', [ ] ) or [ None ])[ 0 ]
+								if isinstance( item.get( 'sensorsId', [ ] ), list )
+								   and len( item.get( 'sensorsId', [ ] ) ) > 0
+								else None
+						)
+				} )
 			
 			return rows
 		
@@ -23198,23 +20319,24 @@ class OpenAQ( Fetcher ):
 					'_shape_latest_rows( self, payload: Dict[ str, Any ] ) '
 					'-> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized OpenAQ rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_name = ''
@@ -23240,26 +20362,26 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = '_summarize_rows( self, *args )  -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def _shape_resource_rows( self, payload: Dict[ str, Any ], resource: str ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Normalize OpenAQ lookup resources into a human-readable table.
-	
-			Parameters:
-			-----------
-			payload (Dict[str, Any]):
-				OpenAQ resource payload.
-	
-			resource (str):
-				Resource name used to shape common fields.
-	
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+	def _shape_resource_rows( self, payload: Dict[ str, Any ], resource: str ) -> List[
+		Dict[ str, Any ] ]:
+		"""Run shape resource rows.
+		
+		Purpose:
+			Provides the documented shape resource rows operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] value supplied by the caller.
+			resource: str value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			rows: List[ Dict[ str, Any ] ] = [ ]
 			results = payload.get( 'results', [ ] ) or [ ]
@@ -23302,36 +20424,29 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = '_shape_resource_rows( self, *args ) -> List[ Dict[ str, Any ] ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch_countries( self, providers_id: str = '', parameters_id: str = '',
-			limit: int=100, page: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch OpenAQ countries for resource discovery.
-	
-			Parameters:
-			-----------
-			providers_id (str):
-				Optional provider ID filter.
-	
-			parameters_id (str):
-				Optional parameter ID filter.
-	
-			limit (int):
-				Maximum returned countries.
-	
-			page (int):
-				Result page number.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+			limit: int = 100, page: int = 1, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch countries.
+		
+		Purpose:
+			Provides the documented fetch countries operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			providers_id: str value supplied by the caller.
+			parameters_id: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'countries'
 			base = self.request(
@@ -23365,30 +20480,27 @@ class OpenAQ( Fetcher ):
 					'fetch_countries( self, providers_id: str="", parameters_id: str="", '
 					'limit: int=100, page: int=1, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_providers( self, limit: int=100, page: int=1,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch OpenAQ providers for resource discovery.
-	
-			Parameters:
-			-----------
-			limit (int):
-				Maximum returned providers.
-	
-			page (int):
-				Result page number.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_providers( self, limit: int = 100, page: int = 1,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch providers.
+		
+		Purpose:
+			Provides the documented fetch providers operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'providers'
 			base = self.request(
@@ -23420,30 +20532,27 @@ class OpenAQ( Fetcher ):
 					'fetch_providers( self, limit: int=100, page: int=1, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_parameters( self, limit: int=100, page: int=1,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch OpenAQ parameters for resource discovery.
-	
-			Parameters:
-			-----------
-			limit (int):
-				Maximum returned parameters.
-	
-			page (int):
-				Result page number.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_parameters( self, limit: int = 100, page: int = 1,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch parameters.
+		
+		Purpose:
+			Provides the documented fetch parameters operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'parameters'
 			base = self.request(
@@ -23475,33 +20584,28 @@ class OpenAQ( Fetcher ):
 					'fetch_parameters( self, limit: int=100, page: int=1, '
 					'time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_parameter_latest( self, parameter_id: int, limit: int=100,
-			page: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch latest measurements for a single OpenAQ parameter.
-	
-			Parameters:
-			-----------
-			parameter_id (int):
-				OpenAQ parameter identifier.
-	
-			limit (int):
-				Maximum returned latest values.
-	
-			page (int):
-				Result page number.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_parameter_latest( self, parameter_id: int, limit: int = 100,
+			page: int = 1, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch parameter latest.
+		
+		Purpose:
+			Provides the documented fetch parameter latest operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			parameter_id: int value supplied by the caller.
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'parameter_latest'
 			base = self.request(
@@ -23537,46 +20641,33 @@ class OpenAQ( Fetcher ):
 					'fetch_parameter_latest( self, parameter_id: int, limit: int=100, '
 					'page: int=1, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
+	
+	def fetch_locations( self, country_id: int = None, coordinates: str = '', radius: int = 25000,
+			providers_id: str = '', parameters_id: str = '', limit: int = 25, page: int = 1,
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch locations.
 		
-	def fetch_locations( self, country_id: int=None, coordinates: str='', radius: int=25000,
-			providers_id: str='', parameters_id: str='', limit: int=25, page: int=1,
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch OpenAQ locations.
-
-			Parameters:
-			-----------
-			country_id (int | None):
-				Optional OpenAQ country identifier.
-
-			coordinates (str):
-				Optional latitude,longitude string for geospatial filtering.
-
-			radius (int):
-				Optional radius in meters when coordinates are supplied.
-
-			providers_id (str):
-				Optional provider ID filter.
-
-			parameters_id (str):
-				Optional parameter ID filter.
-
-			limit (int):
-				Maximum returned locations.
-
-			page (int):
-				Result page number.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+		Purpose:
+			Provides the documented fetch locations operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			country_id: int value supplied by the caller.
+			coordinates: str value supplied by the caller.
+			radius: int value supplied by the caller.
+			providers_id: str value supplied by the caller.
+			parameters_id: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'locations'
 			base = self.request(
@@ -23610,26 +20701,25 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = 'fetch_locations( self, *args) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_latest( self, location_id: int, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch latest measurements for a single OpenAQ location.
-
-			Parameters:
-			-----------
-			location_id (int):
-				OpenAQ location identifier.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_latest( self, location_id: int, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch latest.
+		
+		Purpose:
+			Provides the documented fetch latest operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			location_id: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'latest'
 			base = self.request( endpoint=f'locations/{int( location_id )}/latest', params={ },
@@ -23651,63 +20741,37 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = 'fetch_latest( self, *args ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str = 'locations', location_id: int=None,
-			parameter_id: int=None, country_id: int=None, coordinates: str = '',
-			radius: int=25000, providers_id: str = '', parameters_id: str = '',
-			limit: int=25, page: int=1, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for OpenAQ v3 discovery, location, and latest-measurement
-			retrieval.
-	
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- countries
-				- providers
-				- parameters
-				- locations
-				- latest
-				- parameter_latest
-	
-			location_id (int | None):
-				OpenAQ location identifier for latest mode.
-	
-			parameter_id (int | None):
-				OpenAQ parameter identifier for parameter_latest mode.
-	
-			country_id (int | None):
-				Optional OpenAQ country identifier.
-	
-			coordinates (str):
-				Optional latitude,longitude string.
-	
-			radius (int):
-				Geospatial radius in meters.
-	
-			providers_id (str):
-				Optional provider ID filter.
-	
-			parameters_id (str):
-				Optional parameter ID filter.
-	
-			limit (int):
-				Maximum returned rows.
-	
-			page (int):
-				Result page number.
-	
-			time (int):
-				Request timeout in seconds.
-	
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''		
+	def fetch( self, mode: str = 'locations', location_id: int = None,
+			parameter_id: int = None, country_id: int = None, coordinates: str = '',
+			radius: int = 25000, providers_id: str = '', parameters_id: str = '',
+			limit: int = 25, page: int = 1, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			location_id: int value supplied by the caller.
+			parameter_id: int value supplied by the caller.
+			country_id: int value supplied by the caller.
+			coordinates: str value supplied by the caller.
+			radius: int value supplied by the caller.
+			providers_id: str value supplied by the caller.
+			parameters_id: str value supplied by the caller.
+			limit: int value supplied by the caller.
+			page: int value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'locations' ).strip( ).lower( )
 			if active_mode == 'countries':
@@ -23745,36 +20809,29 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = 'fetch( self, *args ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str, description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the OpenAQ workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -23801,33 +20858,24 @@ class OpenAQ( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenAQ'
 			exception.method = 'create_schema( self, *args ) -> Dict[ str, str ]'
+			Logger( ).write( exception )
 			raise exception
 
 class Firms( Fetcher ):
-	'''
-		Purpose:
-		--------
-		Provides access to NASA FIRMS area fire-detection and data-availability
-		services using a MAP_KEY and human-readable normalized output.
-
-		Referenced API Requirements:
-		----------------------------
-		NASA FIRMS API Base Endpoint:
-			- https://firms.modaps.eosdis.nasa.gov/api
-
-		Resources used here:
-			- /area/csv/[MAP_KEY]/[SOURCE]/[AREA_COORDINATES]/[DAY_RANGE]
-			- /area/csv/[MAP_KEY]/[SOURCE]/[AREA_COORDINATES]/[DAY_RANGE]/[DATE]
-			- /data_availability/csv/[MAP_KEY]/[SENSOR]
-
-		Common query concepts:
-			- MAP_KEY
-			- SOURCE or SENSOR
-			- AREA_COORDINATES as west,south,east,north or world
-			- DAY_RANGE from 1 to 5
-			- Optional DATE in YYYY-MM-DD format
-
-	'''
+	"""Provide the Firms component.
+	
+	Purpose:
+		Defines the Firms workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		base_url: Runtime attribute maintained by the class.
+		map_key: Runtime attribute maintained by the class.
+		mode: Runtime attribute maintained by the class.
+		params: Runtime attribute maintained by the class.
+		payload: Runtime attribute maintained by the class.
+		timeout: Runtime attribute maintained by the class.
+		agents: Runtime attribute maintained by the class.
+	"""
 	base_url: Optional[ str ]
 	map_key: Optional[ str ]
 	mode: Optional[ str ]
@@ -23837,19 +20885,11 @@ class Firms( Fetcher ):
 	agents: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-			Purpose:
-			--------
-			Initialize the NASA FIRMS fetcher.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-		'''
+		"""Initialize the Firms instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the Firms workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.base_url = 'https://firms.modaps.eosdis.nasa.gov/api'
 		self.map_key = self._resolve_map_key( )
@@ -23864,19 +20904,14 @@ class Firms( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-			Purpose:
-			--------
-			Provide ordered member visibility.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]
-		'''
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'base_url',
 				'map_key',
@@ -23895,21 +20930,19 @@ class Firms( Fetcher ):
 		]
 	
 	def _resolve_map_key( self ) -> Optional[ str ]:
-		'''
-			Purpose:
-			--------
-			Resolve the NASA FIRMS MAP_KEY from environment variables.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			Optional[str]
-		'''
+		"""Run resolve map key.
+		
+		Purpose:
+			Provides the documented resolve map key operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			Optional[str]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
-			candidates: List[ Optional[ str ] ]=[
+			candidates: List[ Optional[ str ] ] = [
 					os.getenv( 'FIRMS_MAP_KEY' ),
 					os.getenv( 'NASA_FIRMS_MAP_KEY' )
 			]
@@ -23925,26 +20958,25 @@ class Firms( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'Firms'
 			exception.method = '_resolve_map_key( self ) -> Optional[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
-	def request_csv( self, url: str, time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Issue a GET request to a FIRMS CSV endpoint.
-
-			Parameters:
-			-----------
-			url (str):
-				Fully qualified request URL.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def request_csv( self, url: str, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Execute request csv.
+		
+		Purpose:
+			Provides the documented request csv operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			url: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'url', url )
 			
@@ -23980,36 +21012,37 @@ class Firms( Fetcher ):
 					'request_csv( self, url: str, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _csv_to_rows( self, csv_text: str ) -> List[ Dict[ str, Any ] ]:
-		'''
-			Purpose:
-			--------
-			Convert FIRMS CSV text into normalized row dictionaries.
-
-			Parameters:
-			-----------
-			csv_text (str):
-				CSV response text.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]
-		'''
+		"""Run csv to rows.
+		
+		Purpose:
+			Provides the documented csv to rows operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			csv_text: str value supplied by the caller.
+		
+		Returns:
+			List[Dict[str, Any]]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if csv_text is None or not str( csv_text ).strip( ):
 				return [ ]
 			
 			df_csv = pd.read_csv( io.StringIO( str( csv_text ) ) )
-			rows: List[ Dict[ str, Any ] ]=[ ]
+			rows: List[ Dict[ str, Any ] ] = [ ]
 			
 			for _, item in df_csv.iterrows( ):
-				row: Dict[ str, Any ]={ }
+				row: Dict[ str, Any ] = { }
 				
 				for key in df_csv.columns:
 					friendly_key = str( key ).replace( '_', ' ' ).title( )
-					row[ friendly_key ]=item[ key ]
+					row[ friendly_key ] = item[ key ]
 				
 				rows.append( row )
 			
@@ -24022,23 +21055,24 @@ class Firms( Fetcher ):
 			exception.method = (
 					'_csv_to_rows( self, csv_text: str ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def _summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) -> Dict[ str, Any ]:
-		'''
-			Purpose:
-			--------
-			Create a compact summary block from normalized FIRMS rows.
-
-			Parameters:
-			-----------
-			rows (List[Dict[str, Any]]):
-				Normalized row dictionaries.
-
-			Returns:
-			--------
-			Dict[str, Any]
-		'''
+		"""Summarize summarize rows.
+		
+		Purpose:
+			Provides the documented summarize rows operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			rows: List[Dict[str, Any]] value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any]: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			count = len( rows or [ ] )
 			first_date = ''
@@ -24068,45 +21102,30 @@ class Firms( Fetcher ):
 					'_summarize_rows( self, rows: List[ Dict[ str, Any ] ] ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_area( self, source: str, area_coordinates: str='world',
-			day_range: int=1, date: str='',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch FIRMS fire detections for an area.
-
-			Parameters:
-			-----------
-			source (str):
-				FIRMS source, such as:
-				- LANDSAT_NRT
-				- MODIS_NRT
-				- MODIS_SP
-				- VIIRS_NOAA20_NRT
-				- VIIRS_NOAA20_SP
-				- VIIRS_NOAA21_NRT
-				- VIIRS_SNPP_NRT
-				- VIIRS_SNPP_SP
-
-			area_coordinates (str):
-				Bounding box as west,south,east,north, or world.
-
-			day_range (int):
-				Number of days from 1 to 5.
-
-			date (str):
-				Optional YYYY-MM-DD start date. If omitted, most recent data is used.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_area( self, source: str, area_coordinates: str = 'world',
+			day_range: int = 1, date: str = '',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch area.
+		
+		Purpose:
+			Provides the documented fetch area operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			source: str value supplied by the caller.
+			area_coordinates: str value supplied by the caller.
+			day_range: int value supplied by the caller.
+			date: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'source', source )
 			
@@ -24153,29 +21172,26 @@ class Firms( Fetcher ):
 					'day_range: int=1, date: str=, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_data_availability( self, sensor: str='ALL',
-			time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Fetch FIRMS data-availability rows for a sensor family.
-
-			Parameters:
-			-----------
-			sensor (str):
-				Sensor family such as ALL, LANDSAT_NRT, MODIS_NRT, MODIS_SP,
-				VIIRS_NOAA20_NRT, VIIRS_NOAA20_SP, VIIRS_NOAA21_NRT,
-				VIIRS_SNPP_NRT, or VIIRS_SNPP_SP.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch_data_availability( self, sensor: str = 'ALL',
+			time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch data availability.
+		
+		Purpose:
+			Provides the documented fetch data availability operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			sensor: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.mode = 'data-availability'
 			sensor_value = str( sensor ).strip( ).upper( )
@@ -24206,45 +21222,32 @@ class Firms( Fetcher ):
 					'fetch_data_availability( self, sensor: str=ALL, time: int=20 ) '
 					'-> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='area', source: str='',
-			area_coordinates: str='world', day_range: int=1, date: str='',
-			sensor: str='ALL', time: int=20 ) -> Dict[ str, Any ] | None:
-		'''
-			Purpose:
-			--------
-			Unified dispatcher for FIRMS area and data-availability retrieval.
-
-			Parameters:
-			-----------
-			mode (str):
-				Supported modes:
-				- area
-				- data-availability
-
-			source (str):
-				FIRMS source for area mode.
-
-			area_coordinates (str):
-				Bounding box string or world.
-
-			day_range (int):
-				Number of days from 1 to 5.
-
-			date (str):
-				Optional start date for area mode.
-
-			sensor (str):
-				Sensor family for data-availability mode.
-
-			time (int):
-				Request timeout in seconds.
-
-			Returns:
-			--------
-			Dict[str, Any] | None
-		'''
+	def fetch( self, mode: str = 'area', source: str = '',
+			area_coordinates: str = 'world', day_range: int = 1, date: str = '',
+			sensor: str = 'ALL', time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			source: str value supplied by the caller.
+			area_coordinates: str value supplied by the caller.
+			day_range: int value supplied by the caller.
+			date: str value supplied by the caller.
+			sensor: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			active_mode = str( mode or 'area' ).strip( ).lower( )
 			
@@ -24274,37 +21277,30 @@ class Firms( Fetcher ):
 					'area_coordinates: str=world, day_range: int=1, date: str=, '
 					'sensor: str=ALL, time: int=20 ) -> Dict[ str, Any ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict,
 			required: list[ str ] ) -> Dict[ str, str ] | None:
-		'''
-			Purpose:
-			--------
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-
-			Parameters:
-			-----------
-			function (str):
-				The function name exposed to the LLM.
-
-			tool (str):
-				The underlying system or service the function wraps.
-
-			description (str):
-				Precise explanation of what the function does.
-
-			parameters (dict):
-				A dictionary defining parameter names and JSON schema descriptors.
-
-			required (list[str]):
-				List of required parameter names.
-
-			Returns:
-			--------
-			Dict[str, str] | None
-		'''
+		"""Create create schema.
+		
+		Purpose:
+			Provides the documented create schema operation for the Firms workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			function: str value supplied by the caller.
+			tool: str value supplied by the caller.
+			description: str value supplied by the caller.
+			parameters: dict value supplied by the caller.
+			required: list[str] value supplied by the caller.
+		
+		Returns:
+			Dict[str, str] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'function', function )
 			throw_if( 'tool', tool )
@@ -24315,16 +21311,16 @@ class Firms( Fetcher ):
 				required = list( parameters.keys( ) )
 			
 			return { 'name': function.strip( ),
-					'description': (
-							f"{description.strip( )} This function uses the "
-							f"{tool.strip( )} service."
-					),
-					'parameters': {
-							'type': 'object',
-							'properties': parameters,
-							'required': required
-					}
-			}
+			         'description': (
+					         f"{description.strip( )} This function uses the "
+					         f"{tool.strip( )} service."
+			         ),
+			         'parameters': {
+					         'type': 'object',
+					         'properties': parameters,
+					         'required': required
+			         }
+			         }
 		
 		except Exception as e:
 			exception = Error( e )
@@ -24334,17 +21330,22 @@ class Firms( Fetcher ):
 					'create_schema( self, function: str, tool: str, description: str, '
 					'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 
 class OpenSky( Fetcher ):
-	'''
-
-		Purpose:
-		--------
-		Provides access to the OpenSky Network REST API for aircraft state
-		vectors, flights, airport arrivals/departures, and aircraft tracks.
-
-	'''
+	"""Provide the OpenSky component.
+	
+	Purpose:
+		Defines the OpenSky workflow used by Mappy fetcher, crawler, provider, or data-access operations. The class documentation is written in Google style so MkDocs and mkdocstrings can render the public API without relying on legacy comment sections.
+	
+	Attributes:
+		token_url: Runtime attribute maintained by the class.
+		base_url: Runtime attribute maintained by the class.
+		client_id: Runtime attribute maintained by the class.
+		client_secret: Runtime attribute maintained by the class.
+		access_token: Runtime attribute maintained by the class.
+	"""
 	token_url: Optional[ str ]
 	base_url: Optional[ str ]
 	client_id: Optional[ str ]
@@ -24352,6 +21353,11 @@ class OpenSky( Fetcher ):
 	access_token: Optional[ str ]
 	
 	def __init__( self ) -> None:
+		"""Initialize the OpenSky instance.
+		
+		Purpose:
+			Sets up runtime state, client references, configuration values, and reusable fields for the OpenSky workflow. The constructor preserves the public initialization contract while preparing later method calls to perform their provider-specific work.
+		"""
 		super( ).__init__( )
 		self.timeout = 20
 		self.base_url = 'https://opensky-network.org/api'
@@ -24368,6 +21374,14 @@ class OpenSky( Fetcher ):
 		}
 	
 	def __dir__( self ) -> List[ str ]:
+		"""Run dir.
+		
+		Purpose:
+			Provides the documented dir operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'timeout',
 				'headers',
@@ -24390,6 +21404,14 @@ class OpenSky( Fetcher ):
 	
 	@property
 	def mode_options( self ) -> List[ str ]:
+		"""Run mode options.
+		
+		Purpose:
+			Provides the documented mode options operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Returns:
+			List[str]: Result produced by the operation.
+		"""
 		return [
 				'states_bbox',
 				'flights_aircraft',
@@ -24399,26 +21421,21 @@ class OpenSky( Fetcher ):
 		]
 	
 	def get_token( self, client_id: str, client_secret: str ) -> str:
-		'''
-	
-			Purpose:
-			--------
-			Request a bearer token from the OpenSky authentication server.
-	
-			Parameters:
-			-----------
-			client_id (str):
-				OpenSky OAuth client id.
-	
-			client_secret (str):
-				OpenSky OAuth client secret.
-	
-			Returns:
-			--------
-			str:
-				Bearer access token.
-	
-		'''
+		"""Fetch get token.
+		
+		Purpose:
+			Provides the documented get token operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			client_id: str value supplied by the caller.
+			client_secret: str value supplied by the caller.
+		
+		Returns:
+			str: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'client_id', client_id )
 			throw_if( 'client_secret', client_secret )
@@ -24449,36 +21466,28 @@ class OpenSky( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenSky'
 			exception.method = 'get_token( self, client_id: str, client_secret: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
-	def request( self, endpoint: str, params: Dict[ str, Any ], client_id: str=None,
-			client_secret: str=None ) -> Any:
-		'''
-	
-			Purpose:
-			--------
-			Send a GET request to an OpenSky REST endpoint.
-	
-			Parameters:
-			-----------
-			endpoint (str):
-				OpenSky endpoint path beginning with '/'.
-	
-			params (Dict[str, Any]):
-				Query-string parameters passed to the endpoint.
-	
-			client_id (str | None):
-				Optional OAuth client id for authenticated requests.
-	
-			client_secret (str | None):
-				Optional OAuth client secret for authenticated requests.
-	
-			Returns:
-			--------
-			Any:
-				Parsed JSON payload returned by OpenSky.
-	
-		'''
+	def request( self, endpoint: str, params: Dict[ str, Any ], client_id: str = None,
+			client_secret: str = None ) -> Any:
+		"""Execute request.
+		
+		Purpose:
+			Provides the documented request operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			endpoint: str value supplied by the caller.
+			params: Dict[str, Any] value supplied by the caller.
+			client_id: str value supplied by the caller.
+			client_secret: str value supplied by the caller.
+		
+		Returns:
+			Any: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			throw_if( 'endpoint', endpoint )
 			self.url = f'{self.base_url}{endpoint}'
@@ -24486,7 +21495,7 @@ class OpenSky( Fetcher ):
 			request_headers = dict( self.headers or { } )
 			if client_id and client_secret:
 				token = self.get_token( client_id, client_secret )
-				request_headers[ 'Authorization' ]=f'Bearer {token}'
+				request_headers[ 'Authorization' ] = f'Bearer {token}'
 			
 			clean_params = {
 					k: v for k, v in (params or { }).items( )
@@ -24514,26 +21523,24 @@ class OpenSky( Fetcher ):
 					'request( self, endpoint: str, params: Dict[ str, Any ], '
 					'client_id: str | None=None, client_secret: str | None=None ) -> Any'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_states( self, payload: Dict[ str, Any ] | None ) -> Dict[ str, Any ] | None:
-		'''
+		"""Normalize normalize states.
 		
-			Purpose:
-			--------
-			Normalize an OpenSky state-vector response into a structured dictionary with
-			mode metadata and aircraft state records.
+		Purpose:
+			Provides the documented normalize states operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
-			Parameters:
-			-----------
-			payload (Dict[ str, Any ] | None): Raw OpenSky state-vector response payload.
+		Args:
+			payload: Dict[str, Any] | None value supplied by the caller.
 		
-			Returns:
-			--------
-			Dict[ str, Any ] | None: Normalized state-vector records and metadata, or
-			None when normalization fails.
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
 		
-		'''
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if not payload:
 				return {
@@ -24544,7 +21551,7 @@ class OpenSky( Fetcher ):
 				}
 			
 			rows = payload.get( 'states' ) or [ ]
-			items: List[ Dict[ str, Any ] ]=[ ]
+			items: List[ Dict[ str, Any ] ] = [ ]
 			
 			for row in rows:
 				items.append(
@@ -24580,15 +21587,31 @@ class OpenSky( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenSky'
 			exception.method = 'normalize_states( self, payload: Dict[ str, Any ] | None )'
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_flights(
 			self,
 			payload: List[ Dict[ str, Any ] ] | None,
 			mode: str ) -> Dict[ str, Any ] | None:
+		"""Normalize normalize flights.
+		
+		Purpose:
+			Provides the documented normalize flights operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: List[Dict[str, Any]] | None value supplied by the caller.
+			mode: str value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			rows = payload or [ ]
-			items: List[ Dict[ str, Any ] ]=[ ]
+			items: List[ Dict[ str, Any ] ] = [ ]
 			
 			for row in rows:
 				items.append(
@@ -24628,9 +21651,24 @@ class OpenSky( Fetcher ):
 					'normalize_flights( self, payload: List[ Dict[ str, Any ] ] | None, '
 					'mode: str )'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_track( self, payload: Dict[ str, Any ] | None ) -> Dict[ str, Any ] | None:
+		"""Normalize normalize track.
+		
+		Purpose:
+			Provides the documented normalize track operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			payload: Dict[str, Any] | None value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			if not payload:
 				return {
@@ -24644,7 +21682,7 @@ class OpenSky( Fetcher ):
 				}
 			
 			path = payload.get( 'path' ) or [ ]
-			items: List[ Dict[ str, Any ] ]=[ ]
+			items: List[ Dict[ str, Any ] ] = [ ]
 			for row in path:
 				items.append(
 					{
@@ -24672,30 +21710,58 @@ class OpenSky( Fetcher ):
 			exception.module = 'fetchers'
 			exception.cause = 'OpenSky'
 			exception.method = 'normalize_track( self, payload: Dict[ str, Any ] | None )'
+			Logger( ).write( exception )
 			raise exception
 	
-	def fetch( self, mode: str='states_bbox', icao24: str='', airport: str='',
-			begin: int=None, end: int=None, time_value: int=None,
-			lamin: float | None=None, lomin: float | None=None, lamax: float | None=None,
-			lomax: float | None=None, extended: bool=False, client_id: str=None,
-			client_secret: str=None, time: int=20 ) -> Dict[ str, Any ] | None:
+	def fetch( self, mode: str = 'states_bbox', icao24: str = '', airport: str = '',
+			begin: int = None, end: int = None, time_value: int = None,
+			lamin: float | None = None, lomin: float | None = None, lamax: float | None = None,
+			lomax: float | None = None, extended: bool = False, client_id: str = None,
+			client_secret: str = None, time: int = 20 ) -> Dict[ str, Any ] | None:
+		"""Fetch fetch.
+		
+		Purpose:
+			Provides the documented fetch operation for the OpenSky workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
+		
+		Args:
+			mode: str value supplied by the caller.
+			icao24: str value supplied by the caller.
+			airport: str value supplied by the caller.
+			begin: int value supplied by the caller.
+			end: int value supplied by the caller.
+			time_value: int value supplied by the caller.
+			lamin: float | None value supplied by the caller.
+			lomin: float | None value supplied by the caller.
+			lamax: float | None value supplied by the caller.
+			lomax: float | None value supplied by the caller.
+			extended: bool value supplied by the caller.
+			client_id: str value supplied by the caller.
+			client_secret: str value supplied by the caller.
+			time: int value supplied by the caller.
+		
+		Returns:
+			Dict[str, Any] | None: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after logging when the wrapped operation fails.
+		"""
 		try:
 			self.timeout = int( time )
 			active_mode = (mode or 'states_bbox').strip( ).lower( )
 			
 			if active_mode == 'states_bbox':
-				params: Dict[ str, Any ]={ }
+				params: Dict[ str, Any ] = { }
 				if time_value is not None:
-					params[ 'time' ]=int( time_value )
+					params[ 'time' ] = int( time_value )
 				if icao24 and icao24.strip( ):
-					params[ 'icao24' ]=icao24.strip( ).lower( )
+					params[ 'icao24' ] = icao24.strip( ).lower( )
 				if lamin is not None and lomin is not None and lamax is not None and lomax is not None:
-					params[ 'lamin' ]=float( lamin )
-					params[ 'lomin' ]=float( lomin )
-					params[ 'lamax' ]=float( lamax )
-					params[ 'lomax' ]=float( lomax )
+					params[ 'lamin' ] = float( lamin )
+					params[ 'lomin' ] = float( lomin )
+					params[ 'lamax' ] = float( lamax )
+					params[ 'lomax' ] = float( lomax )
 				if extended:
-					params[ 'extended' ]=1
+					params[ 'extended' ] = 1
 				
 				payload = self.request(
 					'/states/all',
@@ -24778,12 +21844,6 @@ class OpenSky( Fetcher ):
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'OpenSky'
-			exception.method = (
-					'fetch( self, mode: str=states_bbox, icao24: str=, airport: str=, '
-					'begin: int | None=None, end: int | None=None, time_value: int | None=None, '
-					'lamin: float | None=None, lomin: float | None=None, '
-					'lamax: float | None=None, lomax: float | None=None, '
-					'extended: bool=False, client_id: str | None=None, '
-					'client_secret: str | None=None, time: int=20 ) -> Dict[ str, Any ]'
-			)
+			exception.method = 'fetch( self, *args ) -> Dict[ str, Any ]'
+			Logger( ).write( exception )
 			raise exception

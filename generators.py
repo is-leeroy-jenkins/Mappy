@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from anthropic import Anthropic as AnthropicClient
 import base64
-from boogr import Error
+from boogr import Error, Logger
 from core import Result
 import config as cfg
 from google import genai
@@ -67,7 +67,7 @@ def throw_if( name: str, value: Any ) -> None:
 		-----------
 		Simple guard which raises ValueError when `value` is falsy (None, empty).
 		
-		Parameters:
+		Args:
 		-----------
 		name (str): Variable name used in the raised message.
 		value (Any): Value to validate.
@@ -86,7 +86,7 @@ def encode_image( path: str ) -> str:
 		Purpose:
 		_________
 		
-		Parametes:
+		Args:
 		----------
 		
 		
@@ -105,7 +105,7 @@ class Generator:
 		--------
 		Base class for Generator subclasses
 
-		Attribues:
+		Attributes:
 		-----------
 		timeout - int
 		headers - Dict[ str, Any ]
@@ -149,7 +149,7 @@ class Generator:
 			-----------
 			Control ordering for introspection.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -173,7 +173,7 @@ class Generator:
 			--------
 			Abstract fetch method to be implemented by subclasses.
 
-			Parameters:
+			Args:
 			-----------
 			url (str): Resource URL to fetch.
 			time (int): Timeout in seconds.
@@ -289,7 +289,7 @@ class Grok( Generator ):
 			Initialize the xAI Grok generator with defaults used by the Foo
 			application.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -330,7 +330,7 @@ class Grok( Generator ):
 			--------
 			Return a stable ordered member list for introspection.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -380,7 +380,7 @@ class Grok( Generator ):
 			Normalize user-supplied domain input into canonical, de-duplicated xAI
 			web-search domains.
 
-			Parameters:
+			Args:
 			-----------
 			domains (Any):
 				String, list, tuple, set, scalar, or None containing domain values.
@@ -436,6 +436,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'normalize_domains( self, domains: Any ) -> List[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def supports_reasoning_effort( self, model: str ) -> bool:
@@ -446,7 +447,7 @@ class Grok( Generator ):
 			Determine whether the selected Grok model supports explicit
 			reasoning_effort.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Grok model identifier.
@@ -467,6 +468,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'supports_reasoning_effort( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def supports_reasoning_object( self, model: str ) -> bool:
@@ -477,7 +479,7 @@ class Grok( Generator ):
 			Determine whether the selected Grok model supports the Responses API
 			reasoning object.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Grok model identifier.
@@ -498,6 +500,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'supports_reasoning_object( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def is_reasoning_model( self, model: str ) -> bool:
@@ -508,7 +511,7 @@ class Grok( Generator ):
 			Identify models where reasoning is native, automatic, or explicitly
 			configurable.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Grok model identifier.
@@ -534,6 +537,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'is_reasoning_model( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_instructions( self, system: str = None,
@@ -544,7 +548,7 @@ class Grok( Generator ):
 			--------
 			Build the final instruction block sent to xAI.
 
-			Parameters:
+			Args:
 			-----------
 			system (str | None):
 				Optional system instructions.
@@ -583,6 +587,7 @@ class Grok( Generator ):
 					'build_instructions( self, system: str | None=None, '
 					'response_format: str | None=None ) -> str | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_tools( self, web_search: bool = False, search_domains: Any = None ) -> List[
@@ -593,7 +598,7 @@ class Grok( Generator ):
 			--------
 			Build the xAI Responses API hosted-tool list.
 
-			Parameters:
+			Args:
 			-----------
 			web_search (bool):
 				Whether to enable the xAI web-search tool.
@@ -630,6 +635,7 @@ class Grok( Generator ):
 					'build_tools( self, web_search: bool=False, '
 					'search_domains: Any=None ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_response_format( self, response_format: str = None ) -> Dict[
@@ -640,7 +646,7 @@ class Grok( Generator ):
 			--------
 			Build the xAI/OpenAI-compatible response_format payload.
 
-			Parameters:
+			Args:
 			-----------
 			response_format (str | None):
 				Response format selector, such as json.
@@ -673,6 +679,7 @@ class Grok( Generator ):
 					'build_response_format( self, response_format: str | None=None ) '
 					'-> Dict[ str, Any ] | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def extract_output_text( self, response: Any ) -> str:
@@ -683,7 +690,7 @@ class Grok( Generator ):
 			Extract response text from xAI SDK Responses API results, OpenAI-compatible
 			response objects, dictionaries, or streams.
 
-			Parameters:
+			Args:
 			-----------
 			response (Any):
 				xAI response object, stream, dictionary, or scalar fallback.
@@ -773,6 +780,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'extract_output_text( self, response: Any ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_response( self, payload: Dict[ str, Any ] ) -> Any:
@@ -782,7 +790,7 @@ class Grok( Generator ):
 			--------
 			Call the xAI Responses API using the available SDK surface.
 
-			Parameters:
+			Args:
 			-----------
 			payload (Dict[str, Any]):
 				Complete Responses API request payload.
@@ -847,6 +855,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'create_response( self, payload: Dict[ str, Any ] ) -> Any'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, query: str, model: str = 'grok-4-fast-reasoning',
@@ -864,7 +873,7 @@ class Grok( Generator ):
 			mode, optional reasoning controls, optional web search, and optional stop
 			sequences.
 
-			Parameters:
+			Args:
 			-----------
 			query (str):
 				User prompt.
@@ -1017,6 +1026,7 @@ class Grok( Generator ):
 					'store: bool=True, parallel_tool_calls: bool=True, '
 					'tool_choice: str="auto" ) -> str | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def generate_text( self, query: str, model: str = 'grok-4-fast-reasoning',
@@ -1032,7 +1042,7 @@ class Grok( Generator ):
 			--------
 			Convenience wrapper around fetch for Grok text generation.
 
-			Parameters:
+			Args:
 			-----------
 			query (str):
 				User prompt.
@@ -1113,6 +1123,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'generate_text( self, query: str, ... ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def search_web( self, query: str, model: str = 'grok-4-fast-reasoning',
@@ -1127,7 +1138,7 @@ class Grok( Generator ):
 			--------
 			Convenience wrapper around fetch with xAI web search enabled.
 
-			Parameters:
+			Args:
 			-----------
 			query (str):
 				User prompt.
@@ -1202,6 +1213,7 @@ class Grok( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Grok'
 			exception.method = 'search_web( self, query: str, ... ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 
 class Gemini( Generator ):
@@ -1316,7 +1328,7 @@ class Gemini( Generator ):
 			--------
 			Initialize the Gemini generator with defaults used by the Foo application.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -1357,7 +1369,7 @@ class Gemini( Generator ):
 			--------
 			Return a stable ordered member list for introspection.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -1413,7 +1425,7 @@ class Gemini( Generator ):
 			Normalize user-supplied grounding domains into canonical, de-duplicated
 			domain names.
 
-			Parameters:
+			Args:
 			-----------
 			domains (Any):
 				String, list, tuple, set, scalar, or None containing domain values.
@@ -1467,6 +1479,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'normalize_domains( self, domains: Any ) -> List[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def normalize_stop_sequences( self, stop_sequences: Any ) -> List[ str ]:
@@ -1476,7 +1489,7 @@ class Gemini( Generator ):
 			--------
 			Normalize stop sequences supplied as a string or iterable.
 
-			Parameters:
+			Args:
 			-----------
 			stop_sequences (Any):
 				String, list, tuple, set, scalar, or None containing stop sequences.
@@ -1511,6 +1524,7 @@ class Gemini( Generator ):
 			exception.method = (
 					'normalize_stop_sequences( self, stop_sequences: Any ) -> List[ str ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def supports_thinking_level( self, model: str ) -> bool:
@@ -1520,7 +1534,7 @@ class Gemini( Generator ):
 			--------
 			Determine whether the selected model supports Gemini 3 thinkingLevel.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Gemini model identifier.
@@ -1540,6 +1554,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'supports_thinking_level( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def supports_thinking_budget( self, model: str ) -> bool:
@@ -1549,7 +1564,7 @@ class Gemini( Generator ):
 			--------
 			Determine whether the selected model supports Gemini 2.5 thinkingBudget.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Gemini model identifier.
@@ -1569,6 +1584,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'supports_thinking_budget( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_system_instruction( self, system: str = None, response_format: str = None,
@@ -1579,7 +1595,7 @@ class Gemini( Generator ):
 			--------
 			Build the Gemini system instruction.
 
-			Parameters:
+			Args:
 			-----------
 			system (str | None):
 				Optional system instruction.
@@ -1627,6 +1643,7 @@ class Gemini( Generator ):
 					'response_format: str | None=None, grounding: bool=False, '
 					'search_domains: Any=None ) -> str | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_thinking_config( self, model: str, reasoning: bool = False,
@@ -1639,7 +1656,7 @@ class Gemini( Generator ):
 			Build Gemini thinking configuration for Gemini 3 thinkingLevel or
 			Gemini 2.5 thinkingBudget.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Gemini model identifier.
@@ -1702,6 +1719,7 @@ class Gemini( Generator ):
 					'thinking_level: str | None=None, thinking_budget: int | None=None, '
 					'include_thoughts: bool=False ) -> Any'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_tools( self, grounding: bool = False ) -> List[ Any ]:
@@ -1711,7 +1729,7 @@ class Gemini( Generator ):
 			--------
 			Build Gemini tool configuration for Google Search grounding.
 
-			Parameters:
+			Args:
 			-----------
 			grounding (bool):
 				Whether to enable Google Search grounding.
@@ -1736,6 +1754,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'build_tools( self, grounding: bool=False ) -> List[ Any ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_config( self, model: str, temperature: float = 0.7,
@@ -1752,7 +1771,7 @@ class Gemini( Generator ):
 			--------
 			Build a Google GenAI GenerateContentConfig-compatible configuration.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				Gemini model identifier.
@@ -1881,6 +1900,7 @@ class Gemini( Generator ):
 					'include_thoughts: bool=False, '
 					'response_json_schema: Dict[ str, Any ] | None=None ) -> Any'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def extract_text( self, response: Any ) -> str:
@@ -1891,7 +1911,7 @@ class Gemini( Generator ):
 			Extract final text from a Gemini response object, dictionary, or fallback
 			value.
 
-			Parameters:
+			Args:
 			-----------
 			response (Any):
 				Gemini response object.
@@ -1940,6 +1960,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'extract_text( self, response: Any ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, prompt: str, model: str = 'gemini-2.5-flash',
@@ -1959,7 +1980,7 @@ class Gemini( Generator ):
 			Google Search grounding, stop sequences, and model-appropriate thinking
 			configuration.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User prompt.
@@ -2065,6 +2086,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'fetch( self, *args ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def generate_text( self, prompt: str, model: str = 'gemini-2.5-flash',
@@ -2082,7 +2104,7 @@ class Gemini( Generator ):
 			--------
 			Convenience wrapper around fetch for Gemini text generation.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User prompt.
@@ -2157,6 +2179,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'generate_text( self, prompt: str, ... ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def search_web( self, prompt: str, model: str = 'gemini-2.5-flash',
@@ -2174,7 +2197,7 @@ class Gemini( Generator ):
 			--------
 			Convenience wrapper around fetch with Google Search grounding enabled.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User prompt.
@@ -2246,6 +2269,7 @@ class Gemini( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Gemini'
 			exception.method = 'search_web( self, prompt: str, ... ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 
 class Claude( Generator ):
@@ -2256,7 +2280,7 @@ class Claude( Generator ):
 		Class providing Anthropic Claude text-generation, extended thinking,
 		and optional web search support through the Messages API.
 	
-		Attribues:
+		Attributes:
 		-----------
 		client - Anthropic
 		model - str
@@ -2304,7 +2328,7 @@ class Claude( Generator ):
 			-----------
 			Initialize Anthropic Claude API client.
 			
-			Parameters:
+			Args:
 			-----------
 			None
 			
@@ -2345,7 +2369,7 @@ class Claude( Generator ):
 			-----------
 			Claude list of members.
 			
-			Parameters:
+			Args:
 			-----------
 			None
 			
@@ -2381,7 +2405,7 @@ class Claude( Generator ):
 			-----------
 			Normalize domain input into a canonical, de-duplicated list.
 			
-			Parameters:
+			Args:
 			-----------
 			domains (Any): String, list, tuple, set, or None.
 			
@@ -2427,6 +2451,7 @@ class Claude( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
 			exception.method = '_normalize_domains( self, domains: Any ) -> List[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _supports_thinking( self, model: str ) -> bool:
@@ -2436,7 +2461,7 @@ class Claude( Generator ):
 			-----------
 			Determine whether the selected Claude model supports extended thinking.
 			
-			Parameters:
+			Args:
 			-----------
 			model (str): Model name.
 			
@@ -2454,6 +2479,7 @@ class Claude( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
 			exception.method = '_supports_thinking( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def _extract_text( self, response: Any ) -> str:
@@ -2463,7 +2489,7 @@ class Claude( Generator ):
 			-----------
 			Extract plain text from an Anthropic Messages API response.
 			
-			Parameters:
+			Args:
 			-----------
 			response (Any): Anthropic response object.
 			
@@ -2493,6 +2519,7 @@ class Claude( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
 			exception.method = '_extract_text( self, response: Any ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, query: str, model: str = 'claude-sonnet-4-6', temperature: float = 0.7,
@@ -2507,7 +2534,7 @@ class Claude( Generator ):
 			Send an Anthropic Messages API request for Claude text generation,
 			optional extended thinking, and optional server-side web search.
 			
-			Parameters:
+			Args:
 			-----------
 			query (str): User prompt.
 			model (str): Claude model name.
@@ -2546,10 +2573,10 @@ class Claude( Generator ):
 			self.thinking_budget = int( thinking_budget ) if thinking_budget is not None else None
 			self.messages = [ { 'role': 'user', 'content': self.query } ]
 			self.params = {
-						'model': self.model,
-						'max_tokens': self.max_tokens,
-						'messages': self.messages,
-				}
+					'model': self.model,
+					'max_tokens': self.max_tokens,
+					'messages': self.messages,
+			}
 			
 			if self.system_instructions:
 				self.params[ 'system' ] = self.system_instructions
@@ -2563,9 +2590,9 @@ class Claude( Generator ):
 					_budget = 1024
 				
 				self.params[ 'thinking' ] = {
-							'type': 'enabled',
-							'budget_tokens': _budget,
-					}
+						'type': 'enabled',
+						'budget_tokens': _budget,
+				}
 				
 				if self.top_p is not None:
 					self.params[ 'top_p' ] = min( 1.0, max( 0.95, self.top_p ) )
@@ -2579,9 +2606,9 @@ class Claude( Generator ):
 			if self.web_search:
 				self.tools = [ ]
 				self.web_tool = {
-							'type': 'web_search_20250305',
-							'name': 'web_search',
-					}
+						'type': 'web_search_20250305',
+						'name': 'web_search',
+				}
 				
 				if self.search_domains:
 					self.web_tool[ 'allowed_domains' ] = self.search_domains
@@ -2598,7 +2625,8 @@ class Claude( Generator ):
 			exception = Error( exc )
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
-			exception.method =  'fetch( self, *args ) -> str | None'
+			exception.method = 'fetch( self, *args ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def generate_text( self, query: str, model: str = 'claude-sonnet-4-6', temperature: float = 0.7,
@@ -2612,7 +2640,7 @@ class Claude( Generator ):
 			-----------
 			Convenience wrapper around fetch for text generation.
 			
-			Parameters:
+			Args:
 			-----------
 			query (str): User prompt.
 			
@@ -2632,6 +2660,7 @@ class Claude( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
 			exception.method = 'generate_text( self, query: str, ... ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def search_web( self, query: str, model: str = 'claude-sonnet-4-6', temperature: float = 0.7,
@@ -2645,7 +2674,7 @@ class Claude( Generator ):
 			-----------
 			Convenience wrapper around fetch with web search enabled.
 			
-			Parameters:
+			Args:
 			-----------
 			query (str): User prompt.
 			
@@ -2655,7 +2684,8 @@ class Claude( Generator ):
 			
 		'''
 		try:
-			return self.fetch( query=query, model=model, temperature=temperature, max_tokens=max_tokens,
+			return self.fetch( query=query, model=model, temperature=temperature,
+				max_tokens=max_tokens,
 				top_p=top_p, top_k=top_k, system=system, stop_sequences=stop_sequences,
 				thinking=thinking, thinking_budget=thinking_budget, web_search=True,
 				search_domains=search_domains, blocked_domains=blocked_domains, )
@@ -2664,6 +2694,7 @@ class Claude( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Claude'
 			exception.method = 'search_web( self, query: str, ... ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 
 class Mistral( Generator ):
@@ -2673,7 +2704,7 @@ class Mistral( Generator ):
 		---------
 		Class providing access to the Mistral chat-completions API.
 
-		Attribues:
+		Attributes:
 		-----------
 		client - Optional[ MistralAI ]
 		model - Optional[ str ]
@@ -2720,7 +2751,7 @@ class Mistral( Generator ):
 			-----------
 			Initialize the Mistral API wrapper.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -2758,7 +2789,7 @@ class Mistral( Generator ):
 			-----------
 			Return the ordered list of members exposed by this wrapper.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -2796,7 +2827,7 @@ class Mistral( Generator ):
 			-----------
 			Extract plain text from a Mistral chat completion response.
 
-			Parameters:
+			Args:
 			-----------
 			response (Any): Raw SDK response object.
 
@@ -2841,6 +2872,7 @@ class Mistral( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Mistral'
 			exception.method = '_extract_text( self, response: Any ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, query: str, model: str = 'mistral-large-latest', temperature: float = 0.7,
@@ -2852,7 +2884,7 @@ class Mistral( Generator ):
 			-------
 			Send a Mistral chat-completions request for text generation.
 
-			Parameters:
+			Args:
 			-----------
 			query (str): User prompt.
 			model (str): Mistral model name.
@@ -2912,6 +2944,7 @@ class Mistral( Generator ):
 			exception.module = 'fetchers'
 			exception.cause = 'Mistral'
 			exception.method = 'fetch( self, *args ) -> str | None'
+			Logger( ).write( exception )
 			raise exception
 	
 	def create_schema( self, function: str, tool: str,
@@ -2923,7 +2956,7 @@ class Mistral( Generator ):
 			Construct and return a fully dynamic OpenAI Tool API schema definition.
 			Supports arbitrary parameters, types, nested objects, and required fields.
 
-			Parameters:
+			Args:
 			___________
 			function (str):
 			The function name exposed to the LLM.
@@ -2997,6 +3030,7 @@ class Mistral( Generator ):
 			exception.cause = 'Mistral'
 			exception.method = ('create_schema( self, function: str, tool: str, description: str, '
 			                    'parameters: dict, required: list[ str ] ) -> Dict[ str, str ]')
+			Logger( ).write( exception )
 			raise exception
 
 class Chat( Generator ):
@@ -3128,7 +3162,7 @@ class Chat( Generator ):
 			Initialize the OpenAI Chat generator with defaults used by the Foo
 			application.
 
-			Parameters:
+			Args:
 			-----------
 			num (int):
 				Default response count retained for compatibility.
@@ -3201,7 +3235,7 @@ class Chat( Generator ):
 			--------
 			Return a stable ordered member list for introspection.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -3258,7 +3292,7 @@ class Chat( Generator ):
 			Normalize user-supplied domain input into canonical, de-duplicated
 			domain names.
 
-			Parameters:
+			Args:
 			-----------
 			domains (Any):
 				String, list, tuple, set, scalar, or None containing domain values.
@@ -3315,6 +3349,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'normalize_domains( self, domains: Any ) -> List[ str ]'
+			Logger( ).write( exception )
 			raise exception
 	
 	def supports_reasoning( self, model: str ) -> bool:
@@ -3325,7 +3360,7 @@ class Chat( Generator ):
 			Determine whether the selected OpenAI model should receive a reasoning
 			configuration.
 
-			Parameters:
+			Args:
 			-----------
 			model (str):
 				OpenAI model identifier.
@@ -3346,6 +3381,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'supports_reasoning( self, model: str ) -> bool'
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_instructions( self, system: str = None,
@@ -3357,7 +3393,7 @@ class Chat( Generator ):
 			--------
 			Build the final instruction block sent to the OpenAI Responses API.
 
-			Parameters:
+			Args:
 			-----------
 			system (str | None):
 				Optional user-provided system/developer instructions.
@@ -3410,6 +3446,7 @@ class Chat( Generator ):
 					'response_format: str | None=None, web_search: bool=False, '
 					'search_domains: Any=None ) -> str | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_text_format( self, response_format: str | Dict[ str, Any ] = None,
@@ -3422,7 +3459,7 @@ class Chat( Generator ):
 			Build the Responses API text.format payload for text, JSON object mode,
 			or JSON schema structured output.
 
-			Parameters:
+			Args:
 			-----------
 			response_format (str | Dict[str, Any] | None):
 				Output format selector. Accepted strings are auto, text, json,
@@ -3479,6 +3516,7 @@ class Chat( Generator ):
 					'json_schema: Dict[ str, Any ] | None=None, schema_name: str=structured_response, '
 					'schema_description: str=Structured JSON response. ) -> Dict[ str, Any ] | None'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def build_tools( self, web_search: bool = False, search_domains: Any = None,
@@ -3490,7 +3528,7 @@ class Chat( Generator ):
 			--------
 			Build the Responses API hosted-tool list for web search and file search.
 
-			Parameters:
+			Args:
 			-----------
 			web_search (bool):
 				Whether to enable the built-in web-search tool.
@@ -3542,6 +3580,7 @@ class Chat( Generator ):
 					'file_search: bool=False, vector_store_ids: List[ str ] | None=None, '
 					'max_file_results: int=20 ) -> List[ Dict[ str, Any ] ]'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def extract_output_text( self, response: Any ) -> str:
@@ -3551,7 +3590,7 @@ class Chat( Generator ):
 			--------
 			Extract text from an OpenAI SDK response or streaming response.
 
-			Parameters:
+			Args:
 			-----------
 			response (Any):
 				OpenAI response object, stream, dictionary, or scalar fallback.
@@ -3617,6 +3656,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'extract_output_text( self, response: Any ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def fetch( self, prompt: str, model: str = 'gpt-5-mini', temperature: float = 0.7,
@@ -3636,7 +3676,7 @@ class Chat( Generator ):
 			mode, optional structured output, optional reasoning, and optional web
 			search.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User prompt.
@@ -3787,6 +3827,7 @@ class Chat( Generator ):
 					'schema_name: str="structured_response", '
 					'schema_description: str="Structured JSON response." ) -> str'
 			)
+			Logger( ).write( exception )
 			raise exception
 	
 	def generate_text( self, prompt: str, model: str = 'gpt-5-mini',
@@ -3803,7 +3844,7 @@ class Chat( Generator ):
 			--------
 			Convenience wrapper around fetch for text generation.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User prompt.
@@ -3872,6 +3913,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'generate_text( self, prompt: str, ... ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def generate_image( self, prompt: str ) -> str:
@@ -3881,7 +3923,7 @@ class Chat( Generator ):
 			--------
 			Generate an image using the OpenAI image API.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				Image-generation prompt.
@@ -3914,6 +3956,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'generate_image( self, prompt: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def analyze_image( self, prompt: str, url: str ) -> str:
@@ -3923,7 +3966,7 @@ class Chat( Generator ):
 			--------
 			Analyze an image using a multimodal OpenAI model.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User analysis prompt.
@@ -3968,6 +4011,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'analyze_image( self, prompt: str, url: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def summarize_document( self, prompt: str, path: str ) -> str:
@@ -3978,7 +4022,7 @@ class Chat( Generator ):
 			Upload or reference a document path and summarize it through the Responses
 			API.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				Summarization prompt.
@@ -4029,6 +4073,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'summarize_document( self, prompt: str, path: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def search_web( self, prompt: str, model: str = 'gpt-5-mini',
@@ -4044,7 +4089,7 @@ class Chat( Generator ):
 			--------
 			Execute a Responses API request with the built-in web-search tool enabled.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User prompt.
@@ -4115,6 +4160,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'search_web( self, prompt: str, ... ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def search_files( self, prompt: str ) -> str:
@@ -4125,7 +4171,7 @@ class Chat( Generator ):
 			Run a file-search tool call against configured vector stores using the
 			Responses API.
 
-			Parameters:
+			Args:
 			-----------
 			prompt (str):
 				User query for file search.
@@ -4158,6 +4204,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'search_files( self, prompt: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def translate( self, text: str ) -> str:
@@ -4167,7 +4214,7 @@ class Chat( Generator ):
 			--------
 			Translate text using the currently selected OpenAI text model.
 
-			Parameters:
+			Args:
 			-----------
 			text (str):
 				Source text to translate.
@@ -4194,6 +4241,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'translate( self, text: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def transcribe( self, text: str ) -> str:
@@ -4204,7 +4252,7 @@ class Chat( Generator ):
 			Compatibility passthrough until audio transcription is split into its own
 			provider path.
 
-			Parameters:
+			Args:
 			-----------
 			text (str):
 				Text value to pass through.
@@ -4224,6 +4272,7 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'transcribe( self, text: str ) -> str'
+			Logger( ).write( exception )
 			raise exception
 	
 	def get_format_options( self ) -> List[ str ]:
@@ -4233,7 +4282,7 @@ class Chat( Generator ):
 			--------
 			Return supported formatting options for UI selectors.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -4253,7 +4302,7 @@ class Chat( Generator ):
 			Return available OpenAI model options from configuration or fallback
 			defaults.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -4283,7 +4332,7 @@ class Chat( Generator ):
 			--------
 			Return available reasoning-effort options.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -4302,7 +4351,7 @@ class Chat( Generator ):
 			--------
 			Return the current Chat generator state as a dictionary.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -4339,7 +4388,7 @@ class Chat( Generator ):
 			--------
 			Return a string representation of the current Chat generator state.
 
-			Parameters:
+			Args:
 			-----------
 			None
 
@@ -4357,5 +4406,6 @@ class Chat( Generator ):
 			exception.module = 'generators'
 			exception.cause = 'Chat'
 			exception.method = 'dump( self ) -> str'
+			Logger( ).write( exception )
 			raise exception
 

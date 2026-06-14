@@ -5,46 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6e8897af-3ee3-4d4e-83df-27a4ae217e01" name="Changes" comment="updates">
-      <change afterPath="$PROJECT_DIR$/docs/api/app.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/caches.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/config.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/core.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/distances.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/excel.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/exceptions.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/fetchers.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/generators.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/geocode.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/index.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/maps.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/places.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/rates.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/staticmaps.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/api/timezones.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/architecture.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/assets/css/mappy.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/assets/js/mappy.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/development.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/img/favicon.ico" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/img/project_mappy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/index.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/user-guide.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logging/Exceptions.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/boogr.py" beforeDir="false" afterPath="$PROJECT_DIR$/boogr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/caches.py" beforeDir="false" afterPath="$PROJECT_DIR$/caches.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core.py" beforeDir="false" afterPath="$PROJECT_DIR$/core.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distances.py" beforeDir="false" afterPath="$PROJECT_DIR$/distances.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/excel.py" beforeDir="false" afterPath="$PROJECT_DIR$/excel.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/exceptions.py" beforeDir="false" afterPath="$PROJECT_DIR$/exceptions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/geocode.py" beforeDir="false" afterPath="$PROJECT_DIR$/geocode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/maps.py" beforeDir="false" afterPath="$PROJECT_DIR$/maps.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/places.py" beforeDir="false" afterPath="$PROJECT_DIR$/places.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rates.py" beforeDir="false" afterPath="$PROJECT_DIR$/rates.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/staticmaps.py" beforeDir="false" afterPath="$PROJECT_DIR$/staticmaps.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/timezones.py" beforeDir="false" afterPath="$PROJECT_DIR$/timezones.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fetchers.py" beforeDir="false" afterPath="$PROJECT_DIR$/fetchers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generators.py" beforeDir="false" afterPath="$PROJECT_DIR$/generators.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,15 +132,7 @@
       <workItem from="1779553011804" duration="3208000" />
       <workItem from="1779558460013" duration="1205000" />
       <workItem from="1779559962910" duration="3466000" />
-      <workItem from="1781466801734" duration="3781000" />
-    </task>
-    <task id="LOCAL-00020" summary="updates">
-      <option name="closed" value="true" />
-      <created>1777555438436</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1777555438436</updated>
+      <workItem from="1781466801734" duration="4688000" />
     </task>
     <task id="LOCAL-00021" summary="updates">
       <option name="closed" value="true" />
@@ -563,7 +518,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781467305065</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="updates">
+      <option name="closed" value="true" />
+      <created>1781470920110</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1781470920110</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
