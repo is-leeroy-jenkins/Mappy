@@ -61,65 +61,50 @@ import re
 import urllib
 
 def throw_if( name: str, value: Any ) -> None:
-	'''
-		
-		Purpose:
-		-----------
-		Simple guard which raises ValueError when `value` is falsy (None, empty).
-		
-		Args:
-		-----------
-		name (str): Variable name used in the raised message.
-		value (Any): Value to validate.
-		
-		Returns:
-		-----------
-		None: Raises ValueError when `value` is falsy.
-		
-	'''
+	"""Validate a required runtime value.
+	
+	Purpose:
+		Validate that a required generator value is present before provider logic uses it.
+	
+	Args:
+		name: Name of the value being validated.
+		value: Runtime value to validate.
+	
+	Raises:
+		ValueError: Raised when the supplied value is missing.
+	"""
 	if value is None:
 		raise ValueError( f"Argument '{name}' cannot be empty!" )
 
 def encode_image( path: str ) -> str:
-	"""
+	"""Encode an image file as base64 text.
 	
-		Purpose:
-		_________
-		
-		Args:
-		----------
-		
-		
-		Returns:
-		--------
-		
-		
+	Purpose:
+		Read an image file and return its base64-encoded string representation for multimodal request payloads.
+	
+	Args:
+		path: Filesystem path used by the operation.
+	
+	Returns:
+		str: Base64-encoded image content.
 	"""
 	data = Path( path ).read_bytes( )
 	return base64.b64encode( data ).decode( "utf-8" )
 
 class Generator:
-	'''
-
-		Purpose:
-		--------
-		Base class for Generator subclasses
-
-		Attributes:
-		-----------
-		timeout - int
-		headers - Dict[ str, Any ]
-		response - requests.Response
-		url - str
-		result - core.Result
-		query - string
-
-		Methods:
-		-----------
-		fetch( ) -> Dict[ str, Any ]
-
-
-	'''
+	"""Base interface for provider-specific generation wrappers.
+	
+	Purpose:
+		Define the shared interface and common state used by provider-specific text-generation wrappers.
+	
+	Attributes:
+		timeout: Request timeout or generation timeout setting retained by subclasses.
+		headers: HTTP headers or provider headers used by subclasses.
+		response: Raw response object returned by a provider request.
+		url: Provider endpoint URL or request URL used by a fetch operation.
+		result: Normalized result container produced by a fetch operation.
+		query: Prompt or query text used by the latest operation.
+	"""
 	timeout: Optional[ int ]
 	headers: Optional[ Dict[ str, Any ] ]
 	response: Optional[ Response ]
@@ -128,13 +113,11 @@ class Generator:
 	query: Optional[ str ]
 	
 	def __init__( self ) -> None:
-		'''
-
-			Purpose:
-			-----------
-			Base initializer. Subclasses should set defaults they require.
-
-		'''
+		"""Initialize the Generator wrapper.
+		
+		Purpose:
+			Initialize common base-generator state used by provider-specific subclasses.
+		"""
 		self.timeout = None
 		self.headers = None
 		self.response = None
@@ -143,21 +126,14 @@ class Generator:
 		self.query = None
 	
 	def __dir__( self ) -> list[ str ]:
-		'''
-
-			Purpose:
-			-----------
-			Control ordering for introspection.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			-----------
-			list[str]: Ordered attribute/method names.
-
-		'''
+		"""Return public Generator members.
+		
+		Purpose:
+			Return the stable public member list exposed for inspection and documentation.
+		
+		Returns:
+			list[str]: Stable public member names.
+		"""
 		return [ 'timeout',
 		         'headers',
 		         'response',
@@ -167,99 +143,41 @@ class Generator:
 		         'fetch' ]
 	
 	def fetch( self, query: str, url: str, time: int = 10 ) -> Result | None:
-		'''
-
-			Purpose:
-			--------
-			Abstract fetch method to be implemented by subclasses.
-
-			Args:
-			-----------
-			url (str): Resource URL to fetch.
-			time (int): Timeout in seconds.
-			show_dialog (bool): If True, show an ErrorDialog on exception.
-
-			Returns:
-			---------
-			Optional[Result]: Should return Result on success or None on failure.
-
-		'''
+		"""Fetch.
+		
+		Purpose:
+			Define the base fetch contract implemented by provider-specific generator classes.
+		
+		Args:
+			query: User query or prompt text.
+			url: Request URL or image URL used by the operation.
+			time: Optional timeout or time value used by the provider call.
+		
+		Returns:
+			Result | None: Provider output text or generated content when available.
+		
+		Raises:
+			NotImplementedError: Raised by the base interface until a subclass implements the method.
+		"""
 		raise NotImplementedError( 'Must be implemented by a subclass.' )
 
 class Grok( Generator ):
-	'''
-
-		Purpose:
-		--------
-		Class providing xAI Grok text generation and web-search functionality through
-		the xAI Responses API.
-
-		Attributes:
-		-----------
-		client (Xai):
-			Initialized xAI SDK client.
-
-		model (str):
-			Selected Grok model identifier.
-
-		response (Any):
-			Last xAI response object.
-
-		api_key (str):
-			xAI API key from configuration.
-
-		query (str | None):
-			Last user prompt.
-
-		params (Dict[str, Any] | None):
-			Last xAI request payload.
-
-		temperature (float):
-			Sampling temperature.
-
-		max_tokens (int):
-			Maximum output token count.
-
-		top_p (float):
-			Nucleus sampling value.
-
-		reasoning_effort (str | None):
-			Optional xAI reasoning-effort setting.
-
-		stream (bool):
-			Whether streaming is enabled.
-
-		store (bool):
-			Whether server-side response storage is enabled.
-
-		messages (List[Dict[str, Any]] | None):
-			Message-style compatibility field.
-
-		system_instructions (str | None):
-			Final instruction block used for the request.
-
-		web_search (bool):
-			Whether xAI web search is enabled.
-
-		search_domains (List[str]):
-			Optional allowed domains for xAI web search.
-
-		parallel_tool_calls (bool):
-			Whether parallel tool calls are enabled.
-
-		tool_choice (str):
-			Tool-choice behavior.
-
-		tools (List[Dict[str, Any]]):
-			xAI Responses API tool declarations.
-
-		Methods:
-		--------
-		fetch( self, query, ... ) -> str | None
-		generate_text( self, query, ... ) -> str | None
-		search_web( self, query, ... ) -> str | None
-
-	'''
+	"""xAI Grok text and web-search generation wrapper.
+	
+	Purpose:
+		Generate text and web-grounded responses through the xAI Responses API.
+	
+	Attributes:
+		api_key: xAI API key loaded from configuration.
+		client: xAI client used for Responses API calls.
+		model: Model identifier selected for the latest request.
+		query: User prompt submitted to the latest request.
+		response: Raw xAI response object.
+		content: Extracted response text returned to callers.
+		tools: Tool definitions sent to the Responses API.
+		instructions: System instructions sent to the Responses API.
+		domains: Optional web-search domain filters.
+	"""
 	
 	client: Optional[ Xai ]
 	model: Optional[ str ]
@@ -282,22 +200,11 @@ class Grok( Generator ):
 	tools: Optional[ List[ Dict[ str, Any ] ] ]
 	
 	def __init__( self ) -> None:
-		'''
+		"""Initialize the Grok wrapper.
 		
-			Purpose:
-			--------
-			Initialize the xAI Grok generator with defaults used by the Foo
-			application.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-			
-		'''
+		Purpose:
+			Initialize xAI client state, request defaults, model option lists, and runtime response fields.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.XAI_API_KEY
 		self.model = 'grok-4-fast-reasoning'
@@ -324,22 +231,14 @@ class Grok( Generator ):
 		self.stream = False
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
+		"""Return public Grok members.
 		
-			Purpose:
-			--------
-			Return a stable ordered member list for introspection.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Ordered attribute and method names.
-			
-		'''
+		Purpose:
+			Return the stable public member list for the Grok generator wrapper.
+		
+		Returns:
+			List[str]: Stable public member names.
+		"""
 		return [
 				'client',
 				'model',
@@ -373,24 +272,20 @@ class Grok( Generator ):
 		]
 	
 	def normalize_domains( self, domains: Any ) -> List[ str ]:
-		'''
+		"""Normalize domains.
 		
-			Purpose:
-			--------
-			Normalize user-supplied domain input into canonical, de-duplicated xAI
-			web-search domains.
-
-			Args:
-			-----------
-			domains (Any):
-				String, list, tuple, set, scalar, or None containing domain values.
-
-			Returns:
-			--------
-			List[str]:
-				Clean domain names without protocol, path, port, or leading www.
-			
-		'''
+		Purpose:
+			Normalize domain-filter input into a clean list of non-empty domain strings.
+		
+		Args:
+			domains: Domain-filter input supplied as a string, list, tuple, or set.
+		
+		Returns:
+			List[str]: Normalized value suitable for provider request construction.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if domains is None:
 				return [ ]
@@ -440,24 +335,20 @@ class Grok( Generator ):
 			raise exception
 	
 	def supports_reasoning_effort( self, model: str ) -> bool:
-		'''
+		"""Supports reasoning effort.
 		
-			Purpose:
-			--------
-			Determine whether the selected Grok model supports explicit
-			reasoning_effort.
-
-			Args:
-			-----------
-			model (str):
-				Grok model identifier.
-
-			Returns:
-			--------
-			bool:
-				True when the model supports the reasoning_effort request field.
-			
-		'''
+		Purpose:
+			Determine whether the selected Grok model supports a reasoning-effort parameter.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Provider capability flag or predicate result.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'model', model )
 			name = str( model ).strip( ).lower( )
@@ -472,24 +363,20 @@ class Grok( Generator ):
 			raise exception
 	
 	def supports_reasoning_object( self, model: str ) -> bool:
-		'''
+		"""Supports reasoning object.
 		
-			Purpose:
-			--------
-			Determine whether the selected Grok model supports the Responses API
-			reasoning object.
-
-			Args:
-			-----------
-			model (str):
-				Grok model identifier.
-
-			Returns:
-			--------
-			bool:
-				True when the model supports a reasoning object in the request.
-			
-		'''
+		Purpose:
+			Determine whether the selected Grok model accepts a reasoning object in the request payload.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Provider capability flag or predicate result.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'model', model )
 			name = str( model ).strip( ).lower( )
@@ -504,24 +391,20 @@ class Grok( Generator ):
 			raise exception
 	
 	def is_reasoning_model( self, model: str ) -> bool:
-		'''
+		"""Is reasoning model.
 		
-			Purpose:
-			--------
-			Identify models where reasoning is native, automatic, or explicitly
-			configurable.
-
-			Args:
-			-----------
-			model (str):
-				Grok model identifier.
-
-			Returns:
-			--------
-			bool:
-				True when the model is a reasoning model.
-			
-		'''
+		Purpose:
+			Determine whether the selected Grok model should be treated as a reasoning-capable model.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Provider capability flag or predicate result.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'model', model )
 			name = str( model ).strip( ).lower( )
@@ -542,26 +425,21 @@ class Grok( Generator ):
 	
 	def build_instructions( self, system: str = None,
 			response_format: str = None ) -> str | None:
-		'''
+		"""Build instructions.
 		
-			Purpose:
-			--------
-			Build the final instruction block sent to xAI.
-
-			Args:
-			-----------
-			system (str | None):
-				Optional system instructions.
-
-			response_format (str | None):
-				Optional output mode.
-
-			Returns:
-			--------
-			str | None:
-				Instruction block or None.
-			
-		'''
+		Purpose:
+			Combine optional system text and response-format guidance into a provider instruction string.
+		
+		Args:
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+		
+		Returns:
+			str | None: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			parts: List[ str ] = [ ]
 			
@@ -592,26 +470,21 @@ class Grok( Generator ):
 	
 	def build_tools( self, web_search: bool = False, search_domains: Any = None ) -> List[
 		Dict[ str, Any ] ]:
-		'''
+		"""Build tools.
 		
-			Purpose:
-			--------
-			Build the xAI Responses API hosted-tool list.
-
-			Args:
-			-----------
-			web_search (bool):
-				Whether to enable the xAI web-search tool.
-
-			search_domains (Any):
-				Optional allowed domains for xAI web search.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]:
-				xAI Responses API tool declarations.
-			
-		'''
+		Purpose:
+			Build xAI Responses API tool definitions for optional web search with optional domain filters.
+		
+		Args:
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+		
+		Returns:
+			List[Dict[str, Any]]: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			tools: List[ Dict[ str, Any ] ] = [ ]
 			
@@ -640,23 +513,20 @@ class Grok( Generator ):
 	
 	def build_response_format( self, response_format: str = None ) -> Dict[
 		                                                                  str, Any ] | None:
-		'''
+		"""Build response format.
 		
-			Purpose:
-			--------
-			Build the xAI/OpenAI-compatible response_format payload.
-
-			Args:
-			-----------
-			response_format (str | None):
-				Response format selector, such as json.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Response-format object or None.
-			
-		'''
+		Purpose:
+			Build the xAI response-format payload for JSON or plain-text output requests.
+		
+		Args:
+			response_format: Requested response format, such as text or JSON.
+		
+		Returns:
+			Dict[str, Any] | None: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			mode = str( response_format or '' ).strip( ).lower( )
 			
@@ -683,24 +553,20 @@ class Grok( Generator ):
 			raise exception
 	
 	def extract_output_text( self, response: Any ) -> str:
-		'''
+		"""Extract output text.
 		
-			Purpose:
-			--------
-			Extract response text from xAI SDK Responses API results, OpenAI-compatible
-			response objects, dictionaries, or streams.
-
-			Args:
-			-----------
-			response (Any):
-				xAI response object, stream, dictionary, or scalar fallback.
-
-			Returns:
-			--------
-			str:
-				Best available output text.
-			
-		'''
+		Purpose:
+			Extract generated text from an xAI Responses API response using supported response shapes.
+		
+		Args:
+			response: Raw provider response object.
+		
+		Returns:
+			str: Extracted generated text when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if response is None:
 				return ''
@@ -784,23 +650,20 @@ class Grok( Generator ):
 			raise exception
 	
 	def create_response( self, payload: Dict[ str, Any ] ) -> Any:
-		'''
+		"""Create response.
 		
-			Purpose:
-			--------
-			Call the xAI Responses API using the available SDK surface.
-
-			Args:
-			-----------
-			payload (Dict[str, Any]):
-				Complete Responses API request payload.
-
-			Returns:
-			--------
-			Any:
-				xAI response object.
-			
-		'''
+		Purpose:
+			Submit a fully prepared payload to the xAI Responses API and return extracted text.
+		
+		Args:
+			payload: Prepared provider request payload.
+		
+		Returns:
+			Any: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'payload', payload )
 			
@@ -865,70 +728,35 @@ class Grok( Generator ):
 			web_search: bool = False, search_domains: Any = None,
 			stop: List[ str ] = None, stream: bool = False, store: bool = True,
 			parallel_tool_calls: bool = True, tool_choice: str = 'auto' ) -> str | None:
-		'''
+		"""Fetch.
 		
-			Purpose:
-			--------
-			Send an xAI Responses API request for Grok text generation, optional JSON
-			mode, optional reasoning controls, optional web search, and optional stop
-			sequences.
-
-			Args:
-			-----------
-			query (str):
-				User prompt.
-
-			model (str):
-				Grok model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling value.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instructions.
-
-			response_format (str | None):
-				Optional output format. Use json for JSON object mode.
-
-			reasoning_effort (str | None):
-				Optional reasoning effort, only sent to models that support it.
-
-			web_search (bool):
-				Whether to enable xAI web search.
-
-			search_domains (Any):
-				Optional allowed domains for xAI web search.
-
-			stop (List[str] | None):
-				Optional stop sequences for non-reasoning models.
-
-			stream (bool):
-				Whether to stream the response.
-
-			store (bool):
-				Whether xAI should store the response server-side.
-
-			parallel_tool_calls (bool):
-				Whether parallel tool calls are enabled.
-
-			tool_choice (str):
-				Tool-choice behavior.
-
-			Returns:
-			--------
-			str | None:
-				Generated response text.
-			
-		'''
+		Purpose:
+			Build and submit an xAI Responses API request for text generation, optional reasoning, optional JSON output, and optional web search.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			reasoning_effort: Requested reasoning-effort level.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			stop: Optional stop sequences.
+			stream: Whether streaming output should be requested.
+			store: Whether the provider should store the response server-side.
+			parallel_tool_calls: Whether parallel tool calls are allowed.
+			tool_choice: Tool-choice behavior sent to the provider.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'query', query )
 			throw_if( 'model', model )
@@ -1036,68 +864,35 @@ class Grok( Generator ):
 			web_search: bool = False, search_domains: Any = None,
 			stop: List[ str ] = None, stream: bool = False, store: bool = True,
 			parallel_tool_calls: bool = True, tool_choice: str = 'auto' ) -> str | None:
-		'''
+		"""Generate text.
 		
-			Purpose:
-			--------
-			Convenience wrapper around fetch for Grok text generation.
-
-			Args:
-			-----------
-			query (str):
-				User prompt.
-
-			model (str):
-				Grok model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling value.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instructions.
-
-			response_format (str | None):
-				Optional output format.
-
-			reasoning_effort (str | None):
-				Optional reasoning effort.
-
-			web_search (bool):
-				Whether xAI web search is enabled.
-
-			search_domains (Any):
-				Optional allowed domains.
-
-			stop (List[str] | None):
-				Optional stop sequences.
-
-			stream (bool):
-				Whether to stream the response.
-
-			store (bool):
-				Whether to store the response server-side.
-
-			parallel_tool_calls (bool):
-				Whether parallel tool calls are enabled.
-
-			tool_choice (str):
-				Tool-choice behavior.
-
-			Returns:
-			--------
-			str | None:
-				Generated response text.
-			
-		'''
+		Purpose:
+			Generate text with Grok by delegating to the full fetch workflow.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			reasoning_effort: Requested reasoning-effort level.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			stop: Optional stop sequences.
+			stream: Whether streaming output should be requested.
+			store: Whether the provider should store the response server-side.
+			parallel_tool_calls: Whether parallel tool calls are allowed.
+			tool_choice: Tool-choice behavior sent to the provider.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch(
 				query=query,
@@ -1132,62 +927,33 @@ class Grok( Generator ):
 			response_format: str = None, reasoning_effort: str = None,
 			search_domains: Any = None, stream: bool = False, store: bool = True,
 			parallel_tool_calls: bool = True, tool_choice: str = 'auto' ) -> str | None:
-		'''
+		"""Search web.
 		
-			Purpose:
-			--------
-			Convenience wrapper around fetch with xAI web search enabled.
-
-			Args:
-			-----------
-			query (str):
-				User prompt.
-
-			model (str):
-				Grok model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling value.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instructions.
-
-			response_format (str | None):
-				Optional output format.
-
-			reasoning_effort (str | None):
-				Optional reasoning effort.
-
-			search_domains (Any):
-				Optional allowed domains.
-
-			stream (bool):
-				Whether to stream the response.
-
-			store (bool):
-				Whether to store the response server-side.
-
-			parallel_tool_calls (bool):
-				Whether parallel tool calls are enabled.
-
-			tool_choice (str):
-				Tool-choice behavior.
-
-			Returns:
-			--------
-			str | None:
-				Web-search-augmented response text.
-			
-		'''
+		Purpose:
+			Generate a web-grounded Grok answer by enabling the xAI web-search tool path.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			reasoning_effort: Requested reasoning-effort level.
+			search_domains: Optional domains used to constrain provider web search.
+			stream: Whether streaming output should be requested.
+			store: Whether the provider should store the response server-side.
+			parallel_tool_calls: Whether parallel tool calls are allowed.
+			tool_choice: Tool-choice behavior sent to the provider.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch(
 				query=query,
@@ -1217,85 +983,22 @@ class Grok( Generator ):
 			raise exception
 
 class Gemini( Generator ):
-	'''
-
-		Purpose:
-		--------
-		Class providing Google Gemini text generation, JSON output, Google Search
-		grounding, stop sequences, and Gemini thinking controls.
-
-		Attributes:
-		-----------
-		api_key (str):
-			Google Gemini API key from configuration.
-
-		client (Any):
-			Initialized Google GenAI client.
-
-		model (str):
-			Selected Gemini model identifier.
-
-		response (Any):
-			Last Gemini response object.
-
-		query (str | None):
-			Last user prompt.
-
-		params (Dict[str, Any] | None):
-			Last request payload.
-
-		temperature (float):
-			Sampling temperature.
-
-		max_tokens (int):
-			Maximum output-token count.
-
-		top_p (float):
-			Nucleus sampling parameter.
-
-		top_k (int | None):
-			Top-k sampling parameter.
-
-		candidate_count (int):
-			Number of candidate responses.
-
-		seed (int | None):
-			Optional deterministic seed.
-
-		system_instructions (str | None):
-			Optional system prompt.
-
-		response_format (str | None):
-			Output response format selector.
-
-		stop_sequences (List[str]):
-			Optional stop sequences.
-
-		grounding (bool):
-			Whether Google Search grounding is enabled.
-
-		search_domains (List[str]):
-			Optional preferred grounding domains used as instruction guidance.
-
-		reasoning (bool):
-			Whether Gemini thinking is enabled.
-
-		thinking_level (str | None):
-			Gemini 3 thinking level.
-
-		thinking_budget (int | None):
-			Gemini 2.5 thinking token budget.
-
-		include_thoughts (bool):
-			Whether Gemini should include thought summaries where supported.
-
-		Methods:
-		--------
-		fetch( self, prompt, ... ) -> str | None
-		generate_text( self, prompt, ... ) -> str | None
-		search_web( self, prompt, ... ) -> str | None
-
-	'''
+	"""Google Gemini text, grounding, and structured-output wrapper.
+	
+	Purpose:
+		Generate text, grounded answers, and structured outputs through the Google Gemini API.
+	
+	Attributes:
+		api_key: Google Gemini API key loaded from configuration.
+		client: Gemini client used for model calls.
+		model: Model identifier selected for the latest request.
+		prompt: Prompt submitted to the latest request.
+		response: Raw Gemini response object.
+		content: Extracted response text returned to callers.
+		config: Generation configuration sent to Gemini.
+		tools: Optional grounding tools sent to Gemini.
+		domains: Optional search-domain filters used in grounded requests.
+	"""
 	
 	api_key: Optional[ str ]
 	client: Optional[ Any ]
@@ -1322,21 +1025,11 @@ class Gemini( Generator ):
 	config: Optional[ Any ]
 	
 	def __init__( self ) -> None:
-		'''
+		"""Initialize the Gemini wrapper.
 		
-			Purpose:
-			--------
-			Initialize the Gemini generator with defaults used by the Foo application.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			None
-			
-		'''
+		Purpose:
+			Initialize Gemini client state, option lists, request defaults, and runtime response fields.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.GOOGLE_API_KEY
 		self.client = genai.Client( api_key=self.api_key )
@@ -1363,22 +1056,14 @@ class Gemini( Generator ):
 		self.config = None
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
+		"""Return public Gemini members.
 		
-			Purpose:
-			--------
-			Return a stable ordered member list for introspection.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Ordered attribute and method names.
-			
-		'''
+		Purpose:
+			Return the stable public member list for the Gemini generator wrapper.
+		
+		Returns:
+			List[str]: Stable public member names.
+		"""
 		return [
 				'api_key',
 				'client',
@@ -1418,24 +1103,20 @@ class Gemini( Generator ):
 		]
 	
 	def normalize_domains( self, domains: Any ) -> List[ str ]:
-		'''
+		"""Normalize domains.
 		
-			Purpose:
-			--------
-			Normalize user-supplied grounding domains into canonical, de-duplicated
-			domain names.
-
-			Args:
-			-----------
-			domains (Any):
-				String, list, tuple, set, scalar, or None containing domain values.
-
-			Returns:
-			--------
-			List[str]:
-				Clean domain names without protocol, path, port, or leading www.
-			
-		'''
+		Purpose:
+			Normalize search-domain filters into a clean list of non-empty domain strings.
+		
+		Args:
+			domains: Domain-filter input supplied as a string, list, tuple, or set.
+		
+		Returns:
+			List[str]: Normalized value suitable for provider request construction.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if domains is None:
 				return [ ]
@@ -1483,23 +1164,20 @@ class Gemini( Generator ):
 			raise exception
 	
 	def normalize_stop_sequences( self, stop_sequences: Any ) -> List[ str ]:
-		'''
+		"""Normalize stop sequences.
 		
-			Purpose:
-			--------
-			Normalize stop sequences supplied as a string or iterable.
-
-			Args:
-			-----------
-			stop_sequences (Any):
-				String, list, tuple, set, scalar, or None containing stop sequences.
-
-			Returns:
-			--------
-			List[str]:
-				Non-empty stop sequences.
-			
-		'''
+		Purpose:
+			Normalize stop-sequence input into a clean list suitable for Gemini generation configuration.
+		
+		Args:
+			stop_sequences: Optional stop sequences.
+		
+		Returns:
+			List[str]: Normalized value suitable for provider request construction.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if stop_sequences is None:
 				return [ ]
@@ -1528,23 +1206,20 @@ class Gemini( Generator ):
 			raise exception
 	
 	def supports_thinking_level( self, model: str ) -> bool:
-		'''
+		"""Supports thinking level.
 		
-			Purpose:
-			--------
-			Determine whether the selected model supports Gemini 3 thinkingLevel.
-
-			Args:
-			-----------
-			model (str):
-				Gemini model identifier.
-
-			Returns:
-			--------
-			bool:
-				True when the model is a Gemini 3 family model.
-			
-		'''
+		Purpose:
+			Determine whether the selected Gemini model supports named thinking-level controls.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Provider capability flag or predicate result.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'model', model )
 			return str( model ).strip( ).lower( ).startswith( 'gemini-3' )
@@ -1558,23 +1233,20 @@ class Gemini( Generator ):
 			raise exception
 	
 	def supports_thinking_budget( self, model: str ) -> bool:
-		'''
+		"""Supports thinking budget.
 		
-			Purpose:
-			--------
-			Determine whether the selected model supports Gemini 2.5 thinkingBudget.
-
-			Args:
-			-----------
-			model (str):
-				Gemini model identifier.
-
-			Returns:
-			--------
-			bool:
-				True when the model is a Gemini 2.5 family model.
-			
-		'''
+		Purpose:
+			Determine whether the selected Gemini model supports explicit thinking-budget controls.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Provider capability flag or predicate result.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'model', model )
 			return str( model ).strip( ).lower( ).startswith( 'gemini-2.5' )
@@ -1589,32 +1261,23 @@ class Gemini( Generator ):
 	
 	def build_system_instruction( self, system: str = None, response_format: str = None,
 			grounding: bool = False, search_domains: Any = None ) -> str | None:
-		'''
+		"""Build system instruction.
 		
-			Purpose:
-			--------
-			Build the Gemini system instruction.
-
-			Args:
-			-----------
-			system (str | None):
-				Optional system instruction.
-
-			response_format (str | None):
-				Optional response-format selector.
-
-			grounding (bool):
-				Whether grounding is enabled.
-
-			search_domains (Any):
-				Optional preferred grounding domains.
-
-			Returns:
-			--------
-			str | None:
-				Final system instruction or None.
-			
-		'''
+		Purpose:
+			Build Gemini system instructions from optional system text, response-format guidance, grounding guidance, and domain filters.
+		
+		Args:
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			grounding: Whether Gemini grounding should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+		
+		Returns:
+			str | None: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			parts: List[ str ] = [ ]
 			if system and str( system ).strip( ):
@@ -1649,36 +1312,24 @@ class Gemini( Generator ):
 	def build_thinking_config( self, model: str, reasoning: bool = False,
 			thinking_level: str = None, thinking_budget: int | None = None,
 			include_thoughts: bool = False ) -> Any:
-		'''
+		"""Build thinking config.
 		
-			Purpose:
-			--------
-			Build Gemini thinking configuration for Gemini 3 thinkingLevel or
-			Gemini 2.5 thinkingBudget.
-
-			Args:
-			-----------
-			model (str):
-				Gemini model identifier.
-
-			reasoning (bool):
-				Whether thinking controls should be enabled.
-
-			thinking_level (str | None):
-				Gemini 3 thinking level.
-
-			thinking_budget (int | None):
-				Gemini 2.5 thinking budget.
-
-			include_thoughts (bool):
-				Whether to include thought summaries where supported.
-
-			Returns:
-			--------
-			Any:
-				Google GenAI ThinkingConfig-compatible object or None.
-			
-		'''
+		Purpose:
+			Build Gemini thinking configuration for supported reasoning models and requested thinking controls.
+		
+		Args:
+			model: Provider model identifier.
+			reasoning: Whether reasoning or thinking controls should be enabled.
+			thinking_level: Requested Gemini thinking-level label.
+			thinking_budget: Optional token budget for thinking-capable models.
+			include_thoughts: Whether Gemini should include thought summaries when supported.
+		
+		Returns:
+			Any: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if not reasoning:
 				return None
@@ -1723,23 +1374,20 @@ class Gemini( Generator ):
 			raise exception
 	
 	def build_tools( self, grounding: bool = False ) -> List[ Any ]:
-		'''
+		"""Build tools.
 		
-			Purpose:
-			--------
-			Build Gemini tool configuration for Google Search grounding.
-
-			Args:
-			-----------
-			grounding (bool):
-				Whether to enable Google Search grounding.
-
-			Returns:
-			--------
-			List[Any]:
-				Google GenAI tool definitions.
-			
-		'''
+		Purpose:
+			Build Gemini tool configuration for grounded search when grounding is enabled.
+		
+		Args:
+			grounding: Whether Gemini grounding should be enabled.
+		
+		Returns:
+			List[Any]: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if not grounding:
 				return [ ]
@@ -1765,71 +1413,36 @@ class Gemini( Generator ):
 			reasoning: bool = False, thinking_level: str = None,
 			thinking_budget: int | None = None, include_thoughts: bool = False,
 			response_json_schema: Dict[ str, Any ] = None ) -> Any:
-		'''
+		"""Build config.
 		
-			Purpose:
-			--------
-			Build a Google GenAI GenerateContentConfig-compatible configuration.
-
-			Args:
-			-----------
-			model (str):
-				Gemini model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling parameter.
-
-			top_k (int | None):
-				Top-k sampling parameter.
-
-			candidate_count (int):
-				Number of candidates to generate.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instruction.
-
-			response_format (str | None):
-				Optional output format selector.
-
-			stop_sequences (Any):
-				Optional stop sequences.
-
-			grounding (bool):
-				Whether Google Search grounding is enabled.
-
-			search_domains (Any):
-				Optional preferred grounding domains.
-
-			reasoning (bool):
-				Whether thinking is enabled.
-
-			thinking_level (str | None):
-				Gemini 3 thinking level.
-
-			thinking_budget (int | None):
-				Gemini 2.5 thinking budget.
-
-			include_thoughts (bool):
-				Whether thought summaries are requested.
-
-			response_json_schema (Dict[str, Any] | None):
-				Optional JSON schema for structured output.
-
-			Returns:
-			--------
-			Any:
-				GenerateContentConfig object or dictionary fallback.
-			
-		'''
+		Purpose:
+			Build the Gemini generation configuration from sampling, response-format, grounding, and thinking options.
+		
+		Args:
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			candidate_count: Number of Gemini candidates to request.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			stop_sequences: Optional stop sequences.
+			grounding: Whether Gemini grounding should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			reasoning: Whether reasoning or thinking controls should be enabled.
+			thinking_level: Requested Gemini thinking-level label.
+			thinking_budget: Optional token budget for thinking-capable models.
+			include_thoughts: Whether Gemini should include thought summaries when supported.
+			response_json_schema: Optional JSON schema for structured responses.
+		
+		Returns:
+			Any: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			config_data: Dict[ str, Any ] = {
 					'temperature': float( temperature ),
@@ -1904,24 +1517,20 @@ class Gemini( Generator ):
 			raise exception
 	
 	def extract_text( self, response: Any ) -> str:
-		'''
+		"""Extract text.
 		
-			Purpose:
-			--------
-			Extract final text from a Gemini response object, dictionary, or fallback
-			value.
-
-			Args:
-			-----------
-			response (Any):
-				Gemini response object.
-
-			Returns:
-			--------
-			str:
-				Best available response text.
-			
-		'''
+		Purpose:
+			Extract generated text from Gemini response objects across supported response shapes.
+		
+		Args:
+			response: Raw provider response object.
+		
+		Returns:
+			str: Extracted generated text when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if response is None:
 				return ''
@@ -1972,76 +1581,37 @@ class Gemini( Generator ):
 			reasoning: bool = False, thinking_level: str = None,
 			thinking_budget: int | None = None, include_thoughts: bool = False,
 			response_json_schema: Dict[ str, Any ] = None ) -> str | None:
-		'''
+		"""Fetch.
 		
-			Purpose:
-			--------
-			Send a Gemini generate_content request for text generation, JSON output,
-			Google Search grounding, stop sequences, and model-appropriate thinking
-			configuration.
-
-			Args:
-			-----------
-			prompt (str):
-				User prompt.
-
-			model (str):
-				Gemini model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling parameter.
-
-			top_k (int | None):
-				Top-k sampling parameter.
-
-			candidate_count (int):
-				Number of candidates to generate.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instruction.
-
-			response_format (str | None):
-				Optional output format selector. Use json for JSON mode.
-
-			stop_sequences (Any):
-				Optional stop sequences.
-
-			grounding (bool):
-				Whether Google Search grounding is enabled.
-
-			search_domains (Any):
-				Optional preferred grounding domains.
-
-			reasoning (bool):
-				Whether Gemini thinking is enabled.
-
-			thinking_level (str | None):
-				Gemini 3 thinking level.
-
-			thinking_budget (int | None):
-				Gemini 2.5 thinking budget.
-
-			include_thoughts (bool):
-				Whether thought summaries are requested.
-
-			response_json_schema (Dict[str, Any] | None):
-				Optional JSON schema for structured output.
-
-			Returns:
-			--------
-			str | None:
-				Generated response text.
-			
-		'''
+		Purpose:
+			Build and submit a Gemini generation request with optional grounding, structured output, stop sequences, and thinking controls.
+		
+		Args:
+			prompt: User prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			candidate_count: Number of Gemini candidates to request.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			stop_sequences: Optional stop sequences.
+			grounding: Whether Gemini grounding should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			reasoning: Whether reasoning or thinking controls should be enabled.
+			thinking_level: Requested Gemini thinking-level label.
+			thinking_budget: Optional token budget for thinking-capable models.
+			include_thoughts: Whether Gemini should include thought summaries when supported.
+			response_json_schema: Optional JSON schema for structured responses.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'prompt', prompt )
 			throw_if( 'model', model )
@@ -2098,74 +1668,37 @@ class Gemini( Generator ):
 			reasoning: bool = False, thinking_level: str = None,
 			thinking_budget: int | None = None, include_thoughts: bool = False,
 			response_json_schema: Dict[ str, Any ] = None ) -> str | None:
-		'''
+		"""Generate text.
 		
-			Purpose:
-			--------
-			Convenience wrapper around fetch for Gemini text generation.
-
-			Args:
-			-----------
-			prompt (str):
-				User prompt.
-
-			model (str):
-				Gemini model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling parameter.
-
-			top_k (int | None):
-				Top-k sampling parameter.
-
-			candidate_count (int):
-				Number of candidates to generate.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instruction.
-
-			response_format (str | None):
-				Optional output format selector.
-
-			stop_sequences (Any):
-				Optional stop sequences.
-
-			grounding (bool):
-				Whether Google Search grounding is enabled.
-
-			search_domains (Any):
-				Optional preferred grounding domains.
-
-			reasoning (bool):
-				Whether Gemini thinking is enabled.
-
-			thinking_level (str | None):
-				Gemini 3 thinking level.
-
-			thinking_budget (int | None):
-				Gemini 2.5 thinking budget.
-
-			include_thoughts (bool):
-				Whether thought summaries are requested.
-
-			response_json_schema (Dict[str, Any] | None):
-				Optional JSON schema for structured output.
-
-			Returns:
-			--------
-			str | None:
-				Generated response text.
-			
-		'''
+		Purpose:
+			Generate text with Gemini by delegating to the full fetch workflow.
+		
+		Args:
+			prompt: User prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			candidate_count: Number of Gemini candidates to request.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			stop_sequences: Optional stop sequences.
+			grounding: Whether Gemini grounding should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			reasoning: Whether reasoning or thinking controls should be enabled.
+			thinking_level: Requested Gemini thinking-level label.
+			thinking_budget: Optional token budget for thinking-capable models.
+			include_thoughts: Whether Gemini should include thought summaries when supported.
+			response_json_schema: Optional JSON schema for structured responses.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch( prompt=prompt, model=model, temperature=temperature,
 				max_tokens=max_tokens, top_p=top_p, top_k=top_k,
@@ -2191,71 +1724,36 @@ class Gemini( Generator ):
 			thinking_level: str = None, thinking_budget: int | None = None,
 			include_thoughts: bool = False,
 			response_json_schema: Dict[ str, Any ] = None ) -> str | None:
-		'''
+		"""Search web.
 		
-			Purpose:
-			--------
-			Convenience wrapper around fetch with Google Search grounding enabled.
-
-			Args:
-			-----------
-			prompt (str):
-				User prompt.
-
-			model (str):
-				Gemini model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output-token count.
-
-			top_p (float):
-				Nucleus sampling parameter.
-
-			top_k (int | None):
-				Top-k sampling parameter.
-
-			candidate_count (int):
-				Number of candidates to generate.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system instruction.
-
-			response_format (str | None):
-				Optional output format selector.
-
-			stop_sequences (Any):
-				Optional stop sequences.
-
-			search_domains (Any):
-				Optional preferred grounding domains.
-
-			reasoning (bool):
-				Whether Gemini thinking is enabled.
-
-			thinking_level (str | None):
-				Gemini 3 thinking level.
-
-			thinking_budget (int | None):
-				Gemini 2.5 thinking budget.
-
-			include_thoughts (bool):
-				Whether thought summaries are requested.
-
-			response_json_schema (Dict[str, Any] | None):
-				Optional JSON schema for structured output.
-
-			Returns:
-			--------
-			str | None:
-				Web-grounded Gemini response text.
-			
-		'''
+		Purpose:
+			Generate a Gemini answer with grounding enabled and optional domain-filter guidance.
+		
+		Args:
+			prompt: User prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			candidate_count: Number of Gemini candidates to request.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			stop_sequences: Optional stop sequences.
+			search_domains: Optional domains used to constrain provider web search.
+			reasoning: Whether reasoning or thinking controls should be enabled.
+			thinking_level: Requested Gemini thinking-level label.
+			thinking_budget: Optional token budget for thinking-capable models.
+			include_thoughts: Whether Gemini should include thought summaries when supported.
+			response_json_schema: Optional JSON schema for structured responses.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch( prompt=prompt, model=model, temperature=temperature,
 				max_tokens=max_tokens, top_p=top_p, top_k=top_k, candidate_count=candidate_count,
@@ -2273,38 +1771,21 @@ class Gemini( Generator ):
 			raise exception
 
 class Claude( Generator ):
-	'''
+	"""Anthropic Claude text and web-search generation wrapper.
 	
-		Purpose:
-		---------
-		Class providing Anthropic Claude text-generation, extended thinking,
-		and optional web search support through the Messages API.
+	Purpose:
+		Generate text and web-search-enabled responses through the Anthropic Claude Messages API.
 	
-		Attributes:
-		-----------
-		client - Anthropic
-		model - str
-		response - Any
-		api_key - str
-		messages - List[ Dict[ str, Any ] ]
-		params - Dict[ str, Any ]
-		temperature - float
-		max_tokens - int
-		top_p - float
-		top_k - int | None
-		thinking_budget - int | None
-		system_instructions - str | None
-		web_search - bool
-		search_domains - List[ str ]
-		blocked_domains - List[ str ]
-	
-		Methods:
-		-----------
-		fetch( ) -> str | None
-		generate_text( ) -> str | None
-		search_web( ) -> str | None
-		
-	'''
+	Attributes:
+		api_key: Anthropic API key loaded from configuration.
+		client: Anthropic client used for Messages API calls.
+		model: Model identifier selected for the latest request.
+		query: User prompt submitted to the latest request.
+		response: Raw Claude response object.
+		content: Extracted response text returned to callers.
+		tools: Tool definitions used for web search when enabled.
+		domains: Optional allowed or blocked web-search domains.
+	"""
 	client: Optional[ AnthropicClient ]
 	model: Optional[ str ]
 	response: Optional[ Any ]
@@ -2322,21 +1803,11 @@ class Claude( Generator ):
 	blocked_domains: Optional[ List[ str ] ]
 	
 	def __init__( self ) -> None:
-		'''
+		"""Initialize the Claude wrapper.
 		
-			Purpose:
-			-----------
-			Initialize Anthropic Claude API client.
-			
-			Args:
-			-----------
-			None
-			
-			Returns:
-			-----------
-			None
-			
-		'''
+		Purpose:
+			Initialize Anthropic client state, model options, request defaults, and runtime response fields.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.CLAUDE_API_KEY
 		self.url = r'https://api.anthropic.com'
@@ -2363,21 +1834,14 @@ class Claude( Generator ):
 			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
+		"""Return public Claude members.
 		
-			Purpose:
-			-----------
-			Claude list of members.
-			
-			Args:
-			-----------
-			None
-			
-			Returns:
-			-----------
-			list[str]: Ordered attribute/method names.
-			
-		'''
+		Purpose:
+			Return the stable public member list for the Claude generator wrapper.
+		
+		Returns:
+			List[str]: Stable public member names.
+		"""
 		return [ 'content',
 		         'url',
 		         'client',
@@ -2399,21 +1863,20 @@ class Claude( Generator ):
 		         'blocked_domains' ]
 	
 	def _normalize_domains( self, domains: Any ) -> List[ str ]:
-		'''
+		"""Normalize domains.
 		
-			Purpose:
-			-----------
-			Normalize domain input into a canonical, de-duplicated list.
-			
-			Args:
-			-----------
-			domains (Any): String, list, tuple, set, or None.
-			
-			Returns:
-			-----------
-			List[str]
-			
-		'''
+		Purpose:
+			Normalize Claude web-search domain filters into a clean list of domain strings.
+		
+		Args:
+			domains: Domain-filter input supplied as a string, list, tuple, or set.
+		
+		Returns:
+			List[str]: Normalized value suitable for provider request construction.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if domains is None:
 				return [ ]
@@ -2455,21 +1918,20 @@ class Claude( Generator ):
 			raise exception
 	
 	def _supports_thinking( self, model: str ) -> bool:
-		'''
+		"""Supports thinking.
 		
-			Purpose:
-			-----------
-			Determine whether the selected Claude model supports extended thinking.
-			
-			Args:
-			-----------
-			model (str): Model name.
-			
-			Returns:
-			-----------
-			bool
-			
-		'''
+		Purpose:
+			Determine whether the selected Claude model supports Anthropic thinking controls.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Result produced by the operation.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'model', model )
 			_name = str( model ).strip( ).lower( )
@@ -2483,21 +1945,20 @@ class Claude( Generator ):
 			raise exception
 	
 	def _extract_text( self, response: Any ) -> str:
-		'''
+		"""Extract text.
 		
-			Purpose:
-			-----------
-			Extract plain text from an Anthropic Messages API response.
-			
-			Args:
-			-----------
-			response (Any): Anthropic response object.
-			
-			Returns:
-			-----------
-			str
-			
-		'''
+		Purpose:
+			Extract text blocks from an Anthropic Messages API response.
+		
+		Args:
+			response: Raw provider response object.
+		
+		Returns:
+			str: Extracted generated text when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if response is None:
 				return ''
@@ -2527,34 +1988,32 @@ class Claude( Generator ):
 			system: str = None, stop_sequences: List[ str ] = None,
 			thinking: bool = False, thinking_budget: int | None = None, web_search: bool = False,
 			search_domains: Any = None, blocked_domains: Any = None ) -> str | None:
-		'''
+		"""Fetch.
 		
-			Purpose:
-			-------
-			Send an Anthropic Messages API request for Claude text generation,
-			optional extended thinking, and optional server-side web search.
-			
-			Args:
-			-----------
-			query (str): User prompt.
-			model (str): Claude model name.
-			temperature (float): Sampling temperature.
-			max_tokens (int): Max output tokens.
-			top_p (float): Top-p nucleus sampling parameter.
-			top_k (int | None): Top-k sampling parameter.
-			system (str | None): Optional system prompt.
-			stop_sequences (List[str] | None): Optional stop sequences.
-			thinking (bool): Enable extended thinking when supported.
-			thinking_budget (int | None): Claude thinking budget in tokens.
-			web_search (bool): Enable Claude web search tool.
-			search_domains (Any): Optional allowlist domain input.
-			blocked_domains (Any): Optional blocklist domain input.
-			
-			Returns:
-			---------
-			str | None
-			
-		'''
+		Purpose:
+			Build and submit a Claude Messages API request with optional thinking, stop sequences, and web-search tools.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			system: Optional system instructions.
+			stop_sequences: Optional stop sequences.
+			thinking: Whether Claude thinking controls should be enabled.
+			thinking_budget: Optional token budget for thinking-capable models.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			blocked_domains: Optional domains excluded from provider web search.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'query', query )
 			throw_if( 'model', model )
@@ -2634,21 +2093,32 @@ class Claude( Generator ):
 			system: str = None, stop_sequences: List[ str ] = None,
 			thinking: bool = False, thinking_budget: int | None = None, web_search: bool = False,
 			search_domains: Any = None, blocked_domains: Any = None ) -> str | None:
-		'''
+		"""Generate text.
 		
-			Purpose:
-			-----------
-			Convenience wrapper around fetch for text generation.
-			
-			Args:
-			-----------
-			query (str): User prompt.
-			
-			Returns:
-			-----------
-			str | None
-			
-		'''
+		Purpose:
+			Generate text with Claude by delegating to the full fetch workflow.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			system: Optional system instructions.
+			stop_sequences: Optional stop sequences.
+			thinking: Whether Claude thinking controls should be enabled.
+			thinking_budget: Optional token budget for thinking-capable models.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			blocked_domains: Optional domains excluded from provider web search.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch( query=query, model=model, temperature=temperature,
 				max_tokens=max_tokens, top_p=top_p, top_k=top_k, system=system,
@@ -2668,21 +2138,31 @@ class Claude( Generator ):
 			system: str = None, stop_sequences: List[ str ] = None,
 			thinking: bool = False, thinking_budget: int | None = None,
 			search_domains: Any = None, blocked_domains: Any = None ) -> str | None:
-		'''
+		"""Search web.
 		
-			Purpose:
-			-----------
-			Convenience wrapper around fetch with web search enabled.
-			
-			Args:
-			-----------
-			query (str): User prompt.
-			
-			Returns:
-			-----------
-			str | None
-			
-		'''
+		Purpose:
+			Generate a Claude answer with Anthropic web search enabled and optional domain controls.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			top_k: Top-k sampling value.
+			system: Optional system instructions.
+			stop_sequences: Optional stop sequences.
+			thinking: Whether Claude thinking controls should be enabled.
+			thinking_budget: Optional token budget for thinking-capable models.
+			search_domains: Optional domains used to constrain provider web search.
+			blocked_domains: Optional domains excluded from provider web search.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch( query=query, model=model, temperature=temperature,
 				max_tokens=max_tokens,
@@ -2698,38 +2178,20 @@ class Claude( Generator ):
 			raise exception
 
 class Mistral( Generator ):
-	'''
-
-		Purpose:
-		---------
-		Class providing access to the Mistral chat-completions API.
-
-		Attributes:
-		-----------
-		client - Optional[ MistralAI ]
-		model - Optional[ str ]
-		response - Optional[ Any ]
-		api_key - Optional[ str ]
-		query - Optional[ str ]
-		params - Optional[ Dict[ str, Any ] ]
-		temperature - Optional[ float ]
-		max_tokens - Optional[ int ]
-		top_p - Optional[ float ]
-		messages - Optional[ List[ Dict[ str, Any ] ] ]
-		system_instructions - Optional[ str ]
-		seed - Optional[ int ]
-		safe_prompt - Optional[ bool ]
-
-		Methods:
-		-----------
-		_extract_text( self, response: Any ) -> str
-		fetch( self, query: str, model: str='mistral-large-latest',
-		       temperature: float=0.7, max_tokens: int=1024, top_p: float=1.0,
-		       seed: int | None=None, safe_mode: bool=False,
-		       system: str | None=None ) -> str | None
-		create_schema( ... ) -> Dict[ str, str ] | None
-
-	'''
+	"""Mistral text-generation and schema-building wrapper.
+	
+	Purpose:
+		Generate text and tool-schema payloads through the Mistral chat completion API.
+	
+	Attributes:
+		api_key: Mistral API key loaded from configuration.
+		client: Mistral client used for chat completion requests.
+		model: Model identifier selected for the latest request.
+		query: User prompt submitted to the latest request.
+		response: Raw Mistral response object.
+		content: Extracted response text returned to callers.
+		schema: Last generated tool schema payload.
+	"""
 	client: Optional[ MistralAI ]
 	model: Optional[ str ]
 	response: Optional[ Any ]
@@ -2745,21 +2207,11 @@ class Mistral( Generator ):
 	safe_prompt: Optional[ bool ]
 	
 	def __init__( self ) -> None:
-		'''
-
-			Purpose:
-			-----------
-			Initialize the Mistral API wrapper.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			-----------
-			None
-
-		'''
+		"""Initialize the Mistral wrapper.
+		
+		Purpose:
+			Initialize Mistral client state, model options, request defaults, and runtime response fields.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.MISTRAL_API_KEY
 		self.model = 'mistral-large-latest'
@@ -2783,21 +2235,14 @@ class Mistral( Generator ):
 			self.headers[ 'User-Agent' ] = self.agents
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
-
-			Purpose:
-			-----------
-			Return the ordered list of members exposed by this wrapper.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			-----------
-			list[str]
-
-		'''
+		"""Return public Mistral members.
+		
+		Purpose:
+			Return the stable public member list for the Mistral generator wrapper.
+		
+		Returns:
+			List[str]: Stable public member names.
+		"""
 		return [
 				'content',
 				'client',
@@ -2821,21 +2266,20 @@ class Mistral( Generator ):
 		]
 	
 	def _extract_text( self, response: Any ) -> str:
-		'''
-
-			Purpose:
-			-----------
-			Extract plain text from a Mistral chat completion response.
-
-			Args:
-			-----------
-			response (Any): Raw SDK response object.
-
-			Returns:
-			-----------
-			str
-
-		'''
+		"""Extract text.
+		
+		Purpose:
+			Extract generated text from a Mistral chat-completion response object.
+		
+		Args:
+			response: Raw provider response object.
+		
+		Returns:
+			str: Extracted generated text when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if response is None:
 				return ''
@@ -2878,28 +2322,27 @@ class Mistral( Generator ):
 	def fetch( self, query: str, model: str = 'mistral-large-latest', temperature: float = 0.7,
 			max_tokens: int = 1024, top_p: float = 1.0, seed: int | None = None,
 			safe_mode: bool = False, system: str = None ) -> str | None:
-		'''
-
-			Purpose:
-			-------
-			Send a Mistral chat-completions request for text generation.
-
-			Args:
-			-----------
-			query (str): User prompt.
-			model (str): Mistral model name.
-			temperature (float): Sampling temperature.
-			max_tokens (int): Maximum output tokens.
-			top_p (float): Top-p nucleus sampling parameter.
-			seed (int | None): Deterministic random seed when provided.
-			safe_mode (bool): If True, enable Mistral safe prompt injection.
-			system (str | None): Optional system instructions.
-
-			Returns:
-			---------
-			str | None
-
-		'''
+		"""Fetch.
+		
+		Purpose:
+			Build and submit a Mistral chat-completion request using sampling, seed, safe-mode, and system options.
+		
+		Args:
+			query: User query or prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			safe_mode: Whether Mistral safe-mode behavior should be enabled.
+			system: Optional system instructions.
+		
+		Returns:
+			str | None: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'query', query )
 			throw_if( 'model', model )
@@ -2949,55 +2392,23 @@ class Mistral( Generator ):
 	
 	def create_schema( self, function: str, tool: str,
 			description: str, parameters: dict, required: list[ str ] ) -> Dict[ str, str ] | None:
-		"""
-
-			Purpose:
-			________
-			Construct and return a fully dynamic OpenAI Tool API schema definition.
-			Supports arbitrary parameters, types, nested objects, and required fields.
-
-			Args:
-			___________
-			function (str):
-			The function name exposed to the LLM.
-
-			tool (str):
-			The underlying system or service the function wraps
-			(e.g., “Google Maps”, “SQLite”, “Weather API”).
-
-			description (str):
-			Precise explanation of what the function does.
-
-			parameters (dict):
-			A dictionary defining parameter names and JSON schema descriptors.
-			Each value must itself be a valid JSON-schema fragment.
-
-				Example:
-					{
-						"origin": {
-							"type": "string",
-							"description": "Starting location."
-						},
-						"destination": {
-							"type": "string",
-							"description": "Ending location."
-						},
-						"mode": {
-							"type": "string",
-							"enum": ["driving", "walking", "bicycling", "transit"],
-							"description": "Travel mode."
-						}
-					}
-
-			required (list[str] | None):
-			List of required parameter names.
-			If None, required = list(parameters.keys()).
-
-			Returns:
-			________
-			dict:
-			A JSON-compatible dictionary defining the tool schema.
-
+		"""Create schema.
+		
+		Purpose:
+			Build a JSON-compatible tool schema dictionary from a function name, tool label, description, parameters, and required fields.
+		
+		Args:
+			function: Function name exposed in the generated tool schema.
+			tool: Tool or service label associated with the generated schema.
+			description: Human-readable description for the generated schema.
+			parameters: JSON-schema parameter definitions.
+			required: Optional list of required parameter names.
+		
+		Returns:
+			Dict[str, str] | None: JSON-compatible tool schema dictionary.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
 		"""
 		try:
 			throw_if( 'function', function )
@@ -3034,90 +2445,22 @@ class Mistral( Generator ):
 			raise exception
 
 class Chat( Generator ):
-	'''
-
-		Purpose:
-		--------
-		Class used for interacting with OpenAI text-generation, reasoning, image,
-		vision, file-search, and web-search capabilities through the Responses API.
-
-		Attributes:
-		-----------
-		api_key (str):
-			OpenAI API key from configuration.
-
-		client (OpenAI):
-			Initialized OpenAI SDK client.
-
-		system_instructions (str | None):
-			Final instruction block supplied to the Responses API.
-
-		model (str):
-			Selected OpenAI model identifier.
-
-		number (int):
-			Default response count retained for compatibility.
-
-		temperature (float):
-			Default sampling temperature.
-
-		top_percent (float):
-			Default nucleus sampling value.
-
-		frequency_penalty (float):
-			Compatibility member retained for older UI paths.
-
-		presence_penalty (float):
-			Compatibility member retained for older UI paths.
-
-		max_completion_tokens (int):
-			Default output-token limit.
-
-		store (bool):
-			Whether Responses API results should be stored server-side.
-
-		stream (bool):
-			Whether the Responses API request should stream.
-
-		response_format (str):
-			Current response-format mode.
-
-		reasoning_effort (str | None):
-			Optional reasoning-effort setting for reasoning-capable models.
-
-		web_search (bool):
-			Whether built-in web search is enabled.
-
-		search_domains (List[str]):
-			Optional preferred web-search domains.
-
-		vector_store_ids (List[str]):
-			Configured OpenAI vector store identifiers for file search.
-
-		request (Dict[str, Any] | None):
-			Last Responses API request payload.
-
-		response (Any):
-			Last OpenAI SDK response object.
-
-		Methods:
-		--------
-		fetch( self, prompt, ... ) -> str
-		generate_text( self, prompt, ... ) -> str
-		generate_image( self, prompt ) -> str
-		analyze_image( self, prompt, url ) -> str
-		summarize_document( self, prompt, path ) -> str
-		search_web( self, prompt, ... ) -> str
-		search_files( self, prompt ) -> str
-		translate( self, text ) -> str
-		transcribe( self, text ) -> str
-		get_format_options( self ) -> List[str]
-		get_model_options( self ) -> List[str]
-		get_effort_options( self ) -> List[str]
-		get_data( self ) -> Dict[str, Any]
-		dump( self ) -> str
-
-	'''
+	"""OpenAI Responses API generation wrapper.
+	
+	Purpose:
+		Generate OpenAI Responses API text, image-analysis, document-summary, search, and utility outputs.
+	
+	Attributes:
+		api_key: OpenAI API key loaded from configuration.
+		client: OpenAI client used for Responses API calls.
+		prompt: Prompt submitted to the latest request.
+		model: Model identifier selected for the latest request.
+		response: Raw OpenAI response object.
+		content: Extracted response text returned to callers.
+		tools: Tool definitions sent to the Responses API.
+		instructions: System instructions sent to the Responses API.
+		format: Text or structured-output format used by the latest request.
+	"""
 	
 	api_key: Optional[ str ]
 	client: Optional[ OpenAI ]
@@ -3155,44 +2498,21 @@ class Chat( Generator ):
 	def __init__( self, num: int = 1, temp: float = 0.8, top: float = 0.9,
 			freq: float = 0.0, pres: float = 0.0, iters: int = 10000,
 			store: bool = True, stream: bool = True ) -> None:
-		'''
+		"""Initialize the Chat wrapper.
 		
-			Purpose:
-			--------
-			Initialize the OpenAI Chat generator with defaults used by the Foo
-			application.
-
-			Args:
-			-----------
-			num (int):
-				Default response count retained for compatibility.
-
-			temp (float):
-				Default sampling temperature.
-
-			top (float):
-				Default top-p value.
-
-			freq (float):
-				Default frequency-penalty value retained for compatibility.
-
-			pres (float):
-				Default presence-penalty value retained for compatibility.
-
-			iters (int):
-				Default maximum completion/output token count.
-
-			store (bool):
-				Default Responses API store setting.
-
-			stream (bool):
-				Default Responses API stream setting.
-
-			Returns:
-			--------
-			None
-			
-		'''
+		Purpose:
+			Initialize OpenAI Responses API defaults, option lists, request state, and runtime output fields.
+		
+		Args:
+			num: Default response count retained for compatibility.
+			temp: Default sampling temperature.
+			top: Default top-p value.
+			freq: Default frequency-penalty value.
+			pres: Default presence-penalty value.
+			iters: Default maximum output-token count.
+			store: Whether the provider should store the response server-side.
+			stream: Whether streaming output should be requested.
+		"""
 		super( ).__init__( )
 		self.api_key = cfg.OPENAI_API_KEY
 		self.client = OpenAI( api_key=self.api_key )
@@ -3229,22 +2549,14 @@ class Chat( Generator ):
 		self.messages = None
 	
 	def __dir__( self ) -> List[ str ]:
-		'''
+		"""Return public Chat members.
 		
-			Purpose:
-			--------
-			Return a stable ordered member list for introspection.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Ordered attribute and method names.
-			
-		'''
+		Purpose:
+			Return the stable public member list for the OpenAI Chat generator wrapper.
+		
+		Returns:
+			List[str]: Stable public member names.
+		"""
 		return [
 				'api_key',
 				'client',
@@ -3285,24 +2597,20 @@ class Chat( Generator ):
 		]
 	
 	def normalize_domains( self, domains: Any ) -> List[ str ]:
-		'''
+		"""Normalize domains.
 		
-			Purpose:
-			--------
-			Normalize user-supplied domain input into canonical, de-duplicated
-			domain names.
-
-			Args:
-			-----------
-			domains (Any):
-				String, list, tuple, set, scalar, or None containing domain values.
-
-			Returns:
-			--------
-			List[str]:
-				Clean domain names without protocol, path, port, or leading www.
-			
-		'''
+		Purpose:
+			Normalize web-search domain filters into a clean list of non-empty domain strings.
+		
+		Args:
+			domains: Domain-filter input supplied as a string, list, tuple, or set.
+		
+		Returns:
+			List[str]: Normalized value suitable for provider request construction.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if domains is None:
 				return [ ]
@@ -3353,24 +2661,17 @@ class Chat( Generator ):
 			raise exception
 	
 	def supports_reasoning( self, model: str ) -> bool:
-		'''
+		"""Supports reasoning.
 		
-			Purpose:
-			--------
-			Determine whether the selected OpenAI model should receive a reasoning
-			configuration.
-
-			Args:
-			-----------
-			model (str):
-				OpenAI model identifier.
-
-			Returns:
-			--------
-			bool:
-				True when the model name indicates a reasoning-capable family.
-			
-		'''
+		Purpose:
+			Determine whether the selected OpenAI model supports reasoning-effort controls.
+		
+		Args:
+			model: Provider model identifier.
+		
+		Returns:
+			bool: Provider capability flag or predicate result.
+		"""
 		try:
 			throw_if( 'model', model )
 			name = str( model ).strip( ).lower( )
@@ -3387,32 +2688,23 @@ class Chat( Generator ):
 	def build_instructions( self, system: str = None,
 			response_format: str = None, web_search: bool = False,
 			search_domains: Any = None ) -> str | None:
-		'''
+		"""Build instructions.
 		
-			Purpose:
-			--------
-			Build the final instruction block sent to the OpenAI Responses API.
-
-			Args:
-			-----------
-			system (str | None):
-				Optional user-provided system/developer instructions.
-
-			response_format (str | None):
-				Optional response-format mode, such as json.
-
-			web_search (bool):
-				Whether web search is enabled for this request.
-
-			search_domains (Any):
-				Optional preferred source domains.
-
-			Returns:
-			--------
-			str | None:
-				Instruction block or None when no instructions are required.
-			
-		'''
+		Purpose:
+			Build OpenAI Responses API instructions from system text, response-format guidance, and web-search guidance.
+		
+		Args:
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+		
+		Returns:
+			str | None: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			parts: List[ str ] = [ ]
 			
@@ -3452,34 +2744,23 @@ class Chat( Generator ):
 	def build_text_format( self, response_format: str | Dict[ str, Any ] = None,
 			json_schema: Dict[ str, Any ] = None, schema_name: str = 'structured_response',
 			schema_description: str = 'Structured JSON response.' ) -> Dict[ str, Any ] | None:
-		'''
+		"""Build text format.
 		
-			Purpose:
-			--------
-			Build the Responses API text.format payload for text, JSON object mode,
-			or JSON schema structured output.
-
-			Args:
-			-----------
-			response_format (str | Dict[str, Any] | None):
-				Output format selector. Accepted strings are auto, text, json,
-				json_object, json_schema, and schema.
-
-			json_schema (Dict[str, Any] | None):
-				Optional JSON Schema object for structured outputs.
-
-			schema_name (str):
-				Response-format name used when json_schema is supplied.
-
-			schema_description (str):
-				Description used when json_schema is supplied.
-
-			Returns:
-			--------
-			Dict[str, Any] | None:
-				Responses API text-format object or None to omit the field.
-			
-		'''
+		Purpose:
+			Build OpenAI Responses API text-format configuration for plain text, JSON object, or JSON schema outputs.
+		
+		Args:
+			response_format: Requested response format, such as text or JSON.
+			json_schema: Optional JSON schema definition for structured output.
+			schema_name: Name assigned to the JSON schema response format.
+			schema_description: Description assigned to the JSON schema response format.
+		
+		Returns:
+			Dict[str, Any] | None: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if isinstance( response_format, dict ):
 				return response_format
@@ -3522,36 +2803,24 @@ class Chat( Generator ):
 	def build_tools( self, web_search: bool = False, search_domains: Any = None,
 			file_search: bool = False, vector_store_ids: List[ str ] = None,
 			max_file_results: int = 20 ) -> List[ Dict[ str, Any ] ]:
-		'''
+		"""Build tools.
 		
-			Purpose:
-			--------
-			Build the Responses API hosted-tool list for web search and file search.
-
-			Args:
-			-----------
-			web_search (bool):
-				Whether to enable the built-in web-search tool.
-
-			search_domains (Any):
-				Optional preferred domains. Current behavior keeps these domains in
-				instructions for compatibility and does not force unsupported filters.
-
-			file_search (bool):
-				Whether to enable the built-in file-search tool.
-
-			vector_store_ids (List[str] | None):
-				Vector store identifiers for file search.
-
-			max_file_results (int):
-				Maximum number of file-search results.
-
-			Returns:
-			--------
-			List[Dict[str, Any]]:
-				Responses API tool definitions.
-			
-		'''
+		Purpose:
+			Build OpenAI Responses API tool definitions for web search and file search.
+		
+		Args:
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			file_search: Whether OpenAI file search should be enabled.
+			vector_store_ids: Vector store identifiers used by OpenAI file search.
+			max_file_results: Maximum number of file-search results to return.
+		
+		Returns:
+			List[Dict[str, Any]]: Provider-specific request configuration or payload fragment.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			tools: List[ Dict[ str, Any ] ] = [ ]
 			
@@ -3584,23 +2853,20 @@ class Chat( Generator ):
 			raise exception
 	
 	def extract_output_text( self, response: Any ) -> str:
-		'''
+		"""Extract output text.
 		
-			Purpose:
-			--------
-			Extract text from an OpenAI SDK response or streaming response.
-
-			Args:
-			-----------
-			response (Any):
-				OpenAI response object, stream, dictionary, or scalar fallback.
-
-			Returns:
-			--------
-			str:
-				Best available output text.
-			
-		'''
+		Purpose:
+			Extract generated text from OpenAI Responses API objects across supported response shapes.
+		
+		Args:
+			response: Raw provider response object.
+		
+		Returns:
+			str: Extracted generated text when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			if response is None:
 				return ''
@@ -3668,77 +2934,37 @@ class Chat( Generator ):
 			json_schema: Dict[ str, Any ] = None,
 			schema_name: str = 'structured_response',
 			schema_description: str = 'Structured JSON response.' ) -> str:
-		'''
+		"""Fetch.
 		
-			Purpose:
-			--------
-			Send an OpenAI Responses API request for text generation, optional JSON
-			mode, optional structured output, optional reasoning, and optional web
-			search.
-
-			Args:
-			-----------
-			prompt (str):
-				User prompt.
-
-			model (str):
-				OpenAI model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output tokens.
-
-			top_p (float):
-				Nucleus sampling parameter.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system/developer instructions.
-
-			response_format (str | Dict[str, Any] | None):
-				Output format. Use json for JSON object mode, or json_schema/schema
-				with json_schema for structured output.
-
-			reasoning_effort (str | None):
-				Optional reasoning effort for reasoning-capable models.
-
-			web_search (bool):
-				Whether to enable OpenAI built-in web search.
-
-			search_domains (Any):
-				Optional preferred domains used in instruction guidance.
-
-			store (bool):
-				Whether to store the response server-side.
-
-			stream (bool):
-				Whether to stream the response.
-
-			parallel_tool_calls (bool):
-				Whether parallel tool calls are allowed.
-
-			tool_choice (str):
-				Tool-choice behavior, normally auto.
-
-			json_schema (Dict[str, Any] | None):
-				Optional JSON Schema object for structured output.
-
-			schema_name (str):
-				Schema response-format name.
-
-			schema_description (str):
-				Schema response-format description.
-
-			Returns:
-			--------
-			str:
-				Generated response text.
-			
-		'''
+		Purpose:
+			Build and submit an OpenAI Responses API request with optional reasoning, structured output, web search, and tool settings.
+		
+		Args:
+			prompt: User prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			reasoning_effort: Requested reasoning-effort level.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			store: Whether the provider should store the response server-side.
+			stream: Whether streaming output should be requested.
+			parallel_tool_calls: Whether parallel tool calls are allowed.
+			tool_choice: Tool-choice behavior sent to the provider.
+			json_schema: Optional JSON schema definition for structured output.
+			schema_name: Name assigned to the JSON schema response format.
+			schema_description: Description assigned to the JSON schema response format.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'prompt', prompt )
 			throw_if( 'model', model )
@@ -3838,68 +3064,35 @@ class Chat( Generator ):
 			search_domains: Any = None, store: bool = True, stream: bool = False,
 			parallel_tool_calls: bool = True, tool_choice: str = 'auto',
 			json_schema: Dict[ str, Any ] = None ) -> str:
-		'''
+		"""Generate text.
 		
-			Purpose:
-			--------
-			Convenience wrapper around fetch for text generation.
-
-			Args:
-			-----------
-			prompt (str):
-				User prompt.
-
-			model (str):
-				OpenAI model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output tokens.
-
-			top_p (float):
-				Nucleus sampling parameter.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system/developer instructions.
-
-			response_format (str | Dict[str, Any] | None):
-				Output format selector or complete text.format object.
-
-			reasoning_effort (str | None):
-				Optional reasoning effort.
-
-			web_search (bool):
-				Whether to enable web search.
-
-			search_domains (Any):
-				Optional preferred source domains.
-
-			store (bool):
-				Whether to store the response.
-
-			stream (bool):
-				Whether to stream the response.
-
-			parallel_tool_calls (bool):
-				Whether parallel tool calls are enabled.
-
-			tool_choice (str):
-				Tool-choice behavior.
-
-			json_schema (Dict[str, Any] | None):
-				Optional JSON Schema for structured output.
-
-			Returns:
-			--------
-			str:
-				Generated response text.
-			
-		'''
+		Purpose:
+			Generate text with OpenAI by delegating to the full fetch workflow.
+		
+		Args:
+			prompt: User prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			reasoning_effort: Requested reasoning-effort level.
+			web_search: Whether provider web search should be enabled.
+			search_domains: Optional domains used to constrain provider web search.
+			store: Whether the provider should store the response server-side.
+			stream: Whether streaming output should be requested.
+			parallel_tool_calls: Whether parallel tool calls are allowed.
+			tool_choice: Tool-choice behavior sent to the provider.
+			json_schema: Optional JSON schema definition for structured output.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch( prompt=prompt, model=model, temperature=temperature,
 				max_tokens=max_tokens, top_p=top_p, seed=seed, system=system,
@@ -3917,23 +3110,17 @@ class Chat( Generator ):
 			raise exception
 	
 	def generate_image( self, prompt: str ) -> str:
-		'''
+		"""Generate image.
 		
-			Purpose:
-			--------
-			Generate an image using the OpenAI image API.
-
-			Args:
-			-----------
-			prompt (str):
-				Image-generation prompt.
-
-			Returns:
-			--------
-			str:
-				Image URL or serialized response fallback.
-			
-		'''
+		Purpose:
+			Generate an image from a prompt using the configured OpenAI image workflow.
+		
+		Args:
+			prompt: User prompt text.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		"""
 		try:
 			throw_if( 'prompt', prompt )
 			self.input_text = prompt
@@ -3960,26 +3147,21 @@ class Chat( Generator ):
 			raise exception
 	
 	def analyze_image( self, prompt: str, url: str ) -> str:
-		'''
+		"""Analyze image.
 		
-			Purpose:
-			--------
-			Analyze an image using a multimodal OpenAI model.
-
-			Args:
-			-----------
-			prompt (str):
-				User analysis prompt.
-
-			url (str):
-				Image URL or data URL.
-
-			Returns:
-			--------
-			str:
-				Image analysis result text.
-			
-		'''
+		Purpose:
+			Analyze an image URL with a multimodal OpenAI request and return the generated description or answer.
+		
+		Args:
+			prompt: User prompt text.
+			url: Request URL or image URL used by the operation.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'prompt', prompt )
 			throw_if( 'url', url )
@@ -4015,27 +3197,21 @@ class Chat( Generator ):
 			raise exception
 	
 	def summarize_document( self, prompt: str, path: str ) -> str:
-		'''
+		"""Summarize document.
 		
-			Purpose:
-			--------
-			Upload or reference a document path and summarize it through the Responses
-			API.
-
-			Args:
-			-----------
-			prompt (str):
-				Summarization prompt.
-
-			path (str):
-				Local path to the document.
-
-			Returns:
-			--------
-			str:
-				Summary text.
-			
-		'''
+		Purpose:
+			Read a document from disk and summarize it with the OpenAI text-generation workflow.
+		
+		Args:
+			prompt: User prompt text.
+			path: Filesystem path used by the operation.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'prompt', prompt )
 			throw_if( 'path', path )
@@ -4083,62 +3259,33 @@ class Chat( Generator ):
 			reasoning_effort: str = None, search_domains: Any = None,
 			store: bool = True, stream: bool = False, parallel_tool_calls: bool = True,
 			tool_choice: str = 'auto' ) -> str:
-		'''
+		"""Search web.
 		
-			Purpose:
-			--------
-			Execute a Responses API request with the built-in web-search tool enabled.
-
-			Args:
-			-----------
-			prompt (str):
-				User prompt.
-
-			model (str):
-				OpenAI model identifier.
-
-			temperature (float):
-				Sampling temperature.
-
-			max_tokens (int):
-				Maximum output tokens.
-
-			top_p (float):
-				Nucleus sampling value.
-
-			seed (int | None):
-				Optional deterministic seed.
-
-			system (str | None):
-				Optional system/developer instructions.
-
-			response_format (str | Dict[str, Any] | None):
-				Optional output format.
-
-			reasoning_effort (str | None):
-				Optional reasoning effort.
-
-			search_domains (Any):
-				Optional preferred source domains.
-
-			store (bool):
-				Whether to store the response.
-
-			stream (bool):
-				Whether to stream the response.
-
-			parallel_tool_calls (bool):
-				Whether parallel tool calls are enabled.
-
-			tool_choice (str):
-				Tool-choice behavior.
-
-			Returns:
-			--------
-			str:
-				Web-search-augmented response text.
-			
-		'''
+		Purpose:
+			Generate an OpenAI answer with web search enabled and optional domain filters.
+		
+		Args:
+			prompt: User prompt text.
+			model: Provider model identifier.
+			temperature: Sampling temperature.
+			max_tokens: Maximum output-token count.
+			top_p: Nucleus sampling value.
+			seed: Optional deterministic seed.
+			system: Optional system instructions.
+			response_format: Requested response format, such as text or JSON.
+			reasoning_effort: Requested reasoning-effort level.
+			search_domains: Optional domains used to constrain provider web search.
+			store: Whether the provider should store the response server-side.
+			stream: Whether streaming output should be requested.
+			parallel_tool_calls: Whether parallel tool calls are allowed.
+			tool_choice: Tool-choice behavior sent to the provider.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			return self.fetch( prompt=prompt, model=model, temperature=temperature,
 				max_tokens=max_tokens,
@@ -4164,24 +3311,20 @@ class Chat( Generator ):
 			raise exception
 	
 	def search_files( self, prompt: str ) -> str:
-		'''
+		"""Search files.
 		
-			Purpose:
-			--------
-			Run a file-search tool call against configured vector stores using the
-			Responses API.
-
-			Args:
-			-----------
-			prompt (str):
-				User query for file search.
-
-			Returns:
-			--------
-			str:
-				File-search-grounded response text.
-			
-		'''
+		Purpose:
+			Run a file-search-oriented OpenAI prompt using the configured file-search workflow.
+		
+		Args:
+			prompt: User prompt text.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'prompt', prompt )
 			self.query = prompt
@@ -4208,23 +3351,20 @@ class Chat( Generator ):
 			raise exception
 	
 	def translate( self, text: str ) -> str:
-		'''
+		"""Translate.
 		
-			Purpose:
-			--------
-			Translate text using the currently selected OpenAI text model.
-
-			Args:
-			-----------
-			text (str):
-				Source text to translate.
-
-			Returns:
-			--------
-			str:
-				Translated text.
-			
-		'''
+		Purpose:
+			Translate text by delegating to the OpenAI generation workflow.
+		
+		Args:
+			text: Text value processed by the utility method.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		try:
 			throw_if( 'text', text )
 			return self.fetch(
@@ -4245,24 +3385,17 @@ class Chat( Generator ):
 			raise exception
 	
 	def transcribe( self, text: str ) -> str:
-		'''
+		"""Transcribe.
 		
-			Purpose:
-			--------
-			Compatibility passthrough until audio transcription is split into its own
-			provider path.
-
-			Args:
-			-----------
-			text (str):
-				Text value to pass through.
-
-			Returns:
-			--------
-			str:
-				The original text value.
-			
-		'''
+		Purpose:
+			Transcribe text-like input by delegating to the OpenAI generation workflow retained by the application.
+		
+		Args:
+			text: Text value processed by the utility method.
+		
+		Returns:
+			str: Provider output text or generated content when available.
+		"""
 		try:
 			throw_if( 'text', text )
 			return text
@@ -4276,42 +3409,25 @@ class Chat( Generator ):
 			raise exception
 	
 	def get_format_options( self ) -> List[ str ]:
-		'''
+		"""Get format options.
 		
-			Purpose:
-			--------
-			Return supported formatting options for UI selectors.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Available response-format labels.
-			
-		'''
+		Purpose:
+			Return supported response-format option labels for UI controls and callers.
+		
+		Returns:
+			List[str]: Option list or state dictionary requested by the caller.
+		"""
 		return [ 'auto', 'text', 'json', 'json_schema' ]
 	
 	def get_model_options( self ) -> List[ str ]:
-		'''
+		"""Get model options.
 		
-			Purpose:
-			--------
-			Return available OpenAI model options from configuration or fallback
-			defaults.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Available model identifiers.
-			
-		'''
+		Purpose:
+			Return supported OpenAI model option labels for UI controls and callers.
+		
+		Returns:
+			List[str]: Option list or state dictionary requested by the caller.
+		"""
 		if hasattr( cfg, 'GPT_MODELS' ) and cfg.GPT_MODELS:
 			return list( cfg.GPT_MODELS )
 		
@@ -4326,41 +3442,28 @@ class Chat( Generator ):
 		]
 	
 	def get_effort_options( self ) -> List[ str ]:
-		'''
+		"""Get effort options.
 		
-			Purpose:
-			--------
-			Return available reasoning-effort options.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			List[str]:
-				Available reasoning-effort labels.
-			
-		'''
+		Purpose:
+			Return supported reasoning-effort option labels for UI controls and callers.
+		
+		Returns:
+			List[str]: Option list or state dictionary requested by the caller.
+		"""
 		return [ 'minimal', 'low', 'medium', 'high' ]
 	
 	def get_data( self ) -> Dict[ str, Any ]:
-		'''
+		"""Get data.
 		
-			Purpose:
-			--------
-			Return the current Chat generator state as a dictionary.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			Dict[str, Any]:
-				Serializable state dictionary.
-			
-		'''
+		Purpose:
+			Return the latest request and response state as a serializable dictionary.
+		
+		Returns:
+			Dict[str, Any]: Option list or state dictionary requested by the caller.
+		
+		Raises:
+			Error: Raised after wrapping and logging provider, validation, or response-processing failures.
+		"""
 		return {
 				'num': self.number,
 				'model': self.model,
@@ -4382,22 +3485,14 @@ class Chat( Generator ):
 		}
 	
 	def dump( self ) -> str:
-		'''
+		"""Dump.
 		
-			Purpose:
-			--------
-			Return a string representation of the current Chat generator state.
-
-			Args:
-			-----------
-			None
-
-			Returns:
-			--------
-			str:
-				String representation of get_data().
-			
-		'''
+		Purpose:
+			Return a compact diagnostic snapshot of the current Chat generator state.
+		
+		Returns:
+			str: Diagnostic state snapshot.
+		"""
 		try:
 			return str( self.get_data( ) )
 		
