@@ -318,6 +318,7 @@ Additional dependencies may be required by optional fetchers or provider-specifi
 
 Mappy is available under the MIT License [here](https://github.com/is-leeroy-jenkins/mappy/blob/master/LICENSE.txt).
 
+![License-MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 
 
