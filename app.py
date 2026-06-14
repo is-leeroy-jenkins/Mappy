@@ -1,27 +1,3 @@
-'''
-******************************************************************************************
- Assembly:                Mappy
- Filename:                app.py
- Author:                  Terry D. Eppler (framework) / Assistant (Streamlit UI)
- Created:                 12-27-2025
-******************************************************************************************
-
-Purpose:
-    Streamlit application exposing Mappy geospatial functionality:
-        - Geocoding
-        - Places Text Search fallback
-        - Distance Matrix
-        - Static Maps
-        - Time Zone lookup
-        - Excel / CSV enrichment
-
-CRITICAL ASSUMPTIONS (VERIFIED):
-    - Flat project layout (no package directory)
-    - Maps.__init__(api_key, qps)
-    - Places.text_to_location(...) is the ONLY Places lookup method
-    - Cache is injected ONLY into services that support it
-******************************************************************************************
-'''
 
 from __future__ import annotations
 
@@ -91,34 +67,34 @@ from fetchers import (
 # ------- Data State
 
 if 'source' not in st.session_state:
-	st.session_state[ 'source' ]=''
+	st.session_state[ 'source' ]= ''
 
 if 'df_source' not in st.session_state:
-	st.session_state[ 'df_source' ]=pd.DataFrame( )
+	st.session_state[ 'df_source' ] = pd.DataFrame( )
 
 if 'df_frame' not in st.session_state:
-	st.session_state[ 'df_frame' ]=pd.DataFrame( )
+	st.session_state[ 'df_frame' ] = pd.DataFrame( )
 
 if 'df_default' not in st.session_state:
-	st.session_state[ 'df_default' ]=pd.DataFrame( )
+	st.session_state[ 'df_default' ] = pd.DataFrame( )
 
 if 'df_original' not in st.session_state:
-	st.session_state[ 'df_original' ]=pd.DataFrame( )
+	st.session_state[ 'df_original' ] = pd.DataFrame( )
 
 if 'df_raw' not in st.session_state:
-	st.session_state[ 'df_raw' ]=pd.DataFrame( )
+	st.session_state[ 'df_raw' ] = pd.DataFrame( )
 
 if 'df_dataset' not in st.session_state:
-	st.session_state[ 'df_dataset' ]=pd.DataFrame( )
+	st.session_state[ 'df_dataset' ] = pd.DataFrame( )
 
 if 'df_reports_geocode_preview' not in st.session_state:
-	st.session_state[ 'df_reports_geocode_preview' ]=pd.DataFrame( )
+	st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
 
 if 'df_geocoding_map_results' not in st.session_state:
-	st.session_state[ 'df_geocoding_map_results' ]=pd.DataFrame( )
+	st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
 
 if 'pipeline_log' not in st.session_state:
-	st.session_state[ 'pipeline_log' ]=[ ]
+	st.session_state[ 'pipeline_log' ] = [ ]
 
 # -------- GENERATIVE AI VARIABLES --------------------
 
@@ -178,156 +154,156 @@ if 'tools' not in st.session_state:
 
 if 'messages' not in st.session_state:
 	st.session_state[ 'messages' ] = [ ]
-	
+
 # ------- Mappy State
 
 if 'mode' not in st.session_state:
-	st.session_state[ 'mode' ]='Geocoding'
+	st.session_state[ 'mode' ] = 'Geocoding'
 
 if 'previous_mode' not in st.session_state:
-	st.session_state[ 'previous_mode' ]=''
+	st.session_state[ 'previous_mode' ] = ''
 
 if 'timezone' not in st.session_state:
-	st.session_state[ 'timezone' ]=dt.timezone
+	st.session_state[ 'timezone' ] = dt.timezone
 
 if 'distances' not in st.session_state:
-	st.session_state[ 'distances' ]=None
+	st.session_state[ 'distances' ] = None
 
 if 'geocoder' not in st.session_state:
-	st.session_state[ 'geocoder' ]=None
+	st.session_state[ 'geocoder' ] = None
 
 if 'places' not in st.session_state:
-	st.session_state[ 'places' ]=None
+	st.session_state[ 'places' ] = None
 
 if 'static_maps' not in st.session_state:
-	st.session_state[ 'static_maps' ]=None
+	st.session_state[ 'static_maps' ] = None
 
 if 'qps' not in st.session_state:
-	st.session_state[ 'qps' ]=10
+	st.session_state[ 'qps' ] = 10
 
 # ------------ Location State
 
 if 'coordinates' not in st.session_state:
-	st.session_state[ 'coordinates' ]=( )
+	st.session_state[ 'coordinates' ] = ( )
 
 if 'latitude' not in st.session_state:
-	st.session_state[ 'latitude' ]=0.0
+	st.session_state[ 'latitude' ] = 0.0
 
 if 'longitude' not in st.session_state:
-	st.session_state[ 'longitude' ]=0.0
+	st.session_state[ 'longitude' ] = 0.0
 
 if 'location' not in st.session_state:
-	st.session_state[ 'location' ]=''
+	st.session_state[ 'location' ] = ''
 
 if 'country' not in st.session_state:
-	st.session_state[ 'country' ]=''
+	st.session_state[ 'country' ] = ''
 
 if 'state' not in st.session_state:
-	st.session_state[ 'state' ]=''
+	st.session_state[ 'state' ] = ''
 
 if 'city' not in st.session_state:
-	st.session_state[ 'city' ]=''
+	st.session_state[ 'city' ] = ''
 
 if 'zipcode' not in st.session_state:
-	st.session_state[ 'zipcode' ]=''
+	st.session_state[ 'zipcode' ] = ''
 
 if 'description' not in st.session_state:
-	st.session_state[ 'description' ]=''
+	st.session_state[ 'description' ] = ''
 
 if 'origin' not in st.session_state:
-	st.session_state[ 'origin' ]=''
+	st.session_state[ 'origin' ] = ''
 
 if 'destination' not in st.session_state:
-	st.session_state[ 'destination' ]=''
+	st.session_state[ 'destination' ] = ''
 
 if 'radius' not in st.session_state:
-	st.session_state[ 'radius' ]=25.0
+	st.session_state[ 'radius' ] = 25.0
 
 if 'zoom' not in st.session_state:
-	st.session_state[ 'zoom' ]=8
+	st.session_state[ 'zoom' ] = 8
 
 if 'map_size' not in st.session_state:
-	st.session_state[ 'map_size' ]='600x400'
+	st.session_state[ 'map_size' ] = '600x400'
 
 if 'year' not in st.session_state:
-	st.session_state[ 'year' ]=dt.datetime.now( ).year
+	st.session_state[ 'year' ] = dt.datetime.now( ).year
 
 if 'month' not in st.session_state:
-	st.session_state[ 'month' ]=dt.datetime.now( ).month
+	st.session_state[ 'month' ] = dt.datetime.now( ).month
 
 if 'day' not in st.session_state:
-	st.session_state[ 'day' ]=dt.datetime.now( ).day
+	st.session_state[ 'day' ] = dt.datetime.now( ).day
 
 if 'calendar_date' not in st.session_state:
-	st.session_state[ 'calendar_date' ]=dt.date.today( )
+	st.session_state[ 'calendar_date' ] = dt.date.today( )
 
 if 'browser_geolocation' not in st.session_state:
-	st.session_state[ 'browser_geolocation' ]=None
+	st.session_state[ 'browser_geolocation' ] = None
 
 if 'browser_geolocation_loaded' not in st.session_state:
-	st.session_state[ 'browser_geolocation_loaded' ]=False
+	st.session_state[ 'browser_geolocation_loaded' ] = False
 
 if 'browser_geolocation_enabled' not in st.session_state:
-	st.session_state[ 'browser_geolocation_enabled' ]=True
+	st.session_state[ 'browser_geolocation_enabled' ] = True
 
 if 'browser_geolocation_reverse_geocoded' not in st.session_state:
-	st.session_state[ 'browser_geolocation_reverse_geocoded' ]=False
+	st.session_state[ 'browser_geolocation_reverse_geocoded' ] = False
 
 if 'browser_geolocation_error' not in st.session_state:
-	st.session_state[ 'browser_geolocation_error' ]=''
+	st.session_state[ 'browser_geolocation_error' ] = ''
 
 if 'browser_geolocation_permission_denied' not in st.session_state:
-	st.session_state[ 'browser_geolocation_permission_denied' ]=False
+	st.session_state[ 'browser_geolocation_permission_denied' ] = False
 
 # ------- API Key State
 
 if 'google_api_key' not in st.session_state:
-	st.session_state[ 'google_api_key' ]=''
+	st.session_state[ 'google_api_key' ] = ''
 
 if 'google_cse_id' not in st.session_state:
-	st.session_state[ 'google_cse_id' ]=''
+	st.session_state[ 'google_cse_id' ] = ''
 
 if 'googlemaps_api_key' not in st.session_state:
-	st.session_state[ 'googlemaps_api_key' ]=''
+	st.session_state[ 'googlemaps_api_key' ] = ''
 
 if 'geocoding_api_key' not in st.session_state:
-	st.session_state[ 'geocoding_api_key' ]=''
+	st.session_state[ 'geocoding_api_key' ] = ''
 
 if 'google_cloud_project_id' not in st.session_state:
-	st.session_state[ 'google_cloud_project_id' ]=''
+	st.session_state[ 'google_cloud_project_id' ] = ''
 
 if 'google_cloud_location' not in st.session_state:
-	st.session_state[ 'google_cloud_location' ]=''
+	st.session_state[ 'google_cloud_location' ] = ''
 
 if 'google_weather_api_key' not in st.session_state:
-	st.session_state[ 'google_weather_api_key' ]=''
+	st.session_state[ 'google_weather_api_key' ] = ''
 
 if 'govinfo_api_key' not in st.session_state:
-	st.session_state[ 'govinfo_api_key' ]=''
+	st.session_state[ 'govinfo_api_key' ] = ''
 
 if 'nasa_api_key' not in st.session_state:
-	st.session_state[ 'nasa_api_key' ]=''
+	st.session_state[ 'nasa_api_key' ] = ''
 
 if 'airnow_api_key' not in st.session_state:
-	st.session_state[ 'airnow_api_key' ]=''
+	st.session_state[ 'airnow_api_key' ] = ''
 
 if 'openaq_api_key' not in st.session_state:
-	st.session_state[ 'openaq_api_key' ]=''
+	st.session_state[ 'openaq_api_key' ] = ''
 
 if 'nasa_earthdata_token' not in st.session_state:
-	st.session_state[ 'nasa_earthdata_token' ]=''
+	st.session_state[ 'nasa_earthdata_token' ] = ''
 
 if 'opensky_api_client_id' not in st.session_state:
-	st.session_state[ 'opensky_api_client_id' ]=''
+	st.session_state[ 'opensky_api_client_id' ] = ''
 
 if 'firms_map_key' not in st.session_state:
-	st.session_state[ 'firms_map_key' ]=''
+	st.session_state[ 'firms_map_key' ] = ''
 
 if 'opensky_api_credentials' not in st.session_state:
-	st.session_state[ 'opensky_api_credentials' ]=''
+	st.session_state[ 'opensky_api_credentials' ] = ''
 
 if 'purpleair_api_key' not in st.session_state:
-	st.session_state[ 'purpleair_api_key' ]=''
+	st.session_state[ 'purpleair_api_key' ] = ''
 
 if 'openai_api_key' not in st.session_state:
 	st.session_state[ 'openai_api_key' ] = ''
@@ -343,102 +319,102 @@ if 'mistral_api_key' not in st.session_state:
 
 if 'xai_api_key' not in st.session_state:
 	st.session_state[ 'xai_api_key' ] = ''
-	
+
 if st.session_state.google_api_key == '':
 	default = cfg.GOOGLE_API_KEY
 	if default:
 		st.session_state.google_api_key = default
-		os.environ[ 'GOOGLE_API_KEY' ]=default
+		os.environ[ 'GOOGLE_API_KEY' ] = default
 
 if st.session_state.google_cse_id == '':
 	default = cfg.GOOGLE_CSE_ID
 	if default:
 		st.session_state.google_cse_id = default
-		os.environ[ 'GOOGLE_CSE_ID' ]=default
+		os.environ[ 'GOOGLE_CSE_ID' ] = default
 
 if st.session_state.googlemaps_api_key == '':
 	default = cfg.GOOGLEMAPS_API_KEY
 	if default:
 		st.session_state.googlemaps_api_key = default
-		os.environ[ 'GOOGLEMAPS_API_KEY' ]=default
+		os.environ[ 'GOOGLEMAPS_API_KEY' ] = default
 
 if st.session_state.geocoding_api_key == '':
 	default = cfg.GEOCODING_API_KEY
 	if default:
 		st.session_state.geocoding_api_key = default
-		os.environ[ 'GEOCODING_API_KEY' ]=default
+		os.environ[ 'GEOCODING_API_KEY' ] = default
 
 if st.session_state.google_cloud_project_id == '':
 	default = cfg.GOOGLE_CLOUD_PROJECT_ID
 	if default:
 		st.session_state.google_cloud_project_id = default
-		os.environ[ 'GOOGLE_CLOUD_PROJECT_ID' ]=default
+		os.environ[ 'GOOGLE_CLOUD_PROJECT_ID' ] = default
 
 if st.session_state.google_cloud_location == '':
 	default = cfg.GOOGLE_CLOUD_LOCATION
 	if default:
 		st.session_state.google_cloud_location = default
-		os.environ[ 'GOOGLE_CLOUD_LOCATION' ]=default
+		os.environ[ 'GOOGLE_CLOUD_LOCATION' ] = default
 
 if st.session_state.google_weather_api_key == '':
 	default = cfg.GOOGLE_WEATHER_API_KEY
 	if default:
 		st.session_state.google_weather_api_key = default
-		os.environ[ 'GOOGLE_WEATHER_API_KEY' ]=default
+		os.environ[ 'GOOGLE_WEATHER_API_KEY' ] = default
 
 if st.session_state.govinfo_api_key == '':
 	default = cfg.GOVINFO_API_KEY
 	if default:
 		st.session_state.govinfo_api_key = default
-		os.environ[ 'GOVINFO_API_KEY' ]=default
+		os.environ[ 'GOVINFO_API_KEY' ] = default
 
 if st.session_state.nasa_api_key == '':
 	default = cfg.NASA_API_KEY
 	if default:
 		st.session_state.nasa_api_key = default
-		os.environ[ 'NASA_API_KEY' ]=default
+		os.environ[ 'NASA_API_KEY' ] = default
 
 if st.session_state.airnow_api_key == '':
 	default = cfg.AIRNOW_API_KEY
 	if default:
 		st.session_state.airnow_api_key = default
-		os.environ[ 'AIRNOW_API_KEY' ]=default
+		os.environ[ 'AIRNOW_API_KEY' ] = default
 
 if st.session_state.openaq_api_key == '':
 	default = cfg.OPENAQ_API_KEY
 	if default:
 		st.session_state.openaq_api_key = default
-		os.environ[ 'OPENAQ_API_KEY' ]=default
+		os.environ[ 'OPENAQ_API_KEY' ] = default
 
 if st.session_state.nasa_earthdata_token == '':
 	default = cfg.NASA_EARTHDATA_TOKEN
 	if default:
 		st.session_state.nasa_earthdata_token = default
-		os.environ[ 'NASA_EARTHDATA_TOKEN' ]=default
+		os.environ[ 'NASA_EARTHDATA_TOKEN' ] = default
 
 if st.session_state.opensky_api_client_id == '':
 	default = cfg.OPENSKY_API_CLIENT_ID
 	if default:
 		st.session_state.opensky_api_client_id = default
-		os.environ[ 'OPENSKY_API_CLIENT_ID' ]=default
+		os.environ[ 'OPENSKY_API_CLIENT_ID' ] = default
 
 if st.session_state.firms_map_key == '':
 	default = cfg.FIRMS_MAP_KEY
 	if default:
 		st.session_state.firms_map_key = default
-		os.environ[ 'FIRMS_MAP_KEY' ]=default
+		os.environ[ 'FIRMS_MAP_KEY' ] = default
 
 if st.session_state.opensky_api_credentials == '':
 	default = cfg.OPENSKY_API_CREDENTIALS
 	if default:
 		st.session_state.opensky_api_credentials = default
-		os.environ[ 'OPENSKY_API_CREDENTIALS' ]=default
+		os.environ[ 'OPENSKY_API_CREDENTIALS' ] = default
 
 if st.session_state.purpleair_api_key == '':
 	default = getattr( cfg, 'PURPLEAIR_API_KEY', '' )
 	if default:
 		st.session_state.purpleair_api_key = default
-		os.environ[ 'PURPLEAIR_API_KEY' ]=default
+		os.environ[ 'PURPLEAIR_API_KEY' ] = default
 
 if st.session_state.openai_api_key == '':
 	default = getattr( cfg, 'OPENAI_API_KEY', '' )
@@ -469,27 +445,26 @@ if st.session_state.xai_api_key == '':
 	if default:
 		st.session_state.xai_api_key = default
 		os.environ[ 'XAI_API_KEY' ] = default
-		
+
 # ---------------------------------------------------------------------
 # UTILITIES
 # ---------------------------------------------------------------------
 
 def throw_if( name: str, value: object ) -> None:
-	"""
+	"""Validate that a required value is present.
 	
-		Purpose:
-		--------
-		Raises a ValueError when a required argument is None or empty.
-		
-		Parameters:
-		-----------
-		name: str - Argument name used in the error message.
-		value: object - Argument value to validate.
-		
-		Returns:
-		--------
-		None
+	Purpose:
+		Raises a clear validation error when a required argument is missing, blank, or
+		empty. The helper is used by Streamlit utilities and data workflows before values
+		are consumed by UI, database, or service logic.
 	
+	Args:
+		name: str value used by the `throw_if` workflow.
+		value: object value used by the `throw_if` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	if value is None:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
@@ -501,12 +476,13 @@ def throw_if( name: str, value: object ) -> None:
 		raise ValueError( f'Argument "{name}" cannot be empty!' )
 
 def style_subheaders( ) -> None:
-	"""
+	"""Handle the style subheaders workflow.
 	
-		Purpose:
-		_________
-		Sets the style of subheaders in the main UI
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the style subheaders
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
 	"""
 	st.markdown(
 		"""
@@ -522,52 +498,57 @@ def style_subheaders( ) -> None:
 		unsafe_allow_html=True, )
 
 def init_state( key: str, value: Any ) -> None:
-	"""
-		
-		Purpose:
-		--------
-		Initialize a Streamlit session-state key only when the key is not already present.
+	"""Handle the init state workflow.
 	
-		Parameters:
-		-----------
-		key (str): Session-state key to initialize.
-		value (Any): Default value assigned only when the key is absent.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the init state workflow. The
+		function preserves the existing UI behavior, session-state interactions, dataframe
+		handling, database access, and service integrations defined by the application
+		code.
 	
-		Returns:
-		--------
-		None
-		
+	Args:
+		key: str value used by the `init_state` workflow.
+		value: Any value used by the `init_state` workflow.
 	"""
 	if key not in st.session_state:
-		st.session_state[ key ]=value
+		st.session_state[ key ] = value
 
 def init_env_state( key: str, config_name: str, env_name: str ) -> None:
-	"""
-		
-		Purpose:
-		--------
-		Initialize a session-state API/configuration key from config.py and mirror the value to
-		os.environ when a configured value exists.
+	"""Handle the init env state workflow.
 	
-		Parameters:
-		-----------
-		key (str): Session-state key to initialize.
-		config_name (str): Attribute name to read from config.py.
-		env_name (str): Environment variable name to assign.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the init env state workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
 	
-		Returns:
-		--------
-		None
-		
+	Args:
+		key: str value used by the `init_env_state` workflow.
+		config_name: str value used by the `init_env_state` workflow.
+		env_name: str value used by the `init_env_state` workflow.
 	"""
 	init_state( key, '' )
 	if st.session_state.get( key, '' ) == '':
 		default = getattr( cfg, config_name, '' )
 		if default:
-			st.session_state[ key ]=default
-			os.environ[ env_name ]=default
+			st.session_state[ key ] = default
+			os.environ[ env_name ] = default
 
 def normalize( obj ):
+	"""Handle the normalize workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the normalize workflow. The
+		function preserves the existing UI behavior, session-state interactions, dataframe
+		handling, database access, and service integrations defined by the application
+		code.
+	
+	Args:
+		obj: Runtime value used by the `normalize` workflow.
+	
+	Returns:
+		object: Result produced by the `normalize` workflow.
+	"""
 	if obj is None or isinstance( obj, (str, int, float, bool) ):
 		return obj
 	
@@ -584,9 +565,28 @@ def normalize( obj ):
 	return str( obj )
 
 def set_blue_divider( ) -> None:
+	"""Set the blue divider used by the application.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the set blue divider
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	"""
 	st.markdown( cfg.BLUE_DIVIDER, unsafe_allow_html=True )
 
 def log_step( msg: str ) -> None:
+	"""Handle the log step workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the log step workflow. The
+		function preserves the existing UI behavior, session-state interactions, dataframe
+		handling, database access, and service integrations defined by the application
+		code.
+	
+	Args:
+		msg: str value used by the `log_step` workflow.
+	"""
 	st.session_state.pipeline_log.append( msg )
 
 # ------------- CELESTIAL MAP UTILITY
@@ -596,33 +596,32 @@ def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400
 		tile_url: Optional[ str ] = None, tile_attribution: Optional[ str ] = None,
 		tile_subdomains: Optional[ str ] = None, location: Optional[ str ] = None,
 		zoom: Optional[ int ] = None ) -> None:
-	"""
+	"""Render the celestial map interface section.
 	
-		Purpose:
-		--------
-		Render the browser-based Celestial Map application inside Streamlit as a
-		self-contained HTML component. The function preserves the existing HTML, CSS,
-		JavaScript, D3, Leaflet, Pickr, star-map rendering, location picker, star detail
-		panel, animation controls, and image-export behavior while loading local JSON data
-		from the configured asset folder and passing Iyrin's observer location into the
-		embedded JavaScript application.
-
-		Parameters:
-		-----------
-		asset_root (str): Root folder containing index.html, style.css, js/main.js,
-			js/modules/*.js, and data/*.json.
-		height (int): Component iframe height in pixels.
-		latitude (Optional[float]): Observer latitude supplied by Iyrin Location State or
-			manual Celestial Map controls.
-		longitude (Optional[float]): Observer longitude supplied by Iyrin Location State or
-			manual Celestial Map controls.
-		location (Optional[str]): Human-readable observer location label.
-		zoom (Optional[int]): Initial Leaflet location-picker zoom level.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the render celestial map
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		asset_root: str value used by the `render_celestial_map` workflow. Defaults to
+			`'assets/starmap'`.
+		height: int value used by the `render_celestial_map` workflow. Defaults to `1400`.
+		latitude: Optional[float] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
+		longitude: Optional[float] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
+		tile_url: Optional[str] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
+		tile_attribution: Optional[str] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
+		tile_subdomains: Optional[str] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
+		location: Optional[str] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
+		zoom: Optional[int] value used by the `render_celestial_map` workflow. Defaults to
+			`None`.
 	"""
 	try:
 		root = Path( asset_root )
@@ -771,26 +770,24 @@ def render_celestial_map( asset_root: str = 'assets/starmap', height: int = 1400
 		components.html( html, height=int( height ), scrolling=True )
 	except Exception as ex:
 		st.error( f'Celestial Map failed to render: {ex}' )
-		
+
 # ------------- LOCATION STATE UTILITIES
 
 def has_valid_coordinates( latitude: object, longitude: object ) -> bool:
-	"""
+	"""Handle the has valid coordinates workflow.
 	
-		Purpose:
-		--------
-		Determine whether latitude and longitude values represent usable coordinates.
-
-		Parameters:
-		-----------
-		latitude (object): Latitude value to validate.
-		longitude (object): Longitude value to validate.
-
-		Returns:
-		--------
-		bool: True when both values are numeric, within valid geographic ranges, and not
-			the placeholder coordinate pair (0, 0).
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the has valid coordinates
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		latitude: object value used by the `has_valid_coordinates` workflow.
+		longitude: object value used by the `has_valid_coordinates` workflow.
+	
+	Returns:
+		bool: Result produced by the `has_valid_coordinates` workflow.
 	"""
 	try:
 		throw_if( 'latitude', latitude )
@@ -812,41 +809,33 @@ def has_valid_coordinates( latitude: object, longitude: object ) -> bool:
 	return True
 
 def has_valid_global_coordinates( ) -> bool:
-	"""
+	"""Handle the has valid global coordinates workflow.
 	
-		Purpose:
-		--------
-		Determine whether the global Location State contains usable coordinates.
-
-		Parameters:
-		-----------
-		None
-
-		Returns:
-		--------
-		bool: True when global latitude and longitude are usable.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the has valid global
+		coordinates workflow. The function preserves the existing UI behavior, session-
+		state interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Returns:
+		bool: Result produced by the `has_valid_global_coordinates` workflow.
 	"""
 	return has_valid_coordinates(
 		st.session_state.get( 'latitude', None ),
 		st.session_state.get( 'longitude', None ) )
 
 def set_coordinates( latitude: object, longitude: object ) -> None:
-	"""
+	"""Set the coordinates used by the application.
 	
-		Purpose:
-		--------
-		Update global latitude, longitude, and coordinates state together.
-
-		Parameters:
-		-----------
-		latitude (object): Latitude value.
-		longitude (object): Longitude value.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the set coordinates
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		latitude: object value used by the `set_coordinates` workflow.
+		longitude: object value used by the `set_coordinates` workflow.
 	"""
 	if not has_valid_coordinates( latitude, longitude ):
 		return
@@ -854,108 +843,104 @@ def set_coordinates( latitude: object, longitude: object ) -> None:
 	lat_value = float( latitude )
 	lon_value = float( longitude )
 	
-	st.session_state[ 'latitude' ]=lat_value
-	st.session_state[ 'longitude' ]=lon_value
-	st.session_state[ 'coordinates' ]=(lat_value, lon_value)
+	st.session_state[ 'latitude' ] = lat_value
+	st.session_state[ 'longitude' ] = lon_value
+	st.session_state[ 'coordinates' ] = (lat_value, lon_value)
 
 def get_location_state( ) -> Dict[ str, object ]:
-	"""
+	"""Return the location state used by the application.
 	
-		Purpose:
-		--------
-		Return the canonical global Location State values.
-
-		Parameters:
-		-----------
-		None
-
-		Returns:
-		--------
-		Dict[str, object]: Dictionary containing global geospatial state values.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get location state
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Returns:
+		Dict[str, object]: Result produced by the `get_location_state` workflow.
 	"""
 	return { 'coordinates': st.session_state.get( 'coordinates', ( ) ),
-			'latitude': st.session_state.get( 'latitude', 0.0 ),
-			'longitude': st.session_state.get( 'longitude', 0.0 ),
-			'location': st.session_state.get( 'location', '' ),
-			'country': st.session_state.get( 'country', '' ),
-			'state': st.session_state.get( 'state', '' ),
-			'city': st.session_state.get( 'city', '' ),
-			'zipcode': st.session_state.get( 'zipcode', '' ),
-			'description': st.session_state.get( 'description', '' ),
-			'origin': st.session_state.get( 'origin', '' ),
-			'destination': st.session_state.get( 'destination', '' ),
-			'radius': st.session_state.get( 'radius', 25.0 ),
-			'zoom': st.session_state.get( 'zoom', 8 ),
-			'map_size': st.session_state.get( 'map_size', '600x400' ),
-			'year': st.session_state.get( 'year', dt.datetime.now( ).year ),
-			'month': st.session_state.get( 'month', dt.datetime.now( ).month ),
-			'day': st.session_state.get( 'day', dt.datetime.now( ).day ),
-			'calendar_date': st.session_state.get( 'calendar_date', dt.date.today( ) ),
-	}
+	         'latitude': st.session_state.get( 'latitude', 0.0 ),
+	         'longitude': st.session_state.get( 'longitude', 0.0 ),
+	         'location': st.session_state.get( 'location', '' ),
+	         'country': st.session_state.get( 'country', '' ),
+	         'state': st.session_state.get( 'state', '' ),
+	         'city': st.session_state.get( 'city', '' ),
+	         'zipcode': st.session_state.get( 'zipcode', '' ),
+	         'description': st.session_state.get( 'description', '' ),
+	         'origin': st.session_state.get( 'origin', '' ),
+	         'destination': st.session_state.get( 'destination', '' ),
+	         'radius': st.session_state.get( 'radius', 25.0 ),
+	         'zoom': st.session_state.get( 'zoom', 8 ),
+	         'map_size': st.session_state.get( 'map_size', '600x400' ),
+	         'year': st.session_state.get( 'year', dt.datetime.now( ).year ),
+	         'month': st.session_state.get( 'month', dt.datetime.now( ).month ),
+	         'day': st.session_state.get( 'day', dt.datetime.now( ).day ),
+	         'calendar_date': st.session_state.get( 'calendar_date', dt.date.today( ) ),
+	         }
 
-def set_location_state( location: Optional[ str ]=None, city: Optional[ str ]=None,
-		state: Optional[ str ]=None, country: Optional[ str ]=None,
-		zipcode: Optional[ str ]=None, description: Optional[ str ]=None,
-		latitude: Optional[ float ]=None, longitude: Optional[ float ]=None ) -> None:
-	"""
+def set_location_state( location: Optional[ str ] = None, city: Optional[ str ] = None,
+		state: Optional[ str ] = None, country: Optional[ str ] = None,
+		zipcode: Optional[ str ] = None, description: Optional[ str ] = None,
+		latitude: Optional[ float ] = None, longitude: Optional[ float ] = None ) -> None:
+	"""Set the location state used by the application.
 	
-		Purpose:
-		--------
-		Update global Location State values without touching unrelated state keys.
-
-		Parameters:
-		-----------
-		location (Optional[str]): Freeform location string.
-		city (Optional[str]): City value.
-		state (Optional[str]): State, province, or region value.
-		country (Optional[str]): Country value.
-		zipcode (Optional[str]): ZIP or postal code value.
-		description (Optional[str]): Description for the current location.
-		latitude (Optional[float]): Latitude value.
-		longitude (Optional[float]): Longitude value.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the set location state
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		location: Optional[str] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		city: Optional[str] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		state: Optional[str] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		country: Optional[str] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		zipcode: Optional[str] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		description: Optional[str] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		latitude: Optional[float] value used by the `set_location_state` workflow. Defaults to
+			`None`.
+		longitude: Optional[float] value used by the `set_location_state` workflow. Defaults to
+			`None`.
 	"""
 	if location is not None:
-		st.session_state[ 'location' ]=str( location ).strip( )
+		st.session_state[ 'location' ] = str( location ).strip( )
 	
 	if city is not None:
-		st.session_state[ 'city' ]=str( city ).strip( )
+		st.session_state[ 'city' ] = str( city ).strip( )
 	
 	if state is not None:
-		st.session_state[ 'state' ]=str( state ).strip( )
+		st.session_state[ 'state' ] = str( state ).strip( )
 	
 	if country is not None:
-		st.session_state[ 'country' ]=str( country ).strip( )
+		st.session_state[ 'country' ] = str( country ).strip( )
 	
 	if zipcode is not None:
-		st.session_state[ 'zipcode' ]=str( zipcode ).strip( )
+		st.session_state[ 'zipcode' ] = str( zipcode ).strip( )
 	
 	if description is not None:
-		st.session_state[ 'description' ]=str( description ).strip( )
+		st.session_state[ 'description' ] = str( description ).strip( )
 	
 	if latitude is not None and longitude is not None:
 		set_coordinates( latitude, longitude )
 
 def compose_location_from_state( ) -> str:
-	"""
+	"""Handle the compose location from state workflow.
 	
-		Purpose:
-		--------
-		Compose a geocoding query from the canonical global Location State.
-
-		Parameters:
-		-----------
-		None
-
-		Returns:
-		--------
-		str: Freeform location query.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the compose location from
+		state workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Returns:
+		str: Result produced by the `compose_location_from_state` workflow.
 	"""
 	location = str( st.session_state.get( 'location', '' ) ).strip( )
 	if location:
@@ -973,21 +958,20 @@ def compose_location_from_state( ) -> str:
 	return ', '.join( parts )
 
 def resolve_table_name( requested: str, tables: List[ str ] ) -> Optional[ str ]:
-	"""
+	"""Handle the resolve table name workflow.
 	
-		Purpose:
-		--------
-		Resolve a requested SQLite table name using case-insensitive matching.
-
-		Parameters:
-		-----------
-		requested (str): Requested table name.
-		tables (List[str]): Available table names.
-
-		Returns:
-		--------
-		Optional[str]: Actual table name when found; otherwise None.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the resolve table name
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		requested: str value used by the `resolve_table_name` workflow.
+		tables: List[str] value used by the `resolve_table_name` workflow.
+	
+	Returns:
+		Optional[str]: Result produced by the `resolve_table_name` workflow.
 	"""
 	if not requested or not tables:
 		return None
@@ -1003,22 +987,21 @@ def resolve_table_name( requested: str, tables: List[ str ] ) -> Optional[ str ]
 	
 	return None
 
-def get_default_location( fallback: str='Washington, DC' ) -> str:
-	"""
+def get_default_location( fallback: str = 'Washington, DC' ) -> str:
+	"""Return the default location used by the application.
 	
-		Purpose:
-		--------
-		Return the best available global location text for location-based controls.
-
-		Parameters:
-		-----------
-		fallback (str): Fallback location text used when global Location State has no
-			usable location value.
-
-		Returns:
-		--------
-		str: Location text suitable for geospatial query controls.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get default location
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		fallback: str value used by the `get_default_location` workflow. Defaults to
+			`'Washington, DC'`.
+	
+	Returns:
+		str: Result produced by the `get_default_location` workflow.
 	"""
 	location = compose_location_from_state( )
 	if location:
@@ -1026,21 +1009,20 @@ def get_default_location( fallback: str='Washington, DC' ) -> str:
 	
 	return fallback
 
-def get_default_zipcode( fallback: str='20001' ) -> str:
-	"""
+def get_default_zipcode( fallback: str = '20001' ) -> str:
+	"""Return the default zipcode used by the application.
 	
-		Purpose:
-		--------
-		Return the best available global ZIP or postal code value.
-
-		Parameters:
-		-----------
-		fallback (str): Fallback ZIP or postal code.
-
-		Returns:
-		--------
-		str: ZIP or postal code value.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get default zipcode
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		fallback: str value used by the `get_default_zipcode` workflow. Defaults to `'20001'`.
+	
+	Returns:
+		str: Result produced by the `get_default_zipcode` workflow.
 	"""
 	zipcode = str( st.session_state.get( 'zipcode', '' ) ).strip( )
 	if zipcode:
@@ -1048,42 +1030,42 @@ def get_default_zipcode( fallback: str='20001' ) -> str:
 	
 	return fallback
 
-def get_default_latitude( fallback: float=38.907200 ) -> float:
-	"""
+def get_default_latitude( fallback: float = 38.907200 ) -> float:
+	"""Return the default latitude used by the application.
 	
-		Purpose:
-		--------
-		Return the best available global latitude value.
-
-		Parameters:
-		-----------
-		fallback (float): Fallback latitude.
-
-		Returns:
-		--------
-		float: Latitude value.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get default latitude
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		fallback: float value used by the `get_default_latitude` workflow. Defaults to
+			`38.9072`.
+	
+	Returns:
+		float: Result produced by the `get_default_latitude` workflow.
 	"""
 	if has_valid_global_coordinates( ):
 		return float( st.session_state.get( 'latitude', fallback ) )
 	
 	return float( fallback )
 
-def get_default_longitude( fallback: float=-77.036900 ) -> float:
-	"""
+def get_default_longitude( fallback: float = -77.036900 ) -> float:
+	"""Return the default longitude used by the application.
 	
-		Purpose:
-		--------
-		Return the best available global longitude value.
-
-		Parameters:
-		-----------
-		fallback (float): Fallback longitude.
-
-		Returns:
-		--------
-		float: Longitude value.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get default longitude
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		fallback: float value used by the `get_default_longitude` workflow. Defaults to
+			`-77.0369`.
+	
+	Returns:
+		float: Result produced by the `get_default_longitude` workflow.
 	"""
 	if has_valid_global_coordinates( ):
 		return float( st.session_state.get( 'longitude', fallback ) )
@@ -1091,24 +1073,22 @@ def get_default_longitude( fallback: float=-77.036900 ) -> float:
 	return float( fallback )
 
 def set_global_coordinates_from_result( latitude: object, longitude: object,
-		location: Optional[ str ]=None, description: Optional[ str ]=None ) -> None:
-	"""
+		location: Optional[ str ] = None, description: Optional[ str ] = None ) -> None:
+	"""Set the global coordinates from result used by the application.
 	
-		Purpose:
-		--------
-		Update global Location State from a service result when valid coordinates exist.
-
-		Parameters:
-		-----------
-		latitude (object): Latitude value returned by a service or derived from controls.
-		longitude (object): Longitude value returned by a service or derived from controls.
-		location (Optional[str]): Optional location text to save globally.
-		description (Optional[str]): Optional description of the source result.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the set global coordinates
+		from result workflow. The function preserves the existing UI behavior, session-
+		state interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		latitude: object value used by the `set_global_coordinates_from_result` workflow.
+		longitude: object value used by the `set_global_coordinates_from_result` workflow.
+		location: Optional[str] value used by the `set_global_coordinates_from_result` workflow.
+			Defaults to `None`.
+		description: Optional[str] value used by the `set_global_coordinates_from_result` workflow.
+			Defaults to `None`.
 	"""
 	if not has_valid_coordinates( latitude, longitude ):
 		return
@@ -1120,24 +1100,24 @@ def set_global_coordinates_from_result( latitude: object, longitude: object,
 		longitude=float( longitude ) )
 
 def create_bounding_box_from_center( latitude: object, longitude: object,
-		delta: float=0.125 ) -> Dict[ str, float ]:
-	"""
+		delta: float = 0.125 ) -> Dict[ str, float ]:
+	"""Create the bounding box from center used by the application.
 	
-		Purpose:
-		--------
-		Create a simple bounding box around a center latitude and longitude.
-
-		Parameters:
-		-----------
-		latitude (object): Center latitude.
-		longitude (object): Center longitude.
-		delta (float): Decimal-degree offset used to build the box.
-
-		Returns:
-		--------
-		Dict[str, float]: Bounding box values with west, south, east, north, northwest,
-			and southeast coordinate keys.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create bounding box from
+		center workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		latitude: object value used by the `create_bounding_box_from_center` workflow.
+		longitude: object value used by the `create_bounding_box_from_center` workflow.
+		delta: float value used by the `create_bounding_box_from_center` workflow. Defaults
+			to `0.125`.
+	
+	Returns:
+		Dict[str, float]: Result produced by the `create_bounding_box_from_center`
+			workflow.
 	"""
 	lat_value = get_default_latitude( )
 	lng_value = get_default_longitude( )
@@ -1162,21 +1142,20 @@ def create_bounding_box_from_center( latitude: object, longitude: object,
 # ------------- BROWSER GEOLOCATION UTILITIES
 
 def get_geolocation_error_message( error_code: object, error_message: object ) -> str:
-	"""
+	"""Return the geolocation error message used by the application.
 	
-		Purpose:
-		--------
-		Convert a browser geolocation error code into a readable application message.
-
-		Parameters:
-		-----------
-		error_code (object): Browser geolocation error code.
-		error_message (object): Browser geolocation error message.
-
-		Returns:
-		--------
-		str: User-facing error message.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get geolocation error
+		message workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		error_code: object value used by the `get_geolocation_error_message` workflow.
+		error_message: object value used by the `get_geolocation_error_message` workflow.
+	
+	Returns:
+		str: Result produced by the `get_geolocation_error_message` workflow.
 	"""
 	try:
 		code = int( error_code )
@@ -1203,20 +1182,19 @@ def get_geolocation_error_message( error_code: object, error_message: object ) -
 	return 'Browser geolocation failed.'
 
 def update_location_from_browser( geo: Dict[ str, object ] ) -> bool:
-	"""
+	"""Handle the update location from browser workflow.
 	
-		Purpose:
-		--------
-		Update global Location State from a browser geolocation payload.
-
-		Parameters:
-		-----------
-		geo (Dict[str, object]): Geolocation payload returned by streamlit-js-eval.
-
-		Returns:
-		--------
-		bool: True when global coordinates were updated.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the update location from
+		browser workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		geo: Dict[str, object] value used by the `update_location_from_browser` workflow.
+	
+	Returns:
+		bool: Result produced by the `update_location_from_browser` workflow.
 	"""
 	try:
 		if not geo:
@@ -1231,20 +1209,20 @@ def update_location_from_browser( geo: Dict[ str, object ] ) -> bool:
 				error_code = error.get( 'code', None )
 				error_message = error.get( 'message', '' )
 			
-			st.session_state[ 'browser_geolocation_error' ]=get_geolocation_error_message(
+			st.session_state[ 'browser_geolocation_error' ] = get_geolocation_error_message(
 				error_code,
 				error_message )
 			
 			if error_code == 1:
-				st.session_state[ 'browser_geolocation_permission_denied' ]=True
+				st.session_state[ 'browser_geolocation_permission_denied' ] = True
 			
-			st.session_state[ 'browser_geolocation_loaded' ]=False
+			st.session_state[ 'browser_geolocation_loaded' ] = False
 			return False
 		
 		coords = geo.get( 'coords', { } )
 		
 		if not coords:
-			st.session_state[ 'browser_geolocation_error' ]=(
+			st.session_state[ 'browser_geolocation_error' ] = (
 					'Browser geolocation did not return coordinates.')
 			return False
 		
@@ -1253,7 +1231,7 @@ def update_location_from_browser( geo: Dict[ str, object ] ) -> bool:
 		accuracy = coords.get( 'accuracy', None )
 		
 		if not has_valid_coordinates( latitude, longitude ):
-			st.session_state[ 'browser_geolocation_error' ]=(
+			st.session_state[ 'browser_geolocation_error' ] = (
 					'Browser geolocation returned invalid coordinates.')
 			return False
 		
@@ -1262,34 +1240,28 @@ def update_location_from_browser( geo: Dict[ str, object ] ) -> bool:
 			latitude=float( latitude ),
 			longitude=float( longitude ) )
 		
-		st.session_state[ 'browser_geolocation' ]=geo
-		st.session_state[ 'browser_geolocation_loaded' ]=True
-		st.session_state[ 'browser_geolocation_permission_denied' ]=False
-		st.session_state[ 'browser_geolocation_error' ]=''
+		st.session_state[ 'browser_geolocation' ] = geo
+		st.session_state[ 'browser_geolocation_loaded' ] = True
+		st.session_state[ 'browser_geolocation_permission_denied' ] = False
+		st.session_state[ 'browser_geolocation_error' ] = ''
 		
 		return True
 	
 	except Exception as ex:
-		st.session_state[ 'browser_geolocation_error' ]=str( ex )
+		st.session_state[ 'browser_geolocation_error' ] = str( ex )
 		return False
 
 def bootstrap_browser_geolocation( geocoder: Geocoder ) -> None:
-	"""
+	"""Handle the bootstrap browser geolocation workflow.
 	
-		Purpose:
-		--------
-		Request browser geolocation once per session and update global Location State
-		before mode controls consume geospatial defaults.
-
-		Parameters:
-		-----------
-		geocoder (Geocoder): Existing geocoder instance used only to optionally label
-			the resolved coordinates.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the bootstrap browser
+		geolocation workflow. The function preserves the existing UI behavior, session-
+		state interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		geocoder: Geocoder value used by the `bootstrap_browser_geolocation` workflow.
 	"""
 	try:
 		if not st.session_state.get( 'browser_geolocation_enabled', True ):
@@ -1321,44 +1293,38 @@ def bootstrap_browser_geolocation( geocoder: Geocoder ) -> None:
 					geocoder.freeform( location_text )
 					
 					if not st.session_state.get( 'location', '' ):
-						st.session_state[ 'location' ]=location_text
+						st.session_state[ 'location' ] = location_text
 					
-					st.session_state[ 'browser_geolocation_reverse_geocoded' ]=True
+					st.session_state[ 'browser_geolocation_reverse_geocoded' ] = True
 				
 				except Exception:
-					st.session_state[ 'location' ]=(
+					st.session_state[ 'location' ] = (
 							f'{float( latitude ):.6f},{float( longitude ):.6f}')
 		
 		st.rerun( )
 	
 	except Exception as ex:
-		st.session_state[ 'browser_geolocation_error' ]=str( ex )
+		st.session_state[ 'browser_geolocation_error' ] = str( ex )
 
 # ------------- VISUALIZATION UTILITIES
 
-def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ]=None,
-		use_user_location: bool=True, key_prefix: str='reports_map' ) -> None:
-	"""
+def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ] = None,
+		use_user_location: bool = True, key_prefix: str = 'reports_map' ) -> None:
+	"""Create the reports map used by the application.
 	
-		Purpose:
-		--------
-		Render an interactive PyDeck map for records containing Latitude and Longitude
-		fields. The function supports base report records, optional overlay records, a
-		user-location fallback, and a dynamic map-style selector.
-
-		Parameters:
-		-----------
-		df (pd.DataFrame): Source DataFrame containing geospatial report records.
-		df_overlay (Optional[pd.DataFrame]): Optional DataFrame containing temporary
-			geocoded results to overlay on top of the base report layer.
-		use_user_location (bool): Use the global/user location as a fallback map point
-			when no valid base or overlay coordinates are available.
-		key_prefix (str): Unique Streamlit widget key prefix for this map instance.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create reports map
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		df: pd.DataFrame value used by the `create_reports_map` workflow.
+		df_overlay: Optional[pd.DataFrame] value used by the `create_reports_map` workflow.
+			Defaults to `None`.
+		use_user_location: bool value used by the `create_reports_map` workflow. Defaults to `True`.
+		key_prefix: str value used by the `create_reports_map` workflow. Defaults to
+			`'reports_map'`.
 	"""
 	try:
 		st.subheader( 'Locations' )
@@ -1383,8 +1349,8 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ]=N
 		df_base_map = pd.DataFrame( )
 		
 		if not df_source.empty:
-			df_source[ 'Latitude' ]=pd.to_numeric( df_source[ 'Latitude' ], errors='coerce' )
-			df_source[ 'Longitude' ]=pd.to_numeric( df_source[ 'Longitude' ], errors='coerce' )
+			df_source[ 'Latitude' ] = pd.to_numeric( df_source[ 'Latitude' ], errors='coerce' )
+			df_source[ 'Longitude' ] = pd.to_numeric( df_source[ 'Longitude' ], errors='coerce' )
 			
 			base_mask = (df_source[ 'Latitude' ].notna( )
 			             & df_source[ 'Longitude' ].notna( )
@@ -1400,10 +1366,10 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ]=N
 		df_overlay_map = pd.DataFrame( )
 		
 		if not df_overlay_source.empty:
-			df_overlay_source[ 'Latitude' ]=pd.to_numeric( df_overlay_source[ 'Latitude' ],
+			df_overlay_source[ 'Latitude' ] = pd.to_numeric( df_overlay_source[ 'Latitude' ],
 				errors='coerce' )
 			
-			df_overlay_source[ 'Longitude' ]=pd.to_numeric( df_overlay_source[ 'Longitude' ],
+			df_overlay_source[ 'Longitude' ] = pd.to_numeric( df_overlay_source[ 'Longitude' ],
 				errors='coerce' )
 			
 			overlay_mask = (df_overlay_source[ 'Latitude' ].notna( )
@@ -1557,10 +1523,10 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ]=N
 			
 			for col in [ 'ID', 'CalendarDate', 'City', 'State', 'Country', 'Shape', 'Summary' ]:
 				if col not in df_target.columns:
-					df_target[ col ]=''
+					df_target[ col ] = ''
 			
-			df_target[ 'MapSummary' ]=df_target[ 'Summary' ].astype( str ).str.slice( 0, 300 )
-			df_target[ 'Position' ]=df_target.apply(
+			df_target[ 'MapSummary' ] = df_target[ 'Summary' ].astype( str ).str.slice( 0, 300 )
+			df_target[ 'Position' ] = df_target.apply(
 				lambda row: [ float( row[ 'Longitude' ] ), float( row[ 'Latitude' ] ) ],
 				axis=1 )
 		
@@ -1648,22 +1614,21 @@ def create_reports_map( df: pd.DataFrame, df_overlay: Optional[ pd.DataFrame ]=N
 # ------------ GIS MAPPING UTILITIES
 
 def compose_location_query( city: object, state: object, country: object ) -> str:
-	"""
+	"""Handle the compose location query workflow.
 	
-		Purpose:
-		--------
-		Compose a clean geocoding query from city, state, and country values.
-
-		Parameters:
-		-----------
-		city (object): City value from the source row.
-		state (object): State, province, region, or equivalent value from the source row.
-		country (object): Country value from the source row.
-
-		Returns:
-		--------
-		str: Comma-delimited location query.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the compose location query
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		city: object value used by the `compose_location_query` workflow.
+		state: object value used by the `compose_location_query` workflow.
+		country: object value used by the `compose_location_query` workflow.
+	
+	Returns:
+		str: Result produced by the `compose_location_query` workflow.
 	"""
 	parts = [ ]
 	
@@ -1678,23 +1643,20 @@ def compose_location_query( city: object, state: object, country: object ) -> st
 	return ', '.join( parts )
 
 def get_value_by_path( obj: object, path: List[ object ] ) -> object:
-	"""
+	"""Return the value by path used by the application.
 	
-		Purpose:
-		--------
-		Read a nested value from dictionaries, lists, tuples, or simple objects using a
-		specified lookup path.
-
-		Parameters:
-		-----------
-		obj (object): Source object to inspect.
-		path (List[object]): Lookup path containing dictionary keys, object attributes,
-			or integer sequence indexes.
-
-		Returns:
-		--------
-		object: Resolved value or None.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get value by path
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		obj: object value used by the `get_value_by_path` workflow.
+		path: List[object] value used by the `get_value_by_path` workflow.
+	
+	Returns:
+		object: Result produced by the `get_value_by_path` workflow.
 	"""
 	current = obj
 	
@@ -1721,20 +1683,20 @@ def get_value_by_path( obj: object, path: List[ object ] ) -> object:
 	return current
 
 def extract_coordinates( result: object ) -> Tuple[ Optional[ float ], Optional[ float ] ]:
-	"""
+	"""Handle the extract coordinates workflow.
 	
-		Purpose:
-		--------
-		Extract latitude and longitude from common geocoding and places response shapes.
-
-		Parameters:
-		-----------
-		result (object): Geocoder or Places response object.
-
-		Returns:
-		--------
-		Tuple[Optional[float], Optional[float]]: Latitude and longitude when available.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the extract coordinates
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		result: object value used by the `extract_coordinates` workflow.
+	
+	Returns:
+		Tuple[Optional[float], Optional[float]]: Result produced by the
+			`extract_coordinates` workflow.
 	"""
 	if result is None:
 		return None, None
@@ -1791,21 +1753,19 @@ def extract_coordinates( result: object ) -> Tuple[ Optional[ float ], Optional[
 	return latitude, longitude
 
 def count_missing_report_coordinate_rows( table_name: str ) -> int:
-	"""
+	"""Handle the count missing report coordinate rows workflow.
 	
-		Purpose:
-		--------
-		Count rows in a Reports-like table with missing, invalid, or placeholder
-		coordinates.
-
-		Parameters:
-		-----------
-		table_name (str): SQLite table name to inspect.
-
-		Returns:
-		--------
-		int: Count of rows requiring coordinate enrichment.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the count missing report
+		coordinate rows workflow. The function preserves the existing UI behavior,
+		session-state interactions, dataframe handling, database access, and service
+		integrations defined by the application code.
+	
+	Args:
+		table_name: str value used by the `count_missing_report_coordinate_rows` workflow.
+	
+	Returns:
+		int: Result produced by the `count_missing_report_coordinate_rows` workflow.
 	"""
 	try:
 		throw_if( 'table_name', table_name )
@@ -1834,23 +1794,22 @@ def count_missing_report_coordinate_rows( table_name: str ) -> int:
 		st.error( f'Unable to count missing coordinate rows: {e}' )
 		return 0
 
-def read_missing_report_locations( table_name: str, limit: Optional[ int ]=None ) -> pd.DataFrame:
-	"""
+def read_missing_report_locations( table_name: str, limit: Optional[ int ] = None ) -> pd.DataFrame:
+	"""Read the missing report locations for application processing.
 	
-		Purpose:
-		--------
-		Read distinct City, State, and Country combinations from a Reports-like table
-		where coordinates are missing, invalid, or placeholder values.
-
-		Parameters:
-		-----------
-		table_name (str): SQLite table name to inspect.
-		limit (Optional[int]): Optional maximum number of distinct locations to return.
-
-		Returns:
-		--------
-		pd.DataFrame: Distinct location records requiring geocoding.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the read missing report
+		locations workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		table_name: str value used by the `read_missing_report_locations` workflow.
+		limit: Optional[int] value used by the `read_missing_report_locations` workflow.
+			Defaults to `None`.
+	
+	Returns:
+		pd.DataFrame: Result produced by the `read_missing_report_locations` workflow.
 	"""
 	try:
 		throw_if( 'table_name', table_name )
@@ -1888,26 +1847,31 @@ def read_missing_report_locations( table_name: str, limit: Optional[ int ]=None 
 		return pd.DataFrame( )
 
 def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, places: Place,
-		use_places: bool=True, limit: Optional[ int ]=None ) -> pd.DataFrame:
-	"""
+		use_places: bool = True, limit: Optional[ int ] = None ) -> pd.DataFrame:
+	"""Handle the preview report coordinate updates workflow.
 	
-		Purpose:
-		--------
-		Geocode distinct missing City, State, and Country combinations and return a
-		dry-run preview without updating SQLite.
-
-		Parameters:
-		-----------
-		table_name (str): SQLite table name to inspect.
-		geocoder (Geocoder): Existing Geocoder service instance.
-		places (Place): Existing Places service instance.
-		use_places (bool): Use Places fallback when Geocoder lookup fails.
-		limit (Optional[int]): Optional maximum number of distinct locations to process.
-
-		Returns:
-		--------
-		pd.DataFrame: Preview of proposed coordinate updates.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the preview report
+		coordinate updates workflow. The function preserves the existing UI behavior,
+		session-state interactions, dataframe handling, database access, and service
+		integrations defined by the application code.
+	
+	Args:
+		table_name: str value used by the `preview_report_coordinate_updates` workflow.
+		geocoder: Geocoder value used by the `preview_report_coordinate_updates` workflow.
+		places: Place value used by the `preview_report_coordinate_updates` workflow.
+		use_places: bool value used by the `preview_report_coordinate_updates` workflow. Defaults
+			to `True`.
+		limit: Optional[int] value used by the `preview_report_coordinate_updates` workflow.
+			Defaults to `None`.
+	
+	Returns:
+		pd.DataFrame: Result produced by the `preview_report_coordinate_updates`
+			workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	try:
 		throw_if( 'table_name', table_name )
@@ -1918,7 +1882,7 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 		if df_locations.empty:
 			return pd.DataFrame( )
 		
-		records: List[ Dict[ str, object ] ]=[ ]
+		records: List[ Dict[ str, object ] ] = [ ]
 		
 		for row in df_locations.itertuples( index=False ):
 			query = compose_location_query( row.City, row.State, row.Country )
@@ -1937,8 +1901,8 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 			}
 			
 			if not query:
-				record[ 'Status' ]='Skipped'
-				record[ 'Message' ]='Location query could not be composed.'
+				record[ 'Status' ] = 'Skipped'
+				record[ 'Message' ] = 'Location query could not be composed.'
 				records.append( record )
 				continue
 			
@@ -1949,11 +1913,11 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 				if latitude is None or longitude is None:
 					raise NotFound( 'No usable coordinates returned by Geocoder.' )
 				
-				record[ 'Latitude' ]=latitude
-				record[ 'Longitude' ]=longitude
-				record[ 'Source' ]='Geocoder'
-				record[ 'Status' ]='Matched'
-				record[ 'Message' ]='Resolved by Geocoder.'
+				record[ 'Latitude' ] = latitude
+				record[ 'Longitude' ] = longitude
+				record[ 'Source' ] = 'Geocoder'
+				record[ 'Status' ] = 'Matched'
+				record[ 'Message' ] = 'Resolved by Geocoder.'
 			
 			except NotFound as e:
 				if use_places and places is not None:
@@ -1962,29 +1926,29 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 						latitude, longitude = extract_coordinates( result )
 						
 						if latitude is None or longitude is None:
-							record[ 'Source' ]='Places'
-							record[ 'Status' ]='Failed'
-							record[ 'Message' ]='No usable coordinates returned by Places.'
+							record[ 'Source' ] = 'Places'
+							record[ 'Status' ] = 'Failed'
+							record[ 'Message' ] = 'No usable coordinates returned by Places.'
 						else:
-							record[ 'Latitude' ]=latitude
-							record[ 'Longitude' ]=longitude
-							record[ 'Source' ]='Places'
-							record[ 'Status' ]='Matched'
-							record[ 'Message' ]='Resolved by Places fallback.'
+							record[ 'Latitude' ] = latitude
+							record[ 'Longitude' ] = longitude
+							record[ 'Source' ] = 'Places'
+							record[ 'Status' ] = 'Matched'
+							record[ 'Message' ] = 'Resolved by Places fallback.'
 					
 					except Exception as ex:
-						record[ 'Source' ]='Places'
-						record[ 'Status' ]='Failed'
-						record[ 'Message' ]=str( ex )
+						record[ 'Source' ] = 'Places'
+						record[ 'Status' ] = 'Failed'
+						record[ 'Message' ] = str( ex )
 				else:
-					record[ 'Source' ]='Geocoder'
-					record[ 'Status' ]='Failed'
-					record[ 'Message' ]=str( e )
+					record[ 'Source' ] = 'Geocoder'
+					record[ 'Status' ] = 'Failed'
+					record[ 'Message' ] = str( e )
 			
 			except Exception as e:
-				record[ 'Source' ]='Geocoder'
-				record[ 'Status' ]='Failed'
-				record[ 'Message' ]=str( e )
+				record[ 'Source' ] = 'Geocoder'
+				record[ 'Status' ] = 'Failed'
+				record[ 'Message' ] = str( e )
 			
 			records.append( record )
 		
@@ -1995,22 +1959,24 @@ def preview_report_coordinate_updates( table_name: str, geocoder: Geocoder, plac
 		return pd.DataFrame( )
 
 def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame ) -> int:
-	"""
+	"""Apply the report coordinate updates operation.
 	
-		Purpose:
-		--------
-		Apply matched latitude and longitude values to all missing-coordinate rows in a
-		Reports-like SQLite table that share the same City, State, and Country values.
-
-		Parameters:
-		-----------
-		table_name (str): SQLite table name to update.
-		df_updates (pd.DataFrame): Preview DataFrame containing matched coordinates.
-
-		Returns:
-		--------
-		int: Number of SQLite rows updated.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the apply report coordinate
+		updates workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		table_name: str value used by the `apply_report_coordinate_updates` workflow.
+		df_updates: pd.DataFrame value used by the `apply_report_coordinate_updates` workflow.
+	
+	Returns:
+		int: Result produced by the `apply_report_coordinate_updates` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	try:
 		throw_if( 'table_name', table_name )
@@ -2101,23 +2067,18 @@ def apply_report_coordinate_updates( table_name: str, df_updates: pd.DataFrame )
 		return 0
 
 def append_geocoding_map_result( query: str, source: str, result: object ) -> None:
-	"""
+	"""Handle the append geocoding map result workflow.
 	
-		Purpose:
-		--------
-		Append a resolved geocoding result to the temporary Geocoding Mode map overlay and
-		update the global Location State with the resolved coordinates.
-
-		Parameters:
-		-----------
-		query (str): User-entered location query.
-		source (str): Source label such as Geocoder or Places.
-		result (object): Raw geocoding response object.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the append geocoding map
+		result workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		query: str value used by the `append_geocoding_map_result` workflow.
+		source: str value used by the `append_geocoding_map_result` workflow.
+		result: object value used by the `append_geocoding_map_result` workflow.
 	"""
 	try:
 		throw_if( 'query', query )
@@ -2156,9 +2117,9 @@ def append_geocoding_map_result( query: str, source: str, result: object ) -> No
 		df_current = st.session_state.get( 'df_geocoding_map_results', pd.DataFrame( ) )
 		
 		if df_current is None or df_current.empty:
-			st.session_state[ 'df_geocoding_map_results' ]=df_new
+			st.session_state[ 'df_geocoding_map_results' ] = df_new
 		else:
-			st.session_state[ 'df_geocoding_map_results' ]=pd.concat(
+			st.session_state[ 'df_geocoding_map_results' ] = pd.concat(
 				[ df_current, df_new ],
 				ignore_index=True )
 	
@@ -2168,19 +2129,13 @@ def append_geocoding_map_result( query: str, source: str, result: object ) -> No
 # ------------ DATABASE UTILITIES
 
 def initialize_database( ) -> None:
-	"""
-		Purpose:
-		--------
-		Ensure required SQLite tables exist and that the Prompts table contains the
-		columns required by the prompt utilities and Prompt Engineering mode.
-
-		Parameters:
-		-----------
-		None
-
-		Returns:
-		--------
-		None
+	"""Handle the initialize database workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the initialize database
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
 	"""
 	Path( 'stores/sqlite' ).mkdir( parents=True, exist_ok=True )
 	with create_connection( ) as connection:
@@ -2258,63 +2213,44 @@ def initialize_database( ) -> None:
 		conn.commit( )
 
 class ManagedConnection( sqlite3.Connection ):
-	"""
+	"""Represent the Managed Connection component for the Mappy Streamlit application.
 	
-		Purpose:
-		--------
-		Provide a SQLite connection context manager that commits or rolls back work and
-		closes the database connection when the context exits.
-
-		Attributes:
-		-----------
-		None
-
-		Methods:
-		--------
-		__enter__:
-			Return the active SQLite connection.
-
-		__exit__:
-			Commit successful work, roll back failed work, and close the connection.
-
+	Purpose:
+		Provides the Managed Connection class used by the Mappy Streamlit application. The
+		class preserves application state, data-access behavior, and UI-facing integration
+		points required by the existing workflow.
 	"""
 	
 	def __enter__( self ) -> "ManagedConnection":
-		"""
+		"""Enter the managed connection context.
 		
-			Purpose:
-			--------
-			Return the active SQLite connection for use in a with-block.
-
-			Parameters:
-			-----------
-			None
-
-			Returns:
-			--------
-			ManagedSQLiteConnection: Active SQLite connection.
-			
+		Purpose:
+			Supports the Mappy Streamlit application by executing the enter workflow. The
+			function preserves the existing UI behavior, session-state interactions, dataframe
+			handling, database access, and service integrations defined by the application
+			code.
+		
+		Returns:
+			'ManagedConnection': Result produced by the `__enter__` workflow.
 		"""
 		return self
 	
 	def __exit__( self, exc_type: object, exc_value: object, traceback: object ) -> bool:
-		"""
+		"""Exit the managed connection context.
 		
-			Purpose:
-			--------
-			Commit the transaction when no exception occurred; otherwise roll back the
-			transaction. Always close the SQLite connection before exiting the with-block.
-
-			Parameters:
-			-----------
-			exc_type (object): Exception type, if an exception occurred.
-			exc_value (object): Exception value, if an exception occurred.
-			traceback (object): Exception traceback, if an exception occurred.
-
-			Returns:
-			--------
-			bool: False so exceptions continue to propagate to the caller.
-			
+		Purpose:
+			Supports the Mappy Streamlit application by executing the exit workflow. The
+			function preserves the existing UI behavior, session-state interactions, dataframe
+			handling, database access, and service integrations defined by the application
+			code.
+		
+		Args:
+			exc_type: object value used by the `__exit__` workflow.
+			exc_value: object value used by the `__exit__` workflow.
+			traceback: object value used by the `__exit__` workflow.
+		
+		Returns:
+			bool: Result produced by the `__exit__` workflow.
 		"""
 		try:
 			if exc_type is None:
@@ -2327,21 +2263,16 @@ class ManagedConnection( sqlite3.Connection ):
 		return False
 
 def create_connection( ) -> sqlite3.Connection:
-	"""
+	"""Create the connection used by the application.
 	
-		Purpose:
-		--------
-		Create a SQLite connection for the configured application database using a managed
-		context manager, a busy timeout, and pragmatic local-application settings.
-
-		Parameters:
-		-----------
-		None
-
-		Returns:
-		--------
-		sqlite3.Connection: Managed SQLite database connection.
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create connection
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Returns:
+		sqlite3.Connection: Result produced by the `create_connection` workflow.
 	"""
 	conn = sqlite3.connect( cfg.DB_PATH, timeout=60.0, isolation_level=None,
 		check_same_thread=False, factory=ManagedConnection )
@@ -2357,36 +2288,56 @@ def create_connection( ) -> sqlite3.Connection:
 	return conn
 
 def list_tables( ) -> List[ str ]:
+	"""Handle the list tables workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the list tables workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Returns:
+		List[str]: Result produced by the `list_tables` workflow.
+	"""
 	with create_connection( ) as conn:
 		_query = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
 		rows = conn.execute( _query ).fetchall( )
 		return [ r[ 0 ] for r in rows ]
 
 def create_schema( table: str ) -> List[ Tuple ]:
+	"""Create the schema used by the application.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create schema workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		table: str value used by the `create_schema` workflow.
+	
+	Returns:
+		List[Tuple]: Result produced by the `create_schema` workflow.
+	"""
 	with create_connection( ) as conn:
 		return conn.execute( f'PRAGMA table_info("{table}");' ).fetchall( )
 
-def read_table( table: str, limit: int=None, offset: int=0 ) -> pd.DataFrame:
-	"""
+def read_table( table: str, limit: int = None, offset: int = 0 ) -> pd.DataFrame:
+	"""Read the table for application processing.
 	
-		Purpose:
-		--------
-		Read a SQLite table into a pandas DataFrame using a normalized scalar-only path.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the read table workflow. The
+		function preserves the existing UI behavior, session-state interactions, dataframe
+		handling, database access, and service integrations defined by the application
+		code.
 	
-		Parameters:
-		-----------
-		table : str
-			Table name.
-		limit : int=None
-			Optional row limit.
-		offset : int=0
-			Optional row offset.
+	Args:
+		table: str value used by the `read_table` workflow.
+		limit: int value used by the `read_table` workflow. Defaults to `None`.
+		offset: int value used by the `read_table` workflow. Defaults to `0`.
 	
-		Returns:
-		--------
-		pd.DataFrame
-			DataFrame of plain Python scalar values.
-	
+	Returns:
+		pd.DataFrame: Result produced by the `read_table` workflow.
 	"""
 	if not table:
 		return pd.DataFrame( )
@@ -2402,19 +2353,33 @@ def read_table( table: str, limit: int=None, offset: int=0 ) -> pd.DataFrame:
 		raw_columns = [ d[ 0 ] for d in (cur.description or [ ]) ]
 		rows = cur.fetchall( )
 	
-	seen: Dict[ str, int ]={ }
-	columns: List[ str ]=[ ]
+	seen: Dict[ str, int ] = { }
+	columns: List[ str ] = [ ]
 	
 	for col in raw_columns:
 		name = str( col )
 		if name not in seen:
-			seen[ name ]=0
+			seen[ name ] = 0
 			columns.append( name )
 		else:
 			seen[ name ] += 1
 			columns.append( f'{name}_{seen[ name ]}' )
 	
 	def _scalarize( value: Any ) -> Any:
+		"""Handle the scalarize workflow.
+		
+		Purpose:
+			Supports the Mappy Streamlit application by executing the scalarize workflow. The
+			function preserves the existing UI behavior, session-state interactions, dataframe
+			handling, database access, and service integrations defined by the application
+			code.
+		
+		Args:
+			value: Any value used by the `_scalarize` workflow.
+		
+		Returns:
+			Any: Result produced by the `_scalarize` workflow.
+		"""
 		if value is None or isinstance( value, (str, int, float, bool) ):
 			return value
 		
@@ -2438,32 +2403,26 @@ def read_table( table: str, limit: int=None, offset: int=0 ) -> pd.DataFrame:
 		
 		return str( value )
 	
-	normalized_rows: List[ Dict[ str, Any ] ]=[ ]
+	normalized_rows: List[ Dict[ str, Any ] ] = [ ]
 	for row in rows:
-		record: Dict[ str, Any ]={ }
+		record: Dict[ str, Any ] = { }
 		for idx, col in enumerate( columns ):
-			record[ col ]=_scalarize( row[ idx ] )
+			record[ col ] = _scalarize( row[ idx ] )
 		normalized_rows.append( record )
 	
 	return pd.DataFrame( normalized_rows, columns=columns )
 
 def render_table( df: pd.DataFrame ) -> None:
-	"""
+	"""Render the table interface section.
 	
-		Purpose:
-		--------
-		Render a DataFrame safely in Streamlit. Use the normal interactive dataframe
-		first, and fall back to HTML rendering if Streamlit/PyArrow serialization fails.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the render table workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
 	
-		Parameters:
-		-----------
-		df : pd.DataFrame
-			The DataFrame to render.
-	
-		Returns:
-		--------
-		None
-	
+	Args:
+		df: pd.DataFrame value used by the `render_table` workflow.
 	"""
 	if df is None:
 		st.info( 'No data available.' )
@@ -2479,29 +2438,44 @@ def render_table( df: pd.DataFrame ) -> None:
 	fallback_df = fallback_df.where( pd.notnull( fallback_df ), '' )
 	
 	for col in fallback_df.columns:
-		fallback_df[ col ]=fallback_df[ col ].map(
+		fallback_df[ col ] = fallback_df[ col ].map(
 			lambda x: x if isinstance( x, (str, int, float, bool) ) or x == '' else str( x ) )
 	
 	st.markdown( fallback_df.to_html( index=False, escape=True ), unsafe_allow_html=True )
 
 def make_display_safe( df: pd.DataFrame ) -> pd.DataFrame:
+	"""Handle the make display safe workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the make display safe
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		df: pd.DataFrame value used by the `make_display_safe` workflow.
+	
+	Returns:
+		pd.DataFrame: Result produced by the `make_display_safe` workflow.
+	"""
 	display_df = df.copy( )
 	
 	for col in display_df.columns:
-		display_df[ col ]=display_df[ col ].map( lambda x: '' if x is None else str( x ) )
+		display_df[ col ] = display_df[ col ].map( lambda x: '' if x is None else str( x ) )
 	
 	return display_df
 
 def drop_table( table: str ) -> None:
-	"""
-		Purpose:
-		--------
-		Safely drop a table if it exists.
+	"""Handle the drop table workflow.
 	
-		Parameters:
-		-----------
-		table : str
-			Table name.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the drop table workflow. The
+		function preserves the existing UI behavior, session-state interactions, dataframe
+		handling, database access, and service integrations defined by the application
+		code.
+	
+	Args:
+		table: str value used by the `drop_table` workflow.
 	"""
 	if not table:
 		return
@@ -2511,24 +2485,21 @@ def drop_table( table: str ) -> None:
 		conn.commit( )
 
 def create_index( table: str, column: str ) -> None:
-	"""
-		Purpose:
-		--------
-		Create a safe SQLite index on a specified table column.
+	"""Create the index used by the application.
 	
-		Handles:
-			- Spaces in column names
-			- Special characters
-			- Reserved words
-			- Duplicate index names
-			- Validation against actual table schema
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create index workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
 	
-		Parameters:
-		-----------
-		table : str
-			Table name.
-		column : str
-			Column name to index.
+	Args:
+		table: str value used by the `create_index` workflow.
+		column: str value used by the `create_index` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	if not table or not column:
 		return
@@ -2564,6 +2535,20 @@ def create_index( table: str, column: str ) -> None:
 		conn.commit( )
 
 def apply_filters( df: pd.DataFrame ) -> pd.DataFrame:
+	"""Apply the filters operation.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the apply filters workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		df: pd.DataFrame value used by the `apply_filters` workflow.
+	
+	Returns:
+		pd.DataFrame: Result produced by the `apply_filters` workflow.
+	"""
 	st.subheader( 'Advanced Filters' )
 	conditions = [ ]
 	col1, col2, col3 = st.columns( 3 )
@@ -2589,6 +2574,17 @@ def apply_filters( df: pd.DataFrame ) -> pd.DataFrame:
 	return df
 
 def create_aggregation( df: pd.DataFrame ):
+	"""Create the aggregation used by the application.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create aggregation
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		df: pd.DataFrame value used by the `create_aggregation` workflow.
+	"""
 	st.subheader( 'Aggregation Engine' )
 	numeric_cols = df.select_dtypes( include=[ 'number' ] ).columns.tolist( )
 	if not numeric_cols:
@@ -2614,22 +2610,16 @@ def create_aggregation( df: pd.DataFrame ):
 	st.metric( 'Result', result )
 
 def create_visualization( df: pd.DataFrame ) -> None:
-	"""
+	"""Create the visualization used by the application.
 	
-		Purpose:
-		--------
-		Render data visualizations without passing pandas objects directly into
-		Plotly/Narwhals.
-		
-		Parameters:
-		-----------
-		df : pd.DataFrame
-			The input DataFrame.
-		
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create visualization
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		df: pd.DataFrame value used by the `create_visualization` workflow.
 	"""
 	
 	set_blue_divider( )
@@ -2644,15 +2634,15 @@ def create_visualization( df: pd.DataFrame ) -> None:
 	
 	for col in df_plot.columns:
 		if df_plot[ col ].dtype == object:
-			df_plot[ col ]=df_plot[ col ].map( lambda x: '' if x is None else str( x ) )
+			df_plot[ col ] = df_plot[ col ].map( lambda x: '' if x is None else str( x ) )
 	
-	numeric_cols: List[ str ]=[ ]
+	numeric_cols: List[ str ] = [ ]
 	for col in df_plot.columns:
 		series_num = pd.to_numeric( df_plot[ col ], errors='coerce' )
 		if series_num.notna( ).any( ):
 			numeric_cols.append( col )
 	
-	categorical_cols: List[ str ]=[ col for col in df_plot.columns if col not in numeric_cols ]
+	categorical_cols: List[ str ] = [ col for col in df_plot.columns if col not in numeric_cols ]
 	
 	chart = st.selectbox( 'Chart Type',
 		[ 'Histogram', 'Bar', 'Line', 'Scatter', 'Box', 'Pie', 'Correlation' ] )
@@ -2749,7 +2739,7 @@ def create_visualization( df: pd.DataFrame ) -> None:
 		
 		corr_df = pd.DataFrame( )
 		for col in numeric_cols:
-			corr_df[ col ]=pd.to_numeric( df_plot[ col ], errors='coerce' )
+			corr_df[ col ] = pd.to_numeric( df_plot[ col ], errors='coerce' )
 		
 		corr = corr_df.corr( )
 		
@@ -2761,6 +2751,18 @@ def create_visualization( df: pd.DataFrame ) -> None:
 		st.plotly_chart( fig, use_container_width=True )
 
 def convert_dataframe( table_name: str, df: pd.DataFrame ):
+	"""Handle the convert dataframe workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the convert dataframe
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		table_name: str value used by the `convert_dataframe` workflow.
+		df: pd.DataFrame value used by the `convert_dataframe` workflow.
+	"""
 	columns = [ ]
 	for col in df.columns:
 		sql_type = get_sqlite_type( df[ col ].dtype )
@@ -2773,6 +2775,18 @@ def convert_dataframe( table_name: str, df: pd.DataFrame ):
 		conn.commit( )
 
 def insert_data( table_name: str, df: pd.DataFrame ):
+	"""Handle the insert data workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the insert data workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		table_name: str value used by the `insert_data` workflow.
+		df: pd.DataFrame value used by the `insert_data` workflow.
+	"""
 	df = df.copy( )
 	df.columns = [ c.replace( ' ', '_' ) for c in df.columns ]
 	placeholders = ', '.join( [ '?' ] * len( df.columns ) )
@@ -2782,20 +2796,19 @@ def insert_data( table_name: str, df: pd.DataFrame ):
 		conn.commit( )
 
 def get_sqlite_type( dtype ) -> str:
-	"""
-		Purpose:
-		--------
-		Map a pandas dtype to an appropriate SQLite column type.
+	"""Return the sqlite type used by the application.
 	
-		Parameters:
-		-----------
-		dtype : pandas dtype
-			The dtype of a pandas Series.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get sqlite type
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
 	
-		Returns:
-		--------
-		str
-			SQLite column type.
+	Args:
+		dtype: Runtime value used by the `get_sqlite_type` workflow.
+	
+	Returns:
+		str: Result produced by the `get_sqlite_type` workflow.
 	"""
 	dtype_str = str( dtype ).lower( )
 	
@@ -2835,26 +2848,21 @@ def get_sqlite_type( dtype ) -> str:
 	return 'TEXT'
 
 def create_custom_table( table_name: str, columns: list ) -> None:
-	"""
-		Purpose:
-		--------
-		Create a custom SQLite table from column definitions.
+	"""Create the custom table used by the application.
 	
-		Parameters:
-		-----------
-		table_name : str
-			Name of table.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create custom table
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
 	
-		columns : list of dict
-			[
-				{
-					"name": str,
-					"type": str,
-					"not_null": bool,
-					"primary_key": bool,
-					"auto_increment": bool
-				}
-			]
+	Args:
+		table_name: str value used by the `create_custom_table` workflow.
+		columns: list value used by the `create_custom_table` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	if not table_name:
 		raise ValueError( 'Table name required.' )
@@ -2891,22 +2899,19 @@ def create_custom_table( table_name: str, columns: list ) -> None:
 		conn.commit( )
 
 def is_safe_query( query: str ) -> bool:
-	"""
+	"""Handle the is safe query workflow.
 	
-		Purpose:
-		--------
-		Determine whether a SQL query is read-only and safe to execute.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the is safe query workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
 	
-		Allows:
-			SELECT
-			WITH (CTE returning SELECT)
-			EXPLAIN SELECT
-			PRAGMA (read-only)
+	Args:
+		query: str value used by the `is_safe_query` workflow.
 	
-		Blocks:
-			INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, ATTACH,
-			DETACH, VACUUM, REPLACE, TRIGGER, and multiple statements.
-			
+	Returns:
+		bool: Result produced by the `is_safe_query` workflow.
 	"""
 	if not query or not isinstance( query, str ):
 		return False
@@ -2946,16 +2951,23 @@ def is_safe_query( query: str ) -> bool:
 	return True
 
 def create_identifier( name: str ) -> str:
-	"""
+	"""Create the identifier used by the application.
 	
-		Purpose:
-		--------
-		Sanitize a string into a safe SQLite identifier.
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create identifier
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
 	
-		- Replaces invalid characters with underscores
-		- Ensures it starts with a letter or underscore
-		- Prevents empty names
-		
+	Args:
+		name: str value used by the `create_identifier` workflow.
+	
+	Returns:
+		str: Result produced by the `create_identifier` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	if not name or not isinstance( name, str ):
 		raise ValueError( 'Invalid Identifier.' )
@@ -2970,11 +2982,38 @@ def create_identifier( name: str ) -> str:
 	return safe
 
 def get_indexes( table: str ):
+	"""Return the indexes used by the application.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get indexes workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		table: str value used by the `get_indexes` workflow.
+	
+	Returns:
+		object: Result produced by the `get_indexes` workflow.
+	"""
 	with create_connection( ) as conn:
 		rows = conn.execute( f'PRAGMA index_list("{table}");' ).fetchall( )
 		return rows
 
 def add_column( table: str, column: str, col_type: str ):
+	"""Handle the add column workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the add column workflow. The
+		function preserves the existing UI behavior, session-state interactions, dataframe
+		handling, database access, and service integrations defined by the application
+		code.
+	
+	Args:
+		table: str value used by the `add_column` workflow.
+		column: str value used by the `add_column` workflow.
+		col_type: str value used by the `add_column` workflow.
+	"""
 	column = create_identifier( column )
 	col_type = col_type.upper( )
 	
@@ -2984,29 +3023,22 @@ def add_column( table: str, column: str, col_type: str ):
 		conn.commit( )
 
 def rename_column( table_name: str, old_name: str, new_name: str ) -> None:
-	"""
+	"""Handle the rename column workflow.
 	
-		Purpose:
-		--------
-		Rename a column within an existing SQLite table. Attempts native ALTER TABLE rename
-		first; if it fails, falls back to a schema-safe rebuild preserving column order, data,
-		and indexes.
-
-		Parameters:
-		-----------
-		table_name : str
-			Table containing the column.
-
-		old_name : str
-			Existing column name.
-
-		new_name : str
-			New column name.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the rename column workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		table_name: str value used by the `rename_column` workflow.
+		old_name: str value used by the `rename_column` workflow.
+		new_name: str value used by the `rename_column` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	if not table_name or not old_name or not new_name:
 		return
@@ -3053,7 +3085,7 @@ def rename_column( table_name: str, old_name: str, new_name: str ) -> None:
 		
 		temp_table = f"{table_name}__rebuild_temp"
 		
-		col_defs: List[ str ]=[ ]
+		col_defs: List[ str ] = [ ]
 		pk_cols = [ r for r in schema if int( r[ 5 ] or 0 ) > 0 ]
 		single_pk = len( pk_cols ) == 1
 		
@@ -3101,6 +3133,20 @@ def rename_column( table_name: str, old_name: str, new_name: str ) -> None:
 		conn.commit( )
 
 def create_profile_table( table: str ):
+	"""Create the profile table used by the application.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the create profile table
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		table: str value used by the `create_profile_table` workflow.
+	
+	Returns:
+		object: Result produced by the `create_profile_table` workflow.
+	"""
 	df = read_table( table )
 	profile_rows = [ ]
 	total_rows = len( df )
@@ -3118,19 +3164,35 @@ def create_profile_table( table: str ):
 			}
 		
 		if pd.api.types.is_numeric_dtype( series ):
-			row[ 'min' ]=series.min( )
-			row[ 'max' ]=series.max( )
-			row[ 'mean' ]=series.mean( )
+			row[ 'min' ] = series.min( )
+			row[ 'max' ] = series.max( )
+			row[ 'mean' ] = series.mean( )
 		else:
-			row[ 'min' ]=None
-			row[ 'max' ]=None
-			row[ 'mean' ]=None
+			row[ 'min' ] = None
+			row[ 'max' ] = None
+			row[ 'mean' ] = None
 		
 		profile_rows.append( row )
 	
 	return pd.DataFrame( profile_rows )
 
 def drop_column( table: str, column: str ):
+	"""Handle the drop column workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the drop column workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		table: str value used by the `drop_column` workflow.
+		column: str value used by the `drop_column` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
+	"""
 	if not table or not column:
 		raise ValueError( 'Table and column required.' )
 	
@@ -3229,26 +3291,21 @@ def drop_column( table: str, column: str ):
 		conn.commit( )
 
 def rename_table( old_name: str, new_name: str ) -> None:
-	"""
+	"""Handle the rename table workflow.
 	
-		Purpose:
-		--------
-		Rename an existing SQLite table. Attempts native ALTER TABLE rename first; if it fails,
-		falls back to a schema-safe rebuild using the original CREATE TABLE statement and
-		preserves indexes.
-
-		Parameters:
-		-----------
-		old_name : str
-			Existing table name.
-
-		new_name : str
-			New table name.
-
-		Returns:
-		--------
-		None
-		
+	Purpose:
+		Supports the Mappy Streamlit application by executing the rename table workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		old_name: str value used by the `rename_table` workflow.
+		new_name: str value used by the `rename_table` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
 	"""
 	if not old_name or not new_name:
 		return
@@ -3314,19 +3371,19 @@ def rename_table( old_name: str, new_name: str ) -> None:
 # ------------- DATASET UTILITIES
 
 def has_loaded_dataset( df_frame: object ) -> bool:
-	"""
-		Purpose:
-		--------
-		Determine whether an object is a valid loaded dataframe.
-
-		Parameters:
-		-----------
-		df_frame ( object ): Candidate dataframe object.
-
-		Returns:
-		--------
-		bool:
-			True when the object is a non-empty dataframe with at least one column.
+	"""Handle the has loaded dataset workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the has loaded dataset
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		df_frame: object value used by the `has_loaded_dataset` workflow.
+	
+	Returns:
+		bool: Result produced by the `has_loaded_dataset` workflow.
 	"""
 	return (
 			isinstance( df_frame, pd.DataFrame )
@@ -3335,19 +3392,16 @@ def has_loaded_dataset( df_frame: object ) -> bool:
 	)
 
 def get_loaded_dataset( ) -> pd.DataFrame | None:
-	"""
-		Purpose:
-		--------
-		Return the currently loaded dataset from session state when valid.
-
-		Parameters:
-		-----------
-		None
-
-		Returns:
-		--------
-		pd.DataFrame | None:
-			Copy of the loaded dataset, or None when no valid dataset exists.
+	"""Return the loaded dataset used by the application.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the get loaded dataset
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Returns:
+		pd.DataFrame | None: Result produced by the `get_loaded_dataset` workflow.
 	"""
 	df_frame = st.session_state.get( 'df_dataset', None )
 	if not has_loaded_dataset( df_frame ):
@@ -3357,19 +3411,18 @@ def get_loaded_dataset( ) -> pd.DataFrame | None:
 
 def store_loaded_dataset( df_dataset: pd.DataFrame,
 		df_original: pd.DataFrame | None = None ) -> None:
-	"""
-		Purpose:
-		--------
-		Persist a successfully loaded dataset to session state.
-
-		Parameters:
-		-----------
-		df_dataset ( pd.DataFrame ): Loaded dataset.
-		df_original ( pd.DataFrame | None ): Optional original copy.
-
-		Returns:
-		--------
-		None
+	"""Handle the store loaded dataset workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the store loaded dataset
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		df_dataset: pd.DataFrame value used by the `store_loaded_dataset` workflow.
+		df_original: pd.DataFrame | None value used by the `store_loaded_dataset` workflow.
+			Defaults to `None`.
 	"""
 	if not has_loaded_dataset( df_dataset ):
 		return
@@ -3377,38 +3430,30 @@ def store_loaded_dataset( df_dataset: pd.DataFrame,
 	df_source = df_dataset.copy( )
 	df_base = df_original.copy( ) if isinstance( df_original, pd.DataFrame ) else df_source.copy( )
 	
-	st.session_state[ 'df_raw' ]=df_source.copy( )
-	st.session_state[ 'df_original' ]=df_base.copy( )
-	st.session_state[ 'df_dataset' ]=df_source.copy( )
+	st.session_state[ 'df_raw' ] = df_source.copy( )
+	st.session_state[ 'df_original' ] = df_base.copy( )
+	st.session_state[ 'df_dataset' ] = df_source.copy( )
 
 # ------------ GENERATIVE AI UTILITIES
 
 def _model_selector( key_prefix: str, label: str, options: list[ str ], default_model: str ) -> str:
-	'''
-		Purpose:
-		--------
-		Render a model selector that supports configured model choices and a custom
-		model override.
-
-		Parameters:
-		-----------
-		key_prefix (str):
-			Unique provider-specific key prefix used for Streamlit widget keys.
-
-		label (str):
-			Display label for the model selector.
-
-		options (list[str]):
-			Configured model names for the provider.
-
-		default_model (str):
-			Default model selected when available.
-
-		Returns:
-		--------
-		str:
-			Selected model name or custom model value.
-	'''
+	"""Handle the model selector workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the model selector workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		key_prefix: str value used by the `_model_selector` workflow.
+		label: str value used by the `_model_selector` workflow.
+		options: list[str] value used by the `_model_selector` workflow.
+		default_model: str value used by the `_model_selector` workflow.
+	
+	Returns:
+		str: Result produced by the `_model_selector` workflow.
+	"""
 	base_options = list( options or [ ] )
 	default_value = str( default_model or '' ).strip( )
 	
@@ -3437,29 +3482,26 @@ def _model_selector( key_prefix: str, label: str, options: list[ str ], default_
 	return str( selected or '' ).strip( )
 
 def _invoke_provider( fetcher: object, prompt: str, params: Dict[ str, Any ] ) -> Any:
-	'''
-		Purpose:
-		--------
-		Invoke a Generative provider wrapper using the prompt keyword expected by the
-		provider implementation.
-
-		Parameters:
-		-----------
-		fetcher (object):
-			Provider wrapper instance. Expected values are Chat, Grok, Claude, Gemini,
-			or Mistral.
-
-		prompt (str):
-			User prompt submitted from the provider expander.
-
-		params (Dict[str, Any]):
-			Provider-specific keyword arguments collected from the UI.
-
-		Returns:
-		--------
-		Any:
-			Provider response returned by the wrapper.
-	'''
+	"""Handle the invoke provider workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the invoke provider
+		workflow. The function preserves the existing UI behavior, session-state
+		interactions, dataframe handling, database access, and service integrations
+		defined by the application code.
+	
+	Args:
+		fetcher: object value used by the `_invoke_provider` workflow.
+		prompt: str value used by the `_invoke_provider` workflow.
+		params: Dict[str, Any] value used by the `_invoke_provider` workflow.
+	
+	Returns:
+		Any: Result produced by the `_invoke_provider` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
+	"""
 	try:
 		if fetcher is None:
 			raise ValueError( 'Provider wrapper cannot be None.' )
@@ -3489,24 +3531,22 @@ def _invoke_provider( fetcher: object, prompt: str, params: Dict[ str, Any ] ) -
 		raise ex
 
 def _render_output( placeholder: object, result: Any ) -> None:
-	'''
-		Purpose:
-		--------
-		Render a Generative provider response into the provider output placeholder.
-
-		Parameters:
-		-----------
-		placeholder (object):
-			Streamlit placeholder returned by st.empty().
-
-		result (Any):
-			Provider result. Supports strings, dictionaries, lists, tuples, objects with
-			model_dump(), and fallback string conversion.
-
-		Returns:
-		--------
-		None
-	'''
+	"""Handle the render output workflow.
+	
+	Purpose:
+		Supports the Mappy Streamlit application by executing the render output workflow.
+		The function preserves the existing UI behavior, session-state interactions,
+		dataframe handling, database access, and service integrations defined by the
+		application code.
+	
+	Args:
+		placeholder: object value used by the `_render_output` workflow.
+		result: Any value used by the `_render_output` workflow.
+	
+	Raises:
+		Exception: Propagates validation, UI, data, database, or provider errors
+			raised by the existing implementation.
+	"""
 	try:
 		if placeholder is None:
 			raise ValueError( 'Output placeholder cannot be None.' )
@@ -3566,13 +3606,13 @@ with st.sidebar:
 	with st.expander( 'Mode', expanded=True ):
 		mode = st.radio( label='Mode', options=cfg.MODES, label_visibility='collapsed' )
 		if mode:
-			st.session_state[ 'mode' ]=mode
+			st.session_state[ 'mode' ] = mode
 		else:
-			st.sessionn_state[ 'mode' ]='Geocoding'
+			st.sessionn_state[ 'mode' ] = 'Geocoding'
 		
 		previous_mode = st.session_state.get( 'previous_mode', None )
 		if previous_mode != mode:
-			st.session_state[ 'previous_mode' ]=mode
+			st.session_state[ 'previous_mode' ] = mode
 			st.rerun( )
 	
 	# -------- Settings
@@ -3601,11 +3641,11 @@ with st.sidebar:
 			st.warning( error )
 		
 		if st.button( 'Reset', key='browser_geolocation_reset', width='stretch' ):
-			st.session_state[ 'browser_geolocation' ]=None
-			st.session_state[ 'browser_geolocation_loaded' ]=False
-			st.session_state[ 'browser_geolocation_reverse_geocoded' ]=False
-			st.session_state[ 'browser_geolocation_error' ]=''
-			st.session_state[ 'browser_geolocation_permission_denied' ]=False
+			st.session_state[ 'browser_geolocation' ] = None
+			st.session_state[ 'browser_geolocation_loaded' ] = False
+			st.session_state[ 'browser_geolocation_reverse_geocoded' ] = False
+			st.session_state[ 'browser_geolocation_error' ] = ''
+			st.session_state[ 'browser_geolocation_permission_denied' ] = False
 			st.rerun( )
 	
 	# ------- Query
@@ -3616,7 +3656,7 @@ with st.sidebar:
 	with st.expander( label='Persistence', expanded=False ):
 		cache_backend = st.selectbox( 'Select', options=[ 'none', 'memory', 'sqlite' ],
 			key='cache_backend' )
-		cache: Optional[ object ]=None
+		cache: Optional[ object ] = None
 		if cache_backend == 'memory':
 			cache = InMemoryCache( )
 		elif cache_backend == 'sqlite':
@@ -3735,7 +3775,7 @@ with st.sidebar:
 		
 		if google_key:
 			st.session_state.google_api_key = google_key
-			os.environ[ 'GOOGLE_API_KEY' ]=google_key
+			os.environ[ 'GOOGLE_API_KEY' ] = google_key
 		
 		googlemaps_key = st.text_input( 'Google Maps API Key', type='password',
 			value=st.session_state.googlemaps_api_key or '',
@@ -3743,7 +3783,7 @@ with st.sidebar:
 		
 		if googlemaps_key:
 			st.session_state.googlemaps_api_key = googlemaps_key
-			os.environ[ 'GOOGLEMAPS_API_KEY' ]=googlemaps_key
+			os.environ[ 'GOOGLEMAPS_API_KEY' ] = googlemaps_key
 		
 		googleweather_key = st.text_input( 'Google Weather API Key', type='password',
 			value=st.session_state.google_weather_api_key or '',
@@ -3751,7 +3791,7 @@ with st.sidebar:
 		
 		if googleweather_key:
 			st.session_state.google_weather_api_key = googleweather_key
-			os.environ[ 'GOOGLE_WEATHER_API_KEY' ]=googleweather_key
+			os.environ[ 'GOOGLE_WEATHER_API_KEY' ] = googleweather_key
 		
 		geocoding_key = st.text_input( 'Geocoding API Key', type='password',
 			value=st.session_state.geocoding_api_key or '',
@@ -3759,7 +3799,7 @@ with st.sidebar:
 		
 		if geocoding_key:
 			st.session_state.geocoding_api_key = geocoding_key
-			os.environ[ 'GEOCODING_API_KEY' ]=geocoding_key
+			os.environ[ 'GEOCODING_API_KEY' ] = geocoding_key
 		
 		google_cse_id = st.text_input( 'Google Custom Search ID', type='password',
 			value=st.session_state.google_cse_id or '',
@@ -3767,7 +3807,7 @@ with st.sidebar:
 		
 		if google_cse_id:
 			st.session_state.google_cse_id = google_cse_id
-			os.environ[ 'GOOGLE_CSE_ID' ]=google_cse_id
+			os.environ[ 'GOOGLE_CSE_ID' ] = google_cse_id
 		
 		govinfo_key = st.text_input( 'Gov Info API', type='password',
 			value=st.session_state.govinfo_api_key or '',
@@ -3775,7 +3815,7 @@ with st.sidebar:
 		
 		if govinfo_key:
 			st.session_state.govinfo_api_key = govinfo_key
-			os.environ[ 'GOVINFO_API_KEY' ]=govinfo_key
+			os.environ[ 'GOVINFO_API_KEY' ] = govinfo_key
 		
 		airnow_key = st.text_input( 'Air Quality Now', type='password',
 			value=st.session_state.airnow_api_key or '',
@@ -3783,7 +3823,7 @@ with st.sidebar:
 		
 		if airnow_key:
 			st.session_state.airnow_api_key = airnow_key
-			os.environ[ 'AIRNOW_API_KEY' ]=airnow_key
+			os.environ[ 'AIRNOW_API_KEY' ] = airnow_key
 		
 		nasa_key = st.text_input( 'NASA API Key', type='password',
 			value=st.session_state.nasa_api_key or '',
@@ -3791,7 +3831,7 @@ with st.sidebar:
 		
 		if nasa_key:
 			st.session_state.nasa_api_key = nasa_key
-			os.environ[ 'NASA_API_KEY' ]=nasa_key
+			os.environ[ 'NASA_API_KEY' ] = nasa_key
 		
 		nasa_token = st.text_input( 'NASA Earth Data', type='password',
 			value=st.session_state.nasa_earthdata_token or '',
@@ -3799,7 +3839,7 @@ with st.sidebar:
 		
 		if nasa_token:
 			st.session_state.nasa_earthdata_token = nasa_token
-			os.environ[ 'NASA_EARTHDATA_TOKEN' ]=nasa_token
+			os.environ[ 'NASA_EARTHDATA_TOKEN' ] = nasa_token
 		
 		openaq_key = st.text_input( 'Open Air Quality', type='password',
 			value=st.session_state.openaq_api_key or '',
@@ -3807,7 +3847,7 @@ with st.sidebar:
 		
 		if openaq_key:
 			st.session_state.openaq_api_key = openaq_key
-			os.environ[ 'AIRNOW_API_KEY' ]=openaq_key
+			os.environ[ 'AIRNOW_API_KEY' ] = openaq_key
 		
 		opensky_client = st.text_input( 'Open Sky Client ID', type='password',
 			value=st.session_state.opensky_api_client_id or '',
@@ -3815,7 +3855,7 @@ with st.sidebar:
 		
 		if opensky_client:
 			st.session_state.opensky_api_client_id = opensky_client
-			os.environ[ 'OPENSKY_API_CLIENT_ID' ]=opensky_client
+			os.environ[ 'OPENSKY_API_CLIENT_ID' ] = opensky_client
 		
 		firms_key = st.text_input( 'FIRMS Map Client', type='password',
 			value=st.session_state.opensky_api_client_id or '',
@@ -3823,7 +3863,7 @@ with st.sidebar:
 		
 		if firms_key:
 			st.session_state.firms_map_key = firms_key
-			os.environ[ 'FIRMS_MAP_KEY' ]=firms_key
+			os.environ[ 'FIRMS_MAP_KEY' ] = firms_key
 		
 		opensky_credentials = st.text_input( 'Open Sky Credentials', type='password',
 			value=st.session_state.opensky_api_credentials or '',
@@ -3831,7 +3871,7 @@ with st.sidebar:
 		
 		if opensky_client:
 			st.session_state.opensky_api_credentials = opensky_credentials
-			os.environ[ 'OPENSKY_API_CREDENTIALS' ]=opensky_credentials
+			os.environ[ 'OPENSKY_API_CREDENTIALS' ] = opensky_credentials
 		
 		purpleair_key = st.text_input( 'Purple Air API', type='password',
 			value=st.session_state.purpleair_api_key or '',
@@ -3839,7 +3879,7 @@ with st.sidebar:
 		
 		if purpleair_key:
 			st.session_state.purpleair_key = purpleair_key
-			os.environ[ 'PURPLEAIR_API_KEY' ]=purpleair_key
+			os.environ[ 'PURPLEAIR_API_KEY' ] = purpleair_key
 		
 		openai_key = st.text_input( 'OpenAI API', type='password',
 			value=st.session_state.openai_api_key or '',
@@ -3913,7 +3953,7 @@ if mode == 'Geocoding':
 			with geosub_c2:
 				if st.button( label='Clear Map Results', icon='💫', width='stretch',
 						key='clear_map_results' ):
-					st.session_state[ 'df_geocoding_map_results' ]=pd.DataFrame( )
+					st.session_state[ 'df_geocoding_map_results' ] = pd.DataFrame( )
 					st.rerun( )
 		
 		with geo_c1:
@@ -4081,11 +4121,11 @@ elif mode == 'Distances':
 			else:
 				try:
 					if update_global_route:
-						st.session_state[ 'origin' ]=str( origin ).strip( )
-						st.session_state[ 'destination' ]=str( destination ).strip( )
+						st.session_state[ 'origin' ] = str( origin ).strip( )
+						st.session_state[ 'destination' ] = str( destination ).strip( )
 					
 					summary = distances.summary( origin, destination, mode=travel_mode )
-					st.session_state[ 'distance_last_result' ]=summary or { }
+					st.session_state[ 'distance_last_result' ] = summary or { }
 					st.success( 'Distance Matrix request completed.' )
 				
 				except Exception as ex:
@@ -4181,8 +4221,8 @@ elif mode == 'Static Maps':
 				try:
 					if save_coordinates:
 						set_coordinates( lat, lng )
-						st.session_state[ 'zoom' ]=int( zoom )
-						st.session_state[ 'map_size' ]=str( size )
+						st.session_state[ 'zoom' ] = int( zoom )
+						st.session_state[ 'map_size' ] = str( size )
 					
 					url = static_maps.pin(
 						lat=float( lat ),
@@ -4190,9 +4230,9 @@ elif mode == 'Static Maps':
 						zoom=int( zoom ),
 						size=str( size ) )
 					
-					st.session_state[ 'maps_last_url' ]=url
-					st.session_state[ 'maps_last_latitude' ]=float( lat )
-					st.session_state[ 'maps_last_longitude' ]=float( lng )
+					st.session_state[ 'maps_last_url' ] = url
+					st.session_state[ 'maps_last_latitude' ] = float( lat )
+					st.session_state[ 'maps_last_longitude' ] = float( lng )
 					st.success( 'Static map generated.' )
 				
 				except Exception as ex:
@@ -4298,9 +4338,9 @@ elif mode == 'Time Zones':
 					
 					result = timezone.lookup( float( lat_tz ), float( lng_tz ) )
 					
-					st.session_state[ 'timezone_last_result' ]=result or { }
-					st.session_state[ 'timezone_last_latitude' ]=float( lat_tz )
-					st.session_state[ 'timezone_last_longitude' ]=float( lng_tz )
+					st.session_state[ 'timezone_last_result' ] = result or { }
+					st.session_state[ 'timezone_last_latitude' ] = float( lat_tz )
+					st.session_state[ 'timezone_last_longitude' ] = float( lng_tz )
 					st.success( 'Time zone lookup completed.' )
 				
 				except Exception as ex:
@@ -4349,19 +4389,14 @@ elif mode == 'Web Scraper':
 			st.session_state[ 'webscrape_clear_request' ] = False
 		
 		def clear_webscrape_state( ) -> None:
-			'''
-				Purpose:
-				--------
-				Set the deferred clear flag for Web Scraper controls and results.
-
-				Parameters:
-				-----------
-				None
-
-				Returns:
-				--------
-				None
-			'''
+			"""Clear the webscrape state state.
+			
+			Purpose:
+				Supports the Mappy Streamlit application by executing the clear webscrape state
+				workflow. The function preserves the existing UI behavior, session-state
+				interactions, dataframe handling, database access, and service integrations
+				defined by the application code.
+			"""
 			st.session_state[ 'webscrape_clear_request' ] = True
 		
 		col_left, col_right = st.columns( [ 1, 2 ], border=True )
@@ -5343,10 +5378,10 @@ elif mode == 'Environmental':
 										time=int( airnow_timeout ) )
 							
 							if result is not None:
-								st.session_state[ 'env_last_source' ]='AirNow'
-								st.session_state[ 'env_last_result' ]=result or { }
-								st.session_state[ 'env_last_latitude' ]=airnow_latitude
-								st.session_state[ 'env_last_longitude' ]=airnow_longitude
+								st.session_state[ 'env_last_source' ] = 'AirNow'
+								st.session_state[ 'env_last_result' ] = result or { }
+								st.session_state[ 'env_last_latitude' ] = airnow_latitude
+								st.session_state[ 'env_last_longitude' ] = airnow_longitude
 								
 								set_global_coordinates_from_result(
 									airnow_latitude,
@@ -5355,7 +5390,7 @@ elif mode == 'Environmental':
 									description='AirNow coordinate result' )
 								
 								if airnow_zip:
-									st.session_state[ 'zipcode' ]=str( airnow_zip ).strip( )
+									st.session_state[ 'zipcode' ] = str( airnow_zip ).strip( )
 								
 								st.success( 'AirNow request completed.' )
 						
@@ -5365,11 +5400,11 @@ elif mode == 'Environmental':
 				with airnow_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_airnow_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
-						
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
+			
 			# ------------------------------------------------------------------
 			# UV INDEX
 			# ------------------------------------------------------------------
@@ -5477,7 +5512,7 @@ elif mode == 'Environmental':
 						st.session_state[ 'env_last_result' ] = { }
 						st.session_state[ 'env_last_latitude' ] = None
 						st.session_state[ 'env_last_longitude' ] = None
-		
+			
 			# ------------------------------------------------------------------
 			# OPENAQ
 			# ------------------------------------------------------------------
@@ -5594,7 +5629,8 @@ elif mode == 'Environmental':
 						key='env_openaq_countries_parameters_id' )
 				
 				elif openaq_mode == 'Providers':
-					st.caption( 'Returns OpenAQ provider IDs and provider names for later filtering.' )
+					st.caption(
+						'Returns OpenAQ provider IDs and provider names for later filtering.' )
 				
 				else:
 					st.caption( 'Returns OpenAQ parameter IDs, names, display names, and units.' )
@@ -5802,7 +5838,8 @@ elif mode == 'Environmental':
 				purple_btn_c1, purple_btn_c2 = st.columns( 2 )
 				
 				with purple_btn_c1:
-					if st.button( label='Run', icon='🏃', key='env_purple_run', use_container_width=True ):
+					if st.button( label='Run', icon='🏃', key='env_purple_run',
+							use_container_width=True ):
 						try:
 							service = PurpleAir( )
 							
@@ -5900,10 +5937,10 @@ elif mode == 'Environmental':
 								limit=int( envirofacts_limit ),
 								time=int( envirofacts_timeout ) )
 							
-							st.session_state[ 'env_last_source' ]='EnviroFacts'
-							st.session_state[ 'env_last_result' ]=result or { }
-							st.session_state[ 'env_last_latitude' ]=None
-							st.session_state[ 'env_last_longitude' ]=None
+							st.session_state[ 'env_last_source' ] = 'EnviroFacts'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = None
+							st.session_state[ 'env_last_longitude' ] = None
 							st.success( 'EnviroFacts request completed.' )
 						
 						except Exception as ex:
@@ -5912,10 +5949,10 @@ elif mode == 'Environmental':
 				with envirofacts_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_envirofacts_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# FIRMS FIRE / THERMAL ANOMALIES
@@ -5923,15 +5960,15 @@ elif mode == 'Environmental':
 			with st.expander( '🔥 NASA FIRMS', expanded=False ):
 				st.badge( label='About API', color='blue', help=cfg.NASA_FIRMS )
 				firms_source = st.selectbox( 'Source', options=[
-							'MODIS_NRT',
-							'MODIS_SP',
-							'VIIRS_SNPP_NRT',
-							'VIIRS_SNPP_SP',
-							'VIIRS_NOAA20_NRT',
-							'VIIRS_NOAA20_SP',
-							'VIIRS_NOAA21_NRT',
-							'LANDSAT_NRT'
-					], key='env_firms_source' )
+						'MODIS_NRT',
+						'MODIS_SP',
+						'VIIRS_SNPP_NRT',
+						'VIIRS_SNPP_SP',
+						'VIIRS_NOAA20_NRT',
+						'VIIRS_NOAA20_SP',
+						'VIIRS_NOAA21_NRT',
+						'LANDSAT_NRT'
+				], key='env_firms_source' )
 				
 				firms_area_mode = st.selectbox( 'Area Mode', options=[ 'World', 'Bounding Box' ],
 					key='env_firms_area_mode' )
@@ -6030,10 +6067,10 @@ elif mode == 'Environmental':
 								date=firms_date,
 								time=int( firms_timeout ) )
 							
-							st.session_state[ 'env_last_source' ]='FIRMS'
-							st.session_state[ 'env_last_result' ]=result or { }
-							st.session_state[ 'env_last_latitude' ]=firms_center_latitude
-							st.session_state[ 'env_last_longitude' ]=firms_center_longitude
+							st.session_state[ 'env_last_source' ] = 'FIRMS'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = firms_center_latitude
+							st.session_state[ 'env_last_longitude' ] = firms_center_longitude
 							
 							set_global_coordinates_from_result(
 								firms_center_latitude,
@@ -6049,10 +6086,10 @@ elif mode == 'Environmental':
 				with firms_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='btn_env_firms_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
 			
 			# ------------------------------------------------------------------
 			# EONET NATURAL EVENTS
@@ -6222,10 +6259,10 @@ elif mode == 'Environmental':
 								bbox=eonet_bbox,
 								time=int( eonet_timeout ) )
 							
-							st.session_state[ 'env_last_source' ]='EONET'
-							st.session_state[ 'env_last_result' ]=result or { }
-							st.session_state[ 'env_last_latitude' ]=eonet_center_latitude
-							st.session_state[ 'env_last_longitude' ]=eonet_center_longitude
+							st.session_state[ 'env_last_source' ] = 'EONET'
+							st.session_state[ 'env_last_result' ] = result or { }
+							st.session_state[ 'env_last_latitude' ] = eonet_center_latitude
+							st.session_state[ 'env_last_longitude' ] = eonet_center_longitude
 							
 							set_global_coordinates_from_result(
 								eonet_center_latitude,
@@ -6241,10 +6278,10 @@ elif mode == 'Environmental':
 				with eonet_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='env_eonet_clear',
 							use_container_width=True ):
-						st.session_state[ 'env_last_source' ]=''
-						st.session_state[ 'env_last_result' ]={ }
-						st.session_state[ 'env_last_latitude' ]=None
-						st.session_state[ 'env_last_longitude' ]=None
+						st.session_state[ 'env_last_source' ] = ''
+						st.session_state[ 'env_last_result' ] = { }
+						st.session_state[ 'env_last_latitude' ] = None
+						st.session_state[ 'env_last_longitude' ] = None
 		
 		with enviro_c2:
 			# ------------------------------------------------------------------
@@ -6257,7 +6294,7 @@ elif mode == 'Environmental':
 			env_longitude = st.session_state.get( 'env_last_longitude', None )
 			if not env_result:
 				st.info(
-					'No environmental results available. Run one of the Environmental expanders.' )			
+					'No environmental results available. Run one of the Environmental expanders.' )
 			else:
 				if env_source:
 					st.caption( f'Source: {env_source}' )
@@ -6456,7 +6493,8 @@ elif mode == 'Astronomical':
 								st.session_state[ 'astro_last_source' ] = 'Naval Observatory'
 								st.session_state[ 'astro_last_result' ] = result or { }
 								st.session_state[ 'astro_last_latitude' ] = float( naval_latitude )
-								st.session_state[ 'astro_last_longitude' ] = float( naval_longitude )
+								st.session_state[ 'astro_last_longitude' ] = float(
+									naval_longitude )
 								st.session_state[ 'astro_last_url' ] = ''
 								
 								set_global_coordinates_from_result(
@@ -6524,7 +6562,8 @@ elif mode == 'Astronomical':
 						key='astro_space_end_date' )
 				
 				if space_start > space_end:
-					st.warning( 'Start Date is after End Date. The request will fail unless corrected.' )
+					st.warning(
+						'Start Date is after End Date. The request will fail unless corrected.' )
 				
 				space_location = 'ALL'
 				space_catalog = 'ALL'
@@ -7058,7 +7097,8 @@ elif mode == 'Astronomical':
 						key='astro_satellite_resolution_factor' )
 					
 					if satellite_start_date > satellite_end_date:
-						st.warning( 'Start Date is after End Date. Correct the date range before running.' )
+						st.warning(
+							'Start Date is after End Date. Correct the date range before running.' )
 				
 				elif satellite_mode == 'observatories':
 					st.caption(
@@ -7342,11 +7382,11 @@ elif mode == 'Astronomical':
 								radius_unit=astroquery_radius_unit,
 								row_limit=int( astroquery_row_limit ) )
 							
-							st.session_state[ 'astro_last_source' ]='AstroQuery / SIMBAD'
-							st.session_state[ 'astro_last_result' ]=normalize( result ) or { }
-							st.session_state[ 'astro_last_latitude' ]=None
-							st.session_state[ 'astro_last_longitude' ]=None
-							st.session_state[ 'astro_last_url' ]=''
+							st.session_state[ 'astro_last_source' ] = 'AstroQuery / SIMBAD'
+							st.session_state[ 'astro_last_result' ] = normalize( result ) or { }
+							st.session_state[ 'astro_last_latitude' ] = None
+							st.session_state[ 'astro_last_longitude' ] = None
+							st.session_state[ 'astro_last_url' ] = ''
 							st.success( 'AstroQuery request completed.' )
 						
 						except Exception as ex:
@@ -7355,11 +7395,11 @@ elif mode == 'Astronomical':
 				with astroquery_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='astro_astroquery_clear',
 							use_container_width=True ):
-						st.session_state[ 'astro_last_source' ]=''
-						st.session_state[ 'astro_last_result' ]={ }
-						st.session_state[ 'astro_last_latitude' ]=None
-						st.session_state[ 'astro_last_longitude' ]=None
-						st.session_state[ 'astro_last_url' ]=''
+						st.session_state[ 'astro_last_source' ] = ''
+						st.session_state[ 'astro_last_result' ] = { }
+						st.session_state[ 'astro_last_latitude' ] = None
+						st.session_state[ 'astro_last_longitude' ] = None
+						st.session_state[ 'astro_last_url' ] = ''
 			
 			# ------------------------------------------------------------------
 			# STAR MAP
@@ -7585,7 +7625,7 @@ elif mode == 'Astronomical':
 			astro_url = st.session_state.get( 'astro_last_url', '' )
 			
 			if not astro_result:
-				st.info(  'No astronomical results available.' )
+				st.info( 'No astronomical results available.' )
 			
 			else:
 				if astro_source:
@@ -7768,7 +7808,7 @@ elif mode == 'Celestial Map':
 			longitude=float( celestial_longitude ),
 			location=celestial_location,
 			zoom=int( celestial_zoom ) )
-		
+
 # ==============================================================================
 # GEOLOGICAL MODE
 # ==============================================================================
@@ -7923,13 +7963,13 @@ elif mode == 'Geological':
 								longitude=quake_longitude, max_radius_km=quake_radius,
 								time=int( quake_timeout ) )
 							
-							st.session_state[ 'geo_last_source' ]='USGS Earthquakes'
-							st.session_state[ 'geo_last_result' ]=result or { }
-							st.session_state[ 'geo_last_latitude' ]=quake_latitude
-							st.session_state[ 'geo_last_longitude' ]=quake_longitude
+							st.session_state[ 'geo_last_source' ] = 'USGS Earthquakes'
+							st.session_state[ 'geo_last_result' ] = result or { }
+							st.session_state[ 'geo_last_latitude' ] = quake_latitude
+							st.session_state[ 'geo_last_longitude' ] = quake_longitude
 							
 							if quake_radius is not None:
-								st.session_state[ 'radius' ]=float( quake_radius )
+								st.session_state[ 'radius' ] = float( quake_radius )
 							
 							set_global_coordinates_from_result( quake_latitude, quake_longitude,
 								location=global_location,
@@ -7943,11 +7983,11 @@ elif mode == 'Geological':
 				with quake_btn_c2:
 					if st.button( label='Clear', icon='🧹', key='geo_quake_clear',
 							use_container_width=True ):
-						st.session_state[ 'geo_last_source' ]=''
-						st.session_state[ 'geo_last_result' ]={ }
-						st.session_state[ 'geo_last_latitude' ]=None
-						st.session_state[ 'geo_last_longitude' ]=None
-						st.session_state[ 'geo_last_image_path' ]=''
+						st.session_state[ 'geo_last_source' ] = ''
+						st.session_state[ 'geo_last_result' ] = { }
+						st.session_state[ 'geo_last_latitude' ] = None
+						st.session_state[ 'geo_last_longitude' ] = None
+						st.session_state[ 'geo_last_image_path' ] = ''
 			
 			# ------------------------------------------------------------------
 			# GLOBAL IMAGERY
@@ -8088,7 +8128,8 @@ elif mode == 'Geological':
 						key='geo_imagery_output_name' )
 					
 					imagery_center_latitude = (
-							                          float( imagery_south ) + float( imagery_north )
+							                          float( imagery_south ) + float(
+						                          imagery_north )
 					                          ) / 2.0
 					
 					imagery_center_longitude = (
@@ -8671,38 +8712,35 @@ elif mode == 'Generative':
 			CHAT_REASONING_EFFORTS = [ 'minimal', 'low', 'medium', 'high' ]
 			
 			def _clear_chat_state( ) -> None:
-				'''
-					Purpose:
-					--------
-					Flag the ChatGPT generation state for reset on the next rerun.
-
-					Parameters:
-					-----------
-					None
-
-					Returns:
-					--------
-					None
-				'''
+				"""Clear the chat state state.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the clear chat state
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				"""
 				st.session_state[ 'chat_clear_request' ] = True
 			
 			def _normalize_chat_domains( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize newline-, comma-, or semicolon-delimited domain entries into
-					clean domains for the OpenAI web-search wrapper argument.
-
-					Parameters:
-					-----------
-					value (object):
-						Domain text supplied by the user.
-
-					Returns:
-					--------
-					list[str]:
-						Canonical, de-duplicated domain names.
-				'''
+				"""Normalize chat domains values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize chat domains
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_chat_domains` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_chat_domains` workflow.
+				
+				Raises:
+					Exception: Propagates validation, UI, data, database, or provider errors
+						raised by the existing implementation.
+				"""
 				text = str( value or '' ).strip( )
 				
 				if not text:
@@ -8799,13 +8837,15 @@ elif mode == 'Generative':
 				p_row5 = st.columns( 2 )
 				
 				with p_row1[ 0 ]:
-					_chat_models = ( cfg.GPT_MODELS
-					                 if hasattr( cfg, 'GPT_MODELS' ) and cfg.GPT_MODELS
-					                 else [ 'gpt-5.4', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1' ] )
+					_chat_models = (cfg.GPT_MODELS
+					                if hasattr( cfg, 'GPT_MODELS' ) and cfg.GPT_MODELS
+					                else [ 'gpt-5.4', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
+					                       'gpt-4.1' ])
 					
 					chat_model = _model_selector( key_prefix='chat', label='Model',
 						options=_chat_models,
-						default_model=( 'gpt-5-mini' if 'gpt-5-mini' in _chat_models else _chat_models[ 0 ] ), )
+						default_model=(
+							'gpt-5-mini' if 'gpt-5-mini' in _chat_models else _chat_models[ 0 ]), )
 				
 				with p_row1[ 1 ]:
 					chat_temperature = st.slider( 'Temperature', min_value=0.0, max_value=2.0,
@@ -8828,9 +8868,9 @@ elif mode == 'Generative':
 					chat_json_mode = st.checkbox( 'JSON Mode',
 						value=bool( st.session_state.get( 'chat_json_mode', False ) ),
 						key='chat_json_mode',
-						help=( 'Current wrapper behavior adds JSON-only instructions. '
-								'A later Chat class drop-in should wire this to Responses '
-								'API text.format.' ) )
+						help=('Current wrapper behavior adds JSON-only instructions. '
+						      'A later Chat class drop-in should wire this to Responses '
+						      'API text.format.') )
 				
 				with p_row4[ 0 ]:
 					chat_reasoning = st.checkbox( 'Reasoning',
@@ -8854,7 +8894,7 @@ elif mode == 'Generative':
 				
 				_chat_supports_reasoning = (
 						str( chat_model ).strip( ).lower( ).startswith( 'gpt-5' )
-						or str( chat_model ).strip( ).lower( ).startswith( 'o' ) )
+						or str( chat_model ).strip( ).lower( ).startswith( 'o' ))
 				
 				if _chat_supports_reasoning and chat_reasoning:
 					chat_reasoning_effort = st.selectbox( 'Reasoning Effort',
@@ -8960,38 +9000,35 @@ elif mode == 'Generative':
 			]
 			
 			def _clear_grok_state( ) -> None:
-				'''
-					Purpose:
-					--------
-					Flag the Grok generation state for reset on the next rerun.
-
-					Parameters:
-					-----------
-					None
-
-					Returns:
-					--------
-					None
-				'''
+				"""Clear the grok state state.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the clear grok state
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				"""
 				st.session_state[ 'grok_clear_request' ] = True
 			
 			def _normalize_grok_domains( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize newline-, comma-, or semicolon-delimited domain entries into
-					clean xAI web-search allowed domains.
-
-					Parameters:
-					-----------
-					value (object):
-						Domain text supplied by the user.
-
-					Returns:
-					--------
-					list[str]:
-						Canonical, de-duplicated domain names.
-				'''
+				"""Normalize grok domains values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize grok domains
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_grok_domains` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_grok_domains` workflow.
+				
+				Raises:
+					Exception: Propagates validation, UI, data, database, or provider errors
+						raised by the existing implementation.
+				"""
 				text = str( value or '' ).strip( )
 				
 				if not text:
@@ -9028,21 +9065,20 @@ elif mode == 'Generative':
 				return values
 			
 			def _normalize_grok_stop_lines( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize stop sequences entered one per line.
-
-					Parameters:
-					-----------
-					value (object):
-						Text value supplied by the stop-sequence textarea.
-
-					Returns:
-					--------
-					list[str]:
-						Non-empty stop sequences.
-				'''
+				"""Normalize grok stop lines values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize grok stop
+					lines workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_grok_stop_lines` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_grok_stop_lines` workflow.
+				"""
 				text = str( value or '' )
 				
 				if not text.strip( ):
@@ -9366,38 +9402,35 @@ elif mode == 'Generative':
 		# -------- CLAUDE
 		with st.expander( label='Claude', expanded=False ):
 			def _clear_claude_state( ) -> None:
-				'''
-					Purpose:
-					--------
-					Flag the Claude generation state for reset on the next rerun.
-
-					Parameters:
-					-----------
-					None
-
-					Returns:
-					--------
-					None
-				'''
+				"""Clear the claude state state.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the clear claude state
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				"""
 				st.session_state[ 'claude_clear_request' ] = True
 			
 			def _normalize_claude_domains( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize newline-, comma-, or semicolon-delimited Claude web-search
-					domain entries.
-
-					Parameters:
-					-----------
-					value (object):
-						Domain text supplied by the user.
-
-					Returns:
-					--------
-					list[str]:
-						Canonical, de-duplicated domain names.
-				'''
+				"""Normalize claude domains values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize claude domains
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_claude_domains` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_claude_domains` workflow.
+				
+				Raises:
+					Exception: Propagates validation, UI, data, database, or provider errors
+						raised by the existing implementation.
+				"""
 				text = str( value or '' ).strip( )
 				
 				if not text:
@@ -9433,21 +9466,20 @@ elif mode == 'Generative':
 				return values
 			
 			def _normalize_claude_stop_lines( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize stop sequences entered one per line.
-
-					Parameters:
-					-----------
-					value (object):
-						Stop-sequence textarea value.
-
-					Returns:
-					--------
-					list[str]:
-						Non-empty stop sequences.
-				'''
+				"""Normalize claude stop lines values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize claude stop
+					lines workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_claude_stop_lines` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_claude_stop_lines` workflow.
+				"""
 				text = str( value or '' )
 				
 				if not text.strip( ):
@@ -9698,38 +9730,35 @@ elif mode == 'Generative':
 			]
 			
 			def _clear_gemini_state( ) -> None:
-				'''
-					Purpose:
-					--------
-					Flag the Gemini generation state for reset on the next rerun.
-
-					Parameters:
-					-----------
-					None
-
-					Returns:
-					--------
-					None
-				'''
+				"""Clear the gemini state state.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the clear gemini state
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				"""
 				st.session_state[ 'gemini_clear_request' ] = True
 			
 			def _normalize_gemini_domains( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize newline-, comma-, or semicolon-delimited Gemini grounding
-					domain entries.
-
-					Parameters:
-					-----------
-					value (object):
-						Domain text supplied by the user.
-
-					Returns:
-					--------
-					list[str]:
-						Canonical, de-duplicated domain names.
-				'''
+				"""Normalize gemini domains values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize gemini domains
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_gemini_domains` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_gemini_domains` workflow.
+				
+				Raises:
+					Exception: Propagates validation, UI, data, database, or provider errors
+						raised by the existing implementation.
+				"""
 				text = str( value or '' ).strip( )
 				
 				if not text:
@@ -9765,21 +9794,20 @@ elif mode == 'Generative':
 				return values
 			
 			def _normalize_gemini_stop_lines( value: object ) -> list[ str ]:
-				'''
-					Purpose:
-					--------
-					Normalize Gemini stop sequences entered one per line.
-
-					Parameters:
-					-----------
-					value (object):
-						Stop-sequence textarea value.
-
-					Returns:
-					--------
-					list[str]:
-						Non-empty stop sequences.
-				'''
+				"""Normalize gemini stop lines values.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the normalize gemini stop
+					lines workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				
+				Args:
+					value: object value used by the `_normalize_gemini_stop_lines` workflow.
+				
+				Returns:
+					list[str]: Result produced by the `_normalize_gemini_stop_lines` workflow.
+				"""
 				text = str( value or '' )
 				
 				if not text.strip( ):
@@ -10132,19 +10160,14 @@ elif mode == 'Generative':
 		# -------- Mistral
 		with st.expander( label='Mistral', expanded=False ):
 			def _clear_mistral_state( ) -> None:
-				'''
-					Purpose:
-					--------
-					Flag the Mistral generation state for reset on the next rerun.
-
-					Parameters:
-					-----------
-					None
-
-					Returns:
-					--------
-					None
-				'''
+				"""Clear the mistral state state.
+				
+				Purpose:
+					Supports the Mappy Streamlit application by executing the clear mistral state
+					workflow. The function preserves the existing UI behavior, session-state
+					interactions, dataframe handling, database access, and service integrations
+					defined by the application code.
+				"""
 				st.session_state[ 'mistral_clear_request' ] = True
 			
 			if 'mistral_clear_request' not in st.session_state:
@@ -10532,16 +10555,16 @@ elif mode == 'Data Management':
 					insert_data = { }
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
-							insert_data[ column ]=st.number_input( column, step=1,
+							insert_data[ column ] = st.number_input( column, step=1,
 								key=f'ins_{table}_{column}' )
 						elif 'REAL' in col_type:
-							insert_data[ column ]=st.number_input( column, format='%.6f',
+							insert_data[ column ] = st.number_input( column, format='%.6f',
 								key=f'ins_{table}_{column}' )
 						elif 'BOOL' in col_type:
-							insert_data[ column ]=1 if st.checkbox( column,
+							insert_data[ column ] = 1 if st.checkbox( column,
 								key=f'ins_{table}_{column}' ) else 0
 						else:
-							insert_data[ column ]=st.text_input( column,
+							insert_data[ column ] = st.text_input( column,
 								key=f'ins_{table}_{column}' )
 					
 					if st.button( 'Insert Row', key=f'insert_row_{table}',
@@ -10572,21 +10595,21 @@ elif mode == 'Data Management':
 					for column, col_type in type_map.items( ):
 						if 'INT' in col_type:
 							val = st.number_input( column, step=1, key=f'upd_{table}_{column}' )
-							update_data[ column ]=val
+							update_data[ column ] = val
 						
 						elif 'REAL' in col_type:
 							val = st.number_input( column, format='%.6f',
 								key=f'upd_{table}_{column}' )
-							update_data[ column ]=val
+							update_data[ column ] = val
 						
 						elif 'BOOL' in col_type:
 							val = 1 if st.checkbox( column,
 								key=f'upd_{table}_{column}' ) else 0
-							update_data[ column ]=val
+							update_data[ column ] = val
 						
 						else:
 							val = st.text_input( column, key=f'upd_{table}_{column}' )
-							update_data[ column ]=val
+							update_data[ column ] = val
 					
 					if st.button( 'Update Row', key=f'update_row_{table}',
 							use_container_width=True ):
@@ -10763,8 +10786,9 @@ elif mode == 'Data Management':
 							st.data_editor( df_locations, key='reports_geocode_locations',
 								use_container_width=True, disabled=True )
 					
-					action_c1, action_c2, action_c3, action_c4 = st.columns( [ 0.25, 0.25, 0.25, 0.25 ] )
-
+					action_c1, action_c2, action_c3, action_c4 = st.columns(
+						[ 0.25, 0.25, 0.25, 0.25 ] )
+					
 					with action_c1:
 						if st.button( 'Preview Geocoding', key='reports_geocode_preview_button',
 								width='stretch' ):
@@ -10797,7 +10821,8 @@ elif mode == 'Data Management':
 								width='stretch',
 								disabled=not confirm_update_coordinates ):
 							try:
-								df_update_preview = preview_report_coordinate_updates( table_name=table,
+								df_update_preview = preview_report_coordinate_updates(
+									table_name=table,
 									geocoder=geocoder, places=places, use_places=use_places,
 									limit=location_limit )
 								
@@ -10814,7 +10839,8 @@ elif mode == 'Data Management':
 									}
 									st.rerun( )
 								
-								status_series = df_update_preview[ 'Status' ].astype( str ).str.lower( )
+								status_series = df_update_preview[ 'Status' ].astype(
+									str ).str.lower( )
 								matched_count = int( (status_series == 'matched').sum( ) )
 								failed_count = int( (status_series == 'failed').sum( ) )
 								skipped_count = int( (status_series == 'skipped').sum( ) )
@@ -10848,7 +10874,8 @@ elif mode == 'Data Management':
 								}
 								
 								if updated_count:
-									st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+									st.session_state[
+										'df_reports_geocode_preview' ] = pd.DataFrame( )
 								
 								st.rerun( )
 							
@@ -10875,7 +10902,8 @@ elif mode == 'Data Management':
 						else:
 							st.info( last_update.get( 'Message', '' ) )
 					
-					df_preview = st.session_state.get( 'df_reports_geocode_preview', pd.DataFrame( ) )
+					df_preview = st.session_state.get( 'df_reports_geocode_preview',
+						pd.DataFrame( ) )
 					
 					if df_preview is not None and not df_preview.empty:
 						status_series = df_preview[ 'Status' ].astype( str ).str.lower( )
@@ -10926,7 +10954,8 @@ elif mode == 'Data Management':
 								}
 								
 								if updated_count:
-									st.session_state[ 'df_reports_geocode_preview' ] = pd.DataFrame( )
+									st.session_state[
+										'df_reports_geocode_preview' ] = pd.DataFrame( )
 								
 								st.rerun( )
 		
