@@ -1,0 +1,141 @@
+site_name: Mappy Documentation
+site_description: Documentation for Mappy, a Python geospatial toolkit for Google Maps workflows, enrichment, mapping, fetching, and content generation.
+site_author: Terry D. Eppler
+site_url: https://is-leeroy-jenkins.github.io/Mappy/
+
+repo_url: https://github.com/is-leeroy-jenkins/Mappy
+repo_name: is-leeroy-jenkins/Mappy
+edit_uri: edit/main/docs/
+
+copyright: Copyright &copy; 2022 Terry D. Eppler
+
+theme:
+  name: material
+  language: en
+  favicon: img/favicon.ico
+  logo: img/favicon.ico
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.highlight
+    - search.suggest
+    - search.share
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+  palette:
+    - scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+extra_css:
+  - assets/css/extra.css
+
+extra_javascript:
+  - assets/js/extra.js
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - .
+          options:
+            docstring_style: google
+            docstring_section_style: table
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            show_category_heading: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            merge_init_into_class: true
+            inherited_members: true
+            filters:
+              - "!^_"
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      title: Page contents
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - User Guide: user-guide.md
+  - Development: development.md
+  - API Reference:
+      - Overview: api/index.md
+      - Application: api/app.md
+      - Caching: api/caches.md
+      - Configuration: api/config.md
+      - Core Models: api/core.md
+      - Distance Matrix: api/distances.md
+      - Excel Enrichment: api/excel.md
+      - Exceptions: api/exceptions.md
+      - External Fetchers: api/fetchers.md
+      - Content Generators: api/generators.md
+      - Geocoding: api/geocode.md
+      - Maps Gateway: api/maps.md
+      - Places: api/places.md
+      - Rates: api/rates.md
+      - Static Maps: api/staticmaps.md
+      - Time Zones: api/timezones.md
+  - GitHub Pages: github-pages.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/is-leeroy-jenkins/Mappy
+      name: Mappy on GitHub
