@@ -7,19 +7,19 @@
   &nbsp;&bull;&nbsp;
   <a href="#-features">Features</a>
   &nbsp;&bull;&nbsp;
-  <a href="#-application-modes">Application Modes</a>
+  <a href="#-application-modes">Modes</a>
   &nbsp;&bull;&nbsp;
   <a href="#-installation">Installation</a>
   &nbsp;&bull;&nbsp;
   <a href="#-configuration">Configuration</a>
   &nbsp;&bull;&nbsp;
-  <a href="#-running-the-streamlit-app">Run App</a>
+  <a href="#-running-the-streamlit-app">Run</a>
   &nbsp;&bull;&nbsp;
-  <a href="#-quick-start-python-framework">Quick Start</a>
+  <a href="#-quick-start-python-framework">Start</a>
   &nbsp;&bull;&nbsp;
-  <a href="#-data-management">Data Management</a>
+  <a href="#-data-management">Data</a>
   &nbsp;&bull;&nbsp;
-  <a href="#-api-key-references">API Keys</a>
+  <a href="#-api-key-references">API</a>
   &nbsp;&bull;&nbsp;
   <a href="#-license">License</a>
 </p>
