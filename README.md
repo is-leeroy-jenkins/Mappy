@@ -102,7 +102,7 @@ The Streamlit application is organized around the following modes.
 | **Data Upload**     | Load Excel or CSV files into the application session.                                  | Working dataframe and preview.                                   |
 | **Data Management** | Manage SQLite tables, geocode missing report coordinates, inspect schema, and run SQL. | Updated tables, coordinate updates, schema views, query results. |
 
-## 🧩 Streamlit Sidebar
+## 🧩 Sidebar
 
 The application sidebar provides the main operating controls.
 
