@@ -1,4 +1,4 @@
-![](./img/mappy_logo.png)
+![](./img/project_mappy.png)
 ___
 ## ✨ Features
 

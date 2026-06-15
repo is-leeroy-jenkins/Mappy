@@ -120,14 +120,14 @@ nav:
       - Application: api/app.md
       - Caching: api/caches.md
       - Configuration: api/config.md
-      - Core Models: api/core.md
+      - Base Models: api/core.md
       - Distance Matrix: api/distances.md
-      - Excel Enrichment: api/excel.md
+      - Excel Data: api/excel.md
       - Exceptions: api/exceptions.md
-      - External Fetchers: api/fetchers.md
-      - Content Generators: api/generators.md
+      - Fetchers: api/fetchers.md
+      - AI Generators: api/generators.md
       - Geocoding: api/geocode.md
-      - Maps Gateway: api/maps.md
+      - Google Maps: api/maps.md
       - Places: api/places.md
       - Rates: api/rates.md
       - Static Maps: api/staticmaps.md

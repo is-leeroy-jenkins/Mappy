@@ -1,4 +1,6 @@
-# Architecture
+![](./img/mappy-architecture.png)
+
+___
 
 Mappy is a Python geospatial toolkit and Streamlit application for Google Maps workflows, location
 enrichment, route analysis, static map generation, external data retrieval, and generated-content
