@@ -1,70 +1,53 @@
 /*
-  ******************************************************************************************
-      Assembly:                Mappy Documentation
-      Filename:                extra.css
-      Author:                  Terry D. Eppler
-      Created:                 06-14-2026
-
-      Purpose:
-        Provides project-specific Material for MkDocs styling for the Mappy documentation
-        site. The stylesheet reinforces the dark documentation theme, improves readable
-        content width, normalizes cards/tables/admonitions, and adds stable styling for
-        API reference pages generated from Google-style Python docstrings.
-
-      Usage:
-        Add this file to docs/assets/css/extra.css and reference it from mkdocs.yml:
-
-            extra_css:
-              - assets/css/extra.css
-  ******************************************************************************************
-*/
+ * ======================================================================================
+ * Mappy Documentation Theme
+ * ======================================================================================
+ * Purpose:
+ *     Provides a dark-mode Material for MkDocs theme layer for the Mappy documentation
+ *     site. The stylesheet preserves the dark blue header, widens the content area,
+ *     improves API reference readability, styles source-generated mkdocstrings blocks,
+ *     and supports the optional high-value JavaScript enhancements in mappy.js.
+ * ======================================================================================
+ */
 :root
 {
-	--mappy-blue: #0078AC;
-	--mappy-blue-dark: #023770;
-	--mappy-blue-deep: #00254C;
 	--mappy-bg: #141414;
-	--mappy-surface: #282828;
-	--mappy-surface-2: #333333;
-	--mappy-surface-3: #414141;
+	--mappy-surface: #1F1F1F;
+	--mappy-surface-2: #2A2A2A;
+	--mappy-surface-3: #343434;
 	--mappy-border: #565557;
-	--mappy-border-soft: rgba(255, 255, 255, 0.12);
+	--mappy-border-soft: rgba(86, 85, 87, 0.65);
+	--mappy-blue: #0078FC;
+	--mappy-blue-dark: #023770;
+	--mappy-blue-darker: #00254C;
+	--mappy-blue-light: #4DA3FF;
+	--mappy-blue-hover: #7DBCFF;
+	--mappy-blue-muted: rgba(0, 120, 252, 0.16);
+	--mappy-blue-border: rgba(77, 163, 255, 0.45);
 	--mappy-text: #FFFFFF;
-	--mappy-text-soft: #D7D7D7;
-	--mappy-text-muted: #B8B8B8;
-	--mappy-code-bg: #1D1F24;
+	--mappy-muted: #C7C7C7;
+	--mappy-code-bg: #101820;
+	--mappy-code-border: rgba(77, 163, 255, 0.28);
 	--mappy-radius: 14px;
 	--mappy-radius-sm: 8px;
-	--mappy-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+	--mappy-shadow: 0 0.45rem 1.35rem rgba(0, 0, 0, 0.35);
 }
 
+/* ======================================================================================
+   Material Theme Overrides
+   ====================================================================================== */
 [data-md-color-scheme='slate']
 {
 	--md-default-bg-color: var(--mappy-bg);
 	--md-default-fg-color: var(--mappy-text);
-	--md-default-fg-color--light: var(--mappy-text-soft);
-	--md-default-fg-color--lighter: var(--mappy-text-muted);
+	--md-default-fg-color--light: var(--mappy-muted);
 	--md-primary-fg-color: var(--mappy-blue-dark);
-	--md-primary-fg-color--dark: var(--mappy-blue-deep);
 	--md-accent-fg-color: var(--mappy-blue);
-	--md-typeset-a-color: #66B2FF;
+	--md-typeset-a-color: var(--mappy-blue-light);
 	--md-code-bg-color: var(--mappy-code-bg);
-	--md-code-fg-color: #F2F5F8;
-	--md-admonition-bg-color: var(--mappy-surface);
-	--md-footer-bg-color: #101010;
-	--md-footer-bg-color--dark: #0B0B0B;
 }
 
-html
-{
-	scroll-behavior: smooth;
-}
-
-body
-{
-	background: var(--mappy-bg);
-}
-
+/* Preserve dark blue header and tabs. */
 .md-header,
 .md-tabs
 {
@@ -73,7 +56,32 @@ body
 
 .md-header
 {
-	box-shadow: var(--mappy-shadow);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.md-tabs
+{
+	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.md-header__title,
+.md-header__topic,
+.md-tabs__link
+{
+	color: #FFFFFF;
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover
+{
+	color: #FFFFFF;
+	opacity: 1;
+}
+
+/* Widen page layout. */
+.md-grid
+{
+	max-width: 92rem;
 }
 
 .md-main__inner
@@ -84,28 +92,32 @@ body
 .md-content__inner
 {
 	max-width: none;
-	padding-bottom: 3rem;
 }
 
-.md-sidebar--primary .md-sidebar__scrollwrap,
-.md-sidebar--secondary .md-sidebar__scrollwrap
+/* Sidebar and footer. */
+.md-sidebar
 {
-	background: transparent;
+	scrollbar-color: var(--mappy-blue-dark) var(--mappy-bg);
 }
 
-.md-nav__title,
-.md-nav__item .md-nav__link--active
+.md-nav__link--active,
+.md-nav__link:focus,
+.md-nav__link:hover
 {
-	color: var(--mappy-text);
+	color: var(--mappy-blue-light);
 }
 
-.md-nav__link:is(:focus, :hover)
+.md-footer
 {
-	color: #82C2FF;
+	border-top: 1px solid var(--mappy-border);
 }
 
+/* ======================================================================================
+   Typography
+   ====================================================================================== */
 .md-typeset
 {
+	color: var(--mappy-text);
 	font-size: 0.84rem;
 	line-height: 1.68;
 }
@@ -116,77 +128,179 @@ body
 .md-typeset h4
 {
 	font-weight: 700;
-	letter-spacing: -0.015em;
+	letter-spacing: -0.01em;
 }
 
 .md-typeset h1
 {
-	margin-bottom: 1.2rem;
+	color: #FFFFFF;
 }
 
 .md-typeset h2
 {
-	border-bottom: 1px solid var(--mappy-border-soft);
+	margin-top: 2.2rem;
 	padding-bottom: 0.35rem;
+	border-bottom: 1px solid var(--mappy-border);
+	color: #FFFFFF;
 }
 
-.md-typeset h2[id],
-.md-typeset h3[id],
-.md-typeset h4[id]
+.md-typeset h3
 {
-	scroll-margin-top: 5.2rem;
+	color: #E8F2FF;
+}
+
+.md-typeset h4
+{
+	color: #D7E9FF;
+}
+
+.md-typeset p,
+.md-typeset li
+{
+	color: var(--mappy-text);
+}
+
+.md-typeset small,
+.md-typeset figcaption
+{
+	color: var(--mappy-muted);
 }
 
 .md-typeset a
 {
-	text-decoration-thickness: 0.08em;
-	text-underline-offset: 0.18em;
+	color: var(--mappy-blue-light);
 }
 
-.md-typeset strong
+.md-typeset a:hover
 {
+	color: var(--mappy-blue-hover);
+}
+
+/* ======================================================================================
+   Tables
+   ====================================================================================== */
+.md-typeset table:not([class])
+{
+	background-color: var(--mappy-surface);
+	border: 1px solid var(--mappy-border);
+	border-radius: var(--mappy-radius);
+	overflow: hidden;
+	box-shadow: 0 0.25rem 0.9rem rgba(0, 0, 0, 0.18);
+}
+
+.md-typeset table:not([class]) th
+{
+	background-color: var(--mappy-blue-dark);
 	color: #FFFFFF;
+	font-weight: 700;
 }
 
-.md-typeset hr
+.md-typeset table:not([class]) td
 {
-	border-bottom-color: var(--mappy-border-soft);
+	border-top: 1px solid var(--mappy-blue-darker);
+	color: var(--mappy-text);
 }
 
+.md-typeset table:not([class]) tr:nth-child(even) td
+{
+	background-color: rgba(255, 255, 255, 0.025);
+}
+
+.mappy-table-wrapper
+{
+	width: 100%;
+	overflow-x: auto;
+	margin: 1rem 0;
+	border-radius: var(--mappy-radius);
+}
+
+/* ======================================================================================
+   Code Blocks
+   ====================================================================================== */
+.md-typeset code
+{
+	border-radius: 6px;
+}
+
+.md-typeset pre
+{
+	border: 1px solid var(--mappy-code-border);
+	border-radius: var(--mappy-radius-sm);
+	background-color: var(--mappy-code-bg);
+}
+
+.md-typeset pre > code
+{
+	background-color: var(--mappy-code-bg);
+	font-size: 0.78rem;
+	line-height: 1.62;
+}
+
+.mappy-code-block
+{
+	position: relative;
+}
+
+.mappy-code-badge
+{
+	position: absolute;
+	top: 0.45rem;
+	right: 0.55rem;
+	z-index: 2;
+	padding: 0.12rem 0.45rem;
+	border: 1px solid var(--mappy-blue-border);
+	border-radius: 999px;
+	background: rgba(2, 55, 112, 0.78);
+	color: #FFFFFF;
+	font-size: 0.62rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+/* ======================================================================================
+   Admonitions and Details
+   ====================================================================================== */
 .md-typeset .admonition,
 .md-typeset details
 {
+	border-color: var(--mappy-blue-border);
 	border-radius: var(--mappy-radius);
 	background-color: var(--mappy-surface);
-	box-shadow: none;
-	border-color: var(--mappy-border);
-	overflow: hidden;
 }
 
 .md-typeset .admonition-title,
 .md-typeset summary
 {
-	background-color: rgba(0, 120, 252, 0.12);
+	background-color: var(--mappy-blue-muted);
+	color: #FFFFFF;
 }
 
+.md-typeset details[open]
+{
+	box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+/* ======================================================================================
+   Cards and Buttons
+   ====================================================================================== */
 .md-typeset .grid.cards > ul > li
 {
+	border: 1px solid var(--mappy-border-soft);
 	border-radius: var(--mappy-radius);
-	background: linear-gradient(180deg, var(--mappy-surface-2), var(--mappy-surface));
-	border: 1px solid var(--mappy-border);
-	box-shadow: none;
+	background-color: var(--mappy-surface);
+	box-shadow: 0 0.25rem 0.9rem rgba(0, 0, 0, 0.18);
 }
 
 .md-typeset .grid.cards > ul > li:hover
 {
-	border-color: rgba(102, 178, 255, 0.72);
+	border-color: var(--mappy-blue-border);
 	box-shadow: var(--mappy-shadow);
 }
 
 .md-typeset .md-button
 {
-	border-radius: var(--mappy-radius-sm);
-	border-color: var(--mappy-blue);
+	border-radius: 999px;
 }
 
 .md-typeset .md-button--primary
@@ -196,156 +310,324 @@ body
 	color: #FFFFFF;
 }
 
-.md-typeset table:not([class])
+/* ======================================================================================
+   mkdocstrings API Reference
+   ====================================================================================== */
+.doc-object
 {
-	border-collapse: separate;
-	border-spacing: 0;
-	border: 1px solid var(--mappy-border);
-	border-radius: var(--mappy-radius);
-	overflow: hidden;
-	box-shadow: none;
+	margin: 1.15rem 0;
+	padding-left: 0.85rem;
+	border-left: 3px solid var(--mappy-blue);
 }
 
-.md-typeset table:not([class]) th
+.doc-object .doc-object
 {
-	background-color: var(--mappy-blue-dark);
-	color: #FFFFFF;
-	border-bottom: 1px solid var(--mappy-border);
+	margin-left: 0.35rem;
+	border-left-color: rgba(77, 163, 255, 0.38);
 }
 
-.md-typeset table:not([class]) td
+.doc-heading
 {
-	border-top: 1px solid var(--mappy-blue-deep);
-}
-
-.md-typeset table:not([class]) tr:nth-child(even) td
-{
-	background-color: rgba(255, 255, 255, 0.025);
-}
-
-.md-typeset code
-{
-	border-radius: 0.38rem;
-	padding: 0.12rem 0.35rem;
-}
-
-.md-typeset pre
-{
-	border-radius: var(--mappy-radius);
-	border: 1px solid var(--mappy-border-soft);
-	background-color: var(--mappy-code-bg);
-}
-
-.md-typeset pre > code
-{
-	font-size: 0.78rem;
-	line-height: 1.62;
-}
-
-.highlight .filename,
-.md-typeset .highlighttable .filename
-{
-	border-top-left-radius: var(--mappy-radius);
-	border-top-right-radius: var(--mappy-radius);
-	background-color: var(--mappy-surface-3);
-	color: var(--mappy-text);
-}
-
-.doc.doc-object
-{
-	border-left: 3px solid rgba(0, 120, 252, 0.45);
-	padding-left: 1rem;
-	margin-bottom: 1.6rem;
-}
-
-.doc.doc-object .doc-heading
-{
-	background: rgba(0, 120, 252, 0.10);
-	border: 1px solid var(--mappy-border-soft);
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	background-color: rgba(0, 120, 252, 0.08);
+	border: 1px solid rgba(0, 120, 252, 0.25);
 	border-radius: var(--mappy-radius-sm);
-	padding: 0.6rem 0.8rem;
+	padding: 0.45rem 0.65rem;
+	color: #FFFFFF;
 }
 
-.doc.doc-object .doc-label
+.doc-heading code
+{
+	background-color: transparent;
+	color: #FFFFFF;
+	font-weight: 700;
+}
+
+.doc-label
 {
 	border-radius: 999px;
 }
 
-.doc.doc-contents
+.doc-contents
 {
 	padding-left: 0.2rem;
 }
 
-.md-typeset .tabbed-set
+.doc-md-description
 {
-	border-radius: var(--mappy-radius);
+	color: var(--mappy-text);
 }
 
-.md-typeset .tabbed-labels
+.doc-signature
 {
-	background-color: var(--mappy-surface);
-	border-radius: var(--mappy-radius) var(--mappy-radius) 0 0;
+	background-color: var(--mappy-code-bg);
+	border: 1px solid var(--mappy-code-border);
+	border-radius: var(--mappy-radius-sm);
+	padding: 0.5rem 0.65rem;
 }
 
-.md-typeset .tabbed-content
+/* ======================================================================================
+   Mappy JavaScript Feature Hooks
+   ====================================================================================== */
+.mappy-back-to-top
 {
-	border: 1px solid var(--mappy-border-soft);
-	border-top: none;
-	border-radius: 0 0 var(--mappy-radius) var(--mappy-radius);
-	padding: 0.8rem 1rem;
-}
-
-.md-typeset img
-{
-	border-radius: var(--mappy-radius);
-}
-
-.md-typeset figure img
-{
-	background-color: var(--mappy-surface);
-	border: 1px solid var(--mappy-border-soft);
+	position: fixed;
+	right: 1.25rem;
+	bottom: 1.25rem;
+	z-index: 20;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 0.55rem 0.85rem;
+	border: 1px solid rgba(77, 163, 255, 0.65);
+	border-radius: 999px;
+	background: rgba(2, 55, 112, 0.96);
+	color: #FFFFFF;
+	font-weight: 700;
+	cursor: pointer;
 	box-shadow: var(--mappy-shadow);
 }
 
-.md-typeset figcaption
+.mappy-back-to-top--visible
 {
-	color: var(--mappy-text-muted);
+	display: inline-flex;
 }
 
-.mappy-hero
+.mappy-back-to-top:hover,
+.mappy-back-to-top:focus
 {
-	padding: 1.2rem 1.4rem;
+	background: var(--mappy-blue);
+	outline: none;
+}
+
+.mappy-api-tools
+{
+	margin: 1rem 0 1.25rem;
+	padding: 0.85rem;
+	border: 1px solid rgba(77, 163, 255, 0.35);
+	border-radius: 0.75rem;
+	background: rgba(0, 120, 252, 0.08);
+}
+
+.mappy-api-filter-label
+{
+	display: block;
+	margin-bottom: 0.35rem;
+	color: #FFFFFF;
+	font-weight: 700;
+}
+
+.mappy-api-filter
+{
+	width: 100%;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid rgba(77, 163, 255, 0.45);
+	border-radius: 0.45rem;
+	background: var(--mappy-code-bg);
+	color: #FFFFFF;
+	font: inherit;
+}
+
+.mappy-api-filter:focus
+{
+	border-color: var(--mappy-blue-hover);
+	outline: none;
+	box-shadow: 0 0 0 0.12rem rgba(77, 163, 255, 0.25);
+}
+
+.mappy-api-actions
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin-top: 0.65rem;
+}
+
+.mappy-api-button,
+.mappy-copy-import,
+.mappy-anchor-copy
+{
+	border: 1px solid rgba(77, 163, 255, 0.5);
+	border-radius: 999px;
+	background: rgba(2, 55, 112, 0.75);
+	color: #FFFFFF;
+	font: inherit;
+	font-size: 0.72rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.mappy-api-button
+{
+	padding: 0.28rem 0.7rem;
+}
+
+.mappy-copy-import
+{
+	margin-left: 0.5rem;
+	padding: 0.1rem 0.5rem;
+	vertical-align: middle;
+}
+
+.mappy-anchor-copy
+{
+	margin-left: 0.45rem;
+	padding: 0.05rem 0.4rem;
+	opacity: 0.45;
+}
+
+.mappy-api-button:hover,
+.mappy-copy-import:hover,
+.mappy-anchor-copy:hover,
+.mappy-api-button:focus,
+.mappy-copy-import:focus,
+.mappy-anchor-copy:focus
+{
+	background: var(--mappy-blue);
+	outline: none;
+}
+
+h1:hover .mappy-anchor-copy,
+h2:hover .mappy-anchor-copy,
+h3:hover .mappy-anchor-copy,
+h4:hover .mappy-anchor-copy,
+.mappy-anchor-copy:focus
+{
+	opacity: 1;
+}
+
+.mappy-api-object-hidden
+{
+	display: none !important;
+}
+
+.mappy-heading-active
+{
+	scroll-margin-top: 5rem;
+}
+
+.mappy-clickable-image
+{
+	cursor: zoom-in;
+}
+
+.mappy-image-overlay
+{
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	background: rgba(0, 0, 0, 0.86);
+}
+
+.mappy-image-overlay--visible
+{
+	display: flex;
+}
+
+.mappy-lightbox-image
+{
+	max-width: min(96vw, 1200px);
+	max-height: 88vh;
+	border: 1px solid rgba(77, 163, 255, 0.55);
+	border-radius: 0.85rem;
+	box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.65);
+}
+
+.mappy-image-overlay-close
+{
+	position: fixed;
+	top: 1rem;
+	right: 1rem;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: 1px solid rgba(77, 163, 255, 0.55);
+	border-radius: 999px;
+	background: rgba(2, 55, 112, 0.95);
+	color: #FFFFFF;
+	font-size: 1.5rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.mappy-image-overlay-close:hover,
+.mappy-image-overlay-close:focus
+{
+	background: var(--mappy-blue);
+	outline: none;
+}
+
+/* ======================================================================================
+   Images
+   ====================================================================================== */
+.md-typeset img
+{
+	border-radius: 0.75rem;
 	border: 1px solid var(--mappy-border);
-	border-radius: var(--mappy-radius);
-	background: linear-gradient(135deg, rgba(0, 120, 252, 0.18), rgba(65, 65, 65, 0.28));
+	box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.35);
 }
 
-.mappy-muted
-{
-	color: var(--mappy-text-muted);
-}
-
-@media screen and (max-width: 76.1875em)
-{
-	.md-main__inner
-	{
-		max-width: none;
-	}
-}
-
+/* ======================================================================================
+   Print
+   ====================================================================================== */
 @media print
 {
-	.md-header,
-	.md-tabs,
-	.md-sidebar,
-	.md-footer
+	.mappy-back-to-top,
+	.mappy-api-tools,
+	.mappy-copy-import,
+	.mappy-anchor-copy,
+	.mappy-code-badge,
+	.mappy-image-overlay
 	{
 		display: none !important;
 	}
 	
-	.md-content__inner
+	.md-typeset
 	{
-		margin: 0;
-		padding: 0;
+		color: #000000;
+	}
+	
+	.doc-object
+	{
+		border-left: 1px solid #888888;
+	}
+}
+
+/* ======================================================================================
+   Small Screens
+   ====================================================================================== */
+@media screen and (max-width: 768px)
+{
+	.md-typeset
+	{
+		font-size: 0.8rem;
+	}
+	
+	.mappy-back-to-top
+	{
+		right: 0.75rem;
+		bottom: 0.75rem;
+	}
+	
+	.mappy-api-actions
+	{
+		flex-direction: column;
+		align-items: stretch;
+	}
+	
+	.mappy-api-button
+	{
+		width: 100%;
+	}
+	
+	.doc-heading
+	{
+		align-items: flex-start;
 	}
 }
