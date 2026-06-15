@@ -2,52 +2,85 @@
 
 ![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/project_mappy.png)
 
+<p align="center">
+  <a href="#-demo">Demo</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-features">Features</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-application-modes">Application Modes</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-installation">Installation</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-configuration">Configuration</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-running-the-streamlit-app">Run App</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-quick-start-python-framework">Quick Start</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-data-management">Data Management</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-api-key-references">API Keys</a>
+  &nbsp;&bull;&nbsp;
+  <a href="#-license">License</a>
+</p>
+
+___
+
 `mappy` is a lightweight Python geospatial framework and Streamlit application for mapping,
 location enrichment, environmental data retrieval, astronomical data access, web scraping, and
 geospatial data management. It wraps core mapping services behind a simple Python interface while
 also exposing the functionality through a wide Streamlit dashboard.
 
 The project supports traditional mapping workflows such as geocoding, distance calculation,
-static map generation, time-zone lookup, spreadsheet enrichment, and interactive map rendering. It
-also extends into weather, environmental, astronomical, geological, and web data sources so the same
-application can support location intelligence, situational awareness, and data pipeline enrichment.
+static map generation, time-zone lookup, spreadsheet enrichment, and interactive map rendering.
+It also extends into weather, environmental, astronomical, geological, and web data sources so the
+same application can support location intelligence, situational awareness, and data pipeline
+enrichment.
 
-`mappy` plays well with `cosmo`, Mappy's galactic cousin.
 
 ## 🎥 Demo
 
 ![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/mappy-demo.gif)
 
-
 ## 🧱 Databricks
-[![Mappy](https://img.shields.io/badge/Databricks-Mappy-FF3621?logo=databricks&logoColor=white)](https://dbc-a0c21f80-7bb3.cloud.databricks.com/browse/folders/3169291152437594?o=7474645703081351)
-- A data engineering, analytics, and artificial intelligence collaborative workspace- Notebook
-- Codebase
 
-## 🕸️ Streamlit (Web)
-[![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)](https://mappy-py.streamlit.app/)
-- A Python framework to build dynamic, interactive web applications.
-  
+[![Mappy](https://img.shields.io/badge/Databricks-Mappy-FF3621?logo=databricks\&logoColor=white)](https://dbc-a0c21f80-7bb3.cloud.databricks.com/browse/folders/3169291152437594?o=7474645703081351)
+
+Databricks provides a collaborative data engineering, analytics, and artificial intelligence
+workspace for the Mappy notebook and codebase.
+
+## 🕸️ Streamlit Web App
+
+[![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit\&logoColor=white)](https://mappy-py.streamlit.app/)
+
+The Streamlit deployment exposes Mappy as a dynamic, interactive web application for geospatial,
+environmental, astronomical, geological, and web-data workflows.
+
 ## ✨ Features
 
-* 🔎 **Geocoding** – Convert free-form addresses or city, state, and country triples into coordinates.
+* 🔎 **Geocoding** – Convert free-form addresses or city, state, and country triples into
+  coordinates.
 * 🧭 **Places Fallback** – Use Places text search when geocoding does not resolve a location.
 * 📏 **Distance Matrix** – Compute distance and travel time between origins and destinations.
 * 🗺️ **Interactive Maps** – Render uploaded or geocoded coordinate data with map overlays.
 * 🖼️ **Static Maps** – Generate static map previews and map image URLs for reporting.
 * ⏱️ **Time Zones** – Resolve IANA time zones from latitude and longitude.
 * 📊 **Excel and CSV Enrichment** – Upload spreadsheets and enrich records with geocoded coordinates.
-* 🗄️ **SQLite Data Management** – Browse, insert, update, delete, geocode, profile, and query local tables.
-* 🌦️ **Weather Data** – Query Google Weather, OpenWeather/Open-Meteo, historical weather, climate data,
-  and tides/current data.
-* 🌫️ **Environmental Data** – Query air quality, UV index, EPA EnviroFacts, PurpleAir, NASA FIRMS, and
+* 🗄️ **SQLite Data Management** – Browse, insert, update, delete, geocode, profile, and query local
+  tables.
+* 🌦️ **Weather Data** – Query Google Weather, OpenWeather/Open-Meteo, historical weather, climate
+  data,
+  tides, and current data.
+* 🌫️ **Environmental Data** – Query air quality, UV index, EPA EnviroFacts, PurpleAir, NASA FIRMS,
+  and
   NASA EONET data.
 * 🌌 **Astronomical Data** – Access naval observatory, space weather, star chart, satellite, catalog,
   AstroQuery/SIMBAD, and star map functionality.
 * 🌎 **Geological Data** – Query USGS earthquakes, water data, national map data, and global imagery.
 * 🕸️ **Web Scraper** – Fetch, crawl, parse, summarize, and extract structured data from web pages.
 * ⚡ **Rate Limiting and Caching** – Control API usage with QPS limits and optional cache backends.
-* 🛠️ **Explicit Error Handling** – Use clear exception paths for not-found, gateway, and framework errors.
+* 🛠️ **Explicit Error Handling** – Use clear exception paths for not-found, gateway, and framework
+  errors.
 
 ## 🧭 Application Modes
 
@@ -71,7 +104,7 @@ The Streamlit application is organized around the following modes.
 
 ## 🧩 Streamlit Sidebar
 
-The application sidebar provides the main operating controls:
+The application sidebar provides the main operating controls.
 
 | Section               | Purpose                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -138,9 +171,10 @@ Start the application from the repository root.
 streamlit run app.py
 ```
 
-The app uses a wide layout and opens with the sidebar expanded. Select a mode from **🛰️ GIS Mapping**
-and then configure the relevant location, credentials, and data inputs from the sidebar and mode-specific
-expanders.
+The app uses a wide layout and opens with the sidebar expanded. Select a mode from **🛰️ GIS Mapping
+**
+and then configure the relevant location, credentials, and data inputs from the sidebar and
+mode-specific expanders.
 
 ## 🚀 Quick Start: Python Framework
 
@@ -257,12 +291,16 @@ cleanly without losing the rest of the processing run.
 ## 💡 Design Philosophy
 
 * **Simplicity first** – Each framework class has a single clear responsibility.
-* **Composable services** – Geocoding, distance, maps, time zones, cache, and fetcher services can be used alone or together.
-* **Streamlit-first operations** – The app exposes common workflows through mode-specific controls rather than forcing command-line use.
-* **Cache-friendly design** – Optional in-memory and SQLite cache support reduces repeated API calls.
+* **Composable services** – Geocoding, distance, maps, time zones, cache, and fetcher services can
+  be used alone or together.
+* **Streamlit-first operations** – The app exposes common workflows through mode-specific controls
+  rather than forcing command-line use.
+* **Cache-friendly design** – Optional in-memory and SQLite cache support reduces repeated API
+  calls.
 * **Rate-aware calls** – QPS controls help protect API quotas.
 * **Spreadsheet-ready workflows** – Excel and CSV support is built into the application.
-* **Data-management capable** – SQLite tooling supports local enrichment, auditing, and iterative cleanup.
+* **Data-management capable** – SQLite tooling supports local enrichment, auditing, and iterative
+  cleanup.
 
 ## 🧪 Example Use Cases
 
@@ -316,12 +354,7 @@ Additional dependencies may be required by optional fetchers or provider-specifi
 
 ## 📜 License
 
-Mappy is available under the MIT License [here](https://github.com/is-leeroy-jenkins/mappy/blob/master/LICENSE.txt).
+Mappy is available under the MIT
+License [here](https://github.com/is-leeroy-jenkins/mappy/blob/master/LICENSE.txt).
 
 ![License-MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-
-
-
-
-
-
