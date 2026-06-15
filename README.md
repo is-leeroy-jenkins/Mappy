@@ -49,7 +49,7 @@ enrichment.
 Databricks provides a collaborative data engineering, analytics, and artificial intelligence
 workspace for the Mappy notebook and codebase.
 
-## 🕸️ Streamlit Web App
+## 🕸️ Web App
 
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit\&logoColor=white)](https://mappy-py.streamlit.app/)
 
