@@ -1,0 +1,351 @@
+/*
+  ******************************************************************************************
+      Assembly:                Mappy Documentation
+      Filename:                extra.css
+      Author:                  Terry D. Eppler
+      Created:                 06-14-2026
+
+      Purpose:
+        Provides project-specific Material for MkDocs styling for the Mappy documentation
+        site. The stylesheet reinforces the dark documentation theme, improves readable
+        content width, normalizes cards/tables/admonitions, and adds stable styling for
+        API reference pages generated from Google-style Python docstrings.
+
+      Usage:
+        Add this file to docs/assets/css/extra.css and reference it from mkdocs.yml:
+
+            extra_css:
+              - assets/css/extra.css
+  ******************************************************************************************
+*/
+:root
+{
+	--mappy-blue: #0078AC;
+	--mappy-blue-dark: #023770;
+	--mappy-blue-deep: #00254C;
+	--mappy-bg: #141414;
+	--mappy-surface: #282828;
+	--mappy-surface-2: #333333;
+	--mappy-surface-3: #414141;
+	--mappy-border: #565557;
+	--mappy-border-soft: rgba(255, 255, 255, 0.12);
+	--mappy-text: #FFFFFF;
+	--mappy-text-soft: #D7D7D7;
+	--mappy-text-muted: #B8B8B8;
+	--mappy-code-bg: #1D1F24;
+	--mappy-radius: 14px;
+	--mappy-radius-sm: 8px;
+	--mappy-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+[data-md-color-scheme='slate']
+{
+	--md-default-bg-color: var(--mappy-bg);
+	--md-default-fg-color: var(--mappy-text);
+	--md-default-fg-color--light: var(--mappy-text-soft);
+	--md-default-fg-color--lighter: var(--mappy-text-muted);
+	--md-primary-fg-color: var(--mappy-blue-dark);
+	--md-primary-fg-color--dark: var(--mappy-blue-deep);
+	--md-accent-fg-color: var(--mappy-blue);
+	--md-typeset-a-color: #66B2FF;
+	--md-code-bg-color: var(--mappy-code-bg);
+	--md-code-fg-color: #F2F5F8;
+	--md-admonition-bg-color: var(--mappy-surface);
+	--md-footer-bg-color: #101010;
+	--md-footer-bg-color--dark: #0B0B0B;
+}
+
+html
+{
+	scroll-behavior: smooth;
+}
+
+body
+{
+	background: var(--mappy-bg);
+}
+
+.md-header,
+.md-tabs
+{
+	background-color: var(--mappy-blue-dark);
+}
+
+.md-header
+{
+	box-shadow: var(--mappy-shadow);
+}
+
+.md-main__inner
+{
+	max-width: 92rem;
+}
+
+.md-content__inner
+{
+	max-width: none;
+	padding-bottom: 3rem;
+}
+
+.md-sidebar--primary .md-sidebar__scrollwrap,
+.md-sidebar--secondary .md-sidebar__scrollwrap
+{
+	background: transparent;
+}
+
+.md-nav__title,
+.md-nav__item .md-nav__link--active
+{
+	color: var(--mappy-text);
+}
+
+.md-nav__link:is(:focus, :hover)
+{
+	color: #82C2FF;
+}
+
+.md-typeset
+{
+	font-size: 0.84rem;
+	line-height: 1.68;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4
+{
+	font-weight: 700;
+	letter-spacing: -0.015em;
+}
+
+.md-typeset h1
+{
+	margin-bottom: 1.2rem;
+}
+
+.md-typeset h2
+{
+	border-bottom: 1px solid var(--mappy-border-soft);
+	padding-bottom: 0.35rem;
+}
+
+.md-typeset h2[id],
+.md-typeset h3[id],
+.md-typeset h4[id]
+{
+	scroll-margin-top: 5.2rem;
+}
+
+.md-typeset a
+{
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.18em;
+}
+
+.md-typeset strong
+{
+	color: #FFFFFF;
+}
+
+.md-typeset hr
+{
+	border-bottom-color: var(--mappy-border-soft);
+}
+
+.md-typeset .admonition,
+.md-typeset details
+{
+	border-radius: var(--mappy-radius);
+	background-color: var(--mappy-surface);
+	box-shadow: none;
+	border-color: var(--mappy-border);
+	overflow: hidden;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary
+{
+	background-color: rgba(0, 120, 252, 0.12);
+}
+
+.md-typeset .grid.cards > ul > li
+{
+	border-radius: var(--mappy-radius);
+	background: linear-gradient(180deg, var(--mappy-surface-2), var(--mappy-surface));
+	border: 1px solid var(--mappy-border);
+	box-shadow: none;
+}
+
+.md-typeset .grid.cards > ul > li:hover
+{
+	border-color: rgba(102, 178, 255, 0.72);
+	box-shadow: var(--mappy-shadow);
+}
+
+.md-typeset .md-button
+{
+	border-radius: var(--mappy-radius-sm);
+	border-color: var(--mappy-blue);
+}
+
+.md-typeset .md-button--primary
+{
+	background-color: var(--mappy-blue);
+	border-color: var(--mappy-blue);
+	color: #FFFFFF;
+}
+
+.md-typeset table:not([class])
+{
+	border-collapse: separate;
+	border-spacing: 0;
+	border: 1px solid var(--mappy-border);
+	border-radius: var(--mappy-radius);
+	overflow: hidden;
+	box-shadow: none;
+}
+
+.md-typeset table:not([class]) th
+{
+	background-color: var(--mappy-blue-dark);
+	color: #FFFFFF;
+	border-bottom: 1px solid var(--mappy-border);
+}
+
+.md-typeset table:not([class]) td
+{
+	border-top: 1px solid var(--mappy-blue-deep);
+}
+
+.md-typeset table:not([class]) tr:nth-child(even) td
+{
+	background-color: rgba(255, 255, 255, 0.025);
+}
+
+.md-typeset code
+{
+	border-radius: 0.38rem;
+	padding: 0.12rem 0.35rem;
+}
+
+.md-typeset pre
+{
+	border-radius: var(--mappy-radius);
+	border: 1px solid var(--mappy-border-soft);
+	background-color: var(--mappy-code-bg);
+}
+
+.md-typeset pre > code
+{
+	font-size: 0.78rem;
+	line-height: 1.62;
+}
+
+.highlight .filename,
+.md-typeset .highlighttable .filename
+{
+	border-top-left-radius: var(--mappy-radius);
+	border-top-right-radius: var(--mappy-radius);
+	background-color: var(--mappy-surface-3);
+	color: var(--mappy-text);
+}
+
+.doc.doc-object
+{
+	border-left: 3px solid rgba(0, 120, 252, 0.45);
+	padding-left: 1rem;
+	margin-bottom: 1.6rem;
+}
+
+.doc.doc-object .doc-heading
+{
+	background: rgba(0, 120, 252, 0.10);
+	border: 1px solid var(--mappy-border-soft);
+	border-radius: var(--mappy-radius-sm);
+	padding: 0.6rem 0.8rem;
+}
+
+.doc.doc-object .doc-label
+{
+	border-radius: 999px;
+}
+
+.doc.doc-contents
+{
+	padding-left: 0.2rem;
+}
+
+.md-typeset .tabbed-set
+{
+	border-radius: var(--mappy-radius);
+}
+
+.md-typeset .tabbed-labels
+{
+	background-color: var(--mappy-surface);
+	border-radius: var(--mappy-radius) var(--mappy-radius) 0 0;
+}
+
+.md-typeset .tabbed-content
+{
+	border: 1px solid var(--mappy-border-soft);
+	border-top: none;
+	border-radius: 0 0 var(--mappy-radius) var(--mappy-radius);
+	padding: 0.8rem 1rem;
+}
+
+.md-typeset img
+{
+	border-radius: var(--mappy-radius);
+}
+
+.md-typeset figure img
+{
+	background-color: var(--mappy-surface);
+	border: 1px solid var(--mappy-border-soft);
+	box-shadow: var(--mappy-shadow);
+}
+
+.md-typeset figcaption
+{
+	color: var(--mappy-text-muted);
+}
+
+.mappy-hero
+{
+	padding: 1.2rem 1.4rem;
+	border: 1px solid var(--mappy-border);
+	border-radius: var(--mappy-radius);
+	background: linear-gradient(135deg, rgba(0, 120, 252, 0.18), rgba(65, 65, 65, 0.28));
+}
+
+.mappy-muted
+{
+	color: var(--mappy-text-muted);
+}
+
+@media screen and (max-width: 76.1875em)
+{
+	.md-main__inner
+	{
+		max-width: none;
+	}
+}
+
+@media print
+{
+	.md-header,
+	.md-tabs,
+	.md-sidebar,
+	.md-footer
+	{
+		display: none !important;
+	}
+	
+	.md-content__inner
+	{
+		margin: 0;
+		padding: 0;
+	}
+}

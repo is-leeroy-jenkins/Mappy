@@ -1,0 +1,2746 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Mappy, a Python geospatial toolkit for Google Maps workflows, enrichment, mapping, fetching, and content generation.">
+      
+      
+        <meta name="author" content="Terry D. Eppler">
+      
+      
+        <link rel="canonical" href="https://is-leeroy-jenkins.github.io/Mappy/architecture/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../user-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Architecture - Mappy Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../assets/css/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="light-blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Mappy Documentation" class="md-header__button md-logo" aria-label="Mappy Documentation" data-md-component="logo">
+      
+  <img src="../img/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Mappy Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="light-blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/is-leeroy-jenkins/Mappy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    is-leeroy-jenkins/Mappy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../development/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Development
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Mappy Documentation" class="md-nav__button md-logo" aria-label="Mappy Documentation" data-md-component="logo">
+      
+  <img src="../img/favicon.ico" alt="logo">
+
+    </a>
+    Mappy Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/is-leeroy-jenkins/Mappy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    is-leeroy-jenkins/Mappy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="Page contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧭 Architectural Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧱 Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🗂️ Repository Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🖥️ Application Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-maps-gateway-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🗺️ Google Maps Gateway Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocoding-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📍 Geocoding Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#places-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏢 Places Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#distance-matrix-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛣️ Distance Matrix Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#static-maps-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🖼️ Static Maps Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-zone-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🕒 Time Zone Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spreadsheet-enrichment-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📊 Spreadsheet Enrichment Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cache-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧠 Cache Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-limiting-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⏱️ Rate Limiting Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-model-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Core Model Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fetcher-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🌐 Fetcher Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generator-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✍️ Generator Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exception-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚠️ Exception Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔐 Configuration Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primary-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔄 Primary Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extension-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧩 Extension Points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📚 Documentation Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ Architecture Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Application
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/caches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Caching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/distances/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distance Matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/excel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Excel Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exceptions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/fetchers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    External Fetchers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content Generators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/geocode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Geocoding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maps Gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/places/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Places
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/rates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/staticmaps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Static Maps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/timezones/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Zones
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="Page contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧭 Architectural Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧱 Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🗂️ Repository Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🖥️ Application Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-maps-gateway-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🗺️ Google Maps Gateway Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geocoding-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📍 Geocoding Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#places-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏢 Places Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#distance-matrix-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛣️ Distance Matrix Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#static-maps-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🖼️ Static Maps Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#time-zone-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🕒 Time Zone Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spreadsheet-enrichment-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📊 Spreadsheet Enrichment Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cache-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧠 Cache Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-limiting-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⏱️ Rate Limiting Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-model-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Core Model Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fetcher-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🌐 Fetcher Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generator-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✍️ Generator Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exception-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚠️ Exception Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔐 Configuration Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primary-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔄 Primary Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extension-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧩 Extension Points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📚 Documentation Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ Architecture Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<p>Mappy is a Python geospatial toolkit and Streamlit application for Google Maps workflows, location
+enrichment, route analysis, static map generation, external data retrieval, and generated-content
+workflows. The architecture is intentionally flat and service-oriented: each major capability lives
+in a standalone Python module that can be used directly from code or orchestrated through the
+Streamlit interface.</p>
+<h2 id="architectural-overview">🧭 Architectural Overview<a class="headerlink" href="#architectural-overview" title="Permanent link">&para;</a></h2>
+<p>Mappy is organized around a reusable service layer with a Streamlit application on top. The
+application layer handles user interaction, while the service modules handle validation, external
+requests, normalization, caching, enrichment, and output generation.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+----------------------------------------------------------------------------------+
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|                                  Streamlit UI                                     |
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|                                    app.py                                         |
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|----------------------------------------------------------------------------------|
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|  Inputs | Uploads | Geocoding | Places | Routes | Static Maps | Fetch | Generate |
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>+---------------------------------------+------------------------------------------+
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                        |
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                                        v
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>+----------------------------------------------------------------------------------+
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|                              Application Services                                |
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|----------------------------------------------------------------------------------|
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|  Geocoding          Places Fallback       Distance Matrix      Spreadsheet        |
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|  geocode.py         places.py             distances.py         excel.py           |
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|                                                                                  |
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>|  Static Maps        Time Zones            External Fetchers    Generators         |
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>|  staticmaps.py      timezones.py          fetchers.py          generators.py      |
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>+---------------------------+----------------------+-------------------------------+
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                            |                      |
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                            v                      v
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>+----------------------------------------------------------------------------------+
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>|                              Shared Infrastructure                               |
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>|----------------------------------------------------------------------------------|
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>|  Google Maps Gateway      Rate Limiter        Cache Backends       Result Model   |
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>|  maps.py                  rates.py            caches.py            core.py        |
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>|                                                                                  |
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>|  Configuration            Exceptions          Logging Integration                 |
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>|  config.py                exceptions.py       boogr.Error / boogr.Logger          |
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>+---------------------------------------+------------------------------------------+
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>                                        |
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                                        v
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>+----------------------------------------------------------------------------------+
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>|                              External Systems                                    |
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>|----------------------------------------------------------------------------------|
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>|  Google Maps APIs | Places API | Distance Matrix | Static Maps | Time Zone API    |
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>|  Web Sources      | Scientific APIs | Search Sources | Provider APIs | Local Files    |
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>+----------------------------------------------------------------------------------+
+</span></code></pre></div>
+<h2 id="design-principles">🧱 Design Principles<a class="headerlink" href="#design-principles" title="Permanent link">&para;</a></h2>
+<p>Mappy follows a few practical design principles.</p>
+<table>
+<thead>
+<tr>
+<th>Principle</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flat source layout</td>
+<td>Modules sit at the repository root so the app and documentation can import them directly.</td>
+</tr>
+<tr>
+<td>Thin UI layer</td>
+<td><code>app.py</code> should orchestrate workflows, not bury service logic inside Streamlit callbacks.</td>
+</tr>
+<tr>
+<td>Reusable services</td>
+<td>Geocoding, Places, Distance Matrix, Static Maps, Time Zone, Excel enrichment, fetchers, and generators can be used independently.</td>
+</tr>
+<tr>
+<td>Canonical output shapes</td>
+<td>Service wrappers normalize external payloads into predictable dictionaries, lists, dataframes, or URLs.</td>
+</tr>
+<tr>
+<td>Cache-aware workflows</td>
+<td>Repeated lookups can use in-memory or SQLite cache backends.</td>
+</tr>
+<tr>
+<td>Documentation-ready source</td>
+<td>Public classes, functions, and methods use Google-style docstrings for MkDocs and mkdocstrings.</td>
+</tr>
+<tr>
+<td>Stable exception logging</td>
+<td>Wrapped exceptions record module, cause, method, message, and traceback without logging sensitive runtime values.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="repository-layout">🗂️ Repository Layout<a class="headerlink" href="#repository-layout" title="Permanent link">&para;</a></h2>
+<p>Mappy uses a flat application layout with documentation under <code>docs/</code>.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Mappy/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  app.py
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  caches.py
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  config.py
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  core.py
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  distances.py
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  excel.py
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  exceptions.py
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  fetchers.py
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  generators.py
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  geocode.py
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  maps.py
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  places.py
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  rates.py
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  staticmaps.py
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  timezones.py
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  requirements.txt
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  README.md
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  mkdocs.yml
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  docs/
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    index.md
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    architecture.md
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    user-guide.md
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    development.md
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    github-pages.md
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>    api/
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>      index.md
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>      app.md
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>      caches.md
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>      config.md
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>      core.md
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>      distances.md
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>      excel.md
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>      exceptions.md
+</span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>      fetchers.md
+</span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>      generators.md
+</span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>      geocode.md
+</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>      maps.md
+</span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>      places.md
+</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>      rates.md
+</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>      staticmaps.md
+</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>      timezones.md
+</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>    assets/
+</span><span id="__span-1-44"><a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>      css/
+</span><span id="__span-1-45"><a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>        extra.css
+</span><span id="__span-1-46"><a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>      js/
+</span><span id="__span-1-47"><a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>        extra.js
+</span></code></pre></div>
+<h2 id="application-layer">🖥️ Application Layer<a class="headerlink" href="#application-layer" title="Permanent link">&para;</a></h2>
+<p>The application layer is implemented in <code>app.py</code>.</p>
+<p><code>app.py</code> provides the Streamlit interface for interactive workflows. It should remain focused on
+page layout, controls, state management, service orchestration, and display logic.</p>
+<p>Primary responsibilities include:</p>
+<table>
+<thead>
+<tr>
+<th>Responsibility</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Page configuration</td>
+<td>Configures the Streamlit page, title, icons, and layout.</td>
+</tr>
+<tr>
+<td>Sidebar controls</td>
+<td>Collects mode selections, configuration values, and workflow options.</td>
+</tr>
+<tr>
+<td>Input capture</td>
+<td>Accepts addresses, coordinates, files, prompts, provider options, and user settings.</td>
+</tr>
+<tr>
+<td>Service orchestration</td>
+<td>Calls geocoding, Places, distance, static map, time-zone, fetcher, and generator modules.</td>
+</tr>
+<tr>
+<td>Result rendering</td>
+<td>Displays dictionaries, tables, dataframes, maps, generated text, URLs, and status summaries.</td>
+</tr>
+<tr>
+<td>Session state</td>
+<td>Maintains state across Streamlit reruns without moving business logic into the UI.</td>
+</tr>
+</tbody>
+</table>
+<p>The UI layer depends on the service layer. The service layer should not depend on Streamlit.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>app.py
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  |
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  +-- geocode.py
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  +-- places.py
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  +-- distances.py
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  +-- staticmaps.py
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  +-- timezones.py
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  +-- excel.py
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  +-- fetchers.py
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  +-- generators.py
+</span></code></pre></div>
+<h2 id="google-maps-gateway-layer">🗺️ Google Maps Gateway Layer<a class="headerlink" href="#google-maps-gateway-layer" title="Permanent link">&para;</a></h2>
+<p>The Google Maps gateway is implemented in <code>maps.py</code>.</p>
+<p>The <code>Maps</code> class centralizes outbound Google Maps Web Services requests. Instead of having every
+service wrapper construct its own HTTP logic, service classes call <code>Maps.request(...)</code>.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Service Wrapper
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>      |
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>      v
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Maps.request(endpoint, params)
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>      |
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>      +-- validate endpoint and parameter inputs
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>      +-- apply request rate limiting
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>      +-- inject configured Google Maps API key
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>      +-- issue HTTP GET request
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>      +-- record diagnostics
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>      +-- retry transient failures
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>      +-- raise gateway errors for hard failures
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>      |
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>      v
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>Parsed JSON payload
+</span></code></pre></div>
+<p>The gateway layer supports these service wrappers:</p>
+<table>
+<thead>
+<tr>
+<th>Wrapper</th>
+<th>Module</th>
+<th>Google API Family</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Geocoder</code></td>
+<td><code>geocode.py</code></td>
+<td>Geocoding API</td>
+</tr>
+<tr>
+<td><code>Place</code></td>
+<td><code>places.py</code></td>
+<td>Places Text Search and Place Details</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix</code></td>
+<td><code>distances.py</code></td>
+<td>Distance Matrix API</td>
+</tr>
+<tr>
+<td><code>Timezone</code></td>
+<td><code>timezones.py</code></td>
+<td>Time Zone API</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geocoding-layer">📍 Geocoding Layer<a class="headerlink" href="#geocoding-layer" title="Permanent link">&para;</a></h2>
+<p>The geocoding layer is implemented in <code>geocode.py</code>.</p>
+<p>The <code>Geocoder</code> class resolves free-form addresses, reverse-geocodes coordinates, resolves structured
+city/state/country values, and supports batch geocoding.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flatten_geocode(...)</code></td>
+<td>Converts raw Google Geocoding results into Mappy’s canonical output shape.</td>
+</tr>
+<tr>
+<td><code>Geocoder.freeform(...)</code></td>
+<td>Resolves one free-form address.</td>
+</tr>
+<tr>
+<td><code>Geocoder.reverse(...)</code></td>
+<td>Resolves one coordinate pair into an address.</td>
+</tr>
+<tr>
+<td><code>Geocoder.city_state_country(...)</code></td>
+<td>Resolves structured locality fields.</td>
+</tr>
+<tr>
+<td><code>Geocoder.batch_freeform(...)</code></td>
+<td>Processes multiple addresses with row-level status handling.</td>
+</tr>
+</tbody>
+</table>
+<p>Typical output fields include:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>formatted_address</code></td>
+<td>Canonical formatted address.</td>
+</tr>
+<tr>
+<td><code>lat</code></td>
+<td>Latitude.</td>
+</tr>
+<tr>
+<td><code>lng</code></td>
+<td>Longitude.</td>
+</tr>
+<tr>
+<td><code>place_id</code></td>
+<td>Google place identifier.</td>
+</tr>
+<tr>
+<td><code>types</code></td>
+<td>Google result types.</td>
+</tr>
+<tr>
+<td><code>country_code</code></td>
+<td>Short country code.</td>
+</tr>
+<tr>
+<td><code>country_name</code></td>
+<td>Full country name.</td>
+</tr>
+<tr>
+<td><code>admin_level_1</code></td>
+<td>State, province, region, or equivalent.</td>
+</tr>
+<tr>
+<td><code>admin_level_2</code></td>
+<td>County or secondary administrative area.</td>
+</tr>
+<tr>
+<td><code>locality</code></td>
+<td>City or locality.</td>
+</tr>
+<tr>
+<td><code>postal_code</code></td>
+<td>Postal code.</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Workflow source, such as <code>geocode</code> or <code>reverse_geocode</code>.</td>
+</tr>
+<tr>
+<td><code>query</code></td>
+<td>Original query value.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="places-layer">🏢 Places Layer<a class="headerlink" href="#places-layer" title="Permanent link">&para;</a></h2>
+<p>The Places layer is implemented in <code>places.py</code>.</p>
+<p>The <code>Place</code> class provides a fallback and enrichment path for named locations, businesses,
+landmarks, institutions, and ambiguous user queries. It uses Places Text Search to find candidates
+and Place Details to retrieve structured metadata.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Place.text_to_location(...)</code></td>
+<td>Resolves free text into a canonical location record.</td>
+</tr>
+<tr>
+<td><code>Place.place_details(...)</code></td>
+<td>Resolves a known <code>place_id</code> into detailed metadata.</td>
+</tr>
+<tr>
+<td><code>Place.search_candidates(...)</code></td>
+<td>Returns candidate Places results for review or disambiguation.</td>
+</tr>
+<tr>
+<td><code>Place.flatten_place_details(...)</code></td>
+<td>Converts Place Details into Mappy’s canonical output shape.</td>
+</tr>
+<tr>
+<td><code>Place.component_value(...)</code></td>
+<td>Extracts address components from Google payloads.</td>
+</tr>
+</tbody>
+</table>
+<p>Places output intentionally overlaps with geocoding output. It also includes additional fields such
+as:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>Place name.</td>
+</tr>
+<tr>
+<td><code>business_status</code></td>
+<td>Google business status when available.</td>
+</tr>
+<tr>
+<td><code>rating</code></td>
+<td>Google rating when available.</td>
+</tr>
+<tr>
+<td><code>user_ratings_total</code></td>
+<td>Number of user ratings when available.</td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Place website when available.</td>
+</tr>
+<tr>
+<td><code>formatted_phone_number</code></td>
+<td>Place phone number when available.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="distance-matrix-layer">🛣️ Distance Matrix Layer<a class="headerlink" href="#distance-matrix-layer" title="Permanent link">&para;</a></h2>
+<p>The distance layer is implemented in <code>distances.py</code>.</p>
+<p>The <code>DistanceMatrix</code> class wraps route-distance and duration workflows.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DistanceMatrix.matrix(...)</code></td>
+<td>Executes one-to-many or many-to-many distance requests.</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix.summary(...)</code></td>
+<td>Returns a compact one-route summary.</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix.compare_modes(...)</code></td>
+<td>Compares travel modes for the same route.</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix.to_dataframe(...)</code></td>
+<td>Converts route rows into a pandas DataFrame.</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix.normalize_mode(...)</code></td>
+<td>Validates travel mode values.</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix.normalize_inputs(...)</code></td>
+<td>Normalizes address and coordinate inputs.</td>
+</tr>
+<tr>
+<td><code>DistanceMatrix.flatten_element(...)</code></td>
+<td>Converts one Google response element into a row.</td>
+</tr>
+</tbody>
+</table>
+<p>Supported modes are:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>driving</code></td>
+<td>Driving distance and duration.</td>
+</tr>
+<tr>
+<td><code>walking</code></td>
+<td>Walking distance and duration.</td>
+</tr>
+<tr>
+<td><code>bicycling</code></td>
+<td>Bicycling distance and duration.</td>
+</tr>
+<tr>
+<td><code>transit</code></td>
+<td>Transit distance and duration when available.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="static-maps-layer">🖼️ Static Maps Layer<a class="headerlink" href="#static-maps-layer" title="Permanent link">&para;</a></h2>
+<p>The static map layer is implemented in <code>staticmaps.py</code>.</p>
+<p>The <code>StaticMap</code> class builds Google Static Maps URLs. It does not download images directly. It
+returns URLs that can be displayed in Streamlit, used in documentation, opened in a browser, or
+embedded in reports.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StaticMap.pin(...)</code></td>
+<td>Builds a single-marker map URL.</td>
+</tr>
+<tr>
+<td><code>StaticMap.pins(...)</code></td>
+<td>Builds a multi-marker map URL.</td>
+</tr>
+<tr>
+<td><code>StaticMap.path(...)</code></td>
+<td>Builds a map URL with a visible path.</td>
+</tr>
+<tr>
+<td><code>StaticMap.bbox(...)</code></td>
+<td>Builds a map URL with a bounding box outline.</td>
+</tr>
+<tr>
+<td><code>StaticMap.build_url(...)</code></td>
+<td>Assembles the final Google Static Maps URL.</td>
+</tr>
+<tr>
+<td><code>StaticMap.normalize_points(...)</code></td>
+<td>Converts supported point shapes into coordinate tuples.</td>
+</tr>
+<tr>
+<td><code>StaticMap.validate_coordinate(...)</code></td>
+<td>Validates latitude and longitude ranges.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="time-zone-layer">🕒 Time Zone Layer<a class="headerlink" href="#time-zone-layer" title="Permanent link">&para;</a></h2>
+<p>The time-zone layer is implemented in <code>timezones.py</code>.</p>
+<p>The <code>Timezone</code> class wraps the Google Time Zone API.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Timezone.lookup(...)</code></td>
+<td>Retrieves the full Google Time Zone API payload.</td>
+</tr>
+<tr>
+<td><code>Timezone.get_id(...)</code></td>
+<td>Extracts the IANA time-zone identifier.</td>
+</tr>
+<tr>
+<td><code>Timezone.offset_hours(...)</code></td>
+<td>Calculates total UTC offset in hours.</td>
+</tr>
+<tr>
+<td><code>Timezone.local_time(...)</code></td>
+<td>Converts UTC time into local time for a coordinate.</td>
+</tr>
+<tr>
+<td><code>Timezone.batch_lookup(...)</code></td>
+<td>Enriches row dictionaries with time-zone fields.</td>
+</tr>
+<tr>
+<td><code>Timezone.validate_coordinates(...)</code></td>
+<td>Validates latitude and longitude ranges.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="spreadsheet-enrichment-layer">📊 Spreadsheet Enrichment Layer<a class="headerlink" href="#spreadsheet-enrichment-layer" title="Permanent link">&para;</a></h2>
+<p>The spreadsheet layer is implemented in <code>excel.py</code>.</p>
+<p>The <code>Excel</code> class reads CSV/XLSX files, resolves location data, appends canonical geospatial output
+columns, summarizes enrichment results, and writes enriched files.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>CSV/XLSX Input
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>      |
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>      v
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Excel.read(...)
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>      |
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>      v
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>Row iteration
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>      |
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>      +-- Geocoder.freeform(...)
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>      |       |
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>      |       +-- fallback to Place.text_to_location(...)
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>      |
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>      +-- Geocoder.city_state_country(...)
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>              |
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>              +-- fallback to Place.text_to_location(...)
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>      |
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>      v
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>Canonical enrichment columns
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>      |
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>      v
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>Excel.write(...)
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>      |
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>      v
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>CSV/XLSX Output
+</span></code></pre></div>
+<p>The enrichment layer preserves row alignment. Every input row receives output values, even when the
+row is skipped, not found, or fails with an error.</p>
+<p>Common row-level status values include:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ok</code></td>
+<td>Resolved through geocoding.</td>
+</tr>
+<tr>
+<td><code>ok_places</code></td>
+<td>Resolved through Places fallback.</td>
+</tr>
+<tr>
+<td><code>not_found</code></td>
+<td>No usable result was found.</td>
+</tr>
+<tr>
+<td><code>skipped_empty</code></td>
+<td>The source row did not contain usable location input.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>A row-level error occurred.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cache-layer">🧠 Cache Layer<a class="headerlink" href="#cache-layer" title="Permanent link">&para;</a></h2>
+<p>The cache layer is implemented in <code>caches.py</code>.</p>
+<p>Caching reduces duplicate lookups and allows repeated workflows to reuse previous results.</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Storage</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BaseCache</code></td>
+<td>Interface</td>
+<td>Defines the common cache contract.</td>
+</tr>
+<tr>
+<td><code>InMemoryCache</code></td>
+<td>Python dictionary</td>
+<td>Provides fast process-local caching.</td>
+</tr>
+<tr>
+<td><code>SQLiteCache</code></td>
+<td>SQLite database</td>
+<td>Provides durable local caching across application runs.</td>
+</tr>
+</tbody>
+</table>
+<p>Cache implementations support:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get(...)</code></td>
+<td>Read a cached dictionary payload.</td>
+</tr>
+<tr>
+<td><code>set(...)</code></td>
+<td>Store a cached dictionary payload.</td>
+</tr>
+<tr>
+<td><code>delete(...)</code></td>
+<td>Remove one cached key.</td>
+</tr>
+<tr>
+<td><code>clear(...)</code></td>
+<td>Clear all records or a namespace.</td>
+</tr>
+<tr>
+<td><code>contains(...)</code></td>
+<td>Check whether a usable cached value exists.</td>
+</tr>
+<tr>
+<td><code>stats(...)</code></td>
+<td>Return backend diagnostics.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rate-limiting-layer">⏱️ Rate Limiting Layer<a class="headerlink" href="#rate-limiting-layer" title="Permanent link">&para;</a></h2>
+<p>The rate-limiting layer is implemented in <code>rates.py</code>.</p>
+<p>The <code>RateLimiter</code> class enforces a minimum interval between requests. The <code>Maps</code> gateway calls it
+before outbound API requests.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Maps.request(...)
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>      |
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>      v
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>RateLimiter.wait()
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>      |
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>      +-- count request
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>      +-- compare elapsed time with configured interval
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>      +-- sleep when necessary
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>      +-- update diagnostics
+</span></code></pre></div>
+<h2 id="core-model-layer">📦 Core Model Layer<a class="headerlink" href="#core-model-layer" title="Permanent link">&para;</a></h2>
+<p>The core layer is implemented in <code>core.py</code>.</p>
+<p>The <code>Result</code> class wraps an HTTP response into a lightweight result object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>url</code></td>
+<td>Response URL.</td>
+</tr>
+<tr>
+<td><code>status_code</code></td>
+<td>HTTP response status code.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>Response text body.</td>
+</tr>
+<tr>
+<td><code>encoding</code></td>
+<td>Response encoding.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Response headers.</td>
+</tr>
+<tr>
+<td><code>response</code></td>
+<td>Original <code>requests.Response</code> object.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="fetcher-layer">🌐 Fetcher Layer<a class="headerlink" href="#fetcher-layer" title="Permanent link">&para;</a></h2>
+<p>The fetcher layer is implemented in <code>fetchers.py</code>.</p>
+<p>Fetchers isolate retrieval logic for web pages, documents, search results, scientific sources,
+environmental sources, geospatial services, and other external data sources.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>User or App Request
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>      |
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>      v
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>Fetcher Class
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>      |
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>      +-- validate inputs
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>      +-- call external source
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>      +-- parse or normalize result
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>      +-- return text, data, document, table, image, or result object
+</span></code></pre></div>
+<p>The architectural role of <code>fetchers.py</code> is to keep external retrieval logic out of the Streamlit UI
+and out of generator classes.</p>
+<h2 id="generator-layer">✍️ Generator Layer<a class="headerlink" href="#generator-layer" title="Permanent link">&para;</a></h2>
+<p>The generator layer is implemented in <code>generators.py</code>.</p>
+<p>Generators transform prompts, retrieved context, user inputs, files, or structured data into
+generated responses or structured outputs.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Prompt / Context / Data
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>      |
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>      v
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>Generator Class
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>      |
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>      +-- validate inputs
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>      +-- prepare provider payload
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>      +-- call provider or local model
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>      +-- normalize output
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>      |
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>      v
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>Generated response or structured result
+</span></code></pre></div>
+<p>The architectural role of <code>generators.py</code> is to keep provider-specific generation logic separate
+from the UI and retrieval layers.</p>
+<h2 id="exception-layer">⚠️ Exception Layer<a class="headerlink" href="#exception-layer" title="Permanent link">&para;</a></h2>
+<p>Project-specific exceptions are defined in <code>exceptions.py</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MappyError</code></td>
+<td>Base exception for known Mappy errors.</td>
+</tr>
+<tr>
+<td><code>GatewayError</code></td>
+<td>External gateway, API, response, retry, or transport failure.</td>
+</tr>
+<tr>
+<td><code>NotFound</code></td>
+<td>Lookup completed without producing a usable result.</td>
+</tr>
+</tbody>
+</table>
+<p>Operational modules that wrap errors use the project logging pattern:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>boogr.Error
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>boogr.Logger
+</span></code></pre></div>
+<p>The logging pattern records stable diagnostic metadata, such as module, cause, method, message, and
+traceback. Runtime-sensitive values should not be written to logs.</p>
+<p>Do not log:</p>
+<table>
+<thead>
+<tr>
+<th>Sensitive Value</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API keys</td>
+<td>Secret credential.</td>
+</tr>
+<tr>
+<td>Raw payloads</td>
+<td>May contain user input or provider data.</td>
+</tr>
+<tr>
+<td>Full API responses</td>
+<td>May contain user or service data.</td>
+</tr>
+<tr>
+<td>Addresses</td>
+<td>User-provided location data.</td>
+</tr>
+<tr>
+<td>Coordinates</td>
+<td>User-provided location data.</td>
+</tr>
+<tr>
+<td>File contents</td>
+<td>Uploaded data may be sensitive.</td>
+</tr>
+<tr>
+<td>DataFrame rows</td>
+<td>Uploaded spreadsheet rows may contain sensitive data.</td>
+</tr>
+<tr>
+<td>Cache keys</td>
+<td>Cache keys may include normalized user input.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration-layer">🔐 Configuration Layer<a class="headerlink" href="#configuration-layer" title="Permanent link">&para;</a></h2>
+<p>Configuration is centralized in <code>config.py</code>.</p>
+<p>Typical configuration responsibilities include:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Paths</td>
+<td>Root, log, database, image, and documentation paths.</td>
+</tr>
+<tr>
+<td>API keys</td>
+<td>External provider keys read from environment variables.</td>
+</tr>
+<tr>
+<td>App labels</td>
+<td>Application title, subtitle, and UI constants.</td>
+</tr>
+<tr>
+<td>Helper functions</td>
+<td>Typed environment-variable readers and validation helpers.</td>
+</tr>
+</tbody>
+</table>
+<p>The configuration layer should not perform external network work. It should remain safe to import.</p>
+<h2 id="primary-data-flow">🔄 Primary Data Flow<a class="headerlink" href="#primary-data-flow" title="Permanent link">&para;</a></h2>
+<p>Most workflows follow the same pattern.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>User Input
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>   |
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>   v
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>Streamlit UI or Python Caller
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>   |
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>   v
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>Service Wrapper
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>   |
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>   +-- validate inputs
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>   +-- check cache when configured
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>   +-- call gateway, fetcher, or provider
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>   +-- normalize result
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>   +-- write cache when configured
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>   |
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>   v
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>Dictionary / DataFrame / URL / Generated Output
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>   |
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>   v
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>Display, export, documentation, or downstream use
+</span></code></pre></div>
+<h2 id="extension-points">🧩 Extension Points<a class="headerlink" href="#extension-points" title="Permanent link">&para;</a></h2>
+<p>Mappy is designed so additional workflows can be added without rewriting the whole application.</p>
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>Where to Add It</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New Google Maps service</td>
+<td>Add a service wrapper that uses <code>Maps.request(...)</code>.</td>
+</tr>
+<tr>
+<td>New external data source</td>
+<td>Add a fetcher class in <code>fetchers.py</code>.</td>
+</tr>
+<tr>
+<td>New generation provider</td>
+<td>Add a generator class in <code>generators.py</code>.</td>
+</tr>
+<tr>
+<td>New enrichment column</td>
+<td>Extend <code>Excel.create_outputs(...)</code>, <code>append_empty(...)</code>, and <code>append_result(...)</code>.</td>
+</tr>
+<tr>
+<td>New cache backend</td>
+<td>Implement the <code>BaseCache</code> interface.</td>
+</tr>
+<tr>
+<td>New Streamlit workflow</td>
+<td>Add UI orchestration in <code>app.py</code> that calls an existing service class.</td>
+</tr>
+<tr>
+<td>New API documentation page</td>
+<td>Add <code>docs/api/&lt;module&gt;.md</code> with a mkdocstrings directive.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="documentation-integration">📚 Documentation Integration<a class="headerlink" href="#documentation-integration" title="Permanent link">&para;</a></h2>
+<p>Mappy documentation is built with MkDocs, Material for MkDocs, and mkdocstrings.</p>
+<p>Source modules are documented with Google-style docstrings. API pages under <code>docs/api/</code> should use
+mkdocstrings directives such as:</p>
+<div class="language-markdown highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gh"># Geocoding API</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>::: geocode
+</span></code></pre></div>
+<p>The documentation system depends on:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mkdocs.yml</code></td>
+<td>Site configuration, navigation, theme, and plugin settings.</td>
+</tr>
+<tr>
+<td><code>docs/index.md</code></td>
+<td>Documentation landing page.</td>
+</tr>
+<tr>
+<td><code>docs/architecture.md</code></td>
+<td>Architecture explanation.</td>
+</tr>
+<tr>
+<td><code>docs/user-guide.md</code></td>
+<td>Usage guide and examples.</td>
+</tr>
+<tr>
+<td><code>docs/development.md</code></td>
+<td>Contributor and validation guide.</td>
+</tr>
+<tr>
+<td><code>docs/api/*.md</code></td>
+<td>API reference pages generated from source docstrings.</td>
+</tr>
+<tr>
+<td><code>docs/assets/css/extra.css</code></td>
+<td>Documentation styling overrides.</td>
+</tr>
+<tr>
+<td><code>docs/assets/js/extra.js</code></td>
+<td>Small documentation UI enhancements.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="architecture-summary">✅ Architecture Summary<a class="headerlink" href="#architecture-summary" title="Permanent link">&para;</a></h2>
+<p>Mappy’s architecture is organized around clear separation of responsibilities:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Main Files</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI</td>
+<td><code>app.py</code></td>
+<td>User interaction and workflow orchestration.</td>
+</tr>
+<tr>
+<td>Service wrappers</td>
+<td><code>geocode.py</code>, <code>places.py</code>, <code>distances.py</code>, <code>staticmaps.py</code>, <code>timezones.py</code>, <code>excel.py</code></td>
+<td>Domain workflows and normalized outputs.</td>
+</tr>
+<tr>
+<td>Gateway</td>
+<td><code>maps.py</code></td>
+<td>Shared Google Maps request execution.</td>
+</tr>
+<tr>
+<td>Infrastructure</td>
+<td><code>caches.py</code>, <code>rates.py</code>, <code>core.py</code>, <code>config.py</code>, <code>exceptions.py</code></td>
+<td>Caching, rate limiting, configuration, models, and errors.</td>
+</tr>
+<tr>
+<td>Retrieval</td>
+<td><code>fetchers.py</code></td>
+<td>External data retrieval.</td>
+</tr>
+<tr>
+<td>Generation</td>
+<td><code>generators.py</code></td>
+<td>Generated content and provider workflows.</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>docs/</code>, <code>mkdocs.yml</code></td>
+<td>MkDocs site and API reference.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Home
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../user-guide/" class="md-footer__link md-footer__link--next" aria-label="Next: User Guide">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                User Guide
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2022 Terry D. Eppler
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/is-leeroy-jenkins/Mappy" target="_blank" rel="noopener" title="Mappy on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.select", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../assets/js/extra.js"></script>
+      
+    
+  </body>
+</html>
