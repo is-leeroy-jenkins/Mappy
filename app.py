@@ -2750,7 +2750,7 @@ def create_visualization( df: pd.DataFrame ) -> None:
 				y=corr.index.tolist( ) ) ] )
 		st.plotly_chart( fig, use_container_width=True )
 
-def convert_dataframe( table_name: str, df: pd.DataFrame ):
+def convert_dataframe( table_name: str, df: pd.DataFrame ) -> None:
 	"""Handle the convert dataframe workflow.
 	
 	Purpose:
@@ -2774,7 +2774,7 @@ def convert_dataframe( table_name: str, df: pd.DataFrame ):
 		conn.execute( create_stmt )
 		conn.commit( )
 
-def insert_data( table_name: str, df: pd.DataFrame ):
+def insert_data( table_name: str, df: pd.DataFrame ) -> None:
 	"""Handle the insert data workflow.
 	
 	Purpose:

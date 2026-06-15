@@ -4211,7 +4211,7 @@ class GlobalImagery( Fetcher ):
 			Provides the documented fetch mercator map operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
 		Args:
-			str: Value supplied by the caller.
+			ccrs: str Value supplied by the caller.
 		
 		Returns:
 			Dict[str, Any] | None: Result produced by the operation.
