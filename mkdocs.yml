@@ -7,7 +7,7 @@ repo_url: https://github.com/is-leeroy-jenkins/Mappy
 repo_name: is-leeroy-jenkins/Mappy
 edit_uri: edit/main/docs/
 
-copyright: Copyright &copy; 2022 Terry D. Eppler
+copyright: Copyright &copy; 2025 Terry D. Eppler
 
 theme:
   name: material
@@ -47,10 +47,10 @@ theme:
     code: Roboto Mono
 
 extra_css:
-  - assets/css/extra.css
+  - assets/css/mappy.css
 
 extra_javascript:
-  - assets/js/extra.js
+  - assets/js/mappy.js
 
 plugins:
   - search
