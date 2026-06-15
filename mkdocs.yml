@@ -132,7 +132,6 @@ nav:
       - Rates: api/rates.md
       - Static Maps: api/staticmaps.md
       - Time Zones: api/timezones.md
-  - GitHub Pages: github-pages.md
 
 extra:
   social:

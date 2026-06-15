@@ -4103,16 +4103,9 @@ class GlobalImagery( Fetcher ):
 			self.mode = 'wms_map'
 			self.timeout = int( time )
 			
-			request_url = self.build_wms_url(
-				layer=layer,
-				image_date=image_date,
-				bbox=bbox,
-				width=width,
-				height=height,
-				projection=projection,
-				quality=quality,
-				image_format=image_format,
-				transparent=transparent )
+			request_url = self.build_wms_url( layer=layer, image_date=image_date, bbox=bbox,
+				width=width, height=height, projection=projection, quality=quality,
+				image_format=image_format, transparent=transparent )
 			
 			directory = Path( output_dir or 'python-examples' )
 			directory.mkdir( parents=True, exist_ok=True )
@@ -4211,14 +4204,14 @@ class GlobalImagery( Fetcher ):
 			Logger( ).write( exception )
 			raise exception
 	
-	def fetch_mercator_map( self, ccrs=None ) -> Dict[ str, Any ] | None:
+	def fetch_mercator_map( self, ccrs: str=None ) -> Dict[ str, Any ] | None:
 		"""Fetch fetch mercator map.
 		
 		Purpose:
 			Provides the documented fetch mercator map operation for the GlobalImagery workflow. The method keeps the existing Mappy behavior intact while exposing a Google-style docstring that can be rendered by MkDocs and mkdocstrings.
 		
 		Args:
-			ccrs: Value supplied by the caller.
+			str: Value supplied by the caller.
 		
 		Returns:
 			Dict[str, Any] | None: Result produced by the operation.

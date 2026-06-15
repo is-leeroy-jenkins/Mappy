@@ -534,7 +534,7 @@ def init_env_state( key: str, config_name: str, env_name: str ) -> None:
 			st.session_state[ key ] = default
 			os.environ[ env_name ] = default
 
-def normalize( obj ):
+def normalize( obj: str ) -> str:
 	"""Handle the normalize workflow.
 	
 	Purpose:
@@ -544,10 +544,10 @@ def normalize( obj ):
 		code.
 	
 	Args:
-		obj: Runtime value used by the `normalize` workflow.
+		obj: str Runtime value used by the `normalize` workflow.
 	
 	Returns:
-		object: Result produced by the `normalize` workflow.
+		str: Result produced by the `normalize` workflow.
 	"""
 	if obj is None or isinstance( obj, (str, int, float, bool) ):
 		return obj
@@ -2779,12 +2779,9 @@ def insert_data( table_name: str, df: pd.DataFrame ):
 	
 	Purpose:
 		Supports the Mappy Streamlit application by executing the insert data workflow.
-		The function preserves the existing UI behavior, session-state interactions,
-		dataframe handling, database access, and service integrations defined by the
-		application code.
 	
 	Args:
-		table_name: str value used by the `insert_data` workflow.
+		table_name: str value representing the name of the table.
 		df: pd.DataFrame value used by the `insert_data` workflow.
 	"""
 	df = df.copy( )
@@ -2795,7 +2792,7 @@ def insert_data( table_name: str, df: pd.DataFrame ):
 		conn.executemany( stmt, df.values.tolist( ) )
 		conn.commit( )
 
-def get_sqlite_type( dtype ) -> str:
+def get_sqlite_type( dtype: str ) -> str:
 	"""Return the sqlite type used by the application.
 	
 	Purpose:
@@ -2805,7 +2802,7 @@ def get_sqlite_type( dtype ) -> str:
 		defined by the application code.
 	
 	Args:
-		dtype: Runtime value used by the `get_sqlite_type` workflow.
+		dtype: str Runtime value used by the `get_sqlite_type` workflow.
 	
 	Returns:
 		str: Result produced by the `get_sqlite_type` workflow.
@@ -2981,7 +2978,7 @@ def create_identifier( name: str ) -> str:
 	
 	return safe
 
-def get_indexes( table: str ):
+def get_indexes( table: str ) -> List[ int ]:
 	"""Return the indexes used by the application.
 	
 	Purpose:
@@ -2994,7 +2991,7 @@ def get_indexes( table: str ):
 		table: str value used by the `get_indexes` workflow.
 	
 	Returns:
-		object: Result produced by the `get_indexes` workflow.
+		List[ int ]: Result produced by the `get_indexes` workflow.
 	"""
 	with create_connection( ) as conn:
 		rows = conn.execute( f'PRAGMA index_list("{table}");' ).fetchall( )
@@ -3132,7 +3129,7 @@ def rename_column( table_name: str, old_name: str, new_name: str ) -> None:
 		
 		conn.commit( )
 
-def create_profile_table( table: str ):
+def create_profile_table( table: str ) -> object:
 	"""Create the profile table used by the application.
 	
 	Purpose:
