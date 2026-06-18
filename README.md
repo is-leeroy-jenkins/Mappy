@@ -52,12 +52,16 @@ enrichment.
 Databricks provides a collaborative data engineering, analytics, and artificial intelligence
 workspace for the Mappy notebook and codebase.
 
-## 🕸️ Web App
+## 🔥 Streamlit 
 
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit\&logoColor=white)](https://mappy-py.streamlit.app/)
 
 The Streamlit deployment exposes Mappy as a dynamic, interactive web application for geospatial,
 environmental, astronomical, geological, and web-data workflows.
+
+## 🧊 Azure
+
+[![Containerized](https://img.shields.io/badge/Docker-App-2496ED?logo=docker&logoColor=white)](https://mappy.wonderfulsand-c318f361.eastus.azurecontainerapps.io)
 
 ## ✨ Features
 
