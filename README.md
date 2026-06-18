@@ -2,7 +2,7 @@
 
 ![](https://github.com/is-leeroy-jenkins/Mappy/blob/master/resources/images/project_mappy.png)
 
-<p align="center">
+<p align="left">
   <a href="#-demo">Demo</a>
   &nbsp;&bull;&nbsp;
   <a href="#-features">Features</a>
